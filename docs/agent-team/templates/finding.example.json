@@ -1,0 +1,26 @@
+{
+  "id": "SEC-001",
+  "category": "security",
+  "severity": "high",
+  "blocking": true,
+  "status": "open",
+  "reported_by": "security_reviewer",
+  "owner": "coder",
+  "revision": "REPLACE_ME",
+  "requirement_ids": [
+    "AC-001"
+  ],
+  "location": "path/to/file:line",
+  "summary": "Describe the concrete weakness",
+  "attack_scenario": "Describe actor, action and impact",
+  "preconditions": [
+    "State conditions required"
+  ],
+  "evidence": [
+    "Exact code or observed behavior"
+  ],
+  "recommended_fix": "Describe remediation",
+  "verification": "Describe evidence needed for closure",
+  "closure_evidence": null,
+  "human_risk_acceptance": null
+}

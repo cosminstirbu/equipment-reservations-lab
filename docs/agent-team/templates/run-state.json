@@ -1,0 +1,29 @@
+{
+  "feature_directory": "REPLACE_ME",
+  "status": "preparing",
+  "baseline_revision": null,
+  "preparation_round": 0,
+  "implementation_round": 0,
+  "limits": {
+    "preparation_repairs": 3,
+    "implementation_repairs": 3,
+    "no_progress_recurrences": 2
+  },
+  "required_checks": [],
+  "acceptance_evidence": [],
+  "quality_review": {
+    "verdict": "pending",
+    "revision": null
+  },
+  "security_review": {
+    "verdict": "pending",
+    "revision": null
+  },
+  "convergence": {
+    "verdict": "pending",
+    "revision": null
+  },
+  "human_acceptance_required": false,
+  "human_acceptance": null,
+  "pending_decisions": []
+}
