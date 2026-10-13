@@ -1,11 +1,10 @@
 <!--
 Sync Impact Report (temporary; remove before committing this amendment)
-Version change: unratified scaffold -> 1.0.0 (initial adoption)
-Modified principles: unnamed scaffold slots replaced by principles I-VI.
-Added sections: Application and Technology Constraints; Development Workflow and Quality Gates.
-Removed sections: none; template examples replaced by project policy.
-Follow-up TODOs: none. Database engine, telemetry backend, dependency resilience settings,
-and testing approaches for additional infrastructure are intentional planning decisions.
+Version change: 1.0.0 -> 1.1.0
+Modified principles: III and V retain their intent; concrete tools moved to engineering guides.
+Added sections: engineering standards compliance and amendment rules in Governance.
+Removed sections: none; stack details relocated to docs/engineering/README.md.
+Follow-up TODOs: none. Implementation versions and unselected infrastructure remain planning decisions.
 -->
 # Equipment Reservations Constitution
 
@@ -44,8 +43,8 @@ integration tests with faithful boundary doubles, verified through contract test
 This combines sociable application behavior tests with Fowler's narrow integration tests;
 these terms MUST NOT be treated as interchangeable.
 
-Database tests MUST use real, isolated databases provisioned with Testcontainers rather
-than substitutes for database behavior. Testing approaches for additional infrastructure,
+Database tests MUST use real, isolated databases rather than substitutes for database
+behavior. The engineering standards define the provisioning tool. Testing approaches for additional infrastructure,
 including Redis, Kafka, or RabbitMQ, MUST be decided case by case during planning and
 recorded before implementing the affected integration.
 
@@ -77,7 +76,7 @@ and [Programmer Test Principles](https://medium.com/@kentbeck_7670/programmer-te
 
 ### V. Correlated Observability
 
-The application MUST use OpenTelemetry for traces, logs, and metrics. Key reservation,
+The application MUST provide correlated traces, logs, and metrics. Key reservation,
 approval, collection, and return workflows and external calls MUST be traceable.
 Logs MUST be structured and correlated with traces where a trace context exists.
 Metrics MUST cover latency, errors, dependency health, and reservation outcomes.
@@ -109,10 +108,11 @@ equipment such as laptops, cameras, and meeting-room devices. Managers approve r
 equipment; staff record collection and return. Detailed business rules and authorization
 decisions MUST be captured in feature specifications with the human owner.
 
-The client application MUST use Angular. Backend services MUST use ASP.NET Core.
-Local application and dependency orchestration MUST use .NET Aspire. These choices do
-not require a particular service decomposition. Framework versions, database engine,
-hosting, and additional infrastructure MUST be selected in implementation plans.
+The approved stack and technology-specific standards are defined in the
+[engineering guides](../../docs/engineering/README.md). Feature plans MUST identify and
+follow the applicable guides. Technology choices MUST NOT impose unnecessary service
+decomposition. Unselected infrastructure and implementation versions MUST be recorded
+in plans before dependent implementation.
 
 ## Development Workflow and Quality Gates
 
@@ -151,9 +151,16 @@ removals or redefinitions, MINOR for new principles or materially expanded guida
 and PATCH for non-semantic clarifications. Amendments MUST update the version and last
 amended date while preserving the original ratification date.
 
-Planning and independent reviews MUST explicitly assess constitution compliance.
+Engineering guides MUST NOT weaken constitutional principles. Changes to mandatory
+engineering rules or the approved stack, and exceptions to those rules, MUST obtain
+explicit human-owner approval. Non-semantic clarifications and example corrections
+follow ordinary review. Engineering updates do not require a constitution version bump
+unless they change constitutional policy.
+
+Planning and independent reviews MUST explicitly assess constitution and applicable
+engineering standards compliance.
 Violations MUST be resolved or receive a recorded human-approved exception before
 completion. References explain adopted principles; their future revisions MUST NOT
 automatically change this constitution.
 
-**Version**: 1.0.0 | **Ratified**: 2026-10-13 | **Last Amended**: 2026-10-13
+**Version**: 1.1.0 | **Ratified**: 2026-10-13 | **Last Amended**: 2026-10-13
