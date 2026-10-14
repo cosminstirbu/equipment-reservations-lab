@@ -1,0 +1,47 @@
+{
+  "findings": [
+    {
+      "id": "ENV-001",
+      "category": "design",
+      "severity": "high",
+      "blocking": true,
+      "status": "closed",
+      "reported_by": "coordinator live validation",
+      "owner": "architect_planner/coder",
+      "revision": "I1:a2d445727aecb5d9e6016dc3eb064bcd9150cc94a426f5c4a4bb1746a95d4895",
+      "summary": "RabbitMQ4.3 rejects non-durable non-exclusive queue, blocking consumer/startup",
+      "evidence": [
+        "Smoke exit1 2failed; QueueDeclareAsync broker541 transient_nonexcl_queues deprecated"
+      ],
+      "recommended_fix": "Supported durable queue metadata, transient messages, no volume; update design and revalidate real path",
+      "verification": "Broker contract and full AppHost smoke pass; independent reviewers approve targeted design/code",
+      "closure_evidence": "security-review.md independent closure; final real smoke/contract pass"
+    },
+    {
+      "id": "Q-001",
+      "category": "environment",
+      "severity": "medium",
+      "blocking": true,
+      "status": "open",
+      "reported_by": "verifier_reviewer",
+      "owner": "coordinator",
+      "revision": "I1:a2d445727aecb5d9e6016dc3eb064bcd9150cc94a426f5c4a4bb1746a95d4895",
+      "requirement_ids": [
+        "FR-014",
+        "T020",
+        "T021"
+      ],
+      "location": "docs/engineering/angular.md User-facing behavior",
+      "summary": "Mandatory manual keyboard/focus/status review unavailable",
+      "evidence": [
+        "Angular guide requires manual keyboard review and says automated checks alone are insufficient",
+        "Native Edge control pipe closed; in-app browser unavailable",
+        "Automated actual keyboard and axe pass do not waive reviewer gate"
+      ],
+      "recommended_fix": "Record manual review on current snapshot or obtain explicit owner-scoped policy exception; original verifier validates closure",
+      "verification": "Verifier Q-001 closure report",
+      "closure_evidence": null,
+      "human_risk_acceptance": null
+    }
+  ]
+}

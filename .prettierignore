@@ -1,0 +1,14 @@
+**/node_modules/**
+**/bin/**
+**/obj/**
+**/dist/**
+**/.angular/**
+**/coverage/**
+**/test-results/**
+**/playwright-report/**
+**/packages.lock.json
+**/package-lock.json
+.git/**
+.agents/**
+.specify/**
+specs/**

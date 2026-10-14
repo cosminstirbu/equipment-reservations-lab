@@ -1,0 +1,30 @@
+body {
+  margin: 0;
+  font:
+    18px system-ui,
+    sans-serif;
+  color: #152238;
+  background: #f5f7fa;
+}
+main {
+  max-width: 42rem;
+  margin: 4rem auto;
+  padding: 2rem;
+}
+button {
+  font: inherit;
+  padding: 0.7rem 1.2rem;
+  border: 2px solid #174ea6;
+  border-radius: 0.4rem;
+  background: #174ea6;
+  color: white;
+  cursor: pointer;
+}
+button:focus-visible {
+  outline: 3px solid #111;
+  outline-offset: 3px;
+}
+button:disabled {
+  cursor: wait;
+  opacity: 0.7;
+}

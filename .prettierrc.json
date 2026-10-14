@@ -1,0 +1,13 @@
+{
+  "singleQuote": true,
+  "plugins": ["@prettier/plugin-xml"],
+  "overrides": [
+    {
+      "files": ["*.csproj", "*.props", "*.targets", "*.slnx", "*.xml"],
+      "options": {
+        "parser": "xml",
+        "xmlWhitespaceSensitivity": "preserve"
+      }
+    }
+  ]
+}

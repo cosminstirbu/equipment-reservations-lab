@@ -1,0 +1,20 @@
+{
+  "editor.formatOnSave": true,
+  "dotnet.server.sourceGeneratorExecution": "Automatic",
+  "editor.codeActionsOnSave": {
+    "source.fixAll.eslint": "explicit"
+  },
+  "[csharp]": {
+    "editor.defaultFormatter": "ms-dotnettools.csharp"
+  },
+  "[typescript][javascript][html][css][json][jsonc][xml]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "files.associations": {
+    "*.csproj": "xml",
+    "*.props": "xml",
+    "*.targets": "xml",
+    "*.slnx": "xml"
+  },
+  "eslint.workingDirectories": [{ "directory": "." }]
+}

@@ -1,0 +1,14 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/AppHost/AppHost.csproj" />
+    <Project Path="src/HelloMessaging/HelloMessaging.csproj" />
+    <Project Path="src/Inventory/Inventory.csproj" />
+    <Project Path="src/Notifications/Notifications.csproj" />
+    <Project Path="src/Reservations/Reservations.csproj" />
+    <Project Path="src/ServiceDefaults/ServiceDefaults.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/Backend.Tests/Backend.Tests.csproj" />
+    <Project Path="tests/Smoke.Tests/Smoke.Tests.csproj" />
+  </Folder>
+</Solution>

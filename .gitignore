@@ -1,0 +1,13 @@
+**/bin/
+**/obj/
+node_modules/
+dist/
+.angular/
+coverage/
+.env*
+.DS_Store
+*.log
+TestResults/
+playwright-report/
+test-results/
+.cache/

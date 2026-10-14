@@ -1,0 +1,23 @@
+{
+  "name": "equipment-reservations-quality",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "format": "node scripts/quality.mjs format",
+    "format-check": "node scripts/quality.mjs format-check",
+    "lint": "node scripts/quality.mjs lint",
+    "check": "node scripts/quality.mjs check",
+    "test:tooling": "node --test scripts/quality.test.mjs"
+  },
+  "devDependencies": {
+    "@eslint/js": "10.0.1",
+    "@prettier/plugin-xml": "3.4.2",
+    "@types/node": "24.19.2",
+    "angular-eslint": "22.6.0",
+    "eslint": "10.12.0",
+    "eslint-config-prettier": "10.1.8",
+    "prettier": "3.9.10",
+    "typescript": "6.0.3",
+    "typescript-eslint": "8.71.2"
+  }
+}

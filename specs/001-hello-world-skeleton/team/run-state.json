@@ -1,0 +1,240 @@
+{
+  "feature_directory": "specs/001-hello-world-skeleton",
+  "status": "needs_intervention",
+  "baseline_revision": "FMT2:1a2835959c8083370cc7d9231717bf43116a122a1c6e7f73751edf421cf1047d",
+  "preparation_round": 2,
+  "implementation_round": 2,
+  "limits": {
+    "preparation_repairs": 3,
+    "implementation_repairs": 3,
+    "no_progress_recurrences": 2
+  },
+  "required_checks": [
+    {
+      "command": "dotnet test EquipmentReservation.slnx -m:1",
+      "environment": "macOS arm64 + Podman6.0.2, .NET10.0.301, Node24.15, Aspire13.6.1",
+      "exit_status": 0,
+      "result": "16 backend + 2 real broker/smoke passed; no skips/warnings",
+      "revision": "I1:a2d445727aecb5d9e6016dc3eb064bcd9150cc94a426f5c4a4bb1746a95d4895"
+    },
+    {
+      "command": "npm --prefix src/Web test",
+      "environment": "macOS arm64 + Podman6.0.2, .NET10.0.301, Node24.15, Aspire13.6.1",
+      "exit_status": 0,
+      "result": "6 rendered tests passed",
+      "revision": "I1:a2d445727aecb5d9e6016dc3eb064bcd9150cc94a426f5c4a4bb1746a95d4895"
+    },
+    {
+      "command": "npm --prefix src/Web run build",
+      "environment": "macOS arm64 + Podman6.0.2, .NET10.0.301, Node24.15, Aspire13.6.1",
+      "exit_status": 0,
+      "result": "strict production build passed",
+      "revision": "I1:a2d445727aecb5d9e6016dc3eb064bcd9150cc94a426f5c4a4bb1746a95d4895"
+    },
+    {
+      "command": "API_WEB_URL=<Aspire web URL> BROWSER_EXECUTABLE=<Edge path> npm --prefix src/Web run test:browser",
+      "environment": "macOS arm64 + Podman6.0.2, .NET10.0.301, Node24.15, Aspire13.6.1",
+      "exit_status": 0,
+      "result": "3 passed; real keyboard two-send path, all-state axe including contrast",
+      "revision": "I1:a2d445727aecb5d9e6016dc3eb064bcd9150cc94a426f5c4a4bb1746a95d4895"
+    },
+    {
+      "command": "npm --prefix src/Web audit --json",
+      "environment": "macOS arm64 + Podman6.0.2, .NET10.0.301, Node24.15, Aspire13.6.1",
+      "exit_status": 0,
+      "result": "zero advisories",
+      "revision": "I1:a2d445727aecb5d9e6016dc3eb064bcd9150cc94a426f5c4a4bb1746a95d4895"
+    },
+    {
+      "command": "dotnet list EquipmentReservation.slnx package --vulnerable --include-transitive",
+      "environment": "macOS arm64 + Podman6.0.2, .NET10.0.301, Node24.15, Aspire13.6.1",
+      "exit_status": 0,
+      "result": "no known vulnerable packages across8projects",
+      "revision": "I1:a2d445727aecb5d9e6016dc3eb064bcd9150cc94a426f5c4a4bb1746a95d4895"
+    },
+    {
+      "command": "dotnet run --project src/AppHost --no-build",
+      "environment": "macOS arm64 + Podman6.0.2, .NET10.0.301, Node24.15, Aspire13.6.1",
+      "exit_status": 0,
+      "result": "documented local startup healthy",
+      "revision": "I1:a2d445727aecb5d9e6016dc3eb064bcd9150cc94a426f5c4a4bb1746a95d4895"
+    },
+    {
+      "command": "podman ps; lsof -nP -iTCP -sTCP:LISTEN",
+      "environment": "macOS arm64 + Podman6.0.2, .NET10.0.301, Node24.15, Aspire13.6.1",
+      "exit_status": 0,
+      "result": "application listeners and published AMQP loopback only",
+      "revision": "I1:a2d445727aecb5d9e6016dc3eb064bcd9150cc94a426f5c4a4bb1746a95d4895"
+    },
+    {
+      "command": "aspire otel traces/logs --apphost src/AppHost",
+      "environment": "macOS arm64 + Podman6.0.2, .NET10.0.301, Node24.15, Aspire13.6.1",
+      "exit_status": 0,
+      "result": "real success correlation and controlled Inventory503 failure visible",
+      "revision": "I1:a2d445727aecb5d9e6016dc3eb064bcd9150cc94a426f5c4a4bb1746a95d4895"
+    },
+    {
+      "command": "Manual keyboard/focus/status review",
+      "result": "pending: native control closed pipe; in-app browser unavailable",
+      "revision": "I1:a2d445727aecb5d9e6016dc3eb064bcd9150cc94a426f5c4a4bb1746a95d4895",
+      "exit_status": null
+    }
+  ],
+  "acceptance_evidence": [
+    {
+      "criterion": "AC1",
+      "revision": "I1:a2d445727aecb5d9e6016dc3eb064bcd9150cc94a426f5c4a4bb1746a95d4895",
+      "evidence": "validation.md and independent review reports",
+      "implementation_verdict": "pass",
+      "completion_gate": "manual review + human acceptance pending"
+    },
+    {
+      "criterion": "AC2",
+      "revision": "I1:a2d445727aecb5d9e6016dc3eb064bcd9150cc94a426f5c4a4bb1746a95d4895",
+      "evidence": "validation.md and independent review reports",
+      "implementation_verdict": "pass",
+      "completion_gate": "manual review + human acceptance pending"
+    },
+    {
+      "criterion": "AC3",
+      "revision": "I1:a2d445727aecb5d9e6016dc3eb064bcd9150cc94a426f5c4a4bb1746a95d4895",
+      "evidence": "validation.md and independent review reports",
+      "implementation_verdict": "pass",
+      "completion_gate": "manual review + human acceptance pending"
+    },
+    {
+      "criterion": "AC4",
+      "revision": "I1:a2d445727aecb5d9e6016dc3eb064bcd9150cc94a426f5c4a4bb1746a95d4895",
+      "evidence": "validation.md and independent review reports",
+      "implementation_verdict": "pass",
+      "completion_gate": "manual review + human acceptance pending"
+    },
+    {
+      "criterion": "AC5",
+      "revision": "I1:a2d445727aecb5d9e6016dc3eb064bcd9150cc94a426f5c4a4bb1746a95d4895",
+      "evidence": "validation.md and independent review reports",
+      "implementation_verdict": "pass",
+      "completion_gate": "manual review + human acceptance pending"
+    },
+    {
+      "criterion": "AC6",
+      "revision": "I1:a2d445727aecb5d9e6016dc3eb064bcd9150cc94a426f5c4a4bb1746a95d4895",
+      "evidence": "validation.md and independent review reports",
+      "implementation_verdict": "pass",
+      "completion_gate": "manual review + human acceptance pending"
+    },
+    {
+      "criterion": "AC7",
+      "revision": "I1:a2d445727aecb5d9e6016dc3eb064bcd9150cc94a426f5c4a4bb1746a95d4895",
+      "evidence": "validation.md and independent review reports",
+      "implementation_verdict": "pass",
+      "completion_gate": "manual review + human acceptance pending"
+    },
+    {
+      "criterion": "AC8",
+      "revision": "I1:a2d445727aecb5d9e6016dc3eb064bcd9150cc94a426f5c4a4bb1746a95d4895",
+      "evidence": "validation.md and independent review reports",
+      "implementation_verdict": "pass",
+      "completion_gate": "manual review + human acceptance pending"
+    }
+  ],
+  "quality_review": {
+    "verdict": "pending",
+    "revision": "FMT2:1a2835959c8083370cc7d9231717bf43116a122a1c6e7f73751edf421cf1047d",
+    "blocking_findings": [
+      "Q-001"
+    ],
+    "reason": "Source/analyzer cleanup invalidates I1 review evidence"
+  },
+  "security_review": {
+    "verdict": "pending",
+    "revision": "FMT2:1a2835959c8083370cc7d9231717bf43116a122a1c6e7f73751edf421cf1047d",
+    "reason": "Source/analyzer cleanup invalidates I1 review evidence"
+  },
+  "convergence": {
+    "verdict": "pending",
+    "revision": "FMT2:1a2835959c8083370cc7d9231717bf43116a122a1c6e7f73751edf421cf1047d",
+    "reason": "Refresh after current-revision independent reviews"
+  },
+  "human_acceptance_required": true,
+  "human_acceptance": null,
+  "pending_decisions": [
+    "Resume independent reviews and convergence on FMT2; historical I1 verdicts are not current approvals",
+    "Owner performs and records manual keyboard/focus/status review or explicitly approves a scoped exception to close Q-001",
+    "Explicit owner acceptance of Feature0 after quality gate closure"
+  ],
+  "scope_decisions": [
+    "User corrected Docker Compose to .NET Aspire; Podman is the container runtime.",
+    "Authentication deliberately deferred for loopback-only local skeleton."
+  ],
+  "stage": "post_formatting_review_refresh",
+  "requirements_review": {
+    "quality": "no specification blockers; design items pending",
+    "security": "pass",
+    "revision": "cf9062f + completed spec working tree"
+  },
+  "environment": {
+    "dotnet_sdk": "10.0.301",
+    "node": "24.15.0",
+    "npm": "11.12.1",
+    "aspire_cli": "13.6.1",
+    "podman": "6.0.2",
+    "podman_running": true
+  },
+  "preparation_quality": {
+    "verdict": "pass",
+    "revision": "P2:415dcbda4fe096b72231de2e392335fed1cdc4f72614568522a9feeaf9cb5dbe",
+    "version_recheck": "pass"
+  },
+  "preparation_security": {
+    "verdict": "pass",
+    "revision": "P2:415dcbda4fe096b72231de2e392335fed1cdc4f72614568522a9feeaf9cb5dbe",
+    "version_recheck": "pass"
+  },
+  "incomplete_tasks": [
+    "T020",
+    "T021"
+  ],
+  "local_validation_apphost": "stopped after checks",
+  "historical_implementation_reviews": {
+    "quality": {
+      "verdict": "changes_requested",
+      "revision": "I1:a2d445727aecb5d9e6016dc3eb064bcd9150cc94a426f5c4a4bb1746a95d4895",
+      "report": "quality-review.md",
+      "blocking_findings": [
+        "Q-001"
+      ]
+    },
+    "security": {
+      "verdict": "pass",
+      "revision": "I1:a2d445727aecb5d9e6016dc3eb064bcd9150cc94a426f5c4a4bb1746a95d4895",
+      "report": "security-review.md"
+    },
+    "convergence": {
+      "verdict": "tasks_appended",
+      "revision": "I1:a2d445727aecb5d9e6016dc3eb064bcd9150cc94a426f5c4a4bb1746a95d4895",
+      "report": "convergence.md",
+      "task_ids": [
+        "T021"
+      ]
+    }
+  },
+  "maintenance_validation": {
+    "revision": "FMT2:1a2835959c8083370cc7d9231717bf43116a122a1c6e7f73751edf421cf1047d",
+    "report": "formatting-refresh.md",
+    "command": "npm run check",
+    "exit_status": 0,
+    "results": {
+      "hook_tests": 4,
+      "angular_tests": 6,
+      "backend_tests": 16,
+      "real_broker_smoke_tests": 2,
+      "warnings": 0,
+      "skips": 0,
+      "root_npm_audit_advisories": 0
+    },
+    "hook_runtime_activation": "Prepared and handler-tested; exact-definition trust/reload by owner still required",
+    "previous_revision": "FMT1:34f0bbb7e7e125d5b369a4c69a37798effcef0ea9b46c6a5b83566bb51439609",
+    "readability_refresh": "Logical spacing, endpoint guard clauses, multiline callbacks/chains; npm run check passed again with 4 tooling, 6 Angular, 16 backend and 2 real broker tests, no skips or warnings."
+  }
+}

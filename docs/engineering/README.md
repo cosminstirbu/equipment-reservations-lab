@@ -4,6 +4,8 @@ These guides apply the [constitution](../../.specify/memory/constitution.md) to 
 Read the relevant guides during planning, implementation, and review. Feature plans must
 list which guides apply and record decisions the guides deliberately leave open.
 
+All source changes must follow [formatting and static analysis](formatting-and-linting.md), including suggestion-level .NET IDE diagnostics, per-edit formatting, and final quality checks.
+
 ## Approved stack
 
 | Area | Technology | Guide |
