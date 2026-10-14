@@ -19,7 +19,7 @@ public sealed class HelloPublisher(IConfiguration configuration, ILogger<HelloPu
 
         try
         {
-            byte[] body = JsonSerializer.SerializeToUtf8Bytes(hello, JsonSerializerOptions.Web);
+            byte[] body = JsonSerializer.SerializeToUtf8Bytes(hello, MessagingJsonContext.Default.HelloRequested);
             if (body.Length > 4096)
             {
                 throw new IOException("Hello event exceeds the size limit");

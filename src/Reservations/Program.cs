@@ -4,6 +4,11 @@ using ServiceDefaults;
 
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 builder.AddServiceDefaults();
+builder.Services.ConfigureHttpJsonOptions(options =>
+{
+    options.SerializerOptions.TypeInfoResolverChain.Insert(0, MessagingJsonContext.Default);
+    options.SerializerOptions.TypeInfoResolverChain.Insert(0, ReservationsJsonContext.Default);
+});
 
 builder.Services.AddHttpClient("inventory", c =>
 {
@@ -53,7 +58,7 @@ app.MapPost("/api/hellos", async (
             return Results.Problem(statusCode: 413, title: "Request too large");
         }
 
-        input = JsonSerializer.Deserialize<HelloInput>(buffer.AsSpan(0, size), JsonSerializerOptions.Web);
+        input = JsonSerializer.Deserialize(buffer.AsSpan(0, size), ReservationsJsonContext.Default.HelloInput);
     }
     catch (JsonException)
     {
@@ -75,7 +80,7 @@ app.MapPost("/api/hellos", async (
         }
 
         _ = response.EnsureSuccessStatusCode();
-        Equipment? item = await response.Content.ReadFromJsonAsync<Equipment>(budget.Token);
+        Equipment? item = await response.Content.ReadFromJsonAsync(MessagingJsonContext.Default.Equipment, budget.Token);
         if (item is null || item.Id != input.EquipmentId || string.IsNullOrWhiteSpace(item.Name))
         {
             throw new HttpRequestException();
@@ -85,10 +90,7 @@ app.MapPost("/api/hellos", async (
         using var publishBudget = CancellationTokenSource.CreateLinkedTokenSource(budget.Token);
         publishBudget.CancelAfter(TimeSpan.FromSeconds(3));
         await publisher.PublishAsync(hello, publishBudget.Token);
-        return Results.Accepted(value: new
-        {
-            hello.CorrelationId
-        });
+        return Results.Accepted(value: new HelloResult(hello.CorrelationId));
     }
     catch (Exception ex) when (ex is HttpRequestException
         or IOException

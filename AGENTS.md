@@ -6,6 +6,13 @@ Feature documents and the project constitution are shared agreements. Missing pr
 
 Do not merge, deploy, publish, or create external issues merely because a feature passes the loop. These actions require their own authorization.
 
+## .NET source generation
+
+Follow the source-generation rules in docs/engineering/aspnet-core.md. Use supported
+.NET generators for compile-time-known JSON contracts, logging, regular expressions,
+and other applicable features. Preserve behavior and wire contracts, inspect generator
+diagnostics, and document unsupported or dynamic cases for owner review.
+
 ## Formatting and static analysis
 
 Follow docs/engineering/formatting-and-linting.md and the committed formatter/linter configuration. After each source-file edit, format that exact file before reading, testing or editing it again: `npm run format -- <edited paths>`. The trusted Codex post-edit hook handles apply_patch/Edit/Write automatically; shell writes and clients without hooks must invoke this command explicitly. Re-read files after formatting. Never format another worker's files or run a whole-repository formatter while workers are writing; formatter commands serialize themselves.

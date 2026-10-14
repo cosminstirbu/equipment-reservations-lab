@@ -4,6 +4,8 @@ using ServiceDefaults;
 
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 builder.AddServiceDefaults();
+builder.Services.ConfigureHttpJsonOptions(options =>
+    options.SerializerOptions.TypeInfoResolverChain.Insert(0, NotificationsJsonContext.Default));
 
 builder.Services.AddSingleton(TimeProvider.System);
 builder.Services.AddSingleton<NotificationStore>();

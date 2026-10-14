@@ -21,6 +21,43 @@ do not capture request-scoped services after the request ends.
 
 Source: [ASP.NET Core best practices](https://learn.microsoft.com/en-us/aspnet/core/fundamentals/best-practices?view=aspnetcore-10.0).
 
+## Source generation
+
+Application code must use supported .NET source generators when the required types,
+patterns, or call sites are known at compile time. Apply this rule to existing code when
+changing it and during engineering-practice migrations. Preserve behavior and wire
+contracts; do not introduce a feature solely to use its generator.
+
+- JSON: declare `JsonSerializerContext` types with `[JsonSerializable]` for known
+  contracts. Use `JsonTypeInfo<T>` overloads for explicit serialization, deserialization,
+  and HTTP client JSON calls. Register contexts ahead of fallback resolvers in ASP.NET
+  Core HTTP JSON options. Use named response contracts instead of anonymous objects.
+  Preserve web defaults and include collection types. Metadata generation is needed for
+  deserialization and asynchronous HTTP serialization.
+- Logging: use `[LoggerMessage]` partial methods with stable event IDs and structured
+  message templates for application log events.
+- Regular expressions: use `[GeneratedRegex]` partial members for constant patterns
+  and supported options. Preserve matching options and timeouts. Simple character
+  validation does not need to become a regular expression.
+- Other features: use the supported generator for applicable configuration binding,
+  Minimal API request delegates, interop (`LibraryImport`), and other .NET capabilities
+  when those features are present. Check the target framework's support and generator
+  diagnostics, and enable opt-in generators in the owning project when applicable.
+
+Dynamic inputs or unsupported generator behavior require a documented rationale for
+an exception and owner approval under the engineering standards. Framework-owned
+serialization is governed by the framework; registering application contexts does not
+make the entire service Native AOT compatible. Tests may construct raw JSON or use
+independent fixture serialization to verify wire compatibility and malformed inputs;
+application serializers must use generated metadata.
+
+Sources: [JSON source generation](https://learn.microsoft.com/en-us/dotnet/standard/serialization/system-text-json/source-generation),
+[generated logging](https://learn.microsoft.com/en-us/dotnet/core/extensions/logging/source-generation),
+[generated regular expressions](https://learn.microsoft.com/en-us/dotnet/standard/base-types/regular-expression-source-generators),
+[configuration binding](https://learn.microsoft.com/en-us/dotnet/core/extensions/configuration-generator),
+[request delegate generation](https://learn.microsoft.com/en-us/aspnet/core/fundamentals/aot/request-delegate-generator/rdg?view=aspnetcore-10.0),
+and [interop generation](https://learn.microsoft.com/en-us/dotnet/standard/native-interop/pinvoke-source-generation).
+
 ## Relevant .NET 10 features
 
 Prefer built-in capabilities before adding equivalent libraries:

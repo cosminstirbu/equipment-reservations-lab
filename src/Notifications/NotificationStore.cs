@@ -21,7 +21,7 @@ public sealed class NotificationStore(TimeProvider time)
         HelloRequested? hello;
         try
         {
-            hello = JsonSerializer.Deserialize<HelloRequested>(body.Span, JsonSerializerOptions.Web);
+            hello = JsonSerializer.Deserialize(body.Span, MessagingJsonContext.Default.HelloRequested);
         }
         catch (JsonException)
         {

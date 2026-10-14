@@ -3,6 +3,8 @@ using ServiceDefaults;
 
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 builder.AddServiceDefaults();
+builder.Services.ConfigureHttpJsonOptions(options =>
+    options.SerializerOptions.TypeInfoResolverChain.Insert(0, MessagingJsonContext.Default));
 
 WebApplication app = builder.Build();
 app.MapOperationalEndpoints();
