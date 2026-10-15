@@ -32,6 +32,8 @@ npm run check
 
 `lint` runs ESLint with zero warnings, .NET build with warnings treated as errors, and the suggestion-level IDE verification gate. `check` adds hook tests, frontend build/tests and the complete backend/real RabbitMQ smoke suite, requiring running Podman. Browser checks remain documented in the application README.
 
+After the solution build and frontend checks, `check` runs Backend.Tests and Smoke.Tests concurrently in separate processes using `--no-build` to avoid competing writes to shared build outputs. Each suite keeps its existing sequential test execution. The command waits for both suites and fails if either fails.
+
 To format only edited files after each edit:
 
 ```sh
