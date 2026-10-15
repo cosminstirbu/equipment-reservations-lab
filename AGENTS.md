@@ -6,6 +6,12 @@ Feature documents and the project constitution are shared agreements. Missing pr
 
 Do not merge, deploy, publish, or create external issues merely because a feature passes the loop. These actions require their own authorization.
 
+## Feature-team completion rules
+
+The coordinator owns the final completion-metadata consistency check.
+
+**Synchronize completion metadata.** Before reporting a feature complete, verify that `spec.md`, `tasks.md`, and the team state consistently reflect implementation, independent reviews, convergence, and explicit human acceptance. After acceptance, update the spec's Status to `Complete — implemented, independently reviewed, and accepted YYYY-MM-DD`. Record acceptance before changing that status. Preserve historical review hashes and reports; identify the status edit as a metadata-only change. If a required gate remains pending, name that gate accurately instead of leaving a generic Draft status. Completion checks must inspect these files, not rely solely on task checkboxes.
+
 ## .NET source generation
 
 Follow the source-generation rules in docs/engineering/aspnet-core.md. Use supported

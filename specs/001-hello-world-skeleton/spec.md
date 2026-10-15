@@ -2,7 +2,7 @@
 
 **Feature Directory**: `specs/001-hello-world-skeleton`
 **Created**: 2026-10-13
-**Status**: Draft — awaiting independent review and human feature acceptance
+**Status**: Implemented — awaiting independent review refresh, convergence, and explicit human feature acceptance
 **Input**: Build a local-only equipment application proving the real end-to-end hello journey, with one seeded item and three service responsibilities. The owner corrected startup to .NET Aspire AppHost with Podman; implementation constraints are carried into planning.
 
 ## User Scenarios & Testing *(mandatory)*

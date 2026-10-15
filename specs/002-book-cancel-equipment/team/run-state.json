@@ -466,5 +466,14 @@
     "live_secret_matches": 0,
     "git_diff_check": 0,
     "unresolved_blocking_findings": 0
+  },
+  "completion_metadata_correction": {
+    "date": "2026-10-15",
+    "change": "metadata-only; spec Status line and completion bookkeeping; requirements/application unchanged",
+    "spec_status": "Complete \u2014 implemented, independently reviewed, and accepted 2026-10-15",
+    "previous_spec_sha256": "e2822291af872664bc42c6a252e1c7e020216570b92b323b4bbe003b8b18cb96",
+    "current_spec_sha256": "635d74c7b4a2da54161bcddb26fa30593348431c97d40b3c76bfb6ea6c62b3a0",
+    "historical_review_hashes": "preserved unchanged; prior hashes identify reviewed content before metadata correction",
+    "report": "completion-metadata-correction.md"
   }
 }
