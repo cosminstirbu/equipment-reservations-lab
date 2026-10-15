@@ -1,0 +1,470 @@
+{
+  "feature_directory": "specs/002-book-cancel-equipment",
+  "status": "complete",
+  "baseline_revision": "0f3ee965011ddf3fc473ea1a5bba6bfa3acdc7b1",
+  "preparation_round": 0,
+  "implementation_round": 3,
+  "limits": {
+    "preparation_repairs": 3,
+    "implementation_repairs": 3,
+    "no_progress_recurrences": 2
+  },
+  "required_checks": [
+    {
+      "command": "npm run check",
+      "phase": "baseline",
+      "revision": "0f3ee965011ddf3fc473ea1a5bba6bfa3acdc7b1",
+      "exit_status": 0,
+      "result": "4 tooling, 6 Angular, 16 backend, 2 real RabbitMQ smoke tests passed; no skips; build zero warnings/errors",
+      "environment": "local macOS .NET10, Angular22, Podman/Aspire"
+    },
+    {
+      "phase": "batch1",
+      "command": "npm run format-check",
+      "revision": "3a8c0d24bfd8632b52d6ccd0fbc172bc2378106e025f3aa71784b24a0ae54739",
+      "exit_status": 0,
+      "result": "pass",
+      "environment": "macOS .NET10/Angular22/Podman; DOCKER_HOST local Podman socket, TESTCONTAINERS_RYUK_DISABLED=true"
+    },
+    {
+      "phase": "batch1",
+      "command": "npm run lint",
+      "revision": "3a8c0d24bfd8632b52d6ccd0fbc172bc2378106e025f3aa71784b24a0ae54739",
+      "exit_status": 0,
+      "result": "zero warnings/errors",
+      "environment": "macOS .NET10/Angular22/Podman; DOCKER_HOST local Podman socket, TESTCONTAINERS_RYUK_DISABLED=true"
+    },
+    {
+      "phase": "batch1",
+      "command": "npm run check",
+      "revision": "3a8c0d24bfd8632b52d6ccd0fbc172bc2378106e025f3aa71784b24a0ae54739",
+      "exit_status": 0,
+      "result": "4tooling6Angular23backend3realSmoke; zero skips",
+      "environment": "macOS .NET10/Angular22/Podman; DOCKER_HOST local Podman socket, TESTCONTAINERS_RYUK_DISABLED=true"
+    },
+    {
+      "phase": "batch1",
+      "command": "git diff --check",
+      "revision": "3a8c0d24bfd8632b52d6ccd0fbc172bc2378106e025f3aa71784b24a0ae54739",
+      "exit_status": 0,
+      "result": "pass",
+      "environment": "macOS .NET10/Angular22/Podman; DOCKER_HOST local Podman socket, TESTCONTAINERS_RYUK_DISABLED=true"
+    },
+    {
+      "phase": "batch2",
+      "command": "npm run format-check",
+      "revision": "728d8163d6e7cb2e50a642d1ffa350709d30ba5fad8fdff18f4eafd686a7e3b0",
+      "exit_status": 0,
+      "result": "pass",
+      "environment": "macOS .NET10/Angular22/Podman"
+    },
+    {
+      "phase": "batch2",
+      "command": "npm run lint",
+      "revision": "728d8163d6e7cb2e50a642d1ffa350709d30ba5fad8fdff18f4eafd686a7e3b0",
+      "exit_status": 0,
+      "result": "zero warnings/errors",
+      "environment": "macOS .NET10/Angular22/Podman"
+    },
+    {
+      "phase": "batch2",
+      "command": "npm run check",
+      "revision": "728d8163d6e7cb2e50a642d1ffa350709d30ba5fad8fdff18f4eafd686a7e3b0",
+      "exit_status": 0,
+      "result": "4tooling17Angular69backend3realSmoke; zero skips",
+      "environment": "macOS .NET10/Angular22/Podman"
+    },
+    {
+      "phase": "batch3",
+      "command": "npm run format-check",
+      "revision": "bf246f5f76035a77f30c58b2472e56ed7f8b4db8ad69eed3bd50e758136e6c87",
+      "exit_status": 0,
+      "result": "pass",
+      "environment": "macOS .NET10/Angular22/Podman"
+    },
+    {
+      "phase": "batch3",
+      "command": "npm run lint",
+      "revision": "bf246f5f76035a77f30c58b2472e56ed7f8b4db8ad69eed3bd50e758136e6c87",
+      "exit_status": 0,
+      "result": "zero warnings/errors",
+      "environment": "macOS .NET10/Angular22/Podman"
+    },
+    {
+      "phase": "batch3",
+      "command": "npm run check",
+      "revision": "bf246f5f76035a77f30c58b2472e56ed7f8b4db8ad69eed3bd50e758136e6c87",
+      "exit_status": 0,
+      "result": "4tooling26Angular83backend3realSmoke; zero skips",
+      "environment": "macOS .NET10/Angular22/Podman"
+    },
+    {
+      "phase": "repair1",
+      "command": "npm run format-check",
+      "revision": "272f62a7ab3900707ab56c39f407b315d05289acbde802ceb854aa7b1b2817b3",
+      "exit_status": 0,
+      "result": "pass",
+      "environment": "macOS .NET10/Angular22/Podman"
+    },
+    {
+      "phase": "repair1",
+      "command": "npm run lint",
+      "revision": "272f62a7ab3900707ab56c39f407b315d05289acbde802ceb854aa7b1b2817b3",
+      "exit_status": 0,
+      "result": "zero warnings/errors",
+      "environment": "macOS .NET10/Angular22/Podman"
+    },
+    {
+      "phase": "repair1",
+      "command": "npm run check",
+      "revision": "272f62a7ab3900707ab56c39f407b315d05289acbde802ceb854aa7b1b2817b3",
+      "exit_status": 0,
+      "result": "4tooling27Angular83backend3realSmoke; zero skips",
+      "environment": "macOS .NET10/Angular22/Podman"
+    },
+    {
+      "phase": "batch4",
+      "command": "npm run check",
+      "revision": "3f4080a91b0ec60b5b570ec9112d3a4b442d39f27fdcd25403deb8da8f666952",
+      "exit_status": 0,
+      "result": "format-check/lint pass; build zero warnings/errors;4 tooling35Angular144backend31realSmoke;zero skips",
+      "environment": "local macOS .NET10/Angular22.2.2/PostgreSQL18.6/RabbitMQ4.3.6/Podman",
+      "source_snapshot_note": "Final hash confirmed after full gate and removal of temporary formatter-test fixture; no source edits during gate"
+    },
+    {
+      "phase": "batch4",
+      "command": "npm run format-check",
+      "revision": "3f4080a91b0ec60b5b570ec9112d3a4b442d39f27fdcd25403deb8da8f666952",
+      "exit_status": 0,
+      "result": "pass",
+      "environment": "macOS.NET10/Angular22/Podman",
+      "evidence": "batch-4-handoff.md"
+    },
+    {
+      "phase": "batch4",
+      "command": "npm run lint",
+      "revision": "3f4080a91b0ec60b5b570ec9112d3a4b442d39f27fdcd25403deb8da8f666952",
+      "exit_status": 0,
+      "result": "zero warnings/errors",
+      "environment": "macOS.NET10/Angular22/Podman",
+      "evidence": "batch-4-handoff.md"
+    },
+    {
+      "phase": "batch4",
+      "command": "git diff --check",
+      "revision": "3f4080a91b0ec60b5b570ec9112d3a4b442d39f27fdcd25403deb8da8f666952",
+      "exit_status": 0,
+      "result": "pass",
+      "environment": "macOS.NET10/Angular22/Podman",
+      "evidence": "batch-4-handoff.md"
+    },
+    {
+      "phase": "repair3",
+      "command": "npm run format-check",
+      "revision": "c40044c4771a1abf9df625520207a867298e75ff09f9fd6b8b021906376cd81a",
+      "exit_status": 0,
+      "result": "pass",
+      "environment": "macOS .NET10/Angular22/Podman/PostgreSQL18.6/RabbitMQ4.3.6",
+      "evidence": "batch-4-repair-3-handoff.md"
+    },
+    {
+      "phase": "repair3",
+      "command": "npm run lint",
+      "revision": "c40044c4771a1abf9df625520207a867298e75ff09f9fd6b8b021906376cd81a",
+      "exit_status": 0,
+      "result": "zero warnings/errors",
+      "environment": "macOS .NET10/Angular22/Podman/PostgreSQL18.6/RabbitMQ4.3.6",
+      "evidence": "batch-4-repair-3-handoff.md"
+    },
+    {
+      "phase": "repair3",
+      "command": "npm run check",
+      "revision": "c40044c4771a1abf9df625520207a867298e75ff09f9fd6b8b021906376cd81a",
+      "exit_status": 0,
+      "result": "4 tooling, 35 Angular, 191 backend, 44 real smoke; zero skips/warnings/errors; backend1m13s, smoke2m30s",
+      "environment": "macOS .NET10/Angular22/Podman/PostgreSQL18.6/RabbitMQ4.3.6",
+      "evidence": "batch-4-repair-3-handoff.md"
+    },
+    {
+      "phase": "repair3",
+      "command": "git diff --check",
+      "revision": "c40044c4771a1abf9df625520207a867298e75ff09f9fd6b8b021906376cd81a",
+      "exit_status": 0,
+      "result": "pass",
+      "environment": "macOS .NET10/Angular22/Podman/PostgreSQL18.6/RabbitMQ4.3.6",
+      "evidence": "batch-4-repair-3-handoff.md"
+    },
+    {
+      "phase": "batch5-final",
+      "command": "npm run format-check",
+      "revision": "05da930fed1290f7e88fd8fbc409188a88975aaf3974f9373e7aa7bdb18f5107",
+      "exit_status": 0,
+      "result": "pass",
+      "environment": "local macOS .NET10/Angular22/Podman/PostgreSQL18.6/RabbitMQ4.3.6",
+      "evidence": "validation.md; coder Batch5 frozen handoff"
+    },
+    {
+      "phase": "batch5-final",
+      "command": "npm run lint",
+      "revision": "05da930fed1290f7e88fd8fbc409188a88975aaf3974f9373e7aa7bdb18f5107",
+      "exit_status": 0,
+      "result": "pass; zero warnings/errors and suggestions addressed",
+      "environment": "local macOS .NET10/Angular22/Podman/PostgreSQL18.6/RabbitMQ4.3.6",
+      "evidence": "validation.md; coder Batch5 frozen handoff"
+    },
+    {
+      "phase": "batch5-final",
+      "command": "npm run check",
+      "revision": "05da930fed1290f7e88fd8fbc409188a88975aaf3974f9373e7aa7bdb18f5107",
+      "exit_status": 0,
+      "result": "4 tooling,39 Angular,211 backend,45 real smoke; zero skips/warnings/errors; backend1m14s,smoke4m22s",
+      "environment": "local macOS .NET10/Angular22/Podman/PostgreSQL18.6/RabbitMQ4.3.6",
+      "evidence": "validation.md; coder Batch5 frozen handoff"
+    },
+    {
+      "phase": "batch5-final",
+      "command": "git diff --check",
+      "revision": "05da930fed1290f7e88fd8fbc409188a88975aaf3974f9373e7aa7bdb18f5107",
+      "exit_status": 0,
+      "result": "pass",
+      "environment": "local macOS .NET10/Angular22/Podman/PostgreSQL18.6/RabbitMQ4.3.6",
+      "evidence": "validation.md; coder Batch5 frozen handoff"
+    }
+  ],
+  "acceptance_evidence": [
+    {
+      "revision": "05da930fed1290f7e88fd8fbc409188a88975aaf3974f9373e7aa7bdb18f5107",
+      "criteria": "SC001\u2013018",
+      "map": "acceptance-evidence-map.md",
+      "human_acceptance": "accepted2026-10-15"
+    }
+  ],
+  "quality_review": {
+    "verdict": "pass",
+    "revision": "05da930fed1290f7e88fd8fbc409188a88975aaf3974f9373e7aa7bdb18f5107",
+    "scope": "final whole-feature source/artifacts/acceptance evidence; native closure separately recorded",
+    "report": "quality-final.md"
+  },
+  "security_review": {
+    "verdict": "pass",
+    "revision": "05da930fed1290f7e88fd8fbc409188a88975aaf3974f9373e7aa7bdb18f5107",
+    "scope": "final whole-feature source/artifacts/runtime/privacy; SEC001 closed",
+    "report": "security-final.md"
+  },
+  "convergence": {
+    "verdict": "converged",
+    "revision": "05da930fed1290f7e88fd8fbc409188a88975aaf3974f9373e7aa7bdb18f5107",
+    "report": "convergence-final.md",
+    "findings": 0,
+    "tasks_appended": 0,
+    "tasks_before_after_sha256": "573924a5c17bca30841ae14a402da8c3956f5a599b68de4a1030d92240cafbf5"
+  },
+  "human_acceptance_required": true,
+  "human_acceptance": {
+    "owner": "human project owner",
+    "date": "2026-10-15",
+    "timezone": "Europe/Bucharest",
+    "decision": "Accept Feature 1",
+    "revision": "05da930fed1290f7e88fd8fbc409188a88975aaf3974f9373e7aa7bdb18f5107",
+    "source": "Explicit reply to final Feature1 acceptance prompt",
+    "scope": "Feature1 Book and Cancel Equipment; reviewed implementation and evidence; existing scoped T008 exception preserved"
+  },
+  "pending_decisions": [],
+  "spec_snapshot": "e2822291af872664bc42c6a252e1c7e020216570b92b323b4bbe003b8b18cb96",
+  "preparation": {
+    "requirements_quality": {
+      "verdict": "pass",
+      "revision": "e2822291af872664bc42c6a252e1c7e020216570b92b323b4bbe003b8b18cb96",
+      "report": "quality-requirements.md"
+    },
+    "requirements_security": {
+      "verdict": "pass",
+      "revision": "e2822291af872664bc42c6a252e1c7e020216570b92b323b4bbe003b8b18cb96",
+      "report": "security-requirements.md"
+    },
+    "design": {
+      "quality": "pass",
+      "security": "pass",
+      "snapshot": "D1"
+    },
+    "tasks_analysis": {
+      "quality": "pass",
+      "security": "pass",
+      "snapshot": "81fb46b86264780a0f4cbc7bbe3bfa279e4a9c47a3fd5e51e94d656d31014c0d"
+    }
+  },
+  "phase": "complete",
+  "human_decisions": [
+    {
+      "date": "2026-10-14",
+      "decision": "Already-Cancelled repetition after original start succeeds without another event",
+      "source": "explicit async question reply"
+    },
+    {
+      "finding": "Q-B1-001",
+      "scope": "T008 broker-independent readiness split only, Batch1 snapshot3a8c0d24bfd8632b52d6ccd0fbc172bc2378106e025f3aa71784b24a0ae54739",
+      "rationale": "Owner approves one-time chronology exception because current readiness behavior has passing automated coverage and full gates/security review; no retrospective test-first claim",
+      "owner": "human project owner",
+      "date": "2026-10-14",
+      "source": "Explicit async reply: Approve the scoped exception and continue (Recommended)",
+      "future_requirement": "Every subsequent new behavior requires intended failing automated test before implementation"
+    }
+  ],
+  "design_snapshot": {
+    "id": "D1",
+    "files": {
+      "spec.md": "e2822291af872664bc42c6a252e1c7e020216570b92b323b4bbe003b8b18cb96",
+      "plan.md": "27d154448784413614d2164f78b0f22718fd284fcf03fe4238db2a6307a9a4d2",
+      "research.md": "07a37f8bf615b92c1c433d84d7e63cea7fec346a61aff8d259bdd8218acff81d",
+      "data-model.md": "715e6949cd5419d2d6187f616690bc9f4c897bc275c07053aac04ec4e07aaa12",
+      "contracts/http.md": "583e4caef915520128e75976d3324b43f645e1ad5f77e252df21d426ef3af4b5",
+      "contracts/events.md": "f85ae8a2e43966682bc46a44d7ab86dd4234f498c7b4a36762280aacff3929b8",
+      "quickstart.md": "da9ddf70ef592de6171d1ebcd4461303a6efbbce1e3ede6a0439f287f9611798"
+    }
+  },
+  "tasks_snapshot": "81fb46b86264780a0f4cbc7bbe3bfa279e4a9c47a3fd5e51e94d656d31014c0d",
+  "current_batch": {
+    "id": 5,
+    "tasks": "T037\u2013T044; T046 final browser evidence",
+    "owner": "coder/coordinator",
+    "status": "complete",
+    "remaining": "None",
+    "last_milestone": "Explicit owner acceptance recorded; all tasks, checks, independent reviews and clean convergence complete",
+    "live_runtime": "running healthy on Webhttp://127.0.0.1:51221; controlled resources restored;5API/workerhealth200; existing productionvolumes preserved",
+    "source_snapshot": "05da930fed1290f7e88fd8fbc409188a88975aaf3974f9373e7aa7bdb18f5107"
+  },
+  "completed_batches": [
+    {
+      "id": 1,
+      "tasks": "T001\u2013T009",
+      "owner": "coder",
+      "status": "frozen_for_review",
+      "source_snapshot": "3a8c0d24bfd8632b52d6ccd0fbc172bc2378106e025f3aa71784b24a0ae54739",
+      "quality": "pass_with_owner_exception",
+      "security": "pass"
+    },
+    {
+      "id": 2,
+      "tasks": "T010\u2013T020",
+      "owner": "coder",
+      "status": "review_passed",
+      "source_snapshot": "728d8163d6e7cb2e50a642d1ffa350709d30ba5fad8fdff18f4eafd686a7e3b0",
+      "quality": "pass",
+      "security": "pass"
+    },
+    {
+      "id": 3,
+      "tasks": "T021\u2013T026",
+      "owner": "coder",
+      "status": "review_passed",
+      "source_snapshot": "272f62a7ab3900707ab56c39f407b315d05289acbde802ceb854aa7b1b2817b3",
+      "quality": "pass",
+      "security": "pass",
+      "repair_finding": "Q-B3-001"
+    },
+    {
+      "id": 4,
+      "tasks": "T027\u2013T036 + T047\u2013T048",
+      "owner": "coder",
+      "status": "review_passed",
+      "source_snapshot": "c40044c4771a1abf9df625520207a867298e75ff09f9fd6b8b021906376cd81a",
+      "quality": "pass",
+      "security": "pass",
+      "repair_findings": [
+        "Q-B4-001",
+        "Q-B4-002"
+      ]
+    }
+  ],
+  "active_repair": {
+    "round": 3,
+    "findings": [
+      "Q-B4-001",
+      "Q-B4-002"
+    ],
+    "tasks": "T047\u2013T048",
+    "status": "closed_by_original_reviewers",
+    "scope": "Permanent RabbitMQ and own-PostgreSQL provider fault classification including outer outbox DB loop; strict event timestamp grammar; final allowed repair round",
+    "db_scope_consolidation": "Existing Constitution VI root cause, T047 expanded before DB production edits; actual08006 remains transient; no round reset",
+    "revision": "c40044c4771a1abf9df625520207a867298e75ff09f9fd6b8b021906376cd81a"
+  },
+  "design_amendments": [
+    {
+      "id": "SEC-001",
+      "verdicts": {
+        "quality": "pass",
+        "security": "pass"
+      },
+      "files": {
+        "contracts/browser-write-policy.md": "6b5d1cb597185cb7e67251fa081f9fdcabe3ef8a81c21167bc8b838cd4e829ec",
+        "plan.md": "8b40fa355a34d33f3aff0bf639fe1807e2a875ab82be76b3be656e4b28e561e6",
+        "contracts/http.md": "a7d8e4d9c9aa8d9b65743d7cb42f4eb0c596a79ddb1dcaaaa834572b6496fe31"
+      },
+      "scope": "Browserwriteguardonly; originalD1restunchanged"
+    },
+    {
+      "id": "permanent-outbox-disposition",
+      "verdicts": {
+        "quality": "pass",
+        "security": "pass"
+      },
+      "files": {
+        "contracts/browser-write-policy.md": "317ccbf7f7ab00537b248d0629511bac0b6da5c90ef3a426c42d95e3002dbd5b",
+        "data-model.md": "92205fc298623381c9f0577f23299bd4f385c45566462b579f8b2d5c4eb9dc52",
+        "plan.md": "64e2bc3d684e2af8d7ede989d9aee1bccefc6b5ff77f9e0a564796ba46266092",
+        "contracts/events.md": "6404a1b930cc736aca116603a736978bbbf74ac5037eb1270ce58b8b9716a24f",
+        "quickstart.md": "2ff428c534a9ae62d4bd8f72480e5e74293f7d1cf85f90b9a8317d70f68c265e"
+      },
+      "scope": "Clarification of existing transient-only retry policy; pending event durable blocking and explicit selected-event metadata reset after repair",
+      "reports": [
+        "quality-permanent-outbox-design.md",
+        "security-permanent-outbox-design.md"
+      ]
+    },
+    {
+      "id": "Q-B4-001-own-database-disposition",
+      "verdicts": {
+        "quality": "pass",
+        "security": "pass"
+      },
+      "files": {
+        "plan.md": "9837a3c435bd9c4c221fc01e91e9417de6081ed4736b2ea389454306cd49d5ff",
+        "data-model.md": "0187a3d72ccf21f79946ef2b095a02045f0053b0613eff71bc7985b29b4f9a0f",
+        "contracts/events.md": "ec5da23ae4ffa5ae2e06cb5974ee31b0121699637813e9f8ab5f45618d12111a",
+        "quickstart.md": "91bd3c6d6def7d68a0de47869930ff38efd5b5c955e14bddabebfdce9c3e8436",
+        "research.md": "c81a904ec04dd497d61f20f8e827574d5057c52dd5bf78e3b3751c1d67979d09"
+      },
+      "scope": "Factual clarification of existing transient-only recovery: permanent database faults halt until repaired restart; no false parked claim when metadata unwritable; generic infrastructure utility only",
+      "reports": [
+        "quality-db-failure-design.md",
+        "security-db-failure-design.md"
+      ]
+    },
+    {
+      "id": "dashboard-diagnostic-retention-factual-correction",
+      "verdicts": {
+        "quality": "pass",
+        "security": "pass"
+      },
+      "files": {
+        "plan.md": "5448f5993c8a0f676a793cd621cc80b21402076389eaf56fa957f1847ce4c302",
+        "research.md": "8ff9a3ec647a1b61afdf9f75b52b4d86a193bc96b245a1852373433140f2bfc6"
+      },
+      "scope": "Accurate Aspire13.6.1 default local SQLite Run diagnostic persistence, up to10 unpinned runs/app; same selected Dashboard/local scope/AlwaysOn and unchanged application retention/content permissions",
+      "reports": [
+        "quality-telemetry-privacy-and-retention-design.md",
+        "security-telemetry-privacy-and-retention-design.md"
+      ]
+    }
+  ],
+  "final_integrity_check": {
+    "source_files": 143,
+    "source_snapshot": "05da930fed1290f7e88fd8fbc409188a88975aaf3974f9373e7aa7bdb18f5107",
+    "manifest_file_digests": "all unchanged after final review/convergence",
+    "postreview_candidate_files_scanned": 318,
+    "private_live_secrets": 6,
+    "live_secret_matches": 0,
+    "git_diff_check": 0,
+    "unresolved_blocking_findings": 0
+  }
+}

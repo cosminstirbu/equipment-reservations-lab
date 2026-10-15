@@ -5,16 +5,19 @@ using HelloMessaging;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Extensions.DependencyInjection;
 using Notifications;
+using Npgsql;
 using Xunit;
 
 namespace Backend.Tests;
 
-public class NotificationsTests
+[Collection("PostgreSQL")]
+public class NotificationsTests(PostgresFixture postgres)
 {
     [Fact]
     public async Task DeliveredEventIsAccessibleThroughPublicHTTP()
     {
-        using var app = new WebApplicationFactory<Notifications.Program>();
+        await using NpgsqlDataSource database = await postgres.CreateMigratedDatabaseAsync("notifications");
+        using WebApplicationFactory<Notifications.Program> app = PostgresFixture.Factory<Notifications.Program>(database);
         using HttpClient client = app.CreateClient();
         NotificationStore store = app.Services.GetRequiredService<NotificationStore>();
         var id = Guid.NewGuid();

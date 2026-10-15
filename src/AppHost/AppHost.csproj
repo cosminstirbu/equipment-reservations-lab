@@ -10,6 +10,8 @@
     <PackageReference Include="Aspire.Hosting.AppHost" Version="13.6.1" />
     <PackageReference Include="Aspire.Hosting.JavaScript" Version="13.6.1" />
     <PackageReference Include="Aspire.Hosting.RabbitMQ" Version="13.6.1" />
+    <PackageReference Include="Aspire.Hosting.PostgreSQL" Version="13.6.1" />
+    <ProjectReference Include="../DatabaseBootstrap/DatabaseBootstrap.csproj" />
     <ProjectReference Include="../Inventory/Inventory.csproj" />
     <ProjectReference Include="../Reservations/Reservations.csproj" />
     <ProjectReference Include="../Notifications/Notifications.csproj" />

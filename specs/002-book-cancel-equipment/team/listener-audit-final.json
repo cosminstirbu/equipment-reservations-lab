@@ -1,0 +1,121 @@
+{
+  "source_snapshot": "05da930fed1290f7e88fd8fbc409188a88975aaf3974f9373e7aa7bdb18f5107",
+  "listeners": [
+    {
+      "process": "AppHost",
+      "pid": 15225,
+      "address": "127.0.0.1:18890",
+      "loopback": true
+    },
+    {
+      "process": "dcp",
+      "pid": 15250,
+      "address": "127.0.0.1:15888",
+      "loopback": true
+    },
+    {
+      "process": "dcp",
+      "pid": 15250,
+      "address": "127.0.0.1:51220",
+      "loopback": true
+    },
+    {
+      "process": "dcp",
+      "pid": 15250,
+      "address": "127.0.0.1:51219",
+      "loopback": true
+    },
+    {
+      "process": "dcp",
+      "pid": 15250,
+      "address": "127.0.0.1:18889",
+      "loopback": true
+    },
+    {
+      "process": "dcp",
+      "pid": 15250,
+      "address": "127.0.0.1:51221",
+      "loopback": true
+    },
+    {
+      "process": "dcp",
+      "pid": 15250,
+      "address": "127.0.0.1:51222",
+      "loopback": true
+    },
+    {
+      "process": "dcp",
+      "pid": 15250,
+      "address": "127.0.0.1:51223",
+      "loopback": true
+    },
+    {
+      "process": "dcp",
+      "pid": 15250,
+      "address": "127.0.0.1:51218",
+      "loopback": true
+    },
+    {
+      "process": "node",
+      "pid": 15478,
+      "address": "127.0.0.1:10919",
+      "loopback": true
+    },
+    {
+      "process": "Inventory",
+      "pid": 18567,
+      "address": "127.0.0.1:10924",
+      "loopback": true
+    },
+    {
+      "process": "Reservati",
+      "pid": 23925,
+      "address": "127.0.0.1:10923",
+      "loopback": true
+    },
+    {
+      "process": "Notificat",
+      "pid": 23926,
+      "address": "127.0.0.1:10922",
+      "loopback": true
+    }
+  ],
+  "actual_resource_target_ports": [
+    {
+      "resource": "inventory",
+      "target_host": "127.0.0.1",
+      "target_port": 10924
+    },
+    {
+      "resource": "notifications",
+      "target_host": "127.0.0.1",
+      "target_port": 10922
+    },
+    {
+      "resource": "reservations",
+      "target_host": "127.0.0.1",
+      "target_port": 10923
+    },
+    {
+      "resource": "web",
+      "target_port": 10919
+    }
+  ],
+  "all_loopback": true,
+  "container_mapping_audit": {
+    "postgres": {
+      "container": "postgres-ctpbpjhb",
+      "container_port": 5432,
+      "host": "127.0.0.1",
+      "host_port": 41625
+    },
+    "messaging": {
+      "container": "messaging-eechbqgr",
+      "container_port": 5672,
+      "host": "127.0.0.1",
+      "host_port": 42483
+    },
+    "other_rabbitmq_exposed_ports": "not host-published; podman ps contains no host mapping arrows for these ports",
+    "commands": "podman ps --format ID/Names/Ports; podman port exact container names; exit0"
+  }
+}

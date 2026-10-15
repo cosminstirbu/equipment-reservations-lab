@@ -1,0 +1,126 @@
+{
+  "phase": "live-application-ready-runtime; final snapshot linkage pending",
+  "container": "postgres-shxuzthz",
+  "credential_source": "actual running API environment captured privately by Aspire",
+  "password_transport": "private stdin; forced TCP; no psqlrc; bounded deadline",
+  "results": [
+    {
+      "service": "inventory",
+      "database": "inventory",
+      "role": "inventory_app",
+      "own_tcp_authentication": "pass",
+      "superuser": false,
+      "createdb": false,
+      "createrole": false,
+      "replication": false,
+      "bypassrls": false,
+      "role_memberships": 0,
+      "other_database_admission": [
+        {
+          "database": "reservations",
+          "connect_privilege": false,
+          "actual_connection": "permission denied",
+          "exit_code": 2
+        },
+        {
+          "database": "notifications",
+          "connect_privilege": false,
+          "actual_connection": "permission denied",
+          "exit_code": 2
+        },
+        {
+          "database": "postgres",
+          "connect_privilege": false,
+          "actual_connection": "permission denied",
+          "exit_code": 2
+        },
+        {
+          "database": "template1",
+          "connect_privilege": false,
+          "actual_connection": "permission denied",
+          "exit_code": 2
+        }
+      ],
+      "administrator_connection_in_api_environment": false
+    },
+    {
+      "service": "reservations",
+      "database": "reservations",
+      "role": "reservations_app",
+      "own_tcp_authentication": "pass",
+      "superuser": false,
+      "createdb": false,
+      "createrole": false,
+      "replication": false,
+      "bypassrls": false,
+      "role_memberships": 0,
+      "other_database_admission": [
+        {
+          "database": "inventory",
+          "connect_privilege": false,
+          "actual_connection": "permission denied",
+          "exit_code": 2
+        },
+        {
+          "database": "notifications",
+          "connect_privilege": false,
+          "actual_connection": "permission denied",
+          "exit_code": 2
+        },
+        {
+          "database": "postgres",
+          "connect_privilege": false,
+          "actual_connection": "permission denied",
+          "exit_code": 2
+        },
+        {
+          "database": "template1",
+          "connect_privilege": false,
+          "actual_connection": "permission denied",
+          "exit_code": 2
+        }
+      ],
+      "administrator_connection_in_api_environment": false
+    },
+    {
+      "service": "notifications",
+      "database": "notifications",
+      "role": "notifications_app",
+      "own_tcp_authentication": "pass",
+      "superuser": false,
+      "createdb": false,
+      "createrole": false,
+      "replication": false,
+      "bypassrls": false,
+      "role_memberships": 0,
+      "other_database_admission": [
+        {
+          "database": "inventory",
+          "connect_privilege": false,
+          "actual_connection": "permission denied",
+          "exit_code": 2
+        },
+        {
+          "database": "reservations",
+          "connect_privilege": false,
+          "actual_connection": "permission denied",
+          "exit_code": 2
+        },
+        {
+          "database": "postgres",
+          "connect_privilege": false,
+          "actual_connection": "permission denied",
+          "exit_code": 2
+        },
+        {
+          "database": "template1",
+          "connect_privilege": false,
+          "actual_connection": "permission denied",
+          "exit_code": 2
+        }
+      ],
+      "administrator_connection_in_api_environment": false
+    }
+  ],
+  "sqlstate_claim": "No SQLSTATE claimed for psql initial connection failures; server permission-denied messages privately verified"
+}

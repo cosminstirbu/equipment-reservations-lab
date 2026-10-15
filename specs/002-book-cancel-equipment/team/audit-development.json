@@ -1,0 +1,38 @@
+{
+  "phase": "batch5-development",
+  "candidate_files_scanned": 292,
+  "private_live_secret_values_checked": 6,
+  "live_secret_match_files": [],
+  "dependency_lock_hashes": {
+    "package-lock.json": "c84ddcc11bf2759ef27320eac0fb66be308501de793bb3de9a111f8db355e426",
+    "src/AppHost/packages.lock.json": "11beb2b032cea3940b5aa8808da17ca8393aca5b20d677ccdf863a10d9e493ff",
+    "src/DatabaseBootstrap/packages.lock.json": "2882234550b02a8ef10ddb054686d9b0f7dc7ca440802fccbda5485fcf5c2f6a",
+    "src/HelloMessaging/packages.lock.json": "2683fee2f69e55fd960a76389dc16afb0e2fb3e9cd17371c743ba6324432963e",
+    "src/Inventory/packages.lock.json": "ea0c94c4ba8382a5fe8c972ffdadd4f970a82f600319ed4d159f096c2bc7a150",
+    "src/Notifications/packages.lock.json": "ea0c94c4ba8382a5fe8c972ffdadd4f970a82f600319ed4d159f096c2bc7a150",
+    "src/Persistence/packages.lock.json": "394acf13f58ebe99a2479e010d851af03e7150e08ab645131dcc2edb085f6fad",
+    "src/Reservations/packages.lock.json": "ea0c94c4ba8382a5fe8c972ffdadd4f970a82f600319ed4d159f096c2bc7a150",
+    "src/ServiceDefaults/packages.lock.json": "a7e10738ee915925a8470d57ae379eb133a9da57b60c49b9f35887995b346a4f",
+    "src/Web/package-lock.json": "39b6ef4dbc3f7522db721bcf1d991841a13ef6d3e9c8c58e5ec2a2f598dadcfb",
+    "tests/Backend.Tests/packages.lock.json": "7cff6921d49a5fee40587b77f10b8fea40de14adc333413442b41d6b8dee9f56",
+    "tests/Smoke.Tests/packages.lock.json": "79c919390f304c0df2e24e7a64970dc57f4ca59eab5d389c49952d279b3a8bf8"
+  },
+  "root_npm_vulnerabilities": {
+    "info": 0,
+    "low": 0,
+    "moderate": 0,
+    "high": 0,
+    "critical": 0,
+    "total": 0
+  },
+  "web_npm_vulnerabilities": {
+    "info": 0,
+    "low": 0,
+    "moderate": 0,
+    "high": 0,
+    "critical": 0,
+    "total": 0
+  },
+  "dotnet_transitive_audit": "exit0; ten projects have no vulnerable packages given configured NuGet source",
+  "final_snapshot_validation": "pending; verify unchanged lockfiles and repeat candidate scan on final freeze"
+}

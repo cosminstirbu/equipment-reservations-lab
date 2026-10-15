@@ -1,9 +1,17 @@
 using System.Text.Json;
 using HelloMessaging;
+using Reservations;
 using ServiceDefaults;
 
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 builder.AddServiceDefaults();
+builder.AddDatabase("reservations");
+builder.Services.AddSingleton(TimeProvider.System);
+builder.Services.AddSingleton<InventoryClient>();
+builder.Services.AddSingleton<ReservationStore>();
+builder.Services.AddSingleton<IRecoverySchedule, RecoverySchedule>();
+builder.Services.AddSingleton<IReservationPublisher, ReservationPublisher>();
+builder.Services.AddHostedService<OutboxWorker>();
 builder.Services.ConfigureHttpJsonOptions(options =>
 {
     options.SerializerOptions.TypeInfoResolverChain.Insert(0, MessagingJsonContext.Default);
@@ -14,12 +22,16 @@ builder.Services.AddHttpClient("inventory", c =>
 {
     c.BaseAddress = new Uri(builder.Configuration["InventoryUrl"] ?? "http://inventory");
     c.Timeout = TimeSpan.FromSeconds(3);
-});
-builder.Services.AddSingleton<IHelloPublisher, Reservations.HelloPublisher>();
-builder.Services.AddHealthChecks().AddCheck<Reservations.DependencyHealth>("dependencies");
+}).RemoveAllLoggers();
+builder.Services.AddSingleton<IHelloPublisher, HelloPublisher>();
+builder.Services.AddHealthChecks()
+    .AddCheck<DependencyHealth>("dependencies")
+    .AddCheck<BrokerHealth>("broker", tags: ["worker"]);
 
 WebApplication app = builder.Build();
 app.MapOperationalEndpoints();
+app.UseBrowserWriteGuard();
+app.MapReservations();
 
 app.MapPost("/api/hellos", async (
     HttpRequest request,
@@ -98,7 +110,7 @@ app.MapPost("/api/hellos", async (
         or RabbitMQ.Client.Exceptions.RabbitMQClientException
         or JsonException)
     {
-        Reservations.ReservationsLog.DependencyFailed(logger, ex.GetType().Name);
+        ReservationsLog.DependencyFailed(logger, ex.GetType().Name);
         HelloTelemetry.Record("request", "error");
         return Results.Problem(
             statusCode: 503,

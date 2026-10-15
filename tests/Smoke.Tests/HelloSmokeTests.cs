@@ -17,14 +17,26 @@ public class HelloSmokeTests
         Environment.SetEnvironmentVariable("ASPIRE_CONTAINER_RUNTIME", "podman");
         IDistributedApplicationTestingBuilder builder = await DistributedApplicationTestingBuilder.CreateAsync<Projects.AppHost>(["--environment=Development"], deadline.Token);
         Assert.Contains(builder.Resources, resource => resource.Name == "inventory");
+        SmokeStartup.IsolateStorage(builder);
         await using DistributedApplication app = await builder.BuildAsync(deadline.Token);
         await SmokeStartup.StartAsync(app, deadline.Token);
         _ = await app.ResourceNotifications.WaitForResourceHealthyAsync("inventory", deadline.Token);
         _ = await app.ResourceNotifications.WaitForResourceHealthyAsync("notifications", deadline.Token);
+        foreach (string service in new[] { "inventory", "reservations", "notifications" })
+        {
+            Assert.True(app.ResourceNotifications.TryGetCurrentState(service, out Aspire.Hosting.ApplicationModel.ResourceEvent? resource));
+            Assert.DoesNotContain(resource!.Snapshot.EnvironmentVariables, variable => variable.Name == "ConnectionStrings__postgres" || variable.Name.EndsWith("Password", StringComparison.Ordinal));
+            Aspire.Hosting.ApplicationModel.EnvironmentVariableSnapshot own = Assert.Single(resource.Snapshot.EnvironmentVariables, variable => variable.Name == "ConnectionStrings__" + service);
+            var connection = new Npgsql.NpgsqlConnectionStringBuilder(own.Value);
+            Assert.Equal(service, connection.Database);
+            Assert.Equal(service + "_app", connection.Username);
+        }
+
         using HttpClient inventory = app.CreateHttpClient("inventory");
         using HttpClient reservations = app.CreateHttpClient("reservations");
         using HttpClient notifications = app.CreateHttpClient("notifications");
-        Equipment equipment = Assert.Single((await inventory.GetFromJsonAsync<Equipment[]>("/api/equipment", deadline.Token))!);
+        Equipment[] items = (await inventory.GetFromJsonAsync<Equipment[]>("/api/equipment", deadline.Token))!;
+        Equipment equipment = Assert.Single(items, item => item.Id == "camera-001");
         Assert.Equal("camera-001", equipment.Id);
         Assert.Equal("Demo Camera", equipment.Name);
         var invalidId = Guid.NewGuid();

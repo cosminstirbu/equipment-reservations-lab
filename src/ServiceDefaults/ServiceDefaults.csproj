@@ -26,4 +26,7 @@
       Version="1.19.0"
     />
   </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="../Persistence/Persistence.csproj" />
+  </ItemGroup>
 </Project>

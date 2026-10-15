@@ -1,0 +1,248 @@
+<main>
+  <h1>Book equipment</h1>
+  <p>
+    Local demo: <strong>demo-user</strong>. No authentication or user isolation.
+  </p>
+  <p id="timezone-help">
+    Times use <strong>{{ timeZone }}</strong>. UTC offsets appear below each
+    time. Repeated daylight-saving times require an explicit offset.
+  </p>
+  <button
+    type="button"
+    data-action="reload"
+    (click)="load()"
+    [disabled]="loading() || pending()"
+  >
+    Reload equipment
+  </button>
+
+  <form (submit)="submit($event)" novalidate>
+    <label for="equipment">Equipment</label>
+    <select id="equipment" [formField]="fields.equipmentId">
+      <option value="">Select equipment</option>
+      @for (item of equipment(); track item.id) {
+      <option [value]="item.id" [disabled]="!item.operational">
+        {{ item.name }} — {{ item.operational ? 'Operational' : 'Not
+        operational' }}
+      </option>
+      }
+    </select>
+
+    <label for="start-time">Start time</label>
+    <input
+      id="start-time"
+      type="datetime-local"
+      step="60"
+      [formField]="fields.startLocal"
+      aria-describedby="timezone-help start-offset-help"
+    />
+    <p id="start-offset-help">
+      @for (candidate of starts(); track candidate.instant) {
+      <span>UTC{{ candidate.offset }} </span> }
+    </p>
+    @if (starts().length > 1) {
+    <label for="start-offset">Start timezone offset</label>
+    <select id="start-offset" [formField]="fields.startOffset">
+      <option value="">Choose an offset</option>
+      @for (candidate of starts(); track candidate.instant) {
+      <option [value]="candidate.offset">UTC{{ candidate.offset }}</option>
+      }
+    </select>
+    }
+
+    <label for="end-time">End time</label>
+    <input
+      id="end-time"
+      type="datetime-local"
+      step="60"
+      [formField]="fields.endLocal"
+      aria-describedby="timezone-help end-offset-help"
+    />
+    <p id="end-offset-help">
+      @for (candidate of ends(); track candidate.instant) {
+      <span>UTC{{ candidate.offset }} </span> }
+    </p>
+    @if (ends().length > 1) {
+    <label for="end-offset">End timezone offset</label>
+    <select id="end-offset" [formField]="fields.endOffset">
+      <option value="">Choose an offset</option>
+      @for (candidate of ends(); track candidate.instant) {
+      <option [value]="candidate.offset">UTC{{ candidate.offset }}</option>
+      }
+    </select>
+    }
+
+    <div class="actions">
+      <button
+        type="button"
+        data-action="availability"
+        (click)="checkAvailability()"
+        [disabled]="loading() || pending() || !equipment().length"
+      >
+        Check availability
+      </button>
+      <button
+        type="submit"
+        data-action="book"
+        [disabled]="loading() || pending() || !equipment().length"
+      >
+        Book equipment
+      </button>
+    </div>
+  </form>
+
+  @if (availability(); as result) {
+  <p>
+    {{ result.available ? 'Available (advisory)' : 'Unavailable' }}. Creation
+    checks the dates again.
+  </p>
+  }
+  <p role="status" aria-live="polite" aria-atomic="true">{{ status() }}</p>
+
+  @if (saved(); as reservation) {
+  <section aria-labelledby="saved-title">
+    <h2 id="saved-title">Latest saved reservation</h2>
+    <p>
+      <strong>{{ reservation.status }}</strong>: {{ reservation.equipmentName }}
+    </p>
+    <p>Reservation ID: <code>{{ reservation.id }}</code></p>
+    <p>
+      Stored interval (UTC): {{ reservation.startAt }} → {{ reservation.endAt }}
+    </p>
+    <p>
+      Confirmation notification {{
+      notificationObserved(reservation.confirmationEventId) ? 'observed' : 'not
+      yet observed' }}.
+    </p>
+    @if (reservation.cancellationEventId) {
+    <p>
+      Cancellation notification {{
+      notificationObserved(reservation.cancellationEventId) ? 'observed' : 'not
+      yet observed' }}.
+    </p>
+    } @if (!notificationObserved(reservation.confirmationEventId) ||
+    (reservation.cancellationEventId &&
+    !notificationObserved(reservation.cancellationEventId))) {
+    <p>
+      Notification not yet observed. The committed reservation remains valid
+      while delivery is pending.
+    </p>
+    }
+  </section>
+  }
+  <section aria-labelledby="history-title">
+    <h2 id="history-title">Reservation history</h2>
+    <button
+      type="button"
+      data-action="refresh-reservations"
+      (click)="refreshReservations()"
+      [disabled]="historyLoading() || pending()"
+    >
+      Refresh reservations
+    </button>
+    <p role="status" aria-live="polite" aria-atomic="true">
+      {{ historyStatus() }}
+    </p>
+    @for (reservation of reservations(); track reservation.id) {
+    <article [attr.data-reservation-id]="reservation.id">
+      <h3>{{ reservation.equipmentName }}</h3>
+      <p><strong>{{ reservation.status }}</strong></p>
+      <p>Reservation ID: <code>{{ reservation.id }}</code></p>
+      <p>
+        <time [attr.datetime]="reservation.startAt"
+          >{{ formatTime(reservation.startAt) }}</time
+        >
+        →
+        <time [attr.datetime]="reservation.endAt"
+          >{{ formatTime(reservation.endAt) }}</time
+        >
+      </p>
+      <p>Confirmed: {{ formatTime(reservation.confirmedAt) }}</p>
+      @if (reservation.cancelledAt) {
+      <p>Cancelled: {{ formatTime(reservation.cancelledAt) }}</p>
+      }
+      <p>
+        Confirmation event ID:
+        <code>{{ reservation.confirmationEventId }}</code>
+      </p>
+      @if (reservation.cancellationEventId) {
+      <p>
+        Cancellation event ID:
+        <code>{{ reservation.cancellationEventId }}</code>
+      </p>
+      }
+      <p>
+        Confirmation notification {{
+        notificationObserved(reservation.confirmationEventId) ? 'observed' :
+        'not yet observed' }}.
+      </p>
+      @if (reservation.cancellationEventId) {
+      <p>
+        Cancellation notification {{
+        notificationObserved(reservation.cancellationEventId) ? 'observed' :
+        'not yet observed' }}.
+      </p>
+      } @if (!notificationObserved(reservation.confirmationEventId) ||
+      (reservation.cancellationEventId &&
+      !notificationObserved(reservation.cancellationEventId))) {
+      <p>
+        Notification not yet observed. Saved reservation state is independent of
+        asynchronous delivery.
+      </p>
+      } @if (reservation.status === 'Confirmed') {
+      <button
+        type="button"
+        data-action="cancel-reservation"
+        (click)="cancelReservation(reservation)"
+        [disabled]="pending() || historyLoading()"
+        [attr.aria-label]="'Cancel reservation for ' + reservation.equipmentName + ' starting ' + formatTime(reservation.startAt)"
+      >
+        Cancel reservation
+      </button>
+      }
+    </article>
+    }
+  </section>
+  <section aria-labelledby="inbox-title">
+    <h2 id="inbox-title">Notification inbox</h2>
+    <p>
+      Saved Confirmed or Cancelled state is independent of asynchronous
+      delivery. Only a matching event in this inbox means its notification was
+      observed.
+    </p>
+    <button
+      type="button"
+      data-action="refresh-notifications"
+      (click)="refreshNotifications()"
+      [disabled]="notificationsLoading()"
+    >
+      Refresh notifications
+    </button>
+    <p role="status" aria-live="polite" aria-atomic="true">
+      {{ notificationsStatus() }}
+    </p>
+    @for (entry of notifications(); track entry.eventId) {
+    <article [attr.data-event-id]="entry.eventId">
+      <h3>
+        {{ entry.eventType === 'ReservationConfirmed' ? 'Reservation confirmed'
+        : 'Reservation cancelled' }}
+      </h3>
+      <p>{{ entry.message }}</p>
+      <p>
+        Occurred:
+        <time [attr.datetime]="entry.occurredAt"
+          >{{ formatTime(entry.occurredAt) }}</time
+        >
+      </p>
+      <p>
+        Received:
+        <time [attr.datetime]="entry.receivedAt"
+          >{{ formatTime(entry.receivedAt) }}</time
+        >
+      </p>
+      <p>Reservation ID: <code>{{ entry.reservationId }}</code></p>
+      <p>Event ID: <code>{{ entry.eventId }}</code></p>
+    </article>
+    }
+  </section>
+</main>

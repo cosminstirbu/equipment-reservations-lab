@@ -1,0 +1,77 @@
+{
+  "listeners": [
+    {
+      "process": "AppHost",
+      "pid": 29597,
+      "address": "127.0.0.1:18890",
+      "loopback": true
+    },
+    {
+      "process": "dcp",
+      "pid": 29610,
+      "address": "127.0.0.1:18889",
+      "loopback": true
+    },
+    {
+      "process": "dcp",
+      "pid": 29610,
+      "address": "127.0.0.1:54439",
+      "loopback": true
+    },
+    {
+      "process": "dcp",
+      "pid": 29610,
+      "address": "127.0.0.1:54440",
+      "loopback": true
+    },
+    {
+      "process": "dcp",
+      "pid": 29610,
+      "address": "127.0.0.1:15888",
+      "loopback": true
+    },
+    {
+      "process": "dcp",
+      "pid": 29610,
+      "address": "127.0.0.1:54441",
+      "loopback": true
+    },
+    {
+      "process": "dcp",
+      "pid": 29610,
+      "address": "127.0.0.1:54442",
+      "loopback": true
+    },
+    {
+      "process": "dcp",
+      "pid": 29610,
+      "address": "127.0.0.1:54443",
+      "loopback": true
+    },
+    {
+      "process": "dcp",
+      "pid": 29610,
+      "address": "127.0.0.1:54444",
+      "loopback": true
+    },
+    {
+      "process": "Notificat",
+      "pid": 29788,
+      "address": "127.0.0.1:23200",
+      "loopback": true
+    },
+    {
+      "process": "Reservati",
+      "pid": 29845,
+      "address": "127.0.0.1:23201",
+      "loopback": true
+    },
+    {
+      "process": "Inventory",
+      "pid": 33120,
+      "address": "127.0.0.1:23202",
+      "loopback": true
+    }
+  ],
+  "all_loopback": true
+}

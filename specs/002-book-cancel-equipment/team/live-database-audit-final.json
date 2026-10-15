@@ -1,0 +1,149 @@
+{
+  "source_snapshot": "05da930fed1290f7e88fd8fbc409188a88975aaf3974f9373e7aa7bdb18f5107",
+  "procedure": "actual API own credentials privately parsed; psql TCP inside exact running PostgreSQL container; passwords only private stdin; bounded10s; no rc scripts",
+  "services": [
+    {
+      "service": "inventory",
+      "own_tcp_connection": "pass",
+      "role": {
+        "database": "inventory",
+        "role": "inventory_app",
+        "superuser": false,
+        "createdb": false,
+        "createrole": false,
+        "replication": false,
+        "bypassrls": false,
+        "memberships": 0
+      },
+      "forbidden_connections": [
+        {
+          "database": "reservations",
+          "connect_privilege": false,
+          "tcp_connection": "denied",
+          "psql_exit": 2,
+          "sqlstate": "not exposed by psql initial connection; no42501 claim"
+        },
+        {
+          "database": "notifications",
+          "connect_privilege": false,
+          "tcp_connection": "denied",
+          "psql_exit": 2,
+          "sqlstate": "not exposed by psql initial connection; no42501 claim"
+        },
+        {
+          "database": "postgres",
+          "connect_privilege": false,
+          "tcp_connection": "denied",
+          "psql_exit": 2,
+          "sqlstate": "not exposed by psql initial connection; no42501 claim"
+        },
+        {
+          "database": "template1",
+          "connect_privilege": false,
+          "tcp_connection": "denied",
+          "psql_exit": 2,
+          "sqlstate": "not exposed by psql initial connection; no42501 claim"
+        }
+      ],
+      "configured_connections": [
+        "ConnectionStrings__inventory"
+      ]
+    },
+    {
+      "service": "reservations",
+      "own_tcp_connection": "pass",
+      "role": {
+        "database": "reservations",
+        "role": "reservations_app",
+        "superuser": false,
+        "createdb": false,
+        "createrole": false,
+        "replication": false,
+        "bypassrls": false,
+        "memberships": 0
+      },
+      "forbidden_connections": [
+        {
+          "database": "inventory",
+          "connect_privilege": false,
+          "tcp_connection": "denied",
+          "psql_exit": 2,
+          "sqlstate": "not exposed by psql initial connection; no42501 claim"
+        },
+        {
+          "database": "notifications",
+          "connect_privilege": false,
+          "tcp_connection": "denied",
+          "psql_exit": 2,
+          "sqlstate": "not exposed by psql initial connection; no42501 claim"
+        },
+        {
+          "database": "postgres",
+          "connect_privilege": false,
+          "tcp_connection": "denied",
+          "psql_exit": 2,
+          "sqlstate": "not exposed by psql initial connection; no42501 claim"
+        },
+        {
+          "database": "template1",
+          "connect_privilege": false,
+          "tcp_connection": "denied",
+          "psql_exit": 2,
+          "sqlstate": "not exposed by psql initial connection; no42501 claim"
+        }
+      ],
+      "configured_connections": [
+        "ConnectionStrings__messaging",
+        "ConnectionStrings__reservations"
+      ]
+    },
+    {
+      "service": "notifications",
+      "own_tcp_connection": "pass",
+      "role": {
+        "database": "notifications",
+        "role": "notifications_app",
+        "superuser": false,
+        "createdb": false,
+        "createrole": false,
+        "replication": false,
+        "bypassrls": false,
+        "memberships": 0
+      },
+      "forbidden_connections": [
+        {
+          "database": "inventory",
+          "connect_privilege": false,
+          "tcp_connection": "denied",
+          "psql_exit": 2,
+          "sqlstate": "not exposed by psql initial connection; no42501 claim"
+        },
+        {
+          "database": "reservations",
+          "connect_privilege": false,
+          "tcp_connection": "denied",
+          "psql_exit": 2,
+          "sqlstate": "not exposed by psql initial connection; no42501 claim"
+        },
+        {
+          "database": "postgres",
+          "connect_privilege": false,
+          "tcp_connection": "denied",
+          "psql_exit": 2,
+          "sqlstate": "not exposed by psql initial connection; no42501 claim"
+        },
+        {
+          "database": "template1",
+          "connect_privilege": false,
+          "tcp_connection": "denied",
+          "psql_exit": 2,
+          "sqlstate": "not exposed by psql initial connection; no42501 claim"
+        }
+      ],
+      "configured_connections": [
+        "ConnectionStrings__messaging",
+        "ConnectionStrings__notifications"
+      ]
+    }
+  ]
+}

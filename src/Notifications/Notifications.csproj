@@ -3,7 +3,11 @@
     <EnableRequestDelegateGenerator>true</EnableRequestDelegateGenerator>
   </PropertyGroup>
   <ItemGroup>
+    <ProjectReference Include="../Persistence/Persistence.csproj" />
     <ProjectReference Include="../ServiceDefaults/ServiceDefaults.csproj" />
     <ProjectReference Include="../HelloMessaging/HelloMessaging.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="Migrations/*.sql" />
   </ItemGroup>
 </Project>

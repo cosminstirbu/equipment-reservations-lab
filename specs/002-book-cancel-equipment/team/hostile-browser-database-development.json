@@ -1,0 +1,46 @@
+{
+  "phase": "actual hostile browser supplement; final snapshot linkage pending",
+  "container": "postgres-shxuzthz",
+  "boundary": "actual own-role TCP credentials; passwords private stdin",
+  "browser_headers": "No on-wire Origin capture claimed; exact hostile/opaque context and server403 proved by browser, literal Origin branches by48-case HTTP/SQL suite",
+  "results": [
+    {
+      "context": "hostile_alias",
+      "reservation": "0d5e0b3c-1486-465d-9b7e-294b7fdd7ce8",
+      "confirmation": "d6f1b3d0-a3a9-442e-bde6-85df37f776ab",
+      "cancellation": "24830bd8-4141-4af0-9263-319fb8de3808",
+      "start": "2026-11-24T23:00:00Z",
+      "end": "2026-11-25T00:00:00Z",
+      "saved_status": "Cancelled",
+      "outbox": {
+        "24830bd8-4141-4af0-9263-319fb8de3808": "ReservationCancelled",
+        "d6f1b3d0-a3a9-442e-bde6-85df37f776ab": "ReservationConfirmed"
+      },
+      "inbox_event_ids": [
+        "24830bd8-4141-4af0-9263-319fb8de3808",
+        "d6f1b3d0-a3a9-442e-bde6-85df37f776ab"
+      ],
+      "extra_transition_rows": 0,
+      "hostile_laptop_reservations": 0
+    },
+    {
+      "context": "opaque_null",
+      "reservation": "3a76ec9b-9958-4f79-9993-b85ca7d9e2c1",
+      "confirmation": "8043c71d-8e9e-443d-846b-e038893162d1",
+      "cancellation": "0c0d59e5-2e51-484a-beb9-0ea4d3f0e07a",
+      "start": "2026-11-18T23:07:00Z",
+      "end": "2026-11-19T00:07:00Z",
+      "saved_status": "Cancelled",
+      "outbox": {
+        "0c0d59e5-2e51-484a-beb9-0ea4d3f0e07a": "ReservationCancelled",
+        "8043c71d-8e9e-443d-846b-e038893162d1": "ReservationConfirmed"
+      },
+      "inbox_event_ids": [
+        "0c0d59e5-2e51-484a-beb9-0ea4d3f0e07a",
+        "8043c71d-8e9e-443d-846b-e038893162d1"
+      ],
+      "extra_transition_rows": 0,
+      "hostile_laptop_reservations": 0
+    }
+  ]
+}

@@ -27,17 +27,18 @@ test('real services complete two keyboard sends with distinct correlation IDs', 
     (response) =>
       response.url().endsWith('/api/equipment') && response.status() === 200,
   );
-  await page.goto('/');
+  await page.goto('/hello');
   const items = (await (await equipmentReply).json()) as {
     id: string;
     name: string;
   }[];
-  expect(items).toEqual([{ id: 'camera-001', name: 'Demo Camera' }]);
-  await expect(
-    page.getByRole('heading', { name: items[0].name }),
-  ).toBeVisible();
+  const camera = items.find((item) => item.id === 'camera-001')!;
+  expect(camera.name).toBe('Demo Camera');
+  await expect(page.getByRole('heading', { name: camera.name })).toBeVisible();
   await accessible(page);
   const send = page.getByRole('button', { name: 'Send hello' });
+  await page.keyboard.press('Tab');
+  await page.keyboard.press('Tab');
   await page.keyboard.press('Tab');
   await expect(send).toBeFocused();
   const ids: string[] = [];
@@ -57,14 +58,14 @@ test('real services complete two keyboard sends with distinct correlation IDs', 
     const accepted = await response;
     expect(accepted.status()).toBe(202);
     expect(accepted.request().postDataJSON()).toEqual({
-      equipmentId: items[0].id,
+      equipmentId: camera.id,
     });
     const result = (await accepted.json()) as { correlationId: string };
     expect(result.correlationId).toMatch(
       /^[0-9a-f]{8}(-[0-9a-f]{4}){3}-[0-9a-f]{12}$/i,
     );
     await expect(page.getByRole('status')).toHaveText(
-      `Hello received for ${items[0].name}`,
+      `Hello received for ${camera.name}`,
     );
     await expect(page.locator('code')).toHaveText(result.correlationId);
     ids.push(result.correlationId);
@@ -86,7 +87,7 @@ test('UI-only held HTTP boundary shows accessible loading and pending states', a
     await inventoryGate;
     await route.fulfill({ json: [{ id: 'camera-001', name: 'Demo Camera' }] });
   });
-  await page.goto('/');
+  await page.goto('/hello');
   await expect(page.getByRole('status')).toHaveText('Loading equipment…');
   await accessible(page);
   releaseInventory();
@@ -123,7 +124,7 @@ test('UI-only unavailable HTTP boundary announces an accessible error', async ({
   await page.route('**/api/equipment', (route) =>
     route.fulfill({ status: 503, json: { title: 'Inventory unavailable' } }),
   );
-  await page.goto('/');
+  await page.goto('/hello');
   await expect(page.getByRole('status')).toHaveText(
     'Unable to load equipment. Check Inventory and reload.',
   );

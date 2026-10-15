@@ -22,7 +22,7 @@
       "category": "environment",
       "severity": "medium",
       "blocking": true,
-      "status": "open",
+      "status": "closed",
       "reported_by": "verifier_reviewer",
       "owner": "coordinator",
       "revision": "I1:a2d445727aecb5d9e6016dc3eb064bcd9150cc94a426f5c4a4bb1746a95d4895",
@@ -40,7 +40,14 @@
       ],
       "recommended_fix": "Record manual review on current snapshot or obtain explicit owner-scoped policy exception; original verifier validates closure",
       "verification": "Verifier Q-001 closure report",
-      "closure_evidence": null,
+      "closure_evidence": {
+        "revision": "05da930fed1290f7e88fd8fbc409188a88975aaf3974f9373e7aa7bdb18f5107",
+        "report": "specs/002-book-cancel-equipment/team/quality-accessibility-closure.md",
+        "native_report": "specs/002-book-cancel-equipment/team/accessibility-review.md",
+        "validated_by": "original verifier_reviewer",
+        "date": "2026-10-15",
+        "scope": "current feature native keyboard/focus/status including preserved hello; no retroactive historical approval"
+      },
       "human_risk_acceptance": null
     }
   ]

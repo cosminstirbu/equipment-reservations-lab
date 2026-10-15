@@ -1,27 +1,47 @@
 using HelloMessaging;
+using Inventory;
+using Npgsql;
 using ServiceDefaults;
 
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 builder.AddServiceDefaults();
+builder.AddDatabase("inventory");
+builder.Services.AddSingleton<EquipmentStore>();
 builder.Services.ConfigureHttpJsonOptions(options =>
-    options.SerializerOptions.TypeInfoResolverChain.Insert(0, MessagingJsonContext.Default));
+    options.SerializerOptions.TypeInfoResolverChain.Insert(0, InventoryJsonContext.Default));
 
 WebApplication app = builder.Build();
 app.MapOperationalEndpoints();
 
-var equipment = new Equipment("camera-001", "Demo Camera");
-app.MapGet("/api/equipment", () => new[] { equipment });
-app.MapGet("/api/equipment/{id}", (string id) =>
+app.MapGet("/api/equipment", async (EquipmentStore store, CancellationToken cancellationToken) =>
+{
+    try
+    {
+        return Results.Ok(await store.ListAsync(cancellationToken));
+    }
+    catch (NpgsqlException)
+    {
+        return Results.Problem(statusCode: 503, title: "Equipment catalog unavailable", detail: "The Inventory database is unavailable. Try refreshing later.");
+    }
+});
+app.MapGet("/api/equipment/{id}", async (string id, EquipmentStore store, CancellationToken cancellationToken) =>
 {
     if (!HelloValidation.IsEquipmentId(id))
     {
         return Results.Problem(statusCode: 400, title: "Invalid equipment ID");
     }
 
-    Equipment? item = id == equipment.Id ? equipment : null;
-    return item is not null
-        ? Results.Ok(item)
-        : Results.Problem(statusCode: 404, title: "Equipment not found");
+    try
+    {
+        EquipmentItem? item = await store.FindAsync(id, cancellationToken);
+        return item is null
+            ? Results.Problem(statusCode: 404, title: "Equipment not found")
+            : Results.Ok(item);
+    }
+    catch (NpgsqlException)
+    {
+        return Results.Problem(statusCode: 503, title: "Equipment unavailable", detail: "The Inventory database is unavailable. Try refreshing later.");
+    }
 });
 
 app.Run();

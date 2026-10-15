@@ -1,0 +1,386 @@
+{
+  "source_snapshot": "05da930fed1290f7e88fd8fbc409188a88975aaf3974f9373e7aa7bdb18f5107",
+  "private_archives": {
+    "telemetry_sha256": "dae452531c3875afea177e0dfbc82866ade8101fa4514d18371196d3ff51b8c2",
+    "metrics_sha256": "4106b1ce425247cf17f57188a35390086b259bc837a76f3c8ec018282bbe4a7c",
+    "storage": "private/tmp mode600; raw credential-bearing resource archive not committed"
+  },
+  "inspected_application_entries": [
+    "consolelogs/database-bootstrap.txt application records",
+    "consolelogs/inventory.txt application records",
+    "consolelogs/notifications.txt application records",
+    "consolelogs/reservations.txt application records",
+    "structuredlogs/notifications.json",
+    "structuredlogs/inventory.json",
+    "structuredlogs/reservations.json",
+    "traces/notifications.json",
+    "traces/inventory.json",
+    "traces/reservations.json"
+  ],
+  "console_producer_counts": {
+    "consolelogs/database-bootstrap.txt": {
+      "application_lines": 6,
+      "dcp_launcher_lines_excluded": 1
+    },
+    "consolelogs/inventory.txt": {
+      "application_lines": 504,
+      "dcp_launcher_lines_excluded": 1
+    },
+    "consolelogs/notifications.txt": {
+      "application_lines": 52,
+      "dcp_launcher_lines_excluded": 1
+    },
+    "consolelogs/reservations.txt": {
+      "application_lines": 280,
+      "dcp_launcher_lines_excluded": 1
+    }
+  },
+  "excluded_entries": [
+    {
+      "entry": "resources/broker-password.json",
+      "producer": "resource configuration",
+      "reason": "private configuration/tooling/infrastructure; excluded from application telemetry acceptance; not described as sanitized"
+    },
+    {
+      "entry": "resources/database-bootstrap.json",
+      "producer": "resource configuration",
+      "reason": "private configuration/tooling/infrastructure; excluded from application telemetry acceptance; not described as sanitized"
+    },
+    {
+      "entry": "resources/inventory.json",
+      "producer": "resource configuration",
+      "reason": "private configuration/tooling/infrastructure; excluded from application telemetry acceptance; not described as sanitized"
+    },
+    {
+      "entry": "resources/inventory-password.json",
+      "producer": "resource configuration",
+      "reason": "private configuration/tooling/infrastructure; excluded from application telemetry acceptance; not described as sanitized"
+    },
+    {
+      "entry": "resources/messaging.json",
+      "producer": "resource configuration",
+      "reason": "private configuration/tooling/infrastructure; excluded from application telemetry acceptance; not described as sanitized"
+    },
+    {
+      "entry": "resources/notifications.json",
+      "producer": "resource configuration",
+      "reason": "private configuration/tooling/infrastructure; excluded from application telemetry acceptance; not described as sanitized"
+    },
+    {
+      "entry": "resources/notifications-password.json",
+      "producer": "resource configuration",
+      "reason": "private configuration/tooling/infrastructure; excluded from application telemetry acceptance; not described as sanitized"
+    },
+    {
+      "entry": "resources/postgres.json",
+      "producer": "resource configuration",
+      "reason": "private configuration/tooling/infrastructure; excluded from application telemetry acceptance; not described as sanitized"
+    },
+    {
+      "entry": "resources/postgres-password.json",
+      "producer": "resource configuration",
+      "reason": "private configuration/tooling/infrastructure; excluded from application telemetry acceptance; not described as sanitized"
+    },
+    {
+      "entry": "resources/reservations.json",
+      "producer": "resource configuration",
+      "reason": "private configuration/tooling/infrastructure; excluded from application telemetry acceptance; not described as sanitized"
+    },
+    {
+      "entry": "resources/reservations-password.json",
+      "producer": "resource configuration",
+      "reason": "private configuration/tooling/infrastructure; excluded from application telemetry acceptance; not described as sanitized"
+    },
+    {
+      "entry": "resources/web-installer.json",
+      "producer": "resource configuration",
+      "reason": "private configuration/tooling/infrastructure; excluded from application telemetry acceptance; not described as sanitized"
+    },
+    {
+      "entry": "resources/web.json",
+      "producer": "resource configuration",
+      "reason": "private configuration/tooling/infrastructure; excluded from application telemetry acceptance; not described as sanitized"
+    },
+    {
+      "entry": "consolelogs/database-bootstrap.txt",
+      "producer": "DCP [sys] Starting process launcher command",
+      "lines": 1,
+      "reason": "development process configuration; private local path; application lines separately inspected"
+    },
+    {
+      "entry": "consolelogs/inventory.txt",
+      "producer": "DCP [sys] Starting process launcher command",
+      "lines": 1,
+      "reason": "development process configuration; private local path; application lines separately inspected"
+    },
+    {
+      "entry": "consolelogs/messaging.txt",
+      "producer": "infrastructure container console",
+      "reason": "private configuration/tooling/infrastructure; excluded from application telemetry acceptance; not described as sanitized"
+    },
+    {
+      "entry": "consolelogs/notifications.txt",
+      "producer": "DCP [sys] Starting process launcher command",
+      "lines": 1,
+      "reason": "development process configuration; private local path; application lines separately inspected"
+    },
+    {
+      "entry": "consolelogs/reservations.txt",
+      "producer": "DCP [sys] Starting process launcher command",
+      "lines": 1,
+      "reason": "development process configuration; private local path; application lines separately inspected"
+    },
+    {
+      "entry": "consolelogs/web.txt",
+      "producer": "development frontend build/npm/installer",
+      "reason": "private configuration/tooling/infrastructure; excluded from application telemetry acceptance; not described as sanitized"
+    },
+    {
+      "entry": "consolelogs/web-installer.txt",
+      "producer": "development frontend build/npm/installer",
+      "reason": "private configuration/tooling/infrastructure; excluded from application telemetry acceptance; not described as sanitized"
+    },
+    {
+      "entry": "consolelogs/postgres.txt",
+      "producer": "infrastructure container console",
+      "reason": "private configuration/tooling/infrastructure; excluded from application telemetry acceptance; not described as sanitized"
+    }
+  ],
+  "privacy": {
+    "actual_live_secret_values_checked": 6,
+    "query_header_userAgent_body_canaries": {
+      "query": "FINAL_QUERY_CANARY_7b5d6c",
+      "header": "FINAL_HEADER_CANARY_2e4d8a",
+      "userAgent": "FINAL_USER_AGENT_CANARY_6f9a1c",
+      "body": "FINAL_BODY_CANARY_3c8e5b"
+    },
+    "forbidden_matches": [],
+    "forbidden_raw_http_attributes": [],
+    "resource_attribute_keys": "service.name,service.instance.id,telemetry.sdk.name/language/version; inspected with application payloads",
+    "limitation": "No live-secret/canary/local-account matches in inspected application telemetry. Resource configuration contains secrets; entire archive is not sanitized. No universal arbitrary-header/input guarantee."
+  },
+  "captured_spans": 642,
+  "captured_structured_logs": 1271,
+  "correlated_business_logs": 111,
+  "operation_outcome_counts": [
+    {
+      "operation": "availability",
+      "outcome": "invalid_request",
+      "logs": 2
+    },
+    {
+      "operation": "availability",
+      "outcome": "success",
+      "logs": 5
+    },
+    {
+      "operation": "book",
+      "outcome": "booking_conflict",
+      "logs": 3
+    },
+    {
+      "operation": "book",
+      "outcome": "created",
+      "logs": 11
+    },
+    {
+      "operation": "book",
+      "outcome": "invalid_request",
+      "logs": 1
+    },
+    {
+      "operation": "book",
+      "outcome": "inventory_unavailable",
+      "logs": 1
+    },
+    {
+      "operation": "cancel",
+      "outcome": "cancellation_started",
+      "logs": 1
+    },
+    {
+      "operation": "cancel",
+      "outcome": "cancelled",
+      "logs": 12
+    },
+    {
+      "operation": "consume",
+      "outcome": "stored",
+      "logs": 21
+    },
+    {
+      "operation": "list",
+      "outcome": "success",
+      "logs": 28
+    },
+    {
+      "operation": "publish",
+      "outcome": "published",
+      "logs": 21
+    },
+    {
+      "operation": "publish",
+      "outcome": "retry",
+      "logs": 5
+    }
+  ],
+  "three_stage_workflow_traces": [
+    {
+      "traceId": "d4280fa155d89c414d619a8403bddf3c",
+      "span_names": [
+        "GET",
+        "GET /api/equipment/{id}",
+        "POST /api/reservations",
+        "reservation.book",
+        "reservation.consume",
+        "reservation.publish"
+      ]
+    },
+    {
+      "traceId": "21c0af5bb75008006482efee7e230609",
+      "span_names": [
+        "GET",
+        "GET /api/equipment/{id}",
+        "POST /api/reservations",
+        "reservation.book",
+        "reservation.consume",
+        "reservation.publish"
+      ]
+    },
+    {
+      "traceId": "0cf9fc2f0e54ead774268e9682cbdee1",
+      "span_names": [
+        "GET",
+        "GET /api/equipment/{id}",
+        "POST /api/reservations",
+        "reservation.book",
+        "reservation.consume",
+        "reservation.publish"
+      ]
+    },
+    {
+      "traceId": "e1ac7324c86a9c7391511160ba1dfb10",
+      "span_names": [
+        "GET",
+        "GET /api/equipment/{id}",
+        "POST /api/reservations",
+        "reservation.book",
+        "reservation.consume",
+        "reservation.publish"
+      ]
+    }
+  ],
+  "metrics_only_export_entries": [
+    "metrics/notifications.json",
+    "metrics/reservations.json"
+  ],
+  "custom_metric_summary": {
+    "Equipment.Hello/hello.outcomes": {
+      "kind": "sum",
+      "samples": 13
+    },
+    "Equipment.ReservationMessaging/reservation.dependency.outcomes": {
+      "kind": "sum",
+      "samples": 49
+    },
+    "Equipment.ReservationMessaging/reservation.dependency.duration": {
+      "kind": "histogram",
+      "samples": 49
+    },
+    "Equipment.ReservationMessaging/reservation.delivery.outcomes": {
+      "kind": "sum",
+      "samples": 23
+    },
+    "Equipment.ReservationMessaging/reservation.delivery.duration": {
+      "kind": "histogram",
+      "samples": 23
+    },
+    "Equipment.Notifications/notification.outcomes": {
+      "kind": "sum",
+      "samples": 10
+    },
+    "Equipment.Notifications/notification.duration": {
+      "kind": "histogram",
+      "samples": 10
+    },
+    "Equipment.Reservations/reservation.dependency.outcomes": {
+      "kind": "sum",
+      "samples": 167
+    },
+    "Equipment.Reservations/reservation.dependency.duration": {
+      "kind": "histogram",
+      "samples": 167
+    },
+    "Equipment.Reservations/reservation.outbox.pending": {
+      "kind": "gauge",
+      "samples": 3
+    },
+    "Equipment.Reservations/reservation.outbox.oldest_age": {
+      "kind": "gauge",
+      "samples": 7
+    },
+    "Equipment.Reservations/reservation.outcomes": {
+      "kind": "sum",
+      "samples": 36
+    },
+    "Equipment.Reservations/reservation.duration": {
+      "kind": "histogram",
+      "samples": 36
+    },
+    "Equipment.Hello/hello.duration": {
+      "kind": "histogram",
+      "samples": 3
+    }
+  },
+  "custom_data_points": 596,
+  "custom_dimension_values": {
+    "operation": [
+      "availability",
+      "book",
+      "cancel",
+      "consume",
+      "consumer",
+      "list",
+      "publish",
+      "readiness",
+      "request"
+    ],
+    "outcome": [
+      "available",
+      "booking_conflict",
+      "cancellation_started",
+      "cancelled",
+      "created",
+      "error",
+      "invalid_request",
+      "inventory_unavailable",
+      "published",
+      "retry",
+      "stored",
+      "success",
+      "unavailable"
+    ],
+    "dependency": [
+      "broker_ack",
+      "broker_publish",
+      "broker_setup",
+      "database",
+      "inventory"
+    ]
+  },
+  "gauge_evidence": {
+    "reservation.outbox.pending": {
+      "samples": 3,
+      "minimum": 0.0,
+      "maximum": 1.0,
+      "last_value": 0.0
+    },
+    "reservation.outbox.oldest_age": {
+      "samples": 7,
+      "minimum": 0.0,
+      "maximum": 45.846665,
+      "last_value": 0.0
+    }
+  },
+  "native_metrics_observation": "pending1 during outage; oldest_age0.197778,9.044283,18.737239s increasing; after broker restore pending0 at12:18:37 local; supported metrics-only download20261015-091912"
+}

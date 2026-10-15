@@ -64,12 +64,13 @@ export class Hello {
     this.lifetime.add(
       this.api.equipment().subscribe({
         next: (items) => {
-          if (items.length !== 1) {
+          const camera = items.find((item) => item.id === 'camera-001');
+          if (!camera) {
             this.status.set('Unable to load equipment. Check Inventory.');
             return;
           }
 
-          this.equipment.set(items[0]);
+          this.equipment.set(camera);
           this.status.set('Ready to send hello.');
         },
         error: () =>

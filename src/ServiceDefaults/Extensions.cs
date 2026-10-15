@@ -1,10 +1,12 @@
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using Npgsql;
 using OpenTelemetry.Logs;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Trace;
@@ -20,20 +22,29 @@ public static class Extensions
         _ = builder.Services.ConfigureHttpClientDefaults(http => http.AddServiceDiscovery());
         _ = builder.Services.AddHealthChecks().AddCheck("self", () => HealthCheckResult.Healthy(), tags: ["live"]);
 
+        // These framework information messages contain raw request URLs or local
+        // startup paths. Apply the policy to console and OTLP providers alike.
+        _ = builder.Logging.AddFilter("Microsoft.AspNetCore.Hosting.Diagnostics", LogLevel.Warning);
+        _ = builder.Logging.AddFilter("Microsoft.Hosting.Lifetime", LogLevel.Warning);
+        _ = builder.Logging.AddFilter("System.Net.Http.HttpClient", LogLevel.Warning);
+
         _ = builder.Services.AddOpenTelemetry()
             .WithTracing(tracing => tracing
                 .SetSampler(new AlwaysOnSampler())
-                .AddSource("Equipment.Hello")
+                .AddProcessor(new HttpTelemetryPrivacyProcessor())
+                .AddSource("Equipment.Hello", "Equipment.Reservations", "Equipment.ReservationMessaging", "Equipment.Notifications")
                 .AddAspNetCoreInstrumentation()
                 .AddHttpClientInstrumentation())
             .WithMetrics(metrics => metrics
-                .AddMeter("Equipment.Hello")
+                .AddMeter("Equipment.Hello", "Equipment.Reservations", "Equipment.ReservationMessaging", "Equipment.Notifications")
                 .AddAspNetCoreInstrumentation()
                 .AddHttpClientInstrumentation()
                 .AddRuntimeInstrumentation());
         _ = builder.Logging.AddOpenTelemetry(o =>
         {
-            o.IncludeScopes = true;
+            // Activity TraceId/SpanId still correlate logs without request scopes,
+            // which can carry untrusted paths or other request metadata.
+            o.IncludeScopes = false;
             o.IncludeFormattedMessage = true;
         });
 
@@ -48,10 +59,47 @@ public static class Extensions
         _ = builder.WebHost.ConfigureKestrel(k => k.Limits.MaxRequestBodySize = 4096);
     }
 
+    public static void AddDatabase(this WebApplicationBuilder builder, string name)
+    {
+        _ = builder.Services.AddSingleton(_ =>
+        {
+            string connection = builder.Configuration.GetConnectionString(name) ?? throw new InvalidOperationException("Own database connection is not configured.");
+            var settings = new NpgsqlConnectionStringBuilder(connection)
+            {
+                Timeout = 3,
+                CommandTimeout = 5,
+                IncludeErrorDetail = false,
+                LogParameters = false
+            };
+            return NpgsqlDataSource.Create(settings.ConnectionString);
+        });
+        _ = builder.Services.AddHealthChecks().AddCheck<DatabaseHealth>("database");
+    }
+
     public static void MapOperationalEndpoints(this WebApplication app)
     {
         _ = app.UseExceptionHandler();
         _ = app.MapHealthChecks("/alive", new HealthCheckOptions { Predicate = c => c.Tags.Contains("live") });
-        _ = app.MapHealthChecks("/health");
+        _ = app.MapHealthChecks("/health", new HealthCheckOptions { Predicate = check => !check.Tags.Contains("worker") });
+        _ = app.MapHealthChecks("/health/workers", new HealthCheckOptions { Predicate = check => check.Tags.Contains("worker") });
+    }
+}
+
+internal sealed class DatabaseHealth(NpgsqlDataSource source) : IHealthCheck
+{
+    public async Task<HealthCheckResult> CheckHealthAsync(HealthCheckContext context, CancellationToken cancellationToken = default)
+    {
+        using var budget = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+        budget.CancelAfter(TimeSpan.FromSeconds(5));
+        try
+        {
+            await using NpgsqlCommand command = source.CreateCommand("SELECT 1");
+            _ = await command.ExecuteScalarAsync(budget.Token);
+            return HealthCheckResult.Healthy();
+        }
+        catch (Exception exception) when (exception is NpgsqlException or OperationCanceledException)
+        {
+            return HealthCheckResult.Unhealthy("Database unavailable");
+        }
     }
 }

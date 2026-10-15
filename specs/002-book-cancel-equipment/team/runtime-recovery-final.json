@@ -1,0 +1,103 @@
+{
+  "source_snapshot": "05da930fed1290f7e88fd8fbc409188a88975aaf3974f9373e7aa7bdb18f5107",
+  "native_fixture_durable_audit": [
+    {
+      "reservationId": "595500cd-32e7-4ca2-a72a-cb3cf510f519",
+      "status": "Confirmed",
+      "outbox": [
+        {
+          "eventId": "a3e31db5-daa5-4eef-8f89-4b408e2555f9",
+          "type": "ReservationConfirmed",
+          "published": true
+        }
+      ],
+      "inbox": [
+        {
+          "eventId": "a3e31db5-daa5-4eef-8f89-4b408e2555f9",
+          "type": "ReservationConfirmed"
+        }
+      ]
+    },
+    {
+      "reservationId": "6300b6d0-2b4e-4d97-82cb-8dce8161be97",
+      "status": "Cancelled",
+      "outbox": [
+        {
+          "eventId": "1cb76504-3814-4745-9356-4394db2ef09e",
+          "type": "ReservationCancelled",
+          "published": true
+        },
+        {
+          "eventId": "71838f68-1f57-4e92-92f3-9ad3cb1d389f",
+          "type": "ReservationConfirmed",
+          "published": true
+        }
+      ],
+      "inbox": [
+        {
+          "eventId": "1cb76504-3814-4745-9356-4394db2ef09e",
+          "type": "ReservationCancelled"
+        },
+        {
+          "eventId": "71838f68-1f57-4e92-92f3-9ad3cb1d389f",
+          "type": "ReservationConfirmed"
+        }
+      ]
+    },
+    {
+      "reservationId": "0349b2af-f1d5-4963-964e-121aaa350524",
+      "status": "Cancelled",
+      "outbox": [
+        {
+          "eventId": "239b6d2b-619a-421c-9e4f-eaae3118520c",
+          "type": "ReservationCancelled",
+          "published": true
+        },
+        {
+          "eventId": "4837fe9e-e33f-4d67-936a-c114a21e930f",
+          "type": "ReservationConfirmed",
+          "published": true
+        }
+      ],
+      "inbox": [
+        {
+          "eventId": "239b6d2b-619a-421c-9e4f-eaae3118520c",
+          "type": "ReservationCancelled"
+        },
+        {
+          "eventId": "4837fe9e-e33f-4d67-936a-c114a21e930f",
+          "type": "ReservationConfirmed"
+        }
+      ]
+    }
+  ],
+  "restored_api_and_worker_health": [
+    {
+      "port": 51219,
+      "path": "/health",
+      "status": 200
+    },
+    {
+      "port": 51219,
+      "path": "/health/workers",
+      "status": 200
+    },
+    {
+      "port": 51220,
+      "path": "/health",
+      "status": 200
+    },
+    {
+      "port": 51220,
+      "path": "/health/workers",
+      "status": 200
+    },
+    {
+      "port": 51222,
+      "path": "/health",
+      "status": 200
+    }
+  ],
+  "volumes": "existing production demo volumes retained; no reset",
+  "remaining_expired_confirmed_demo_fixture": "595500cd after-start rejection intentionally remains Confirmed history; no unauthorized deletion/cancellation"
+}

@@ -20,11 +20,12 @@ public class BrokerContractTests
         EndpointAnnotation endpoint = Assert.Single(broker.Annotations.OfType<EndpointAnnotation>());
         Assert.Equal("tcp", endpoint.Name);
         Assert.Equal(5672, endpoint.TargetPort);
-        foreach (IResource? resource in builder.Resources.Where(r => r.Name is "inventory" or "reservations" or "notifications" or "web" or "web-installer").ToArray())
+        foreach (IResource? resource in builder.Resources.Where(r => r.Name is "postgres" or "database-bootstrap" or "inventory" or "reservations" or "notifications" or "web" or "web-installer").ToArray())
         {
             _ = builder.Resources.Remove(resource);
         }
 
+        SmokeStartup.IsolateStorage(builder);
         await using DistributedApplication app = await builder.BuildAsync(deadline.Token);
         await SmokeStartup.StartAsync(app, deadline.Token);
         _ = await app.ResourceNotifications.WaitForResourceHealthyAsync("messaging", deadline.Token);

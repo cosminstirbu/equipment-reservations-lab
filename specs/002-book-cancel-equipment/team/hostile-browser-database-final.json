@@ -1,0 +1,118 @@
+{
+  "source_snapshot": "05da930fed1290f7e88fd8fbc409188a88975aaf3974f9373e7aa7bdb18f5107",
+  "procedure": "read-only authenticated own-role TCP SQL; four fixture IDs across initial and green12-case browser runs; expected authorized setup/cleanup only",
+  "fixtures": [
+    {
+      "run": "first-alias",
+      "reservationId": "bc7858a5-cd08-4443-abb7-4ea79c5ffe0c",
+      "status": "Cancelled",
+      "outbox": [
+        {
+          "eventId": "8f7ae7df-012a-4bcd-a513-ad2a30d7b336",
+          "type": "ReservationCancelled",
+          "published": true
+        },
+        {
+          "eventId": "14033db4-d6fe-45c3-94f3-f40aa76f0a36",
+          "type": "ReservationConfirmed",
+          "published": true
+        }
+      ],
+      "inbox": [
+        {
+          "eventId": "8f7ae7df-012a-4bcd-a513-ad2a30d7b336",
+          "type": "ReservationCancelled"
+        },
+        {
+          "eventId": "14033db4-d6fe-45c3-94f3-f40aa76f0a36",
+          "type": "ReservationConfirmed"
+        }
+      ],
+      "rejected_laptop_rows": 0
+    },
+    {
+      "run": "first-null",
+      "reservationId": "3d89b258-7e92-4c8c-8348-5815aa930c10",
+      "status": "Cancelled",
+      "outbox": [
+        {
+          "eventId": "71b26e6c-0fdb-40db-aee2-4b00b30466d3",
+          "type": "ReservationCancelled",
+          "published": true
+        },
+        {
+          "eventId": "fec8c364-e0d8-4550-a796-14312cc0bd2a",
+          "type": "ReservationConfirmed",
+          "published": true
+        }
+      ],
+      "inbox": [
+        {
+          "eventId": "71b26e6c-0fdb-40db-aee2-4b00b30466d3",
+          "type": "ReservationCancelled"
+        },
+        {
+          "eventId": "fec8c364-e0d8-4550-a796-14312cc0bd2a",
+          "type": "ReservationConfirmed"
+        }
+      ],
+      "rejected_laptop_rows": 0
+    },
+    {
+      "run": "green-alias",
+      "reservationId": "de70b9f3-76d8-457a-827d-3b7e2bd69040",
+      "status": "Cancelled",
+      "outbox": [
+        {
+          "eventId": "7e7b3870-2e59-41c9-b0a0-84553cf688f3",
+          "type": "ReservationCancelled",
+          "published": true
+        },
+        {
+          "eventId": "1fcb97ac-b2a2-49c0-b3d9-04607a3f3954",
+          "type": "ReservationConfirmed",
+          "published": true
+        }
+      ],
+      "inbox": [
+        {
+          "eventId": "7e7b3870-2e59-41c9-b0a0-84553cf688f3",
+          "type": "ReservationCancelled"
+        },
+        {
+          "eventId": "1fcb97ac-b2a2-49c0-b3d9-04607a3f3954",
+          "type": "ReservationConfirmed"
+        }
+      ],
+      "rejected_laptop_rows": 0
+    },
+    {
+      "run": "green-null",
+      "reservationId": "860a52ef-c656-4e80-b1eb-7a0befd1f2ef",
+      "status": "Cancelled",
+      "outbox": [
+        {
+          "eventId": "c4e21ef5-a4cd-43e5-a4b5-a3b7e8a1abe6",
+          "type": "ReservationCancelled",
+          "published": true
+        },
+        {
+          "eventId": "d24fbe38-571b-40dd-afd5-bb492946bf0b",
+          "type": "ReservationConfirmed",
+          "published": true
+        }
+      ],
+      "inbox": [
+        {
+          "eventId": "c4e21ef5-a4cd-43e5-a4b5-a3b7e8a1abe6",
+          "type": "ReservationCancelled"
+        },
+        {
+          "eventId": "d24fbe38-571b-40dd-afd5-bb492946bf0b",
+          "type": "ReservationConfirmed"
+        }
+      ],
+      "rejected_laptop_rows": 0
+    }
+  ]
+}

@@ -1,0 +1,48 @@
+form {
+  display: grid;
+  gap: 0.6rem;
+  margin-top: 1.8rem;
+}
+
+label {
+  font-weight: 650;
+}
+
+input,
+select {
+  box-sizing: border-box;
+  font: inherit;
+  padding: 0.65rem;
+  border: 1px solid #56677f;
+  border-radius: 0.35rem;
+  max-width: 100%;
+  color: #152238;
+  background: white;
+}
+
+input:focus-visible,
+select:focus-visible {
+  outline: 3px solid #174ea6;
+  outline-offset: 3px;
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.8rem;
+  margin-top: 1rem;
+}
+
+[role='status'] {
+  min-height: 2.4rem;
+  font-weight: 600;
+}
+
+section {
+  border-top: 1px solid #56677f;
+  padding-top: 1rem;
+}
+
+code {
+  overflow-wrap: anywhere;
+}

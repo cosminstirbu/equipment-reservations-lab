@@ -1,0 +1,170 @@
+{
+  "findings": [
+    {
+      "id": "PRE-Q-001",
+      "category": "environment",
+      "severity": "medium",
+      "blocking": true,
+      "status": "closed",
+      "reported_by": "verifier_reviewer",
+      "owner": "coordinator",
+      "revision": "0f3ee965011ddf3fc473ea1a5bba6bfa3acdc7b1",
+      "summary": "Pre-existing manual keyboard/focus/status review remains open in skeleton Q-001",
+      "evidence": [
+        "specs/001-hello-world-skeleton/team/findings.json Q-001",
+        "Historical maintenance reviews also remain pending"
+      ],
+      "recommended_fix": "Perform current feature manual keyboard/focus/status review and original reviewer validates closure; do not silently close skeleton records",
+      "closure_evidence": {
+        "revision": "05da930fed1290f7e88fd8fbc409188a88975aaf3974f9373e7aa7bdb18f5107",
+        "report": "specs/002-book-cancel-equipment/team/quality-accessibility-closure.md",
+        "native_report": "specs/002-book-cancel-equipment/team/accessibility-review.md",
+        "validated_by": "original verifier_reviewer",
+        "date": "2026-10-15",
+        "scope": "current feature native keyboard/focus/status including preserved hello; no retroactive historical approval"
+      }
+    },
+    {
+      "id": "Q-B1-001",
+      "category": "code",
+      "severity": "critical",
+      "blocking": false,
+      "status": "closed_by_owner_exception",
+      "reported_by": "verifier_reviewer",
+      "owner": "coordinator/coder",
+      "revision": "3a8c0d24bfd8632b52d6ccd0fbc172bc2378106e025f3aa71784b24a0ae54739",
+      "summary": "T008 readiness behavior test was added after production behavior; intended preimplementation red not recorded",
+      "evidence": [
+        "Coder explicitly confirmed missing chronology",
+        "Readiness fixture red was password-redaction failure, not intended behavioral red",
+        "All current gates pass but cannot recreate test-first chronology",
+        "Original verifier supplemental verdict changes_requested, identifies Constitution II violation; manifest independently verified"
+      ],
+      "verification": "Explicit owner-scoped constitutional exception and original reviewer revalidation",
+      "human_risk_acceptance": {
+        "finding": "Q-B1-001",
+        "scope": "T008 broker-independent readiness split only, Batch1 snapshot3a8c0d24bfd8632b52d6ccd0fbc172bc2378106e025f3aa71784b24a0ae54739",
+        "rationale": "Owner approves one-time chronology exception because current readiness behavior has passing automated coverage and full gates/security review; no retrospective test-first claim",
+        "owner": "human project owner",
+        "date": "2026-10-14",
+        "source": "Explicit async reply: Approve the scoped exception and continue (Recommended)",
+        "future_requirement": "Every subsequent new behavior requires intended failing automated test before implementation"
+      },
+      "closure_evidence": "Original verifier quality-batch-1-closure.md validates explicit scoped owner exception and unchanged90file snapshot"
+    },
+    {
+      "id": "Q-B3-001",
+      "category": "code",
+      "severity": "medium",
+      "blocking": false,
+      "status": "closed",
+      "reported_by": "verifier_reviewer",
+      "owner": "coder",
+      "revision": "bf246f5f76035a77f30c58b2472e56ed7f8b4db8ad69eed3bd50e758136e6c87",
+      "location": "src/Web/src/app/booking/booking.ts:134",
+      "requirement_ids": [
+        "FR-008",
+        "T023",
+        "T025"
+      ],
+      "summary": "History re-sorting loses microsecond precision and can reverse requiredorder",
+      "evidence": [
+        "Date.parse truncates .123001Z and .123002Z to same millisecond; UUIDsortingcanplaceolderfirst",
+        "D1requiresconfirmedAtDESC,id at6digitprecision"
+      ],
+      "recommended_fix": "Add intendedfailing renderedsubmsregression thenpreserve authoritativeAPIorder",
+      "verification": "Originalverifier revisedsource/regression+freshaffectedgates",
+      "closure_evidence": "quality-batch-3-closure.md originalreviewervalidatesredgreenprecisionregression+newfrozen115paths/fullgates"
+    },
+    {
+      "id": "SEC-001",
+      "category": "security",
+      "severity": "medium",
+      "blocking": true,
+      "status": "closed",
+      "reported_by": "security_reviewer",
+      "owner": "architect_planner/coder",
+      "revision": "B3stablehandlerbehavior inspected duringB4WIP",
+      "requirement_ids": [
+        "FR-019",
+        "SC-016"
+      ],
+      "summary": "Unsafe cross-origin browser requests can mutate local reservations because JSONmedia-type and browser-origin checks are absent",
+      "evidence": [
+        "ReservationEndpoints manuallyreadsJSONregardlessContent-Type",
+        "CancelhandlerdoesnotvalidateOrigin/FetchMetadata",
+        "Cross-origin text/plain no-cors cancommitwithoutreadingresponse; CORSalonecannotpreventwrite"
+      ],
+      "recommended_fix": "Targetedapprovedbrowser-writepolicy+intendedregressionredthenserverguards forcreation/cancel preservinglocalSPA/proxy/directCLI",
+      "verification": "Originalsecurityreviewerclosure+matrixno-state HTTPtests+realbrowserjourney",
+      "human_risk_acceptance": null,
+      "closure_evidence": {
+        "revision": "05da930fed1290f7e88fd8fbc409188a88975aaf3974f9373e7aa7bdb18f5107",
+        "report": "security-final.md",
+        "validated_by": "original security_reviewer",
+        "evidence": [
+          "SecurityBrowserWriteTests48 passing cases",
+          "final actual Edge12/12 including hostile browser contexts",
+          "hostile-browser-database-final.json",
+          "acceptance-evidence-map.md"
+        ],
+        "date": "2026-10-15"
+      }
+    },
+    {
+      "id": "Q-B4-001",
+      "category": "code",
+      "severity": "high",
+      "blocking": false,
+      "status": "closed",
+      "reported_by": "verifier_reviewer;independently confirmed security_reviewer",
+      "owner": "coder",
+      "revision": "3f4080a91b0ec60b5b570ec9112d3a4b442d39f27fdcd25403deb8da8f666952",
+      "requirement_ids": [
+        "Constitution VI",
+        "FR-020"
+      ],
+      "summary": "Actual broker and own-database permanent provider configuration failures are retried as transient",
+      "evidence": [
+        "quality-batch-4.md",
+        "security-batch-4.md",
+        "Permanent classifier omits OperationInterruptedException reply codes and nested authentication causes",
+        "q-b4-001-db-scope.md confirms Postgres authentication/permission/schema faults and outer outbox selection/open catch; no DB production change before consolidation"
+      ],
+      "recommended_fix": "Regression-first broker and own-DB provider classification; park unchanged unpublished events when accessible or halt worker until repaired restart when DB inaccessible; retain transient recovery",
+      "verification": "Original quality/security reviewers validate new frozen source and regression evidence",
+      "closure_revision": "c40044c4771a1abf9df625520207a867298e75ff09f9fd6b8b021906376cd81a",
+      "closure_evidence": [
+        "quality-batch-4-repair-3.md",
+        "security-batch-4-repair-3.md"
+      ]
+    },
+    {
+      "id": "Q-B4-002",
+      "category": "code",
+      "severity": "medium",
+      "blocking": false,
+      "status": "closed",
+      "reported_by": "verifier_reviewer;independently confirmed security_reviewer",
+      "owner": "coder",
+      "revision": "3f4080a91b0ec60b5b570ec9112d3a4b442d39f27fdcd25403deb8da8f666952",
+      "requirement_ids": [
+        "FR-019",
+        "data-model validation boundary"
+      ],
+      "summary": "Default event DateTimeOffset conversion loses required raw grammar and precision validation",
+      "evidence": [
+        "quality-batch-4.md",
+        "security-batch-4-supplement.md",
+        "Seven aligned fractional digits, truncated longer fractions or missing offset on UTC host can pass post-conversion checks"
+      ],
+      "recommended_fix": "Regression-first strict timestamp wire validation retaining generated metadata and poison rejection with valid following delivery",
+      "verification": "Original quality/security reviewers validate new frozen source and actual broker poison tests",
+      "closure_revision": "c40044c4771a1abf9df625520207a867298e75ff09f9fd6b8b021906376cd81a",
+      "closure_evidence": [
+        "quality-batch-4-repair-3.md",
+        "security-batch-4-repair-3.md"
+      ]
+    }
+  ]
+}
