@@ -1,6 +1,6 @@
 using System.Text.Json;
-using HelloMessaging;
 using RabbitMQ.Client;
+using ReservationMessaging;
 
 namespace Reservations;
 
@@ -44,7 +44,7 @@ public sealed class ReservationPublisher(IConfiguration configuration) : IReserv
             ?? throw new InvalidDataException("Message broker is not configured.");
         using var budget = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
         budget.CancelAfter(TimeSpan.FromSeconds(3));
-        await using IConnection connection = await RabbitTopology.Factory(connectionString, TimeSpan.FromSeconds(3)).CreateConnectionAsync(budget.Token);
+        await using IConnection connection = await RabbitConnection.Factory(connectionString, TimeSpan.FromSeconds(3)).CreateConnectionAsync(budget.Token);
         await using IChannel channel = await connection.CreateChannelAsync(new CreateChannelOptions(true, true), budget.Token);
         await ReservationTopology.DeclareAsync(channel, budget.Token);
         var properties = new BasicProperties

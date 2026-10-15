@@ -3,7 +3,7 @@
     <Project Path="src/AppHost/AppHost.csproj" />
     <Project Path="src/DatabaseBootstrap/DatabaseBootstrap.csproj" />
     <Project Path="src/Persistence/Persistence.csproj" />
-    <Project Path="src/HelloMessaging/HelloMessaging.csproj" />
+    <Project Path="src/ReservationMessaging/ReservationMessaging.csproj" />
     <Project Path="src/Inventory/Inventory.csproj" />
     <Project Path="src/Notifications/Notifications.csproj" />
     <Project Path="src/Reservations/Reservations.csproj" />

@@ -22,7 +22,7 @@ public sealed class DatabaseTracingTests(PostgresFixture postgres)
         host.UseKestrel(0);
         using HttpClient client = host.CreateClient();
         _ = host.Services.GetRequiredService<TracerProvider>();
-        using var controlSource = new ActivitySource("Equipment.Hello");
+        using var controlSource = new ActivitySource("Equipment.Reservations");
         using (Activity? control = controlSource.StartActivity("capture.control"))
         {
             Assert.NotNull(control);

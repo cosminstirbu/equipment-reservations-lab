@@ -1,0 +1,631 @@
+{
+  "candidateManifestSha256": "2d340fae1e3d9849b9729d38772bdc3735ead780e130d73438d5365dea031a07",
+  "spans": [
+    {
+      "traceId": "6c250adf0f500152d414305b85db9d72",
+      "spanId": "791ff595ed455577",
+      "parentSpanId": "1d0039a2ad3c216f",
+      "kind": "Client",
+      "name": "postgresql.inbox.insert",
+      "source": "notifications",
+      "durationMs": 1,
+      "timestamp": "2026-10-15T13:32:22.563823Z",
+      "attributes": {
+        "db.system.name": "postgresql",
+        "db.namespace": "notifications",
+        "db.operation.name": "inbox.insert",
+        "db.query.text": "INSERT INTO reservation_inbox (event_id,reservation_id,demo_user_id,event_type,schema_version,equipment_id,equipment_name,start_at,end_at,occurred_at,received_at,message) VALUES ($1,$2,$3,$4,1,$5,$6,$7,$8,$9,$10,$11) ON CONFLICT (event_id) DO NOTHING"
+      },
+      "dashboardUrl": "http://127.0.0.1:15888/traces/detail/6c250adf0f500152d414305b85db9d72?spanId=791ff595ed455577"
+    },
+    {
+      "traceId": "e40919184a23d5d8fca921e51f3432bf",
+      "spanId": "09026332ba5a0e1c",
+      "parentSpanId": "b55e4eea58f937bb",
+      "kind": "Client",
+      "name": "postgresql.inbox.insert",
+      "source": "notifications",
+      "durationMs": 1,
+      "timestamp": "2026-10-15T13:32:22.579163Z",
+      "attributes": {
+        "db.system.name": "postgresql",
+        "db.namespace": "notifications",
+        "db.operation.name": "inbox.insert",
+        "db.query.text": "INSERT INTO reservation_inbox (event_id,reservation_id,demo_user_id,event_type,schema_version,equipment_id,equipment_name,start_at,end_at,occurred_at,received_at,message) VALUES ($1,$2,$3,$4,1,$5,$6,$7,$8,$9,$10,$11) ON CONFLICT (event_id) DO NOTHING"
+      },
+      "dashboardUrl": "http://127.0.0.1:15888/traces/detail/e40919184a23d5d8fca921e51f3432bf?spanId=09026332ba5a0e1c"
+    },
+    {
+      "traceId": "6c250adf0f500152d414305b85db9d72",
+      "spanId": "1d0039a2ad3c216f",
+      "parentSpanId": "b2db80b455ffeb08",
+      "kind": "Consumer",
+      "name": "reservation.consume",
+      "status": "Ok",
+      "statusMessage": "",
+      "source": "notifications",
+      "durationMs": 2,
+      "timestamp": "2026-10-15T13:32:22.563726Z",
+      "attributes": {
+        "event.id": "6484e8d2-eeb1-49f1-8119-8eab4c30e4bb",
+        "reservation.id": "2a026949-3967-4737-8856-3d87a6b52a02"
+      },
+      "dashboardUrl": "http://127.0.0.1:15888/traces/detail/6c250adf0f500152d414305b85db9d72?spanId=1d0039a2ad3c216f"
+    },
+    {
+      "traceId": "e40919184a23d5d8fca921e51f3432bf",
+      "spanId": "b55e4eea58f937bb",
+      "parentSpanId": "97b53598e78835c1",
+      "kind": "Consumer",
+      "name": "reservation.consume",
+      "status": "Ok",
+      "statusMessage": "",
+      "source": "notifications",
+      "durationMs": 2,
+      "timestamp": "2026-10-15T13:32:22.579109Z",
+      "attributes": {
+        "event.id": "7aff0784-78d1-486c-90bd-951ec61bf963",
+        "reservation.id": "2a026949-3967-4737-8856-3d87a6b52a02"
+      },
+      "dashboardUrl": "http://127.0.0.1:15888/traces/detail/e40919184a23d5d8fca921e51f3432bf?spanId=b55e4eea58f937bb"
+    },
+    {
+      "traceId": "772f9faadc380e19842a0c9d67906011",
+      "spanId": "18a40d4a346ac135",
+      "parentSpanId": "3a02148deddc5f40",
+      "kind": "Server",
+      "name": "GET /api/equipment/{id}",
+      "source": "inventory",
+      "destination": "127.0.0.1:60422",
+      "durationMs": 2,
+      "timestamp": "2026-10-15T13:31:01.26864Z",
+      "attributes": {
+        "http.request.method": "GET",
+        "server.address": "127.0.0.1",
+        "server.port": "60422",
+        "url.scheme": "http",
+        "url.path": "/api/equipment/camera-001",
+        "network.protocol.version": "1.1",
+        "http.route": "/api/equipment/{id}",
+        "http.response.status_code": "200 OK"
+      },
+      "dashboardUrl": "http://127.0.0.1:15888/traces/detail/772f9faadc380e19842a0c9d67906011?spanId=18a40d4a346ac135"
+    },
+    {
+      "traceId": "6c250adf0f500152d414305b85db9d72",
+      "spanId": "654b7d194eca1d49",
+      "parentSpanId": "e586e1bf0c044029",
+      "kind": "Server",
+      "name": "GET /api/equipment/{id}",
+      "source": "inventory",
+      "destination": "127.0.0.1:60422",
+      "durationMs": 2,
+      "timestamp": "2026-10-15T13:32:19.683068Z",
+      "attributes": {
+        "http.request.method": "GET",
+        "server.address": "127.0.0.1",
+        "server.port": "60422",
+        "url.scheme": "http",
+        "url.path": "/api/equipment/camera-001",
+        "network.protocol.version": "1.1",
+        "http.route": "/api/equipment/{id}",
+        "http.response.status_code": "200 OK"
+      },
+      "dashboardUrl": "http://127.0.0.1:15888/traces/detail/6c250adf0f500152d414305b85db9d72?spanId=654b7d194eca1d49"
+    },
+    {
+      "traceId": "772f9faadc380e19842a0c9d67906011",
+      "spanId": "19cfff9376afcf80",
+      "parentSpanId": "18a40d4a346ac135",
+      "kind": "Client",
+      "name": "postgresql.equipment.find",
+      "source": "inventory",
+      "durationMs": 1,
+      "timestamp": "2026-10-15T13:31:01.268853Z",
+      "attributes": {
+        "db.system.name": "postgresql",
+        "db.namespace": "inventory",
+        "db.operation.name": "equipment.find",
+        "db.query.text": "SELECT id, name, operational FROM equipment WHERE id=$1"
+      },
+      "dashboardUrl": "http://127.0.0.1:15888/traces/detail/772f9faadc380e19842a0c9d67906011?spanId=19cfff9376afcf80"
+    },
+    {
+      "traceId": "6c250adf0f500152d414305b85db9d72",
+      "spanId": "cf047d8e57e0abae",
+      "parentSpanId": "654b7d194eca1d49",
+      "kind": "Client",
+      "name": "postgresql.equipment.find",
+      "source": "inventory",
+      "durationMs": 2,
+      "timestamp": "2026-10-15T13:32:19.683223Z",
+      "attributes": {
+        "db.system.name": "postgresql",
+        "db.namespace": "inventory",
+        "db.operation.name": "equipment.find",
+        "db.query.text": "SELECT id, name, operational FROM equipment WHERE id=$1"
+      },
+      "dashboardUrl": "http://127.0.0.1:15888/traces/detail/6c250adf0f500152d414305b85db9d72?spanId=cf047d8e57e0abae"
+    },
+    {
+      "traceId": "772f9faadc380e19842a0c9d67906011",
+      "spanId": "a78a5f3312ddda55",
+      "parentSpanId": "72518dcfda7a98d8",
+      "kind": "Client",
+      "name": "postgresql.reservation.insert",
+      "status": "Error",
+      "statusMessage": "23P01",
+      "source": "reservations",
+      "durationMs": 3,
+      "timestamp": "2026-10-15T13:31:01.270887Z",
+      "attributes": {
+        "db.system.name": "postgresql",
+        "db.namespace": "reservations",
+        "db.operation.name": "reservation.insert",
+        "db.query.text": "INSERT INTO reservations (id,demo_user_id,equipment_id,equipment_name,start_at,end_at,status,confirmed_at) VALUES ($1,'demo-user',$2,$3,$4,$5,'Confirmed',$6)",
+        "error.type": "23P01"
+      },
+      "dashboardUrl": "http://127.0.0.1:15888/traces/detail/772f9faadc380e19842a0c9d67906011?spanId=a78a5f3312ddda55"
+    },
+    {
+      "traceId": "6c250adf0f500152d414305b85db9d72",
+      "spanId": "8b87679a0ca3084b",
+      "parentSpanId": "b2db80b455ffeb08",
+      "kind": "Client",
+      "name": "postgresql.reservation.insert",
+      "source": "reservations",
+      "durationMs": 1,
+      "timestamp": "2026-10-15T13:32:19.685205Z",
+      "attributes": {
+        "db.system.name": "postgresql",
+        "db.namespace": "reservations",
+        "db.operation.name": "reservation.insert",
+        "db.query.text": "INSERT INTO reservations (id,demo_user_id,equipment_id,equipment_name,start_at,end_at,status,confirmed_at) VALUES ($1,'demo-user',$2,$3,$4,$5,'Confirmed',$6)"
+      },
+      "dashboardUrl": "http://127.0.0.1:15888/traces/detail/6c250adf0f500152d414305b85db9d72?spanId=8b87679a0ca3084b"
+    },
+    {
+      "traceId": "6c250adf0f500152d414305b85db9d72",
+      "spanId": "2f8be17c3306a48a",
+      "parentSpanId": "b2db80b455ffeb08",
+      "kind": "Client",
+      "name": "postgresql.outbox.insert.confirmed",
+      "source": "reservations",
+      "durationMs": 1,
+      "timestamp": "2026-10-15T13:32:19.686493Z",
+      "attributes": {
+        "db.system.name": "postgresql",
+        "db.namespace": "reservations",
+        "db.operation.name": "outbox.insert.confirmed",
+        "db.query.text": "INSERT INTO reservation_outbox (event_id,reservation_id,event_type,schema_version,demo_user_id,equipment_id,equipment_name,start_at,end_at,occurred_at,next_attempt_at,traceparent,tracestate) VALUES ($1,$2,'ReservationConfirmed',1,'demo-user',$3,$4,$5,$6,$7,$7,$8,$9)"
+      },
+      "dashboardUrl": "http://127.0.0.1:15888/traces/detail/6c250adf0f500152d414305b85db9d72?spanId=2f8be17c3306a48a"
+    },
+    {
+      "traceId": "6c250adf0f500152d414305b85db9d72",
+      "spanId": "96aa63d8c559a454",
+      "parentSpanId": "81210c0073cc65d6",
+      "kind": "Client",
+      "name": "postgresql.outbox.published",
+      "source": "reservations",
+      "durationMs": 1,
+      "timestamp": "2026-10-15T13:32:22.565794Z",
+      "attributes": {
+        "db.system.name": "postgresql",
+        "db.namespace": "reservations",
+        "db.operation.name": "outbox.published",
+        "db.query.text": "UPDATE reservation_outbox SET published_at=$2,attempt_count=attempt_count+1 WHERE event_id=$1"
+      },
+      "dashboardUrl": "http://127.0.0.1:15888/traces/detail/6c250adf0f500152d414305b85db9d72?spanId=96aa63d8c559a454"
+    },
+    {
+      "traceId": "e40919184a23d5d8fca921e51f3432bf",
+      "spanId": "14facda1527e5df9",
+      "parentSpanId": "97b53598e78835c1",
+      "kind": "Client",
+      "name": "postgresql.reservation.lock",
+      "source": "reservations",
+      "durationMs": 2,
+      "timestamp": "2026-10-15T13:32:19.69123Z",
+      "attributes": {
+        "db.system.name": "postgresql",
+        "db.namespace": "reservations",
+        "db.operation.name": "reservation.lock",
+        "db.query.text": "SELECT id FROM reservations WHERE id=$1 FOR UPDATE"
+      },
+      "dashboardUrl": "http://127.0.0.1:15888/traces/detail/e40919184a23d5d8fca921e51f3432bf?spanId=14facda1527e5df9"
+    },
+    {
+      "traceId": "e40919184a23d5d8fca921e51f3432bf",
+      "spanId": "4b377f4a337fe003",
+      "parentSpanId": "97b53598e78835c1",
+      "kind": "Client",
+      "name": "postgresql.reservation.find",
+      "source": "reservations",
+      "durationMs": 1,
+      "timestamp": "2026-10-15T13:32:19.693242Z",
+      "attributes": {
+        "db.system.name": "postgresql",
+        "db.namespace": "reservations",
+        "db.operation.name": "reservation.find",
+        "db.query.text": "SELECT r.id, r.demo_user_id, r.equipment_id, r.equipment_name, r.start_at, r.end_at, r.status, r.confirmed_at, r.cancelled_at, (SELECT event_id FROM reservation_outbox WHERE reservation_id=r.id AND event_type='ReservationConfirmed'), (SELECT event_id FROM reservation_outbox WHERE reservation_id=r.id AND event_type='ReservationCancelled') FROM reservations r WHERE r.id=$1"
+      },
+      "dashboardUrl": "http://127.0.0.1:15888/traces/detail/e40919184a23d5d8fca921e51f3432bf?spanId=4b377f4a337fe003"
+    },
+    {
+      "traceId": "e40919184a23d5d8fca921e51f3432bf",
+      "spanId": "88f19f5ce3f13a74",
+      "parentSpanId": "97b53598e78835c1",
+      "kind": "Client",
+      "name": "postgresql.reservation.cancel",
+      "source": "reservations",
+      "durationMs": 2,
+      "timestamp": "2026-10-15T13:32:19.694564Z",
+      "attributes": {
+        "db.system.name": "postgresql",
+        "db.namespace": "reservations",
+        "db.operation.name": "reservation.cancel",
+        "db.query.text": "UPDATE reservations SET status='Cancelled', cancelled_at=$2 WHERE id=$1"
+      },
+      "dashboardUrl": "http://127.0.0.1:15888/traces/detail/e40919184a23d5d8fca921e51f3432bf?spanId=88f19f5ce3f13a74"
+    },
+    {
+      "traceId": "e40919184a23d5d8fca921e51f3432bf",
+      "spanId": "e2df75a206bc6250",
+      "parentSpanId": "97b53598e78835c1",
+      "kind": "Client",
+      "name": "postgresql.outbox.insert.cancelled",
+      "source": "reservations",
+      "durationMs": 1,
+      "timestamp": "2026-10-15T13:32:19.696207Z",
+      "attributes": {
+        "db.system.name": "postgresql",
+        "db.namespace": "reservations",
+        "db.operation.name": "outbox.insert.cancelled",
+        "db.query.text": "INSERT INTO reservation_outbox (event_id,reservation_id,event_type,schema_version,demo_user_id,equipment_id,equipment_name,start_at,end_at,occurred_at,next_attempt_at,traceparent,tracestate) VALUES ($1,$2,'ReservationCancelled',1,'demo-user',$3,$4,$5,$6,$7,$7,$8,$9)"
+      },
+      "dashboardUrl": "http://127.0.0.1:15888/traces/detail/e40919184a23d5d8fca921e51f3432bf?spanId=e2df75a206bc6250"
+    },
+    {
+      "traceId": "e40919184a23d5d8fca921e51f3432bf",
+      "spanId": "09dc576c90436175",
+      "parentSpanId": "d4ec7b37f0e080b0",
+      "kind": "Client",
+      "name": "postgresql.outbox.published",
+      "source": "reservations",
+      "durationMs": 1,
+      "timestamp": "2026-10-15T13:32:22.580765Z",
+      "attributes": {
+        "db.system.name": "postgresql",
+        "db.namespace": "reservations",
+        "db.operation.name": "outbox.published",
+        "db.query.text": "UPDATE reservation_outbox SET published_at=$2,attempt_count=attempt_count+1 WHERE event_id=$1"
+      },
+      "dashboardUrl": "http://127.0.0.1:15888/traces/detail/e40919184a23d5d8fca921e51f3432bf?spanId=09dc576c90436175"
+    },
+    {
+      "traceId": "772f9faadc380e19842a0c9d67906011",
+      "spanId": "1fe145a196e43cf4",
+      "kind": "Server",
+      "name": "POST /api/reservations",
+      "source": "reservations",
+      "destination": "127.0.0.1:60418",
+      "durationMs": 20,
+      "timestamp": "2026-10-15T13:31:01.267546Z",
+      "attributes": {
+        "http.request.method": "POST",
+        "server.address": "127.0.0.1",
+        "server.port": "60418",
+        "url.scheme": "http",
+        "url.path": "/api/reservations",
+        "network.protocol.version": "1.1",
+        "http.route": "/api/reservations",
+        "http.response.status_code": "409 Conflict"
+      },
+      "dashboardUrl": "http://127.0.0.1:15888/traces/detail/772f9faadc380e19842a0c9d67906011?spanId=1fe145a196e43cf4"
+    },
+    {
+      "traceId": "6c250adf0f500152d414305b85db9d72",
+      "spanId": "86731450f6317716",
+      "kind": "Server",
+      "name": "POST /api/reservations",
+      "source": "reservations",
+      "destination": "127.0.0.1:60421",
+      "durationMs": 7,
+      "timestamp": "2026-10-15T13:32:19.682076Z",
+      "attributes": {
+        "http.request.method": "POST",
+        "server.address": "127.0.0.1",
+        "server.port": "60421",
+        "url.scheme": "http",
+        "url.path": "/api/reservations",
+        "network.protocol.version": "1.1",
+        "http.route": "/api/reservations",
+        "http.response.status_code": "201 Created"
+      },
+      "dashboardUrl": "http://127.0.0.1:15888/traces/detail/6c250adf0f500152d414305b85db9d72?spanId=86731450f6317716"
+    },
+    {
+      "traceId": "e40919184a23d5d8fca921e51f3432bf",
+      "spanId": "5d2ea85262ee3ab7",
+      "kind": "Server",
+      "name": "POST /api/reservations/{id}/cancel",
+      "source": "reservations",
+      "destination": "127.0.0.1:60421",
+      "durationMs": 8,
+      "timestamp": "2026-10-15T13:32:19.691157Z",
+      "attributes": {
+        "http.request.method": "POST",
+        "server.address": "127.0.0.1",
+        "server.port": "60421",
+        "url.scheme": "http",
+        "url.path": "/api/reservations/2a026949-3967-4737-8856-3d87a6b52a02/cancel",
+        "network.protocol.version": "1.1",
+        "http.route": "/api/reservations/{id}/cancel",
+        "http.response.status_code": "200 OK"
+      },
+      "dashboardUrl": "http://127.0.0.1:15888/traces/detail/e40919184a23d5d8fca921e51f3432bf?spanId=5d2ea85262ee3ab7"
+    },
+    {
+      "traceId": "570e0f6af345628823547eb08b16d0dd",
+      "spanId": "0efb50738b8987b0",
+      "kind": "Server",
+      "name": "POST /api/reservations",
+      "status": "Error",
+      "statusMessage": "",
+      "source": "reservations",
+      "destination": "127.0.0.1:60421",
+      "durationMs": 3004,
+      "timestamp": "2026-10-15T13:34:01.939297Z",
+      "attributes": {
+        "http.request.method": "POST",
+        "server.address": "127.0.0.1",
+        "server.port": "60421",
+        "url.scheme": "http",
+        "url.path": "/api/reservations",
+        "network.protocol.version": "1.1",
+        "http.route": "/api/reservations",
+        "http.response.status_code": "503 Service Unavailable"
+      },
+      "dashboardUrl": "http://127.0.0.1:15888/traces/detail/570e0f6af345628823547eb08b16d0dd?spanId=0efb50738b8987b0"
+    },
+    {
+      "traceId": "772f9faadc380e19842a0c9d67906011",
+      "spanId": "3a02148deddc5f40",
+      "parentSpanId": "72518dcfda7a98d8",
+      "kind": "Client",
+      "name": "GET",
+      "source": "reservations",
+      "destination": "inventory-cwaqryuu",
+      "durationMs": 3,
+      "timestamp": "2026-10-15T13:31:01.267927Z",
+      "attributes": {
+        "http.request.method": "GET",
+        "server.address": "127.0.0.1",
+        "server.port": "60422",
+        "http.response.status_code": "200 OK",
+        "network.protocol.version": "1.1"
+      },
+      "dashboardUrl": "http://127.0.0.1:15888/traces/detail/772f9faadc380e19842a0c9d67906011?spanId=3a02148deddc5f40"
+    },
+    {
+      "traceId": "6c250adf0f500152d414305b85db9d72",
+      "spanId": "e586e1bf0c044029",
+      "parentSpanId": "b2db80b455ffeb08",
+      "kind": "Client",
+      "name": "GET",
+      "source": "reservations",
+      "destination": "inventory-cwaqryuu",
+      "durationMs": 3,
+      "timestamp": "2026-10-15T13:32:19.682479Z",
+      "attributes": {
+        "http.request.method": "GET",
+        "server.address": "127.0.0.1",
+        "server.port": "60422",
+        "http.response.status_code": "200 OK",
+        "network.protocol.version": "1.1"
+      },
+      "dashboardUrl": "http://127.0.0.1:15888/traces/detail/6c250adf0f500152d414305b85db9d72?spanId=e586e1bf0c044029"
+    },
+    {
+      "traceId": "570e0f6af345628823547eb08b16d0dd",
+      "spanId": "bd3aa94f4722506b",
+      "parentSpanId": "7c628b8b604a5a75",
+      "kind": "Client",
+      "name": "GET",
+      "status": "Error",
+      "statusMessage": "",
+      "source": "reservations",
+      "destination": "127.0.0.1:60422",
+      "durationMs": 3002,
+      "timestamp": "2026-10-15T13:34:01.939521Z",
+      "attributes": {
+        "http.request.method": "GET",
+        "server.address": "127.0.0.1",
+        "server.port": "60422",
+        "error.type": "System.Threading.Tasks.TaskCanceledException"
+      },
+      "dashboardUrl": "http://127.0.0.1:15888/traces/detail/570e0f6af345628823547eb08b16d0dd?spanId=bd3aa94f4722506b"
+    },
+    {
+      "traceId": "772f9faadc380e19842a0c9d67906011",
+      "spanId": "72518dcfda7a98d8",
+      "parentSpanId": "1fe145a196e43cf4",
+      "kind": "Internal",
+      "name": "reservation.book",
+      "status": "Error",
+      "statusMessage": "booking_conflict",
+      "source": "reservations",
+      "durationMs": 9,
+      "timestamp": "2026-10-15T13:31:01.267754Z",
+      "attributes": {},
+      "dashboardUrl": "http://127.0.0.1:15888/traces/detail/772f9faadc380e19842a0c9d67906011?spanId=72518dcfda7a98d8"
+    },
+    {
+      "traceId": "6c250adf0f500152d414305b85db9d72",
+      "spanId": "b2db80b455ffeb08",
+      "parentSpanId": "86731450f6317716",
+      "kind": "Internal",
+      "name": "reservation.book",
+      "source": "reservations",
+      "durationMs": 7,
+      "timestamp": "2026-10-15T13:32:19.682209Z",
+      "attributes": {
+        "reservation.id": "2a026949-3967-4737-8856-3d87a6b52a02",
+        "reservation.event_id": "6484e8d2-eeb1-49f1-8119-8eab4c30e4bb",
+        "equipment.id": "camera-001"
+      },
+      "dashboardUrl": "http://127.0.0.1:15888/traces/detail/6c250adf0f500152d414305b85db9d72?spanId=b2db80b455ffeb08"
+    },
+    {
+      "traceId": "e40919184a23d5d8fca921e51f3432bf",
+      "spanId": "97b53598e78835c1",
+      "parentSpanId": "5d2ea85262ee3ab7",
+      "kind": "Internal",
+      "name": "reservation.cancel",
+      "source": "reservations",
+      "durationMs": 8,
+      "timestamp": "2026-10-15T13:32:19.69121Z",
+      "attributes": {
+        "reservation.id": "2a026949-3967-4737-8856-3d87a6b52a02",
+        "reservation.event_id": "7aff0784-78d1-486c-90bd-951ec61bf963",
+        "equipment.id": "camera-001"
+      },
+      "dashboardUrl": "http://127.0.0.1:15888/traces/detail/e40919184a23d5d8fca921e51f3432bf?spanId=97b53598e78835c1"
+    },
+    {
+      "traceId": "570e0f6af345628823547eb08b16d0dd",
+      "spanId": "7c628b8b604a5a75",
+      "parentSpanId": "0efb50738b8987b0",
+      "kind": "Internal",
+      "name": "reservation.book",
+      "status": "Error",
+      "statusMessage": "inventory_unavailable",
+      "source": "reservations",
+      "durationMs": 3003,
+      "timestamp": "2026-10-15T13:34:01.939402Z",
+      "attributes": {},
+      "dashboardUrl": "http://127.0.0.1:15888/traces/detail/570e0f6af345628823547eb08b16d0dd?spanId=7c628b8b604a5a75"
+    },
+    {
+      "traceId": "6c250adf0f500152d414305b85db9d72",
+      "spanId": "81210c0073cc65d6",
+      "parentSpanId": "b2db80b455ffeb08",
+      "kind": "Producer",
+      "name": "reservation.publish",
+      "status": "Ok",
+      "statusMessage": "",
+      "source": "reservations",
+      "durationMs": 24,
+      "timestamp": "2026-10-15T13:32:22.543686Z",
+      "attributes": {
+        "event.id": "6484e8d2-eeb1-49f1-8119-8eab4c30e4bb",
+        "reservation.id": "2a026949-3967-4737-8856-3d87a6b52a02"
+      },
+      "dashboardUrl": "http://127.0.0.1:15888/traces/detail/6c250adf0f500152d414305b85db9d72?spanId=81210c0073cc65d6"
+    },
+    {
+      "traceId": "e40919184a23d5d8fca921e51f3432bf",
+      "spanId": "d4ec7b37f0e080b0",
+      "parentSpanId": "97b53598e78835c1",
+      "kind": "Producer",
+      "name": "reservation.publish",
+      "status": "Ok",
+      "statusMessage": "",
+      "source": "reservations",
+      "durationMs": 14,
+      "timestamp": "2026-10-15T13:32:22.569109Z",
+      "attributes": {
+        "event.id": "7aff0784-78d1-486c-90bd-951ec61bf963",
+        "reservation.id": "2a026949-3967-4737-8856-3d87a6b52a02"
+      },
+      "dashboardUrl": "http://127.0.0.1:15888/traces/detail/e40919184a23d5d8fca921e51f3432bf?spanId=d4ec7b37f0e080b0"
+    }
+  ],
+  "logs": [
+    {
+      "logId": 209,
+      "spanId": "b2db80b455ffeb08",
+      "traceId": "6c250adf0f500152d414305b85db9d72",
+      "message": "Reservation book completed (created)",
+      "severity": "Information",
+      "resourceName": "reservations",
+      "attributes": {
+        "Operation": "book",
+        "Outcome": "created"
+      },
+      "source": "Reservations.Program",
+      "dashboardUrl": "http://127.0.0.1:15888/structuredlogs?logEntryId=209"
+    },
+    {
+      "logId": 210,
+      "spanId": "97b53598e78835c1",
+      "traceId": "e40919184a23d5d8fca921e51f3432bf",
+      "message": "Reservation cancel completed (cancelled)",
+      "severity": "Information",
+      "resourceName": "reservations",
+      "attributes": {
+        "Operation": "cancel",
+        "Outcome": "cancelled"
+      },
+      "source": "Reservations.Program",
+      "dashboardUrl": "http://127.0.0.1:15888/structuredlogs?logEntryId=210"
+    },
+    {
+      "logId": 340,
+      "spanId": "7c628b8b604a5a75",
+      "traceId": "570e0f6af345628823547eb08b16d0dd",
+      "message": "Reservation book rejected (inventory_unavailable)",
+      "severity": "Warning",
+      "resourceName": "reservations",
+      "attributes": {
+        "Operation": "book",
+        "Outcome": "inventory_unavailable"
+      },
+      "source": "Reservations.Program",
+      "dashboardUrl": "http://127.0.0.1:15888/structuredlogs?logEntryId=340"
+    },
+    {
+      "logId": 295,
+      "spanId": "81210c0073cc65d6",
+      "traceId": "6c250adf0f500152d414305b85db9d72",
+      "message": "Reservation delivery publish outcome published",
+      "severity": "Information",
+      "resourceName": "reservations",
+      "attributes": {
+        "Operation": "publish",
+        "Outcome": "published"
+      },
+      "source": "Reservations.OutboxWorker",
+      "dashboardUrl": "http://127.0.0.1:15888/structuredlogs?logEntryId=295"
+    },
+    {
+      "logId": 296,
+      "spanId": "d4ec7b37f0e080b0",
+      "traceId": "e40919184a23d5d8fca921e51f3432bf",
+      "message": "Reservation delivery publish outcome published",
+      "severity": "Information",
+      "resourceName": "reservations",
+      "attributes": {
+        "Operation": "publish",
+        "Outcome": "published"
+      },
+      "source": "Reservations.OutboxWorker",
+      "dashboardUrl": "http://127.0.0.1:15888/structuredlogs?logEntryId=296"
+    }
+  ],
+  "runtimeResults": {
+    "booking": 201,
+    "cancellation": 200,
+    "bothInboxEventsObserved": true,
+    "inventoryStoppedBooking": 503,
+    "inventoryStoppedReadiness": 503,
+    "inventoryRestoredReadiness": 200,
+    "ownedAppHostStopped": true
+  },
+  "limitations": [
+    "Aspire spans CLI output does not expose exception events; production-pipeline DatabaseTelemetryPrivacyTests and TelemetryPrivacyTests in passing 216-test backend suite verify exception-event privacy.",
+    "These are retained application workflow spans for broker operations; no new native RabbitMQ instrumentation is claimed.",
+    "Saved workflow context intentionally parents both publish and consume spans; consume is not a child of publish."
+  ]
+}

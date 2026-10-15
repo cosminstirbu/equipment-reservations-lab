@@ -1,12 +1,12 @@
 using System.Diagnostics;
 using System.Text.Json;
-using HelloMessaging;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Notifications;
 using Npgsql;
+using ReservationMessaging;
 using Reservations;
 using Xunit;
 

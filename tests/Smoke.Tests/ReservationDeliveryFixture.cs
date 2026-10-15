@@ -5,12 +5,12 @@ using System.Threading.Channels;
 using Backend.Tests;
 using DotNet.Testcontainers.Builders;
 using DotNet.Testcontainers.Containers;
-using HelloMessaging;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Npgsql;
 using RabbitMQ.Client;
+using ReservationMessaging;
 using Xunit;
 
 namespace Smoke.Tests;
@@ -44,7 +44,7 @@ public sealed class ReservationDeliveryFixture : IAsyncLifetime
 
     public async Task ResetQueueAsync(CancellationToken cancellationToken)
     {
-        await using IConnection connection = await RabbitTopology.Factory(Messaging, TimeSpan.FromSeconds(3)).CreateConnectionAsync(cancellationToken);
+        await using IConnection connection = await RabbitConnection.Factory(Messaging, TimeSpan.FromSeconds(3)).CreateConnectionAsync(cancellationToken);
         await using IChannel channel = await connection.CreateChannelAsync(cancellationToken: cancellationToken);
         await channel.ExchangeDeclareAsync("reservations", ExchangeType.Direct, true, cancellationToken: cancellationToken);
         _ = await channel.QueueDeclareAsync("reservation-notifications", true, false, false, cancellationToken: cancellationToken);
@@ -60,7 +60,7 @@ public sealed class ReservationDeliveryFixture : IAsyncLifetime
 
     public async Task ChangeReservationExchangeAsync(bool incompatible, CancellationToken cancellationToken)
     {
-        await using IConnection connection = await RabbitTopology.Factory(Messaging, TimeSpan.FromSeconds(3)).CreateConnectionAsync(cancellationToken);
+        await using IConnection connection = await RabbitConnection.Factory(Messaging, TimeSpan.FromSeconds(3)).CreateConnectionAsync(cancellationToken);
         await using IChannel channel = await connection.CreateChannelAsync(cancellationToken: cancellationToken);
         await channel.ExchangeDeleteAsync("reservations", cancellationToken: cancellationToken);
         if (incompatible)

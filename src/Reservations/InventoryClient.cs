@@ -1,7 +1,7 @@
 using System.Diagnostics;
 using System.Net;
 using System.Text.Json;
-using HelloMessaging;
+using ReservationMessaging;
 
 namespace Reservations;
 
@@ -26,7 +26,7 @@ public sealed class InventoryClient(IHttpClientFactory clients)
             await using Stream stream = await response.Content.ReadAsStreamAsync(budget.Token);
             byte[] body = await ReservationValidation.ReadBoundedAsync(stream, budget.Token);
             InventoryItem? item = JsonSerializer.Deserialize(body, ReservationsJsonContext.Default.InventoryItem);
-            if (item is null || item.Id != equipmentId || !HelloValidation.IsEquipmentId(item.Id)
+            if (item is null || item.Id != equipmentId || !EquipmentIdValidation.IsEquipmentId(item.Id)
                 || string.IsNullOrWhiteSpace(item.Name) || item.Name.Length > 256 || item.Operational is null)
             {
                 throw new HttpRequestException("Invalid Inventory contract");

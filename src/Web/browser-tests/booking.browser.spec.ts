@@ -491,21 +491,6 @@ for (const opaque of [false, true]) {
       );
       expect((await rejectedForm).status()).toBe(403);
 
-      const helloURL = new URL('/api/hellos', baseURL).toString();
-      const rejectedHello = page.waitForResponse(
-        (response) =>
-          response.url() === helloURL && response.request().method() === 'POST',
-      );
-      await target.evaluate(async (url) => {
-        await fetch(url, {
-          method: 'POST',
-          mode: 'no-cors',
-          headers: { 'Content-Type': 'text/plain' },
-          body: JSON.stringify({ equipmentId: 'camera-001' }),
-        });
-      }, helloURL);
-      expect((await rejectedHello).status()).toBe(403);
-
       const cancelURL = new URL(
         `/api/reservations/${own.id}/cancel`,
         baseURL,

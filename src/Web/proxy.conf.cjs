@@ -12,7 +12,6 @@ function endpoint(name) {
 module.exports = Object.fromEntries(
   [
     ['/api/equipment', 'inventory'],
-    ['/api/hellos', 'reservations'],
     ['/api/availability', 'reservations'],
     ['/api/reservations', 'reservations'],
     ['/api/notifications', 'notifications'],

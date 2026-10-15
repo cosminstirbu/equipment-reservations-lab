@@ -65,7 +65,7 @@ public sealed class SecurityBrowserWriteTests(PostgresFixture postgres)
     public async Task OriginlessBrowserMetadataBlocksAllReservationPostsBeforeDependencies(string header, string value)
     {
         await using BookingScenario scenario = await BookingScenario.CreateAsync(postgres);
-        foreach (string path in new[] { "/api/reservations", $"/api/reservations/{Guid.NewGuid()}/cancel", "/api/hellos" })
+        foreach (string path in new[] { "/api/reservations", $"/api/reservations/{Guid.NewGuid()}/cancel" })
         {
             using HttpRequestMessage request = CreateRequest("application/json", path);
             _ = request.Headers.TryAddWithoutValidation(header, value);

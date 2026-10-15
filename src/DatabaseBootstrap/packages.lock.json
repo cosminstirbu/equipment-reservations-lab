@@ -426,25 +426,19 @@
         "resolved": "8.0.0",
         "contentHash": "7mu9v0QDv66ar3DpGSZHg9NuNcxDaaAcnMULuZlaTpP9+hwXhrxNGsF5GmLkSHxFdb5bBc1TzeujsRgTrPWi+Q=="
       },
-      "hellomessaging": {
-        "type": "Project",
-        "dependencies": {
-          "RabbitMQ.Client": "[7.2.2, )"
-        }
-      },
       "inventory": {
         "type": "Project",
         "dependencies": {
-          "HelloMessaging": "[1.0.0, )",
           "Persistence": "[1.0.0, )",
+          "ReservationMessaging": "[1.0.0, )",
           "ServiceDefaults": "[1.0.0, )"
         }
       },
       "notifications": {
         "type": "Project",
         "dependencies": {
-          "HelloMessaging": "[1.0.0, )",
           "Persistence": "[1.0.0, )",
+          "ReservationMessaging": "[1.0.0, )",
           "ServiceDefaults": "[1.0.0, )"
         }
       },
@@ -454,11 +448,17 @@
           "Npgsql": "[10.0.3, )"
         }
       },
+      "reservationmessaging": {
+        "type": "Project",
+        "dependencies": {
+          "RabbitMQ.Client": "[7.2.2, )"
+        }
+      },
       "reservations": {
         "type": "Project",
         "dependencies": {
-          "HelloMessaging": "[1.0.0, )",
           "Persistence": "[1.0.0, )",
+          "ReservationMessaging": "[1.0.0, )",
           "ServiceDefaults": "[1.0.0, )"
         }
       },

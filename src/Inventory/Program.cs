@@ -1,6 +1,6 @@
-using HelloMessaging;
 using Inventory;
 using Npgsql;
+using ReservationMessaging;
 using ServiceDefaults;
 
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
@@ -26,7 +26,7 @@ app.MapGet("/api/equipment", async (EquipmentStore store, CancellationToken canc
 });
 app.MapGet("/api/equipment/{id}", async (string id, EquipmentStore store, CancellationToken cancellationToken) =>
 {
-    if (!HelloValidation.IsEquipmentId(id))
+    if (!EquipmentIdValidation.IsEquipmentId(id))
     {
         return Results.Problem(statusCode: 400, title: "Invalid equipment ID");
     }

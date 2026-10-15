@@ -4,7 +4,6 @@ using System.Text.Json.Serialization;
 namespace Notifications;
 
 [JsonSourceGenerationOptions(JsonSerializerDefaults.Web)]
-[JsonSerializable(typeof(Notification))]
 [JsonSerializable(typeof(InboxEntry[]))]
 internal sealed partial class NotificationsJsonContext : JsonSerializerContext
 {

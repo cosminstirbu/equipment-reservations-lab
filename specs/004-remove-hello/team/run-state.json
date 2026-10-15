@@ -1,0 +1,120 @@
+{
+  "feature_directory": "specs/004-remove-hello",
+  "status": "complete",
+  "baseline_revision": "5cfd6233e9d466e9a525f2fe18a30d1aa90015f7",
+  "preparation_round": 1,
+  "implementation_round": 0,
+  "limits": {
+    "preparation_repairs": 3,
+    "implementation_repairs": 3,
+    "no_progress_recurrences": 2
+  },
+  "required_checks": [
+    "npm run format-check",
+    "npm run lint",
+    "npm run check",
+    "booking browser regression",
+    "independent quality and security reviews",
+    "speckit-converge",
+    "explicit human acceptance"
+  ],
+  "acceptance_evidence": [
+    "implementation-evidence.md",
+    "runtime-telemetry-evidence.json",
+    "candidate-source-manifest.json",
+    "historical-manifest.json",
+    "quality-final.md",
+    "security-final.md",
+    "convergence.md",
+    "human-acceptance.md"
+  ],
+  "quality_review": {
+    "verdict": "pass",
+    "revision": "2d340fae1e3d9849b9729d38772bdc3735ead780e130d73438d5365dea031a07",
+    "report": "quality-final.md"
+  },
+  "security_review": {
+    "verdict": "pass",
+    "revision": "2d340fae1e3d9849b9729d38772bdc3735ead780e130d73438d5365dea031a07",
+    "report": "security-final.md"
+  },
+  "convergence": {
+    "verdict": "converged",
+    "revision": "2d340fae1e3d9849b9729d38772bdc3735ead780e130d73438d5365dea031a07",
+    "report": "convergence.md",
+    "tasks_appended": 0
+  },
+  "human_acceptance_required": true,
+  "human_acceptance": {
+    "status": "accepted",
+    "date": "2026-10-15",
+    "actor": "human owner",
+    "statement": "I accept stage the files and give me a commit message.",
+    "revision": "2d340fae1e3d9849b9729d38772bdc3735ead780e130d73438d5365dea031a07",
+    "record": "human-acceptance.md"
+  },
+  "pending_decisions": [],
+  "scope_confirmation": {
+    "date": "2026-10-15",
+    "status": "confirmed",
+    "note": "User confirmed interview scope and authorized feature-team loop; this is not final implementation acceptance."
+  },
+  "preparation_quality": {
+    "verdict": "pass",
+    "snapshot": "prep-owner-evidence-update",
+    "report": "quality-owner-evidence-update.md",
+    "status": "current"
+  },
+  "preparation_security": {
+    "verdict": "pass",
+    "snapshot": "prep-owner-evidence-update",
+    "report": "security-owner-evidence-update.md",
+    "status": "current"
+  },
+  "implementation_assignment": "T001\u2013T022 to coder; T023/T024 coordinator, independent reviewer and human gates",
+  "owner_scope_updates": [
+    {
+      "date": "2026-10-15",
+      "instruction": "No need for tests that check that an old feature is not present any longer. Remove those tests.",
+      "effect": "Remove dedicated endpoint/UI retirement absence tests; verify deletion by source/config/docs review and retain meaningful positive booking/state/security/telemetry regression coverage."
+    }
+  ],
+  "source_snapshot": "2d340fae1e3d9849b9729d38772bdc3735ead780e130d73438d5365dea031a07",
+  "check_results": [
+    {
+      "command": "npm run format-check",
+      "exit_code": 0,
+      "revision": "2d340fae1e3d9849b9729d38772bdc3735ead780e130d73438d5365dea031a07"
+    },
+    {
+      "command": "npm run lint",
+      "exit_code": 0,
+      "revision": "2d340fae1e3d9849b9729d38772bdc3735ead780e130d73438d5365dea031a07"
+    },
+    {
+      "command": "npm run check",
+      "exit_code": 0,
+      "revision": "2d340fae1e3d9849b9729d38772bdc3735ead780e130d73438d5365dea031a07"
+    },
+    {
+      "command": "git diff --check",
+      "exit_code": 0,
+      "revision": "2d340fae1e3d9849b9729d38772bdc3735ead780e130d73438d5365dea031a07"
+    },
+    {
+      "command": "booking Playwright/axe suite",
+      "exit_code": 0,
+      "revision": "2d340fae1e3d9849b9729d38772bdc3735ead780e130d73438d5365dea031a07"
+    }
+  ],
+  "test_results": {
+    "tooling": 4,
+    "frontend": 33,
+    "backend": 216,
+    "smoke": 44,
+    "browser": 9,
+    "failed": 0,
+    "skipped": 0
+  },
+  "completion_metadata_note": "Metadata-only completion after explicit owner acceptance recorded 2026-10-15; reviewed source and historical reports/hashes unchanged."
+}

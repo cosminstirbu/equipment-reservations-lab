@@ -35,7 +35,7 @@
     <PackageReference Include="Aspire.Hosting.Testing" Version="13.6.1" />
     <ProjectReference Include="../../src/AppHost/AppHost.csproj" />
     <ProjectReference
-      Include="../../src/HelloMessaging/HelloMessaging.csproj"
+      Include="../../src/ReservationMessaging/ReservationMessaging.csproj"
     />
   </ItemGroup>
 </Project>

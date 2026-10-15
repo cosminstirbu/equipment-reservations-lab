@@ -4,7 +4,6 @@ using System.Diagnostics.Metrics;
 using System.Net.Http.Json;
 using System.Text.Json;
 using System.Threading.Channels;
-using HelloMessaging;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -15,6 +14,7 @@ using Npgsql;
 using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
 using RabbitMQ.Client.Exceptions;
+using ReservationMessaging;
 using Reservations;
 using Xunit;
 

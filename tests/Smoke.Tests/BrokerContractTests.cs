@@ -1,9 +1,9 @@
 using Aspire.Hosting;
 using Aspire.Hosting.ApplicationModel;
 using Aspire.Hosting.Testing;
-using HelloMessaging;
 using RabbitMQ.Client;
 using RabbitMQ.Client.Exceptions;
+using ReservationMessaging;
 using Xunit;
 
 namespace Smoke.Tests;
@@ -11,7 +11,7 @@ namespace Smoke.Tests;
 public class BrokerContractTests
 {
     [Fact]
-    public async Task FixedTopologyRoutesConfirmsRejectsUnroutableAndCapsQueue()
+    public async Task ReservationTopologyRoutesBothEventsConfirmsAndRejectsUnroutable()
     {
         using var deadline = new CancellationTokenSource(TimeSpan.FromMinutes(3));
         Environment.SetEnvironmentVariable("ASPIRE_CONTAINER_RUNTIME", "podman");
@@ -30,27 +30,27 @@ public class BrokerContractTests
         await SmokeStartup.StartAsync(app, deadline.Token);
         _ = await app.ResourceNotifications.WaitForResourceHealthyAsync("messaging", deadline.Token);
         string? connectionString = await app.GetConnectionStringAsync("messaging", deadline.Token);
-        await using IConnection connection = await RabbitTopology.Factory(connectionString!, TimeSpan.FromSeconds(3)).CreateConnectionAsync(deadline.Token);
+        await using IConnection connection = await RabbitConnection.Factory(connectionString!, TimeSpan.FromSeconds(3)).CreateConnectionAsync(deadline.Token);
         await using IChannel channel = await connection.CreateChannelAsync(new CreateChannelOptions(true, true), deadline.Token);
-        await RabbitTopology.DeclareAsync(channel, deadline.Token);
-        _ = await Assert.ThrowsAsync<PublishReturnException>(async () => await channel.BasicPublishAsync(RabbitTopology.Exchange, "unroutable", true, new BasicProperties(), "{}"u8.ToArray(), deadline.Token));
-        for (int i = 0; i < 1000; i++)
+        await ReservationTopology.DeclareAsync(channel, deadline.Token);
+        _ = await Assert.ThrowsAsync<PublishReturnException>(async () =>
+            await channel.BasicPublishAsync(ReservationTopology.Exchange, "unroutable", true, new BasicProperties(), "{}"u8.ToArray(), deadline.Token));
+
+        foreach (string key in new[] { ReservationTopology.Confirmed, ReservationTopology.Cancelled })
         {
-            await channel.BasicPublishAsync(RabbitTopology.Exchange, RabbitTopology.RoutingKey, true, new BasicProperties(), "{}"u8.ToArray(), deadline.Token);
+            await channel.BasicPublishAsync(ReservationTopology.Exchange, key, true,
+                new BasicProperties { Persistent = true }, System.Text.Encoding.UTF8.GetBytes(key), deadline.Token);
         }
 
-        _ = await Assert.ThrowsAnyAsync<PublishException>(async () => await channel.BasicPublishAsync(RabbitTopology.Exchange, RabbitTopology.RoutingKey, true, new BasicProperties(), "{}"u8.ToArray(), deadline.Token));
-        Assert.Equal(1000u, (await channel.QueueDeclarePassiveAsync(RabbitTopology.Queue, deadline.Token)).MessageCount);
-        BasicGetResult? invalid = await channel.BasicGetAsync(RabbitTopology.Queue, false, deadline.Token);
-        Assert.NotNull(invalid);
-        await channel.BasicRejectAsync(invalid.DeliveryTag, false, deadline.Token);
-        Assert.Equal(999u, (await channel.QueueDeclarePassiveAsync(RabbitTopology.Queue, deadline.Token)).MessageCount);
-        // Real broker TTL is checked by bounded observation, supplementing clock-controlled store tests.
-        using var expiry = CancellationTokenSource.CreateLinkedTokenSource(deadline.Token);
-        expiry.CancelAfter(TimeSpan.FromSeconds(35));
-        while ((await channel.QueueDeclarePassiveAsync(RabbitTopology.Queue, expiry.Token)).MessageCount > 0)
+        Assert.Equal(2u, (await channel.QueueDeclarePassiveAsync(ReservationTopology.Queue, deadline.Token)).MessageCount);
+        foreach (string key in new[] { ReservationTopology.Confirmed, ReservationTopology.Cancelled })
         {
-            await Task.Delay(250, expiry.Token);
+            BasicGetResult? delivery = await channel.BasicGetAsync(ReservationTopology.Queue, false, deadline.Token);
+            Assert.NotNull(delivery);
+            Assert.Equal(key, delivery.RoutingKey);
+            Assert.Equal(key, System.Text.Encoding.UTF8.GetString(delivery.Body.Span));
+            Assert.True(delivery.BasicProperties.Persistent);
+            await channel.BasicAckAsync(delivery.DeliveryTag, false, deadline.Token);
         }
     }
 }

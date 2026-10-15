@@ -1,7 +1,7 @@
 using System.Diagnostics;
-using HelloMessaging;
 using Npgsql;
 using Persistence;
+using ReservationMessaging;
 
 namespace Reservations;
 

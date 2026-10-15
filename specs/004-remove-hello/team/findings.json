@@ -1,0 +1,19 @@
+{
+  "findings": [
+    {
+      "id": "VQ-001",
+      "category": "requirements",
+      "severity": "medium",
+      "blocking": true,
+      "status": "closed",
+      "owner": "requirements_analyst",
+      "reviewer": "verifier_reviewer",
+      "evidence": "SC-005 literal hello-reference allowlist conflicts with plan negative retirement tests and isolated legacy-resource fixture references.",
+      "remediation": "Explicitly allow references solely proving removed surfaces/resources absent or inert, with no production hello behavior.",
+      "aliases": [
+        "PRE-Q-001"
+      ],
+      "closure": "Original verifier validated prep-design-1; see quality-design-1.md."
+    }
+  ]
+}

@@ -7,11 +7,11 @@ using Aspire.Hosting.Testing;
 using Backend.Tests;
 using DotNet.Testcontainers.Builders;
 using DotNet.Testcontainers.Volumes;
-using HelloMessaging;
 using Inventory;
 using Notifications;
 using Npgsql;
 using RabbitMQ.Client;
+using ReservationMessaging;
 using Xunit;
 using Xunit.Abstractions;
 
@@ -39,11 +39,11 @@ public sealed class BookingSmokeTests(ITestOutputHelper output)
         BookedReservation confirmed;
         Dictionary<string, Migration> ledger;
         Dictionary<string, string> lifecycles;
-        Guid firstHello;
 
         await using (DistributedApplication first = await BuildAsync(postgres.Name, rabbit.Name, secrets, false, token))
         {
             await StartReadyAsync(first, token);
+            await LegacyBrokerStateAsync(first, seed: true, token);
             lifecycles = ObserveLifecycles(first, "first");
             using HttpClient inventory = first.CreateHttpClient("inventory");
             using HttpClient reservations = first.CreateHttpClient("reservations");
@@ -55,7 +55,6 @@ public sealed class BookingSmokeTests(ITestOutputHelper output)
             retained = await BookAndCancelAsync(reservations, 10, token);
             confirmed = await BookAsync(reservations, 30, token);
             await WaitInboxAsync(notifications, [retained.ConfirmationEventId, retained.CancellationEventId!.Value, confirmed.ConfirmationEventId], token);
-            firstHello = await HelloAsync(reservations, notifications, token);
             ledger = await ReadLedgerAsync(first, secrets, token);
 
             await using (NpgsqlDataSource own = await OwnDatabaseAsync(first, "inventory", secrets, token))
@@ -80,6 +79,7 @@ public sealed class BookingSmokeTests(ITestOutputHelper output)
             _ = await second.ResourceNotifications.WaitForResourceHealthyAsync("messaging", token);
             await AssertOutboxAsync(second, secrets, pending, false, token);
             await AssertInboxRowsAsync(second, secrets, 3, token);
+            await LegacyBrokerStateAsync(second, seed: false, token);
             await AuditRolesAsync(second, secrets, token);
             Assert.Equal(ledger.OrderBy(item => item.Key), (await ReadLedgerAsync(second, secrets, token)).OrderBy(item => item.Key));
             using HttpClient inventory = second.CreateHttpClient("inventory");
@@ -101,6 +101,7 @@ public sealed class BookingSmokeTests(ITestOutputHelper output)
             _ = await third.ResourceNotifications.WaitForResourceHealthyAsync("inventory", token);
             _ = await third.ResourceNotifications.WaitForResourceHealthyAsync("messaging", token);
             Assert.Equal(2U, await QueuedAsync(third, token));
+            await LegacyBrokerStateAsync(third, seed: false, token);
             await AssertInboxRowsAsync(third, secrets, 3, token);
             Assert.Equal(ledger.OrderBy(item => item.Key), (await ReadLedgerAsync(third, secrets, token)).OrderBy(item => item.Key));
             await AssertOutboxAsync(third, secrets, pending, true, token);
@@ -120,8 +121,7 @@ public sealed class BookingSmokeTests(ITestOutputHelper output)
             {
                 Assert.NotEqual(lifecycles[service], started);
             }
-            Assert.Equal(HttpStatusCode.NotFound, (await notifications.GetAsync($"/api/notifications/{firstHello}", token)).StatusCode);
-            Assert.NotEqual(firstHello, await HelloAsync(reservations, notifications, token));
+            await LegacyBrokerStateAsync(third, seed: false, token);
             await third.StopAsync(token);
         }
     }
@@ -329,36 +329,30 @@ public sealed class BookingSmokeTests(ITestOutputHelper output)
     private static async Task<uint> QueuedAsync(DistributedApplication app, CancellationToken token)
     {
         string? settings = await app.GetConnectionStringAsync("messaging", token);
-        await using IConnection connection = await RabbitTopology.Factory(settings!, TimeSpan.FromSeconds(3)).CreateConnectionAsync(token);
+        await using IConnection connection = await RabbitConnection.Factory(settings!, TimeSpan.FromSeconds(3)).CreateConnectionAsync(token);
         await using IChannel channel = await connection.CreateChannelAsync(cancellationToken: token);
         return (await channel.QueueDeclarePassiveAsync(ReservationTopology.Queue, token)).MessageCount;
     }
 
-    private static async Task<Guid> HelloAsync(HttpClient reservations, HttpClient notifications, CancellationToken token)
+    private static async Task LegacyBrokerStateAsync(DistributedApplication app, bool seed, CancellationToken token)
     {
-        HttpResponseMessage response = await reservations.PostAsJsonAsync("/api/hellos", new
+        string? settings = await app.GetConnectionStringAsync("messaging", token);
+        await using IConnection connection = await RabbitConnection.Factory(settings!, TimeSpan.FromSeconds(3)).CreateConnectionAsync(token);
+        await using IChannel channel = await connection.CreateChannelAsync(new CreateChannelOptions(true, true), token);
+        if (seed)
         {
-            equipmentId = "camera-001"
-        }, token);
-        Assert.Equal(HttpStatusCode.Accepted, response.StatusCode);
-        Guid id = (await response.Content.ReadFromJsonAsync<HelloAccepted>(token))!.CorrelationId;
-        using var recovery = CancellationTokenSource.CreateLinkedTokenSource(token);
-        recovery.CancelAfter(TimeSpan.FromSeconds(30));
-        while (true)
-        {
-            response = await notifications.GetAsync($"/api/notifications/{id}", recovery.Token);
-            if (response.StatusCode == HttpStatusCode.OK)
-            {
-                Assert.Contains("Hello received for Demo Camera", await response.Content.ReadAsStringAsync(recovery.Token), StringComparison.Ordinal);
-                return id;
-            }
-
-            Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
-            await Task.Delay(100, recovery.Token);
+            await channel.ExchangeDeclareAsync("hello", ExchangeType.Direct, true, false, cancellationToken: token);
+            _ = await channel.QueueDeclareAsync("hello-notifications", true, false, false, cancellationToken: token);
+            await channel.QueueBindAsync("hello-notifications", "hello", "hello.requested", cancellationToken: token);
+            await channel.BasicPublishAsync("hello", "hello.requested", true,
+                new BasicProperties { Persistent = true }, "retained legacy state"u8.ToArray(), token);
         }
-    }
 
-    private sealed record HelloAccepted(Guid CorrelationId);
+        await channel.ExchangeDeclarePassiveAsync("hello", token);
+        QueueDeclareOk queue = await channel.QueueDeclarePassiveAsync("hello-notifications", token);
+        Assert.Equal(1u, queue.MessageCount);
+        Assert.Equal(0u, queue.ConsumerCount);
+    }
 
     private sealed record Migration(int Version, string Checksum, DateTimeOffset AppliedAt);
 }

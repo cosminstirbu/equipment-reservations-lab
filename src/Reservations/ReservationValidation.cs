@@ -1,7 +1,7 @@
 using System.Globalization;
 using System.Text.Json;
 using System.Text.RegularExpressions;
-using HelloMessaging;
+using ReservationMessaging;
 
 namespace Reservations;
 
@@ -12,7 +12,7 @@ public static partial class ReservationValidation
 
     public static ReservationInterval Interval(ReservationInput? input, TimeProvider time)
     {
-        if (input is null || !HelloValidation.IsEquipmentId(input.EquipmentId))
+        if (input is null || !EquipmentIdValidation.IsEquipmentId(input.EquipmentId))
         {
             throw new ReservationProblemException(400, "invalid_request", "Select a valid equipment identifier.", "equipmentId");
         }

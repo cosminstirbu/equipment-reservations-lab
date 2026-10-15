@@ -1,6 +1,6 @@
-using HelloMessaging;
 using Npgsql;
 using Persistence;
+using ReservationMessaging;
 
 namespace Notifications;
 

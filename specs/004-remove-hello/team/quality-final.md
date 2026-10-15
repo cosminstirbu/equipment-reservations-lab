@@ -1,0 +1,32 @@
+# Independent Implementation Quality Review — Hello Retirement
+
+Reviewer: verifier_reviewer. Date: 2026-10-15. Feature: specs/004-remove-hello. Baseline HEAD: 5cfd6233e9d466e9a525f2fe18a30d1aa90015f7. Reviewed source snapshot: candidate-source-manifest.json SHA256 `2d340fae1e3d9849b9729d38772bdc3735ead780e130d73438d5365dea031a07` (168 files).
+
+**Verdict: PASS.** No correctness regressions, missing required retained coverage, or unresolved blocking quality findings identified. This is implementation quality approval; security, convergence, and explicit human completed-result acceptance retain their separate ownership.
+
+## Review and snapshot evidence
+
+Read current spec/design/tasks, source diff and surrounding affected paths, concern-to-test mapping, final implementation evidence and runtime-telemetry-evidence.json. Independently recalculated manifest hash and every listed source hash: exact match, zero mismatches. Reviewed removed paths via git diff/status as well as new ReservationMessaging files. Independently ran `git diff --check`: exit 0. No reviewer file writes or application/test reruns; validation execution evidence supplied by coordinator/coder is identified below.
+
+## Requirement traceability
+
+- FR-001/002, SC-001: App root now renders Booking alone; hello component/client/tests and proxy entry removed. Reservations hello handler and Notifications transient lookup removed. No aliases or deprecation behavior added. Source/config/current-doc inspection establishes removal as explicitly directed by owner; no old-feature absence tests retained.
+- FR-003/005: Hello publisher/consumer/transient store/DTOs/generated metadata/logs, topology declarations, worker health registrations and Equipment.Hello sources/meters removed. Existing shared project renamed ReservationMessaging; exact EquipmentIdValidation predicate and RabbitConnection timeouts/recovery-disabled settings preserved.
+- FR-004/009, SC-002: Eight retained messaging C# files independently compared to baseline and found byte-identical after namespace/validation-symbol normalization. Reservation topology/schema/UTC converter/regex/recovery contracts preserved; publisher/subscription changes are shared-factory symbol substitutions. Booking endpoints, persistence, migrations, browser-write protections and privacy processors remain intact. Database tracing capture-control source changes to a retained subscribed source.
+- FR-006, SC-003: AppHost secret ID and storage declarations unchanged; no production purge/delete/reset path introduced. Positive isolated named-volume smoke extends existing durability assertions with preserved legacy resource/message state across restart. Fixture deliberately uses durable artifacts to test retention, not recreate obsolete TTL/transient contracts.
+- FR-007, SC-004: Dedicated hello tests retired; mixed smoke/browser/security tests retain positive booking assertions. Existing BookingTests cover malformed/missing/unexpected/oversized payloads, unusable Inventory responses, timeout and no allocation/retry. Operational/recovery/outbox/consumer/database/privacy/telemetry tests cover retained health, durability, repeat safety, safe correlation and bounded dimensions; booking UI/browser tests retain keyboard/focus/axe/security coverage. Obsolete TTL/cap/expiration contracts correctly receive no invented booking replacement.
+- FR-008, SC-005: Current tracked readme.md and formatter example now use booking guidance; Web package identity updated without dependency upgrade. Separate docs/history/hello-retirement.md preserves historical meaning. Independently confirmed no baseline diff under prior three feature directories; historical manifest covers 170 files. Remaining active hello strings are preserved secret ID, separate history references and isolated state-preservation fixture only. No absence-only test suite exists. Earlier red absence evidence is accurately labeled superseded chronology.
+- FR-010: Readiness failures use bounded retained reservation dependency telemetry. Production AddNpgsql, privacy processors, framework/booking sources and meters remain registered. Reviewed exported create/cancel success, SQL conflict, Inventory outage and correlated structured logs; selected SQL uses placeholders without runtime parameters. Publish/consume correctly retain existing saved-workflow sibling parentage; inbox insert is consume child.
+- FR-011, SC-006: T001–T022 evidence is revision-matched. Required reviews, convergence and actual human acceptance remain separate final coordinator gates; implementation authorization is not recorded as acceptance.
+
+## Required validation evidence reviewed
+
+Frozen-source `npm run check`: exit 0; formatting/style/ESLint pass; build 0 warnings/errors and no generator diagnostics; tooling 4/4, Angular build pass, Vitest 33/33, Backend 216/216, real-infrastructure Smoke 44/44, zero skips. Separate format-check/lint and diff-check pass. Edge Playwright suite: exit 0, 9/9, no skips/retries; keyboard booking/conflict/cancel/rebook/inbox, focus/error/pending behavior, axe including contrast, hostile/opaque-origin 403 and no mutations. Real create201/cancel200 yielded both durable events. Inventory stop yielded readiness503 and booking503; restart restored readiness200. Owned AppHost stopped cleanly, final ps empty; persistent state/secrets retained.
+
+## Runtime evidence and limitations
+
+Reviewed success traces `6c250adf0f500152d414305b85db9d72` (create) and `e40919184a23d5d8fca921e51f3432bf` (cancel), conflict trace `772f9faadc380e19842a0c9d67906011`, outage trace `570e0f6af345628823547eb08b16d0dd`, SQL operations, publish/consume/inbox relationships, safe correlated structured outcomes. Aspire CLI does not expose exception-event fields; evidence correctly relies on passing production-pipeline privacy tests for that dimension. No native RabbitMQ instrumentation claim is made. Dashboard links are historical local-session evidence after runtime stop.
+
+## Findings and next gates
+
+No new findings. Preparation VQ-001 remains CLOSED; targeted owner-directed absence-test removal baseline remains approved. Evidence concern-map stale root-test phrase was corrected before final review. All 20 custom requirements-quality items remain satisfied. No unresolved product questions. Changed reviewer files: none. Coordinator should finish independent security/convergence and request explicit acceptance before recording feature complete.

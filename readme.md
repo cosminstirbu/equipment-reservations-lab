@@ -161,12 +161,6 @@ means the notification was observed. Missing entries display **not yet
 observed**. There is no automatic booking retry or reservation/inbox browser
 polling.
 
-The **Connectivity demo** link preserves the hello walking skeleton: the screen
-displays Demo Camera; press **Send hello**. Reservations verifies Inventory, confirms
-broker publication and returns a new correlation ID. Angular polls that ID and
-displays **Hello received for Demo Camera**. Each deliberate send has a distinct
-ID. Hello results retain their original bounded, transient memory contract.
-
 ### Verification
 
 The startup procedure above installs Web dependencies through Aspire. Repository
@@ -211,7 +205,7 @@ provider contracts. Database concurrency tests send competing public requests to
 verify the exclusion constraint. Tests control time for date/cancellation rules.
 Rendered Angular tests exercise user actions, deadlines, cancellation and axe
 accessibility checks. Smoke tests start isolated AppHost processes and actual
-PostgreSQL/RabbitMQ, verify the full hello path and correlation, exercise broker
+PostgreSQL/RabbitMQ, verify booking delivery and correlation, exercise broker
 contracts and use fresh AppHosts with test-owned named volumes to check durable
 state and queued-event recovery. These tests do not reset the normal application
 volumes. Missing runtime/dependencies fail the check; they are never skipped.
@@ -228,8 +222,8 @@ npm --prefix src/Web run test:browser
 ```
 
 The browser suite starts an isolated browser, verifies real booking/conflict,
-cancellation/rebooking and explicit inbox observation, preserves two distinct
-hello keyboard sends, and runs axe with color contrast enabled. Separate tests
+cancellation/rebooking and explicit inbox observation, keyboard/focus behavior,
+and runs axe with color contrast enabled. Separate tests
 hold or replace HTTP boundaries to inspect loading, empty, pending, validation
 and error accessibility; those checks do not establish broker connectivity.
 Hostile alias and opaque-origin browser tests require actual server 403
@@ -330,9 +324,8 @@ analyzer diagnostics are checked rather than suppressed.
 If Podman is unavailable, start its machine (`podman machine start`) and rerun.
 Inspect the Aspire resource readiness and logs for restore, port, or dependency
 failures. Inventory validation and broker publication have three-second budgets;
-client calls have five seconds. Only the legacy hello notification lookup polls:
-every 500 ms for at most 30 seconds and stops at success, failure or component
-destruction. Errors stay visible and a new send is a deliberate action.
+client calls have five seconds. Booking errors stay visible; refresh saved
+state before deliberately retrying an uncertain write.
 
 Reservation APIs have eight-second request budgets. Outbox publication has three
 seconds, consumer setup/database calls five seconds and ACK three seconds. Safe
@@ -365,20 +358,17 @@ telemetry → Manage, expand the relevant resources, select only Metrics, then
 Export selected. Keep resource configuration exports private because they can
 contain credentials.
 
-Hello retains its original policy: after a hello broker outage restart AppHost;
-automatic hello retries are disabled. A hello publish-confirm timeout is
-uncertain and does not automatically resend. Notifications keeps at most 1,000
-hello results and expires them after five minutes. Restarting Notifications
-clears hello results. Hello messages are nonpersistent; reservation
-persistence/replay does not extend the hello contract.
-
 This remains a single-user trusted-workstation demo with no authentication,
 authorization, tenant/user isolation, identity provider, approval workflow, real
 external notification or production deployment. Canonical HTTP(S) loopback
 browser origins (`localhost`, `127.0.0.1`, `[::1]`) on any valid local port are
 trusted; this is not isolation from other local applications. Reservations
-POSTs, including hello, reject hostile/null Origin and originless browser
+POSTs reject hostile/null Origin and originless browser
 metadata with safe 403. Direct local CLI JSON writes without browser metadata
 remain supported. Booking creation requires `application/json` with UTF-8. Proxy
 requests preserve Origin/Host; CORS read restrictions alone are not the write
 guard. Do not expose this demo to a shared network or use it with personal data.
+
+Walking-skeleton retirement context is recorded separately in
+[the history note](docs/history/hello-retirement.md). Historical feature evidence
+describes its original reviewed revisions.

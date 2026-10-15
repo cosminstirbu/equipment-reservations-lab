@@ -35,7 +35,7 @@ npm run check
 To format only edited files after each edit:
 
 ```sh
-npm run format -- src/Notifications/NotificationStore.cs src/Web/src/app/hello-api.ts
+npm run format -- src/Notifications/ReservationInbox.cs src/Web/src/app/booking/booking-api.ts
 ```
 
 Apply semantic .NET IDE fixes explicitly, then inspect the diff, format, and test:

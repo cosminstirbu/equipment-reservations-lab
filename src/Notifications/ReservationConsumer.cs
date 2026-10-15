@@ -1,7 +1,7 @@
 using System.Diagnostics;
-using HelloMessaging;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Persistence;
+using ReservationMessaging;
 
 namespace Notifications;
 

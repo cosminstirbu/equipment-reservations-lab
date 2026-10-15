@@ -49,11 +49,11 @@ public static class Extensions
                 .AddProcessor(new HttpTelemetryPrivacyProcessor())
                 .AddProcessor(new DatabaseTelemetryPrivacyProcessor())
                 .AddNpgsql()
-                .AddSource("Equipment.Hello", "Equipment.Reservations", "Equipment.ReservationMessaging", "Equipment.Notifications", "Equipment.DatabaseBootstrap")
+                .AddSource("Equipment.Reservations", "Equipment.ReservationMessaging", "Equipment.Notifications", "Equipment.DatabaseBootstrap")
                 .AddAspNetCoreInstrumentation()
                 .AddHttpClientInstrumentation())
             .WithMetrics(metrics => metrics
-                .AddMeter("Equipment.Hello", "Equipment.Reservations", "Equipment.ReservationMessaging", "Equipment.Notifications", "Equipment.DatabaseBootstrap")
+                .AddMeter("Equipment.Reservations", "Equipment.ReservationMessaging", "Equipment.Notifications", "Equipment.DatabaseBootstrap")
                 .AddAspNetCoreInstrumentation()
                 .AddHttpClientInstrumentation()
                 .AddRuntimeInstrumentation());

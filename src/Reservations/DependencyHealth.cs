@@ -1,6 +1,7 @@
-using HelloMessaging;
+using System.Diagnostics;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
 using RabbitMQ.Client;
+using ReservationMessaging;
 
 namespace Reservations;
 
@@ -8,6 +9,7 @@ public sealed class DependencyHealth(IHttpClientFactory clients) : IHealthCheck
 {
     public async Task<HealthCheckResult> CheckHealthAsync(HealthCheckContext context, CancellationToken cancellationToken = default)
     {
+        long started = Stopwatch.GetTimestamp();
         using var budget = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
         budget.CancelAfter(TimeSpan.FromSeconds(3));
         try
@@ -17,7 +19,7 @@ public sealed class DependencyHealth(IHttpClientFactory clients) : IHealthCheck
         }
         catch (Exception exception) when (exception is HttpRequestException or OperationCanceledException)
         {
-            HelloTelemetry.Record("readiness", "unavailable");
+            ReservationTelemetry.Dependency("inventory", "unavailable", started);
             return HealthCheckResult.Unhealthy("Inventory unavailable");
         }
     }
@@ -33,16 +35,17 @@ public sealed class BrokerHealth(IConfiguration configuration) : IHealthCheck
             return HealthCheckResult.Unhealthy("Broker not configured");
         }
 
+        long started = Stopwatch.GetTimestamp();
         using var budget = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
         budget.CancelAfter(TimeSpan.FromSeconds(3));
         try
         {
-            await using IConnection connection = await RabbitTopology.Factory(broker, TimeSpan.FromSeconds(3)).CreateConnectionAsync(budget.Token);
+            await using IConnection connection = await RabbitConnection.Factory(broker, TimeSpan.FromSeconds(3)).CreateConnectionAsync(budget.Token);
             return connection.IsOpen ? HealthCheckResult.Healthy() : HealthCheckResult.Unhealthy("Broker unavailable");
         }
         catch (Exception)
         {
-            HelloTelemetry.Record("readiness", "unavailable");
+            ReservationMessagingTelemetry.Dependency("broker", "unavailable", started);
             return HealthCheckResult.Unhealthy("Broker unavailable");
         }
     }

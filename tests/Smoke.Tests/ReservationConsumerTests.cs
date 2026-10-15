@@ -4,13 +4,13 @@ using System.Diagnostics.Metrics;
 using System.Net;
 using System.Net.Http.Json;
 using System.Text.Json.Nodes;
-using HelloMessaging;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Notifications;
 using Npgsql;
 using RabbitMQ.Client;
+using ReservationMessaging;
 using Xunit;
 
 namespace Smoke.Tests;
@@ -324,7 +324,7 @@ public sealed class ReservationConsumerTests(ReservationDeliveryFixture infrastr
             properties.Headers["tracestate"] = fault == "tracestate_newline" ? "valid\n=value" : "invalid";
         }
 
-        await using IConnection connection = await RabbitTopology.Factory(infrastructure.Messaging, TimeSpan.FromSeconds(3)).CreateConnectionAsync(deadline.Token);
+        await using IConnection connection = await RabbitConnection.Factory(infrastructure.Messaging, TimeSpan.FromSeconds(3)).CreateConnectionAsync(deadline.Token);
         await using IChannel channel = await connection.CreateChannelAsync(new CreateChannelOptions(true, true), deadline.Token);
         await channel.BasicPublishAsync("reservations", fault == "routing" ? "reservation.cancelled" : "reservation.confirmed", true, properties, poison, deadline.Token);
         var validId = Guid.NewGuid();
@@ -541,7 +541,7 @@ public sealed class ReservationConsumerTests(ReservationDeliveryFixture infrastr
 
     private async Task PublishAsync(Guid eventId, Guid reservationId, byte[] body, CancellationToken cancellationToken)
     {
-        await using IConnection connection = await RabbitTopology.Factory(infrastructure.Messaging, TimeSpan.FromSeconds(3)).CreateConnectionAsync(cancellationToken);
+        await using IConnection connection = await RabbitConnection.Factory(infrastructure.Messaging, TimeSpan.FromSeconds(3)).CreateConnectionAsync(cancellationToken);
         await using IChannel channel = await connection.CreateChannelAsync(new CreateChannelOptions(true, true), cancellationToken);
         var properties = new BasicProperties
         {
@@ -556,7 +556,7 @@ public sealed class ReservationConsumerTests(ReservationDeliveryFixture infrastr
 
     private async Task AwaitQueueEmptyAsync(CancellationToken cancellationToken)
     {
-        await using IConnection connection = await RabbitTopology.Factory(infrastructure.Messaging, TimeSpan.FromSeconds(3)).CreateConnectionAsync(cancellationToken);
+        await using IConnection connection = await RabbitConnection.Factory(infrastructure.Messaging, TimeSpan.FromSeconds(3)).CreateConnectionAsync(cancellationToken);
         await using IChannel channel = await connection.CreateChannelAsync(cancellationToken: cancellationToken);
         while ((await channel.QueueDeclarePassiveAsync("reservation-notifications", cancellationToken)).MessageCount != 0)
         {

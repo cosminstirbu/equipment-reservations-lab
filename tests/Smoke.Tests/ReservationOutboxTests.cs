@@ -2,7 +2,6 @@ using System.Net;
 using System.Net.Http.Json;
 using System.Text.Json;
 using Backend.Tests;
-using HelloMessaging;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -11,6 +10,7 @@ using Microsoft.Extensions.Logging;
 using Npgsql;
 using RabbitMQ.Client;
 using RabbitMQ.Client.Exceptions;
+using ReservationMessaging;
 using Reservations;
 using Xunit;
 
@@ -312,7 +312,7 @@ public sealed class ReservationOutboxTests(ReservationDeliveryFixture infrastruc
                     return;
                 }
 
-                await using IConnection connection = await RabbitTopology.Factory(messaging, TimeSpan.FromSeconds(3)).CreateConnectionAsync(cancellationToken);
+                await using IConnection connection = await RabbitConnection.Factory(messaging, TimeSpan.FromSeconds(3)).CreateConnectionAsync(cancellationToken);
                 await using IChannel channel = await connection.CreateChannelAsync(new CreateChannelOptions(true, true), cancellationToken);
                 string routing = "fixture.unroutable";
                 if (fault == "nack")
