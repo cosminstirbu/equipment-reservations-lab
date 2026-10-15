@@ -29,11 +29,25 @@ storage, and other external systems. Adding an Aspire resource, a connection str
 or a client library does not establish that dependency spans are collected or exported.
 Workflow spans and dependency metrics alone do not establish operation-level tracing.
 
+Required: before implementing custom dependency instrumentation, research the official
+OpenTelemetry integration maintained by the dependency's client/vendor or the
+OpenTelemetry project. Include a suitable supported dependency-specific library/package
+and use its documented production registration API. Use its supported configuration and
+extension points before writing custom instrumentation. Native client instrumentation
+remains the source of dependency spans where available; do not duplicate those spans.
+
+Official instrumentation must still meet our coverage, correlation, and privacy rules.
+Add custom code only for documented gaps, such as SQL admission or exception redaction
+that the integration cannot provide. Record why the official integration is insufficient
+or unavailable and why the custom code is necessary; the presence of an official package
+does not by itself establish safe telemetry.
+
 For each dependency, the feature plan must record:
 
-- The instrumentation library/package, activity sources, and production registration.
-  Prefer supported client instrumentation; use custom spans when suitable instrumentation
-  is unavailable and document the reason.
+- The official integrations evaluated, their compatibility with the selected client
+  version, and the chosen library/package, activity sources, and documented production
+  registration API. Identify any required custom code, the specific gap it addresses,
+  and why supported configuration or extension points do not suffice.
 - The operations expected to produce spans, including database queries/writes and
   message publication/consumption where applicable. Preserve parent/child trace context
   for synchronous calls; document context propagation and parent/link relationships for
@@ -69,4 +83,6 @@ Before accepting the change, inspect a representative Aspire trace containing th
 dependency operations and record the trace/test evidence and any approved limitations.
 Reviewers must check each dependency against the plan's expected spans; passing workflow
 tests, aggregate metrics, or the presence of some spans is insufficient evidence of
-dependency tracing.
+dependency tracing. Reviewers must also verify that suitable official integrations were
+used before custom instrumentation and that any remaining custom code has a documented
+purpose the integration does not cover.
