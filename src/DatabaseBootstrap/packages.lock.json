@@ -331,6 +331,15 @@
           "Microsoft.Extensions.Logging.Abstractions": "10.0.0"
         }
       },
+      "Npgsql.OpenTelemetry": {
+        "type": "Transitive",
+        "resolved": "10.0.3",
+        "contentHash": "ShsdG/FHxJ2VuWM6tebJL/mCWkcxymmvtENN59c85EsJdT4TStWwwtgZoBu/9UvC0qi1jpFZ6bOfl9ijiWD+vA==",
+        "dependencies": {
+          "Npgsql": "10.0.3",
+          "OpenTelemetry.API": "1.15.3"
+        }
+      },
       "OpenTelemetry": {
         "type": "Transitive",
         "resolved": "1.19.1",
@@ -457,6 +466,7 @@
         "type": "Project",
         "dependencies": {
           "Microsoft.Extensions.ServiceDiscovery": "[10.0.0, )",
+          "Npgsql.OpenTelemetry": "[10.0.3, )",
           "OpenTelemetry.Exporter.OpenTelemetryProtocol": "[1.19.1, )",
           "OpenTelemetry.Extensions.Hosting": "[1.19.1, )",
           "OpenTelemetry.Instrumentation.AspNetCore": "[1.19.0, )",

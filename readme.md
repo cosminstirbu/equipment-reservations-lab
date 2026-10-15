@@ -340,6 +340,24 @@ outcome/dependency metrics and correlated W3C workflow/event spans distinguish
 saved state from delivery. Pending-outbox count/oldest age includes unpublished
 parked events. Metric dimensions are bounded operation/dependency/outcome
 values; event/reservation IDs may correlate traces/logs, never metric tags.
+Database command spans come from native Npgsql instrumentation and include API,
+outbox/inbox, health, migrations and administrative provisioning operations.
+Reviewed SQL text is enabled by default locally: placeholders remain intact,
+parameter values and results are excluded, and administrative provisioning SQL
+is always omitted. Set `DatabaseTracing:CaptureSqlText=false` in each service's
+and bootstrap's configuration (environment `DatabaseTracing__CaptureSqlText=false`)
+to retain operation spans without SQL text. Restart the affected processes after
+changing this setting.
+
+SQL admission uses exact shared command templates. Review a whole changed/new
+statement before adding its descriptor; unknown statements retain generic spans
+without text. Embedded scripts additionally require a reviewed resource name and
+matching SHA-256 digest in the owning `ServiceMigrations` class. Never update a
+digest merely to clear a test: review script literals under the telemetry policy.
+Native internal transaction messages do not promise separate BEGIN/COMMIT/ROLLBACK
+spans; each executed application command remains visible. See the
+[database tracing validation guide](specs/003-database-tracing/quickstart.md).
+
 Dashboard diagnostic retention is separate from application persistence; export
 the intended run’s evidence before ending validation and keep diagnostic files
 private. For actual metrics export, use dashboard Settings → Resource logs and

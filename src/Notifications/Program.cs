@@ -8,7 +8,7 @@ using ServiceDefaults;
 
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 builder.AddServiceDefaults();
-builder.AddDatabase("notifications");
+builder.AddDatabase("notifications", ReservationInbox.Commands);
 builder.Services.ConfigureHttpJsonOptions(options =>
     options.SerializerOptions.TypeInfoResolverChain.Insert(0, NotificationsJsonContext.Default));
 

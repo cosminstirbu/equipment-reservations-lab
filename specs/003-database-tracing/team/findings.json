@@ -1,0 +1,20 @@
+{
+  "findings": [
+    {
+      "id": "Q-001",
+      "category": "code",
+      "severity": "medium",
+      "blocking": true,
+      "status": "closed",
+      "owner": "coder",
+      "reviewer": "verifier_reviewer",
+      "source_snapshot": "2961b51ea9f71287d2c8126423ca459cec6b64b9b61a7406496ba58bff66c5e6",
+      "description": "Bootstrap failure logging loses trace correlation after workflow Activity disposal",
+      "evidence": "DatabaseBootstrap/Program.cs outer catch logs after inner using Activity scope exits; subprocess test discards OTLP logs",
+      "verification": "Real subprocess intended red then green: success/failure event log TraceId and SpanId match exported bootstrap workflow; preserve safe fields, exit codes, full checks and original reviewer closure",
+      "closed_by": "verifier_reviewer",
+      "closed_source_snapshot": "79a1bbac6bb4e7ca3ebce3a70f8973fbe48150899aac32b51e5f0fc71f5de058",
+      "closure_report": "team/quality-round-1.md"
+    }
+  ]
+}

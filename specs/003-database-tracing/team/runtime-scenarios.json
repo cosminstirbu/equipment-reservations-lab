@@ -1,0 +1,249 @@
+{
+  "source_snapshot": "79a1bbac6bb4e7ca3ebce3a70f8973fbe48150899aac32b51e5f0fc71f5de058",
+  "scenarios": {
+    "sql_on_workflows": [
+      {
+        "scenario": "equipment_list",
+        "resource": "inventory",
+        "traceId": "20534cd8b6504df1b03cc853001e8831",
+        "status": 200
+      },
+      {
+        "scenario": "equipment_detail",
+        "resource": "inventory",
+        "traceId": "2d53f8bd9b7b4ca1bb017720238da9cd",
+        "status": 200
+      },
+      {
+        "scenario": "availability",
+        "resource": "reservations",
+        "traceId": "b7485dbf34634d1b94aabc805d7c4b2b",
+        "status": 200
+      },
+      {
+        "scenario": "booking",
+        "resource": "reservations",
+        "traceId": "723014e729a34af7b4a2235cd1e637f2",
+        "status": 201
+      },
+      {
+        "scenario": "booking_conflict",
+        "resource": "reservations",
+        "traceId": "96b8ac24f14a4d2cade26104abd46fb3",
+        "status": 409
+      },
+      {
+        "scenario": "reservation_detail",
+        "resource": "reservations",
+        "traceId": "2c747eb05f0c4bc9937ca83bbc899d0e",
+        "status": 200
+      },
+      {
+        "scenario": "cancellation",
+        "resource": "reservations",
+        "traceId": "85ccc0a1a33443dd8d2c0b463d6f8b29",
+        "status": 200
+      },
+      {
+        "scenario": "inbox_delivery",
+        "resource": "notifications",
+        "traceId": "d42a873a136d4d21981ebe36e89d5f22",
+        "status": 200
+      },
+      {
+        "scenario": "inbox_delivery",
+        "resource": "notifications",
+        "traceId": "6dc9622ed49944bea5082894cdf108f9",
+        "status": 200
+      },
+      {
+        "scenario": "inbox_delivery",
+        "resource": "notifications",
+        "traceId": "3355c13ce19f4b698ef54f33d405ee74",
+        "status": 200
+      },
+      {
+        "scenario": "reservation_history",
+        "resource": "reservations",
+        "traceId": "7e7de5b0b3d1438888ba9b7d35917ee3",
+        "status": 200
+      },
+      {
+        "scenario": "notification_history",
+        "resource": "notifications",
+        "traceId": "92a17a13b7a94271a6589ceef5709f1e",
+        "status": 200
+      },
+      {
+        "scenario": "inventory_health",
+        "resource": "inventory",
+        "traceId": "6a9cabb6f5aa415689d3464693b4c0b7",
+        "status": 200
+      },
+      {
+        "scenario": "notifications_health",
+        "resource": "notifications",
+        "traceId": "2fc5ed59bae8457ea377c140c5594a8f",
+        "status": 200
+      },
+      {
+        "scenario": "reservations_health",
+        "resource": "reservations",
+        "traceId": "93619b4062a648a98015b125a6e4032c",
+        "status": 200
+      }
+    ],
+    "database_outage": [
+      {
+        "scenario": "inventory_database_unavailable",
+        "resource": "inventory",
+        "traceId": "b0514a87bc7341cd9c86231509d1c103",
+        "status": 503
+      },
+      {
+        "scenario": "notifications_database_unavailable",
+        "resource": "notifications",
+        "traceId": "ac2e103355d24be0b6c64edeca48fb54",
+        "status": 503
+      },
+      {
+        "scenario": "reservations_database_unavailable",
+        "resource": "reservations",
+        "traceId": "e4316dd41ebf4c4eb71b2604a0c8886c",
+        "status": 503
+      }
+    ],
+    "recovery": [
+      {
+        "scenario": "equipment_list",
+        "resource": "inventory",
+        "traceId": "ab181d12e74a497fbbd39f886674dc98",
+        "status": 200
+      },
+      {
+        "scenario": "equipment_detail",
+        "resource": "inventory",
+        "traceId": "b4a2aa0fa7e24adc84784e42946f6d43",
+        "status": 200
+      },
+      {
+        "scenario": "reservation_history",
+        "resource": "reservations",
+        "traceId": "598ffc96909d42f391c2b24f37345a34",
+        "status": 200
+      },
+      {
+        "scenario": "notification_history",
+        "resource": "notifications",
+        "traceId": "f2e790d987404444afb1139397500b41",
+        "status": 200
+      },
+      {
+        "scenario": "inventory_health",
+        "resource": "inventory",
+        "traceId": "d7d96aeb22114e2c82bb460032e7484b",
+        "status": 200
+      },
+      {
+        "scenario": "notifications_health",
+        "resource": "notifications",
+        "traceId": "726e81a3b48e4e209ace0ac5682b90f7",
+        "status": 200
+      },
+      {
+        "scenario": "reservations_health",
+        "resource": "reservations",
+        "traceId": "596d789d083c498da2c10cc2c0867401",
+        "status": 200
+      }
+    ],
+    "sql_off": [
+      {
+        "scenario": "equipment_list",
+        "resource": "inventory",
+        "traceId": "f42203ce43fe4098bd98e467d7ba96ee",
+        "status": 200
+      },
+      {
+        "scenario": "equipment_detail",
+        "resource": "inventory",
+        "traceId": "1a84b3becd9b41f2a1b46a33dde6ebf4",
+        "status": 200
+      },
+      {
+        "scenario": "reservation_history",
+        "resource": "reservations",
+        "traceId": "a8ea3d28f6e44eca8b3840f3f1b7f8df",
+        "status": 200
+      },
+      {
+        "scenario": "notification_history",
+        "resource": "notifications",
+        "traceId": "780b794ce5fd4076811e32b78f9142d1",
+        "status": 200
+      },
+      {
+        "scenario": "inventory_health",
+        "resource": "inventory",
+        "traceId": "af7ea4a23726464384b7a7241aaea680",
+        "status": 200
+      },
+      {
+        "scenario": "notifications_health",
+        "resource": "notifications",
+        "traceId": "1a954c7ac2974edab858cdc637d89c7a",
+        "status": 200
+      },
+      {
+        "scenario": "reservations_health",
+        "resource": "reservations",
+        "traceId": "6ee59ad376b44c9ea2f375fc2fc768f6",
+        "status": 200
+      }
+    ],
+    "restored_default": [
+      {
+        "scenario": "equipment_list",
+        "resource": "inventory",
+        "traceId": "f81e190f24814bb39468b3fc0d862b9a",
+        "status": 200
+      },
+      {
+        "scenario": "equipment_detail",
+        "resource": "inventory",
+        "traceId": "d0174ab5c2a0457abf1daba4f10fddda",
+        "status": 200
+      },
+      {
+        "scenario": "reservation_history",
+        "resource": "reservations",
+        "traceId": "17094bf2ac8e4f74b7be4eb4563900aa",
+        "status": 200
+      },
+      {
+        "scenario": "notification_history",
+        "resource": "notifications",
+        "traceId": "cf288f7fea5143608842c3ec9c741023",
+        "status": 200
+      },
+      {
+        "scenario": "inventory_health",
+        "resource": "inventory",
+        "traceId": "7857b896ccfe4fd7a7ac8eacc42adb7c",
+        "status": 200
+      },
+      {
+        "scenario": "notifications_health",
+        "resource": "notifications",
+        "traceId": "4188853acd494b8b99996868bb32e747",
+        "status": 200
+      },
+      {
+        "scenario": "reservations_health",
+        "resource": "reservations",
+        "traceId": "785040ab86d54470958493a1cf9730a9",
+        "status": 200
+      }
+    ]
+  }
+}

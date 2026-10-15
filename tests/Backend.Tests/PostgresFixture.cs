@@ -80,6 +80,15 @@ public sealed class PostgresFixture : IAsyncLifetime
         }
     }
 
+    public string ConnectionStringFor(NpgsqlDataSource source)
+    {
+        var settings = new NpgsqlConnectionStringBuilder(source.ConnectionString)
+        {
+            Password = new NpgsqlConnectionStringBuilder(container.GetConnectionString()).Password
+        };
+        return settings.ConnectionString;
+    }
+
     public static WebApplicationFactory<TProgram> Factory<TProgram>(NpgsqlDataSource source) where TProgram : class
     {
         return new WebApplicationFactory<TProgram>().WithWebHostBuilder(builder => builder.ConfigureServices(services =>

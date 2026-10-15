@@ -7,6 +7,22 @@ namespace Reservations;
 
 public sealed class OutboxWorker(NpgsqlDataSource database, IReservationPublisher publisher, IRecoverySchedule schedule, TimeProvider time, IConfiguration configuration, ILogger<OutboxWorker> logger) : BackgroundService
 {
+    private const string SnapshotSql = "SELECT count(*), min(occurred_at) FROM reservation_outbox WHERE published_at IS NULL";
+    private const string SelectSql = "SELECT event_id,reservation_id,event_type,schema_version,demo_user_id,equipment_id,equipment_name,start_at,end_at,occurred_at,attempt_count,traceparent,tracestate FROM reservation_outbox WHERE published_at IS NULL AND next_attempt_at <= $1 ORDER BY next_attempt_at,event_id FOR UPDATE SKIP LOCKED LIMIT 1";
+    private const string PublishedSql = "UPDATE reservation_outbox SET published_at=$2,attempt_count=attempt_count+1 WHERE event_id=$1";
+    private const string RescheduleSql = "UPDATE reservation_outbox SET attempt_count=attempt_count+1,next_attempt_at=$2 WHERE event_id=$1 AND published_at IS NULL";
+
+    public static IReadOnlyList<DatabaseCommand> Commands
+    {
+        get;
+    } =
+    [
+        new("outbox.snapshot", SnapshotSql),
+        new("outbox.select", SelectSql),
+        new("outbox.published", PublishedSql),
+        new("outbox.reschedule", RescheduleSql)
+    ];
+
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
         if (string.IsNullOrEmpty(configuration.GetConnectionString("messaging")))
@@ -53,7 +69,7 @@ public sealed class OutboxWorker(NpgsqlDataSource database, IReservationPublishe
     private async Task<TimeSpan> AttemptAsync(CancellationToken stoppingToken)
     {
         await using NpgsqlConnection connection = await ReservationTelemetry.DatabaseAsync(token => database.OpenConnectionAsync(token).AsTask(), stoppingToken);
-        await using (var snapshot = new NpgsqlCommand("SELECT count(*), min(occurred_at) FROM reservation_outbox WHERE published_at IS NULL", connection))
+        await using (var snapshot = new NpgsqlCommand(SnapshotSql, connection))
         {
             await using NpgsqlDataReader reader = await ReservationTelemetry.DatabaseAsync(snapshot.ExecuteReaderAsync, stoppingToken);
             _ = await reader.ReadAsync(stoppingToken);
@@ -67,7 +83,7 @@ public sealed class OutboxWorker(NpgsqlDataSource database, IReservationPublishe
         int attempts;
         string? parent;
         string? state;
-        await using (var command = new NpgsqlCommand("SELECT event_id,reservation_id,event_type,schema_version,demo_user_id,equipment_id,equipment_name,start_at,end_at,occurred_at,attempt_count,traceparent,tracestate FROM reservation_outbox WHERE published_at IS NULL AND next_attempt_at <= $1 ORDER BY next_attempt_at,event_id FOR UPDATE SKIP LOCKED LIMIT 1", connection, transaction))
+        await using (var command = new NpgsqlCommand(SelectSql, connection, transaction))
         {
             _ = command.Parameters.AddWithValue(ReservationValidation.UtcNow(time));
             await using NpgsqlDataReader reader = await ReservationTelemetry.DatabaseAsync(command.ExecuteReaderAsync, stoppingToken);
@@ -93,7 +109,7 @@ public sealed class OutboxWorker(NpgsqlDataSource database, IReservationPublishe
             using var budget = CancellationTokenSource.CreateLinkedTokenSource(stoppingToken);
             budget.CancelAfter(TimeSpan.FromSeconds(3));
             await PublishAsync(message, parent, state, budget.Token);
-            await using var published = new NpgsqlCommand("UPDATE reservation_outbox SET published_at=$2,attempt_count=attempt_count+1 WHERE event_id=$1", connection, transaction);
+            await using var published = new NpgsqlCommand(PublishedSql, connection, transaction);
             _ = published.Parameters.AddWithValue(message.EventId);
             _ = published.Parameters.AddWithValue(ReservationValidation.UtcNow(time));
             _ = await ReservationTelemetry.DatabaseAsync(published.ExecuteNonQueryAsync, stoppingToken);
@@ -118,7 +134,7 @@ public sealed class OutboxWorker(NpgsqlDataSource database, IReservationPublishe
 
             bool permanent = ReservationFailure.IsPermanent(exception);
             TimeSpan delay = permanent ? TimeSpan.FromSeconds(10) : Backoff(attempts + 1);
-            await using NpgsqlCommand reschedule = database.CreateCommand("UPDATE reservation_outbox SET attempt_count=attempt_count+1,next_attempt_at=$2 WHERE event_id=$1 AND published_at IS NULL");
+            await using NpgsqlCommand reschedule = database.CreateCommand(RescheduleSql);
             _ = reschedule.Parameters.AddWithValue(message.EventId);
             DateTimeOffset due = permanent
                 ? new DateTimeOffset(9999, 12, 31, 23, 59, 59, TimeSpan.Zero).AddTicks(9999990)

@@ -1,0 +1,186 @@
+{
+  "feature_directory": "specs/003-database-tracing",
+  "status": "complete",
+  "baseline_revision": "6241fb1495412274b3de3242d7ec3eb36f9ee4b6",
+  "preparation_round": 1,
+  "implementation_round": 1,
+  "limits": {
+    "preparation_repairs": 3,
+    "implementation_repairs": 3,
+    "no_progress_recurrences": 2
+  },
+  "required_checks": [
+    {
+      "name": "test-first real PostgreSQL exported-span regressions",
+      "status": "pass",
+      "source_snapshot": "17d49d5e859ac45eaf5231448ccd629f73750ed2f04f6aa95c0381644cbe88c4",
+      "evidence": "team/implementation-registration-delta.md",
+      "prior_status": "pass"
+    },
+    {
+      "name": "production registration removal regression",
+      "status": "pass",
+      "source_snapshot": "17d49d5e859ac45eaf5231448ccd629f73750ed2f04f6aa95c0381644cbe88c4",
+      "evidence": "team/implementation-registration-delta.md",
+      "prior_status": "pass"
+    },
+    {
+      "name": "npm run format-check",
+      "status": "pass",
+      "source_snapshot": "17d49d5e859ac45eaf5231448ccd629f73750ed2f04f6aa95c0381644cbe88c4",
+      "evidence": "team/implementation-registration-delta.md",
+      "prior_status": "pass"
+    },
+    {
+      "name": "npm run lint",
+      "status": "pass",
+      "source_snapshot": "17d49d5e859ac45eaf5231448ccd629f73750ed2f04f6aa95c0381644cbe88c4",
+      "evidence": "team/implementation-registration-delta.md",
+      "prior_status": "pass"
+    },
+    {
+      "name": "npm run check",
+      "status": "pass",
+      "source_snapshot": "17d49d5e859ac45eaf5231448ccd629f73750ed2f04f6aa95c0381644cbe88c4",
+      "evidence": "team/implementation-registration-delta.md",
+      "prior_status": "pass"
+    },
+    {
+      "name": "Aspire runtime traces and SQL/privacy coverage",
+      "status": "pass",
+      "source_snapshot": "17d49d5e859ac45eaf5231448ccd629f73750ed2f04f6aa95c0381644cbe88c4",
+      "evidence": "team/runtime-registration-delta.md",
+      "prior_status": "pass"
+    },
+    {
+      "name": "git diff --check",
+      "status": "pass",
+      "source_snapshot": "17d49d5e859ac45eaf5231448ccd629f73750ed2f04f6aa95c0381644cbe88c4",
+      "evidence": "team/implementation-registration-delta.md",
+      "prior_status": "pass"
+    }
+  ],
+  "acceptance_evidence": [
+    "team/implementation-registration-delta.md",
+    "team/runtime-registration-delta.md",
+    "team/runtime-registration-scenarios.json",
+    "team/telemetry-audit-registration-on.json",
+    "team/telemetry-audit-registration-off.json"
+  ],
+  "quality_review": {
+    "verdict": "pass",
+    "revision": "17d49d5e859ac45eaf5231448ccd629f73750ed2f04f6aa95c0381644cbe88c4",
+    "report": "team/quality-registration-final.md"
+  },
+  "security_review": {
+    "verdict": "pass",
+    "revision": "17d49d5e859ac45eaf5231448ccd629f73750ed2f04f6aa95c0381644cbe88c4",
+    "report": "team/security-registration-final.md",
+    "accepted_exceptions": []
+  },
+  "convergence": {
+    "verdict": "converged",
+    "revision": "17d49d5e859ac45eaf5231448ccd629f73750ed2f04f6aa95c0381644cbe88c4",
+    "report": "team/convergence-registration-delta.md",
+    "tasks_appended": 0
+  },
+  "human_acceptance_required": true,
+  "human_acceptance": {
+    "status": "accepted",
+    "date": "2026-10-15",
+    "owner": "human owner",
+    "response": "Accept the updated feature",
+    "source_snapshot": "17d49d5e859ac45eaf5231448ccd629f73750ed2f04f6aa95c0381644cbe88c4",
+    "record": "team/human-acceptance.md"
+  },
+  "pending_decisions": [],
+  "owner_decisions": {
+    "date": "2026-10-15",
+    "sql_content": "Safe parameterized SQL text without parameter values; provisioning SQL text excluded",
+    "sql_capture": "Enabled by default in the supported local application",
+    "coverage": "All current database paths, including startup and background operations"
+  },
+  "requirements_review": {
+    "spec_sha256": "f75233085e5647f7f572b7efdce34e30bc5f5b898de8339ff83b4dc00ef8c95e",
+    "quality": "pass",
+    "security": "pass"
+  },
+  "design_review": {
+    "plan_sha256": "b8ca8afc6706560257b022a2e95f60415eed8b921d4af369f466ef6e66fb0214",
+    "quality": "pass",
+    "security": "pass"
+  },
+  "preparation_review": {
+    "tasks_sha256": "5b7948c4106647087a945d152419d1238e5c06f3691b60342d5d8fe80176aa4f",
+    "research_sha256": "12b8663f82c0a12ea864e51c5ba984810445a4f808b2956616c987d4ccdae280",
+    "clarification": "OTLP exports DisplayName, not internal immutable OperationName; actual database selection remains unchanged",
+    "quality": "pass",
+    "security": "pass"
+  },
+  "assignments": {
+    "coder": "T028\u2013T029 registration delta",
+    "coordinator": "T030 current review/convergence and T026 actual owner acceptance completed"
+  },
+  "candidate": {
+    "source_snapshot": "17d49d5e859ac45eaf5231448ccd629f73750ed2f04f6aa95c0381644cbe88c4",
+    "manifest": "team/implementation-source-manifest.json",
+    "focused_real_postgresql_tests": "18 passed; zero skipped",
+    "registration_removal": "Actual AddNpgsql removal intended missing-span red; exact restoration/fresh green",
+    "source_only_quality": "Final independent quality verdict pass",
+    "source_only_security": "Final independent security verdict pass; no findings or accepted exceptions"
+  },
+  "review_history": [
+    {
+      "source_snapshot": "2961b51ea9f71287d2c8126423ca459cec6b64b9b61a7406496ba58bff66c5e6",
+      "quality_report": "team/quality-round-0.md",
+      "security_report": "team/security-round-0.md",
+      "superseded_by": "79a1bbac6bb4e7ca3ebce3a70f8973fbe48150899aac32b51e5f0fc71f5de058"
+    },
+    {
+      "source_snapshot": "79a1bbac6bb4e7ca3ebce3a70f8973fbe48150899aac32b51e5f0fc71f5de058",
+      "quality_report": "team/quality-round-1.md",
+      "security_report": "team/security-round-1.md",
+      "scope": "Q-001 closure and security delta; final reports supersede pending gates"
+    },
+    {
+      "source_snapshot": "79a1bbac6bb4e7ca3ebce3a70f8973fbe48150899aac32b51e5f0fc71f5de058",
+      "quality_report": "team/quality-final.md",
+      "security_report": "team/security-final.md",
+      "convergence_report": "team/convergence.md",
+      "scope": "Passed prior candidate; historical evidence only after requested registration delta"
+    }
+  ],
+  "completion_metadata": {
+    "scope": "metadata-only completion after explicit owner acceptance; no source or requirement changes",
+    "date": "2026-10-15",
+    "reviewed_spec_sha256": "db8bcdbe0eefa3935b36acaee9b8e05bd9ce9cdebfebbc5648af572e3b8275ff",
+    "current_spec_sha256": "8ad6272ea4b521dd3a4bb4a753963e8bc8b3fe977b86d5a02a129ca9ae272f6d",
+    "pending_gate": null,
+    "acceptance_record": "team/human-acceptance.md",
+    "history": [
+      {
+        "reviewed_spec_sha256": "f75233085e5647f7f572b7efdce34e30bc5f5b898de8339ff83b4dc00ef8c95e",
+        "prior_status_spec_sha256": "908a10e3c160312fa40a9efe97f5960e1c9c69de03e21bf9786546eebae4961e"
+      },
+      {
+        "prior_status_spec_sha256": "f36db09a743e1d23ba004413ebe318a7673a1759654014ef9522d28dc6b88a51",
+        "reason": "Acceptance-pending metadata superseded by actual owner acceptance; reviewed requirement hashes preserved"
+      }
+    ],
+    "source_snapshot_unchanged": "17d49d5e859ac45eaf5231448ccd629f73750ed2f04f6aa95c0381644cbe88c4"
+  },
+  "registration_delta": {
+    "owner_request_date": "2026-10-15",
+    "request": "Use documented .AddNpgsql() via team; retain all privacy controls",
+    "prior_snapshot": "79a1bbac6bb4e7ca3ebce3a70f8973fbe48150899aac32b51e5f0fc71f5de058",
+    "requirements": "pass",
+    "design": "pass",
+    "checks": "pass",
+    "reviews": "pass",
+    "runtime": "pass",
+    "preparation_quality_report": "team/quality-registration-preparation.md",
+    "preparation_security_report": "team/security-registration-preparation.md",
+    "source_snapshot": "17d49d5e859ac45eaf5231448ccd629f73750ed2f04f6aa95c0381644cbe88c4",
+    "convergence": "converged"
+  }
+}

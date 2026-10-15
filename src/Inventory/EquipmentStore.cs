@@ -1,4 +1,5 @@
 using Npgsql;
+using Persistence;
 
 namespace Inventory;
 
@@ -6,9 +7,21 @@ public sealed record EquipmentItem(string Id, string Name, bool Operational);
 
 public sealed class EquipmentStore(NpgsqlDataSource database)
 {
+    private const string ListSql = "SELECT id, name, operational FROM equipment ORDER BY id";
+    private const string FindSql = "SELECT id, name, operational FROM equipment WHERE id=$1";
+
+    public static IReadOnlyList<DatabaseCommand> Commands
+    {
+        get;
+    } =
+    [
+        new("equipment.list", ListSql),
+        new("equipment.find", FindSql)
+    ];
+
     public async Task<EquipmentItem[]> ListAsync(CancellationToken cancellationToken)
     {
-        await using NpgsqlCommand command = database.CreateCommand("SELECT id, name, operational FROM equipment ORDER BY id");
+        await using NpgsqlCommand command = database.CreateCommand(ListSql);
         await using NpgsqlDataReader reader = await command.ExecuteReaderAsync(cancellationToken);
         var items = new List<EquipmentItem>();
         while (await reader.ReadAsync(cancellationToken))
@@ -21,7 +34,7 @@ public sealed class EquipmentStore(NpgsqlDataSource database)
 
     public async Task<EquipmentItem?> FindAsync(string id, CancellationToken cancellationToken)
     {
-        await using NpgsqlCommand command = database.CreateCommand("SELECT id, name, operational FROM equipment WHERE id=$1");
+        await using NpgsqlCommand command = database.CreateCommand(FindSql);
         _ = command.Parameters.AddWithValue(id);
         await using NpgsqlDataReader reader = await command.ExecuteReaderAsync(cancellationToken);
         return await reader.ReadAsync(cancellationToken) ? Read(reader) : null;

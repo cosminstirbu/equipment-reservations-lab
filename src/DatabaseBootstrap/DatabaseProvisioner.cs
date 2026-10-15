@@ -1,4 +1,5 @@
 using Npgsql;
+using Persistence;
 
 namespace DatabaseBootstrap;
 
@@ -6,7 +7,12 @@ public static class DatabaseProvisioner
 {
     private static readonly string[] Databases = ["inventory", "reservations", "notifications"];
 
-    public static async Task ReconcileAsync(string adminConnectionString, IReadOnlyDictionary<string, string> passwords, CancellationToken cancellationToken = default)
+    public static Task ReconcileAsync(string adminConnectionString, IReadOnlyDictionary<string, string> passwords, CancellationToken cancellationToken)
+    {
+        return ReconcileAsync(adminConnectionString, passwords, captureSqlText: true, cancellationToken);
+    }
+
+    public static async Task ReconcileAsync(string adminConnectionString, IReadOnlyDictionary<string, string> passwords, bool captureSqlText = true, CancellationToken cancellationToken = default)
     {
         foreach (string database in Databases)
         {
@@ -16,7 +22,7 @@ public static class DatabaseProvisioner
             }
         }
 
-        await using var admin = NpgsqlDataSource.Create(BoundedConnection(adminConnectionString));
+        await using NpgsqlDataSource admin = DatabaseTracing.Create(adminConnectionString, "postgres", administrative: true, commandTimeout: 30);
         await using NpgsqlConnection connection = await admin.OpenConnectionAsync(cancellationToken);
         await ExecuteAsync(connection, "SET standard_conforming_strings=on", cancellationToken);
         await ExecuteAsync(connection, "REVOKE ALL ON DATABASE postgres, template1 FROM PUBLIC", cancellationToken);
@@ -73,7 +79,7 @@ public static class DatabaseProvisioner
             string role = database + "_app";
             await ExecuteAsync(connection, $"GRANT CONNECT ON DATABASE {Quote(database)} TO {Quote(role)}", cancellationToken);
             var adminSettings = new NpgsqlConnectionStringBuilder(adminConnectionString) { Database = database };
-            await using var databaseAdmin = NpgsqlDataSource.Create(BoundedConnection(adminSettings.ConnectionString));
+            await using NpgsqlDataSource databaseAdmin = DatabaseTracing.Create(adminSettings.ConnectionString, database, administrative: true, commandTimeout: 30);
             await using NpgsqlConnection databaseConnection = await databaseAdmin.OpenConnectionAsync(cancellationToken);
             await ExecuteAsync(databaseConnection, $"REVOKE ALL ON SCHEMA public FROM PUBLIC; GRANT USAGE, CREATE ON SCHEMA public TO {Quote(role)}", cancellationToken);
             if (database == "reservations")
@@ -87,7 +93,7 @@ public static class DatabaseProvisioner
                 Username = role,
                 Password = passwords[database]
             };
-            await using var own = NpgsqlDataSource.Create(BoundedConnection(settings.ConnectionString));
+            await using NpgsqlDataSource own = DatabaseTracing.Create(settings.ConnectionString, database, captureSqlText, commandTimeout: 30);
             switch (database)
             {
                 case "inventory":
@@ -103,17 +109,6 @@ public static class DatabaseProvisioner
                     throw new InvalidOperationException("Unknown service database.");
             }
         }
-    }
-
-    private static string BoundedConnection(string connectionString)
-    {
-        return new NpgsqlConnectionStringBuilder(connectionString)
-        {
-            Timeout = 3,
-            CommandTimeout = 30,
-            IncludeErrorDetail = false,
-            LogParameters = false
-        }.ConnectionString;
     }
 
     private static string Quote(string identifier)

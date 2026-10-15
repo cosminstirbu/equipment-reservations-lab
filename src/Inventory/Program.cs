@@ -5,7 +5,7 @@ using ServiceDefaults;
 
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 builder.AddServiceDefaults();
-builder.AddDatabase("inventory");
+builder.AddDatabase("inventory", EquipmentStore.Commands);
 builder.Services.AddSingleton<EquipmentStore>();
 builder.Services.ConfigureHttpJsonOptions(options =>
     options.SerializerOptions.TypeInfoResolverChain.Insert(0, InventoryJsonContext.Default));

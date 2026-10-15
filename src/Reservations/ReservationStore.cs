@@ -1,17 +1,41 @@
 using System.Diagnostics;
 using Npgsql;
 using NpgsqlTypes;
+using Persistence;
 
 namespace Reservations;
 
 public sealed class ReservationStore(NpgsqlDataSource database, TimeProvider time)
 {
     private const string Projection = "SELECT r.id, r.demo_user_id, r.equipment_id, r.equipment_name, r.start_at, r.end_at, r.status, r.confirmed_at, r.cancelled_at, (SELECT event_id FROM reservation_outbox WHERE reservation_id=r.id AND event_type='ReservationConfirmed'), (SELECT event_id FROM reservation_outbox WHERE reservation_id=r.id AND event_type='ReservationCancelled') FROM reservations r";
+    private const string AvailableSql = "SELECT NOT EXISTS (SELECT 1 FROM reservations WHERE equipment_id=$1 AND status='Confirmed' AND tstzrange(start_at,end_at,'[)') && tstzrange($2,$3,'[)'))";
+    private const string InsertSql = "INSERT INTO reservations (id,demo_user_id,equipment_id,equipment_name,start_at,end_at,status,confirmed_at) VALUES ($1,'demo-user',$2,$3,$4,$5,'Confirmed',$6)";
+    private const string ConfirmedOutboxSql = "INSERT INTO reservation_outbox (event_id,reservation_id,event_type,schema_version,demo_user_id,equipment_id,equipment_name,start_at,end_at,occurred_at,next_attempt_at,traceparent,tracestate) VALUES ($1,$2,'ReservationConfirmed',1,'demo-user',$3,$4,$5,$6,$7,$7,$8,$9)";
+    private const string LockSql = "SELECT id FROM reservations WHERE id=$1 FOR UPDATE";
+    private const string CancelSql = "UPDATE reservations SET status='Cancelled', cancelled_at=$2 WHERE id=$1";
+    private const string CancelledOutboxSql = "INSERT INTO reservation_outbox (event_id,reservation_id,event_type,schema_version,demo_user_id,equipment_id,equipment_name,start_at,end_at,occurred_at,next_attempt_at,traceparent,tracestate) VALUES ($1,$2,'ReservationCancelled',1,'demo-user',$3,$4,$5,$6,$7,$7,$8,$9)";
+    private const string FindSql = Projection + " WHERE r.id=$1";
+    private const string ListSql = Projection + " ORDER BY r.confirmed_at DESC, r.id";
+
+    public static IReadOnlyList<DatabaseCommand> Commands
+    {
+        get;
+    } =
+    [
+        new("reservation.available", AvailableSql),
+        new("reservation.insert", InsertSql),
+        new("outbox.insert.confirmed", ConfirmedOutboxSql),
+        new("reservation.lock", LockSql),
+        new("reservation.cancel", CancelSql),
+        new("outbox.insert.cancelled", CancelledOutboxSql),
+        new("reservation.find", FindSql),
+        new("reservation.list", ListSql)
+    ];
 
     public async Task<bool> AvailableAsync(ReservationInterval interval, CancellationToken cancellationToken)
     {
         ReservationValidation.EnsureNotPast(interval, ReservationValidation.UtcNow(time));
-        await using NpgsqlCommand command = database.CreateCommand("SELECT NOT EXISTS (SELECT 1 FROM reservations WHERE equipment_id=$1 AND status='Confirmed' AND tstzrange(start_at,end_at,'[)') && tstzrange($2,$3,'[)'))");
+        await using NpgsqlCommand command = database.CreateCommand(AvailableSql);
         AddInterval(command, interval);
         return (bool)(await command.ExecuteScalarAsync(cancellationToken))!;
     }
@@ -26,7 +50,7 @@ public sealed class ReservationStore(NpgsqlDataSource database, TimeProvider tim
             ReservationValidation.EnsureNotPast(interval, now);
             var id = Guid.NewGuid();
             var eventId = Guid.NewGuid();
-            await using var reservation = new NpgsqlCommand("INSERT INTO reservations (id,demo_user_id,equipment_id,equipment_name,start_at,end_at,status,confirmed_at) VALUES ($1,'demo-user',$2,$3,$4,$5,'Confirmed',$6)", connection, transaction);
+            await using var reservation = new NpgsqlCommand(InsertSql, connection, transaction);
             _ = reservation.Parameters.AddWithValue(id);
             _ = reservation.Parameters.AddWithValue(interval.EquipmentId);
             _ = reservation.Parameters.AddWithValue(equipmentName);
@@ -35,7 +59,7 @@ public sealed class ReservationStore(NpgsqlDataSource database, TimeProvider tim
             _ = reservation.Parameters.AddWithValue(now);
             _ = await reservation.ExecuteNonQueryAsync(cancellationToken);
 
-            await using var outbox = new NpgsqlCommand("INSERT INTO reservation_outbox (event_id,reservation_id,event_type,schema_version,demo_user_id,equipment_id,equipment_name,start_at,end_at,occurred_at,next_attempt_at,traceparent,tracestate) VALUES ($1,$2,'ReservationConfirmed',1,'demo-user',$3,$4,$5,$6,$7,$7,$8,$9)", connection, transaction);
+            await using var outbox = new NpgsqlCommand(ConfirmedOutboxSql, connection, transaction);
             _ = outbox.Parameters.AddWithValue(eventId);
             _ = outbox.Parameters.AddWithValue(id);
             _ = outbox.Parameters.AddWithValue(interval.EquipmentId);
@@ -63,7 +87,7 @@ public sealed class ReservationStore(NpgsqlDataSource database, TimeProvider tim
     {
         await using NpgsqlConnection connection = await database.OpenConnectionAsync(cancellationToken);
         await using NpgsqlTransaction transaction = await connection.BeginTransactionAsync(cancellationToken);
-        await using (var rowLock = new NpgsqlCommand("SELECT id FROM reservations WHERE id=$1 FOR UPDATE", connection, transaction))
+        await using (var rowLock = new NpgsqlCommand(LockSql, connection, transaction))
         {
             _ = rowLock.Parameters.AddWithValue(id);
             if (await rowLock.ExecuteScalarAsync(cancellationToken) is null)
@@ -75,7 +99,7 @@ public sealed class ReservationStore(NpgsqlDataSource database, TimeProvider tim
         // A new READ COMMITTED statement snapshot includes the outbox event committed
         // by a cancellation that held the lock before this request.
         Reservation current;
-        await using (var command = new NpgsqlCommand(Projection + " WHERE r.id=$1", connection, transaction))
+        await using (var command = new NpgsqlCommand(FindSql, connection, transaction))
         {
             _ = command.Parameters.AddWithValue(id);
             await using NpgsqlDataReader reader = await command.ExecuteReaderAsync(cancellationToken);
@@ -99,12 +123,12 @@ public sealed class ReservationStore(NpgsqlDataSource database, TimeProvider tim
         }
 
         var eventId = Guid.NewGuid();
-        await using var update = new NpgsqlCommand("UPDATE reservations SET status='Cancelled', cancelled_at=$2 WHERE id=$1", connection, transaction);
+        await using var update = new NpgsqlCommand(CancelSql, connection, transaction);
         _ = update.Parameters.AddWithValue(id);
         _ = update.Parameters.AddWithValue(now);
         _ = await update.ExecuteNonQueryAsync(cancellationToken);
 
-        await using var outbox = new NpgsqlCommand("INSERT INTO reservation_outbox (event_id,reservation_id,event_type,schema_version,demo_user_id,equipment_id,equipment_name,start_at,end_at,occurred_at,next_attempt_at,traceparent,tracestate) VALUES ($1,$2,'ReservationCancelled',1,'demo-user',$3,$4,$5,$6,$7,$7,$8,$9)", connection, transaction);
+        await using var outbox = new NpgsqlCommand(CancelledOutboxSql, connection, transaction);
         _ = outbox.Parameters.AddWithValue(eventId);
         _ = outbox.Parameters.AddWithValue(id);
         _ = outbox.Parameters.AddWithValue(current.EquipmentId);
@@ -129,7 +153,7 @@ public sealed class ReservationStore(NpgsqlDataSource database, TimeProvider tim
 
     public async Task<Reservation[]> ListAsync(CancellationToken cancellationToken)
     {
-        await using NpgsqlCommand command = database.CreateCommand(Projection + " ORDER BY r.confirmed_at DESC, r.id");
+        await using NpgsqlCommand command = database.CreateCommand(ListSql);
         await using NpgsqlDataReader reader = await command.ExecuteReaderAsync(cancellationToken);
         var reservations = new List<Reservation>();
         while (await reader.ReadAsync(cancellationToken))
@@ -142,7 +166,7 @@ public sealed class ReservationStore(NpgsqlDataSource database, TimeProvider tim
 
     public async Task<Reservation?> FindAsync(Guid id, CancellationToken cancellationToken)
     {
-        await using NpgsqlCommand command = database.CreateCommand(Projection + " WHERE r.id=$1");
+        await using NpgsqlCommand command = database.CreateCommand(FindSql);
         _ = command.Parameters.AddWithValue(id);
         await using NpgsqlDataReader reader = await command.ExecuteReaderAsync(cancellationToken);
         return await reader.ReadAsync(cancellationToken) ? Read(reader) : null;

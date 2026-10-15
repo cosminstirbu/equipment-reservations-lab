@@ -10,6 +10,7 @@ using Npgsql;
 using OpenTelemetry.Logs;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Trace;
+using Persistence;
 
 namespace ServiceDefaults;
 
@@ -22,6 +23,20 @@ public static class Extensions
         _ = builder.Services.ConfigureHttpClientDefaults(http => http.AddServiceDiscovery());
         _ = builder.Services.AddHealthChecks().AddCheck("self", () => HealthCheckResult.Healthy(), tags: ["live"]);
 
+        builder.AddApplicationTelemetry();
+
+        _ = builder.WebHost.ConfigureKestrel(k => k.Limits.MaxRequestBodySize = 4096);
+    }
+
+    public static void AddApplicationTelemetry(this IHostApplicationBuilder builder)
+    {
+        if (builder.Services.Any(service => service.ServiceType == typeof(TelemetryRegistration)))
+        {
+            return;
+        }
+
+        _ = builder.Services.AddSingleton<TelemetryRegistration>();
+
         // These framework information messages contain raw request URLs or local
         // startup paths. Apply the policy to console and OTLP providers alike.
         _ = builder.Logging.AddFilter("Microsoft.AspNetCore.Hosting.Diagnostics", LogLevel.Warning);
@@ -32,11 +47,13 @@ public static class Extensions
             .WithTracing(tracing => tracing
                 .SetSampler(new AlwaysOnSampler())
                 .AddProcessor(new HttpTelemetryPrivacyProcessor())
-                .AddSource("Equipment.Hello", "Equipment.Reservations", "Equipment.ReservationMessaging", "Equipment.Notifications")
+                .AddProcessor(new DatabaseTelemetryPrivacyProcessor())
+                .AddNpgsql()
+                .AddSource("Equipment.Hello", "Equipment.Reservations", "Equipment.ReservationMessaging", "Equipment.Notifications", "Equipment.DatabaseBootstrap")
                 .AddAspNetCoreInstrumentation()
                 .AddHttpClientInstrumentation())
             .WithMetrics(metrics => metrics
-                .AddMeter("Equipment.Hello", "Equipment.Reservations", "Equipment.ReservationMessaging", "Equipment.Notifications")
+                .AddMeter("Equipment.Hello", "Equipment.Reservations", "Equipment.ReservationMessaging", "Equipment.Notifications", "Equipment.DatabaseBootstrap")
                 .AddAspNetCoreInstrumentation()
                 .AddHttpClientInstrumentation()
                 .AddRuntimeInstrumentation());
@@ -55,26 +72,20 @@ public static class Extensions
                 .WithMetrics(metrics => metrics.AddOtlpExporter());
             _ = builder.Logging.AddOpenTelemetry(o => o.AddOtlpExporter());
         }
-
-        _ = builder.WebHost.ConfigureKestrel(k => k.Limits.MaxRequestBodySize = 4096);
     }
 
-    public static void AddDatabase(this WebApplicationBuilder builder, string name)
+    public static void AddDatabase(this WebApplicationBuilder builder, string name, IEnumerable<DatabaseCommand>? commands = null)
     {
         _ = builder.Services.AddSingleton(_ =>
         {
             string connection = builder.Configuration.GetConnectionString(name) ?? throw new InvalidOperationException("Own database connection is not configured.");
-            var settings = new NpgsqlConnectionStringBuilder(connection)
-            {
-                Timeout = 3,
-                CommandTimeout = 5,
-                IncludeErrorDetail = false,
-                LogParameters = false
-            };
-            return NpgsqlDataSource.Create(settings.ConnectionString);
+            bool captureSql = !bool.TryParse(builder.Configuration["DatabaseTracing:CaptureSqlText"], out bool capture) || capture;
+            return DatabaseTracing.Create(connection, name, captureSql, commands: commands);
         });
         _ = builder.Services.AddHealthChecks().AddCheck<DatabaseHealth>("database");
     }
+
+    private sealed class TelemetryRegistration;
 
     public static void MapOperationalEndpoints(this WebApplication app)
     {
@@ -93,7 +104,7 @@ internal sealed class DatabaseHealth(NpgsqlDataSource source) : IHealthCheck
         budget.CancelAfter(TimeSpan.FromSeconds(5));
         try
         {
-            await using NpgsqlCommand command = source.CreateCommand("SELECT 1");
+            await using NpgsqlCommand command = source.CreateCommand(DatabaseTracing.HealthSql);
             _ = await command.ExecuteScalarAsync(budget.Token);
             return HealthCheckResult.Healthy();
         }

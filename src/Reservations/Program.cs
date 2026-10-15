@@ -5,7 +5,7 @@ using ServiceDefaults;
 
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 builder.AddServiceDefaults();
-builder.AddDatabase("reservations");
+builder.AddDatabase("reservations", ReservationStore.Commands.Concat(OutboxWorker.Commands));
 builder.Services.AddSingleton(TimeProvider.System);
 builder.Services.AddSingleton<InventoryClient>();
 builder.Services.AddSingleton<ReservationStore>();
