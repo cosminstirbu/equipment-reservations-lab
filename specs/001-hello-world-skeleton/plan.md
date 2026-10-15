@@ -15,7 +15,7 @@ One local Angular screen proves Inventory HTTP → Reservations HTTP → Invento
 - Minimal APIs, typed JSON contracts and safe Problem Details. Shared service defaults contain operational configuration only. Shared messaging project contains event contract and the single fixed broker topology, not business logic.
 - One fixed seed (`camera-001`, `Demo Camera`), memory only; Notifications capacity 1,000, FIFO eviction, five-minute TTL, controlled TimeProvider for tests.
 - .NET public HTTP behavior tests using WebApplicationFactory; Angular TestBed/Vitest rendered behavior tests; one AppHost integration smoke test against real processes and broker. No performance SLA beyond explicit deadlines; one developer and one screen.
-- Applies constitution 1.1.0 and engineering guides angular.md, aspnet-core.md, aspire.md, testing.md, observability-and-resilience.md.
+- Applies constitution 1.1.0 and engineering guides angular.md, aspnet-core.md, aspire.md, testing.md, observability.md, resilience.md.
 
 ## Constitution Check
 

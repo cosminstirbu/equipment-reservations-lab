@@ -1,7 +1,7 @@
 # ASP.NET Core
 
 Applies to backend services. Read with [testing](testing.md) and
-[observability and resilience](observability-and-resilience.md).
+[observability](observability.md) and [resilience](resilience.md).
 
 ## Everyday defaults
 

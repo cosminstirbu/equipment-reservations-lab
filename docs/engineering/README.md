@@ -14,7 +14,9 @@ All source changes must follow [formatting and static analysis](formatting-and-l
 | Backend | ASP.NET Core | [ASP.NET Core](aspnet-core.md) |
 | Local orchestration | .NET Aspire | [Aspire](aspire.md) |
 | Database testing | Testcontainers | [Testing](testing.md) |
-| Telemetry | OpenTelemetry | [Observability and resilience](observability-and-resilience.md) |
+| Telemetry | OpenTelemetry | [Observability](observability.md) |
+
+See [Resilience](resilience.md) for dependency timeouts, retries, and repeat safety.
 
 Use .NET 10 LTS and C# 14 as the recommended backend baseline. As of 2026-10-13,
 .NET 10 is the latest stable .NET release; .NET 11 is a prerelease. Keep supported

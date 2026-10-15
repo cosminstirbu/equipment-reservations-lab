@@ -24,7 +24,7 @@ Extend the existing Angular / ASP.NET Core / Aspire / HTTP / RabbitMQ walking sk
 
 **Constraints / Scope**: One fixed `demo-user` identity, two reservation states, explicit refresh, no production deployment. Existing 4-KiB request/event cap remains. Every compile-time-known JSON contract uses generated metadata; structured logs use generated LoggerMessage; constant regexes use GeneratedRegex where relevant.
 
-**Applicable guides**: [ASP.NET Core](../../docs/engineering/aspnet-core.md), [Angular](../../docs/engineering/angular.md), [Aspire](../../docs/engineering/aspire.md), [Testing](../../docs/engineering/testing.md), [Observability/resilience](../../docs/engineering/observability-and-resilience.md), [Formatting/linting](../../docs/engineering/formatting-and-linting.md).
+**Applicable guides**: [ASP.NET Core](../../docs/engineering/aspnet-core.md), [Angular](../../docs/engineering/angular.md), [Aspire](../../docs/engineering/aspire.md), [Testing](../../docs/engineering/testing.md), [Observability](../../docs/engineering/observability.md), [Resilience](../../docs/engineering/resilience.md), [Formatting/linting](../../docs/engineering/formatting-and-linting.md).
 
 ## Constitution Check
 
