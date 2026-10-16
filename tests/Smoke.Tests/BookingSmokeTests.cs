@@ -1,5 +1,9 @@
 using System.Net;
+using System.Net.Http.Headers;
 using System.Net.Http.Json;
+using System.Net.Sockets;
+using System.Security.Cryptography;
+using System.Text.Json;
 using Aspire.Hosting;
 using Aspire.Hosting.ApplicationModel;
 using Aspire.Hosting.JavaScript;
@@ -7,6 +11,7 @@ using Aspire.Hosting.Testing;
 using Backend.Tests;
 using DotNet.Testcontainers.Builders;
 using DotNet.Testcontainers.Volumes;
+using IdentityBootstrap;
 using Inventory;
 using Notifications;
 using Npgsql;
@@ -20,7 +25,8 @@ namespace Smoke.Tests;
 public sealed class BookingSmokeTests(ITestOutputHelper output)
 {
     private static readonly string[] Services = ["inventory", "reservations", "notifications"];
-    private static readonly string[] Parameters = ["postgres", "inventory", "reservations", "notifications", "broker"];
+    private static readonly string[] Parameters = ["postgres-password", "inventory-password", "reservations-password", "notifications-password", "broker-password", "reservations-broker-password", "notifications-broker-password", "broker-admin-salt", "reservations-broker-salt", "notifications-broker-salt", "identity-admin-password", "employee-a-password", "employee-b-password", "approver-password", "equipment-staff-password", "reservations-client-secret"];
+    private static readonly string[] Users = ["employee-a", "employee-b", "approver", "equipment-staff"];
 
     [Fact]
     public async Task IsolatedNamedVolumesRetainPendingOutboxQueuedMessagesAndInboxAcrossFreshAppHosts()
@@ -31,23 +37,40 @@ public sealed class BookingSmokeTests(ITestOutputHelper output)
         string prefix = "booking-smoke-" + Guid.NewGuid().ToString("N");
         await using IVolume postgres = new VolumeBuilder().WithName(prefix + "-postgres").Build();
         await using IVolume rabbit = new VolumeBuilder().WithName(prefix + "-rabbit").Build();
+        await using IVolume identity = new VolumeBuilder().WithName(prefix + "-identity").Build();
         await postgres.CreateAsync(token);
         await rabbit.CreateAsync(token);
+        await identity.CreateAsync(token);
+        int identityPort;
+        using (var listener = new TcpListener(IPAddress.Loopback, 0))
+        {
+            listener.Start();
+            identityPort = ((IPEndPoint)listener.LocalEndpoint).Port;
+        }
+
         Dictionary<string, string> secrets = Parameters.ToDictionary(name => name, _ => Guid.NewGuid().ToString("N"));
+        var subjects = new Dictionary<string, string>();
+        string issuer;
         BookedReservation retained;
         BookedReservation pending;
         BookedReservation confirmed;
         Dictionary<string, Migration> ledger;
         Dictionary<string, string> lifecycles;
 
-        await using (DistributedApplication first = await BuildAsync(postgres.Name, rabbit.Name, secrets, false, token))
+        await using (DistributedApplication first = await BuildAsync(postgres.Name, rabbit.Name, identity.Name, identityPort, secrets, false, token))
         {
             await StartReadyAsync(first, token);
+            Dictionary<string, ProviderTokens> accounts = await LoginAccountsAsync(first, secrets, subjects, token);
+            IdentityProvisioningSettings identitySettings = IdentitySettings(first, secrets);
+            issuer = identitySettings.Authority;
             await LegacyBrokerStateAsync(first, seed: true, token);
             lifecycles = ObserveLifecycles(first, "first");
             using HttpClient inventory = first.CreateHttpClient("inventory");
             using HttpClient reservations = first.CreateHttpClient("reservations");
             using HttpClient notifications = first.CreateHttpClient("notifications");
+            Authenticate(inventory, accounts["employee-a"]);
+            Authenticate(reservations, accounts["employee-a"]);
+            Authenticate(notifications, accounts["employee-a"]);
             EquipmentItem[] equipment = (await inventory.GetFromJsonAsync<EquipmentItem[]>("/api/equipment", token))!;
             Assert.Equal(3, equipment.Length);
             Assert.False(Assert.Single(equipment, item => item.Id == "projector-001").Operational);
@@ -67,22 +90,26 @@ public sealed class BookingSmokeTests(ITestOutputHelper output)
             _ = await first.ResourceNotifications.WaitForResourceAsync("messaging", resource => KnownResourceStates.TerminalStates.Contains(resource.Snapshot.State?.Text ?? ""), token);
             pending = await BookAndCancelAsync(reservations, 20, token);
             await WaitOutboxAsync(first, secrets, pending, false, token);
+            await IdentityProviderFixture.LogoutAsync(identitySettings, accounts["employee-a"], token);
             await first.StopAsync(token);
         }
 
         // Fresh builders reuse only our stable parameters/volumes. Explicit workers
         // allow inspection of durable state before any replay or consumer ACK.
-        await using (DistributedApplication second = await BuildAsync(postgres.Name, rabbit.Name, secrets, true, token))
+        await using (DistributedApplication second = await BuildAsync(postgres.Name, rabbit.Name, identity.Name, identityPort, secrets, true, token))
         {
             await SmokeStartup.StartAsync(second, token);
             _ = await second.ResourceNotifications.WaitForResourceHealthyAsync("inventory", token);
             _ = await second.ResourceNotifications.WaitForResourceHealthyAsync("messaging", token);
+            Assert.Equal(issuer, IdentitySettings(second, secrets).Authority);
+            Dictionary<string, ProviderTokens> accounts = await LoginAccountsAsync(second, secrets, subjects, token);
             await AssertOutboxAsync(second, secrets, pending, false, token);
             await AssertInboxRowsAsync(second, secrets, 3, token);
             await LegacyBrokerStateAsync(second, seed: false, token);
             await AuditRolesAsync(second, secrets, token);
             Assert.Equal(ledger.OrderBy(item => item.Key), (await ReadLedgerAsync(second, secrets, token)).OrderBy(item => item.Key));
             using HttpClient inventory = second.CreateHttpClient("inventory");
+            Authenticate(inventory, accounts["employee-a"]);
             EquipmentItem[] equipment = (await inventory.GetFromJsonAsync<EquipmentItem[]>("/api/equipment", token))!;
             Assert.Equal(3, equipment.Length);
             Assert.True(Assert.Single(equipment, item => item.Id == "projector-001").Operational);
@@ -95,11 +122,13 @@ public sealed class BookingSmokeTests(ITestOutputHelper output)
             await second.StopAsync(token);
         }
 
-        await using (DistributedApplication third = await BuildAsync(postgres.Name, rabbit.Name, secrets, true, token))
+        await using (DistributedApplication third = await BuildAsync(postgres.Name, rabbit.Name, identity.Name, identityPort, secrets, true, token))
         {
             await SmokeStartup.StartAsync(third, token);
             _ = await third.ResourceNotifications.WaitForResourceHealthyAsync("inventory", token);
             _ = await third.ResourceNotifications.WaitForResourceHealthyAsync("messaging", token);
+            Assert.Equal(issuer, IdentitySettings(third, secrets).Authority);
+            Dictionary<string, ProviderTokens> accounts = await LoginAccountsAsync(third, secrets, subjects, token);
             Assert.Equal(2U, await QueuedAsync(third, token));
             await LegacyBrokerStateAsync(third, seed: false, token);
             await AssertInboxRowsAsync(third, secrets, 3, token);
@@ -111,12 +140,23 @@ public sealed class BookingSmokeTests(ITestOutputHelper output)
             _ = await third.ResourceNotifications.WaitForResourceHealthyAsync("reservations", token);
             using HttpClient reservations = third.CreateHttpClient("reservations");
             using HttpClient notifications = third.CreateHttpClient("notifications");
+            Authenticate(reservations, accounts["employee-a"]);
+            Authenticate(notifications, accounts["employee-a"]);
             await WaitInboxAsync(notifications, [retained.ConfirmationEventId, retained.CancellationEventId!.Value, confirmed.ConfirmationEventId, pending.ConfirmationEventId, pending.CancellationEventId!.Value], token);
             BookedReservation[] history = (await reservations.GetFromJsonAsync<BookedReservation[]>("/api/reservations", token))!;
             Assert.Equal(3, history.Length);
             Assert.Contains(retained, history);
             Assert.Contains(pending, history);
             Assert.Contains(confirmed, history);
+            using HttpClient otherReservations = third.CreateHttpClient("reservations");
+            using HttpClient otherNotifications = third.CreateHttpClient("notifications");
+            Authenticate(otherReservations, accounts["employee-b"]);
+            Authenticate(otherNotifications, accounts["employee-b"]);
+            Assert.Empty((await otherReservations.GetFromJsonAsync<BookedReservation[]>("/api/reservations", token))!);
+            Assert.Empty((await otherNotifications.GetFromJsonAsync<InboxEntry[]>("/api/notifications", token))!);
+            string ownerKey = Key(issuer, subjects["employee-a"]);
+            Assert.All(history, reservation => Assert.Equal(ownerKey, reservation.UserKey));
+            Assert.All((await notifications.GetFromJsonAsync<InboxEntry[]>("/api/notifications", token))!, entry => Assert.Equal(ownerKey, entry.UserKey));
             foreach ((string service, string started) in ObserveLifecycles(third, "third"))
             {
                 Assert.NotEqual(lifecycles[service], started);
@@ -126,22 +166,25 @@ public sealed class BookingSmokeTests(ITestOutputHelper output)
         }
     }
 
-    private static async Task<DistributedApplication> BuildAsync(string postgres, string rabbit, Dictionary<string, string> secrets, bool explicitWorkers, CancellationToken token)
+    private static async Task<DistributedApplication> BuildAsync(string postgres, string rabbit, string identity, int identityPort, Dictionary<string, string> secrets, bool explicitWorkers, CancellationToken token)
     {
-        IDistributedApplicationTestingBuilder builder = await DistributedApplicationTestingBuilder.CreateAsync<Projects.AppHost>(["--environment=Development"], token);
+        IDistributedApplicationTestingBuilder builder = await DistributedApplicationTestingBuilder.CreateAsync<Projects.AppHost>(["--environment=Development", "--DcpPublisher:RandomizePorts=false"], token);
         foreach ((string name, string value) in secrets)
         {
-            builder.Configuration["Parameters:" + name + "-password"] = value;
+            builder.Configuration["Parameters:" + name] = value;
         }
 
-        foreach ((string resource, string volume) in new[] { ("postgres", postgres), ("messaging", rabbit) })
+        foreach ((string resource, string volume) in new[] { ("postgres", postgres), ("messaging", rabbit), ("identity", identity) })
         {
             IResource target = Assert.Single(builder.Resources, item => item.Name == resource);
             ContainerMountAnnotation mount = Assert.Single(target.Annotations.OfType<ContainerMountAnnotation>(), item => item.Type == ContainerMountType.Volume);
             _ = target.Annotations.Remove(mount);
             target.Annotations.Add(new ContainerMountAnnotation(volume, mount.Target, mount.Type, mount.IsReadOnly));
-            Assert.DoesNotContain(target.Annotations.OfType<ContainerMountAnnotation>(), item => item.Source is "equipment-reservations-postgres" or "equipment-reservations-rabbitmq");
+            Assert.DoesNotContain(target.Annotations.OfType<ContainerMountAnnotation>(), item => item.Source is "equipment-reservations-postgres" or "equipment-reservations-rabbitmq" or "equipment-reservations-identity");
         }
+
+        KeycloakResource provider = Assert.Single(builder.Resources.OfType<KeycloakResource>());
+        provider.Annotations.OfType<EndpointAnnotation>().Single(endpoint => endpoint.Name == "http").Port = identityPort;
 
         string[] explicitResources = explicitWorkers ? ["reservations", "notifications", "web"] : ["notifications", "web"];
         foreach (string name in explicitResources)
@@ -156,6 +199,57 @@ public sealed class BookingSmokeTests(ITestOutputHelper output)
         _ = builder.CreateResourceBuilder(installer).WithExplicitStart();
 
         return await builder.BuildAsync(token);
+    }
+
+    private static IdentityProvisioningSettings IdentitySettings(DistributedApplication app, Dictionary<string, string> secrets)
+    {
+        string authority = app.GetEndpoint("identity", "http").AbsoluteUri.TrimEnd('/') + "/realms/equipment";
+        string webRoot = app.GetEndpoint("web", "http").AbsoluteUri.TrimEnd('/') + "/";
+        return new IdentityProvisioningSettings(authority, webRoot, "admin", secrets["identity-admin-password"],
+            Users.ToDictionary(username => username, username => secrets[username + "-password"]), secrets["reservations-client-secret"]);
+    }
+
+    private static async Task<Dictionary<string, ProviderTokens>> LoginAccountsAsync(DistributedApplication app, Dictionary<string, string> secrets, Dictionary<string, string> subjects, CancellationToken token)
+    {
+        IdentityProvisioningSettings settings = IdentitySettings(app, secrets);
+        var accounts = new Dictionary<string, ProviderTokens>();
+        foreach (string username in Users)
+        {
+            ProviderTokens issued = await IdentityProviderFixture.LoginAsync(settings, username, cancellationToken: token);
+            using JsonDocument claims = IdentityProviderFixture.Claims(issued.AccessToken);
+            JsonElement value = claims.RootElement;
+            Assert.Equal(settings.Authority, value.GetProperty("iss").GetString());
+            string subject = value.GetProperty("sub").GetString()!;
+            if (subjects.TryGetValue(username, out string? existing))
+            {
+                Assert.True(string.Equals(existing, subject, StringComparison.Ordinal), "Provider subject changed across ordinary restart.");
+            }
+            else
+            {
+                subjects.Add(username, subject);
+            }
+
+            string expectedRole = username switch
+            {
+                "approver" => "Approver",
+                "equipment-staff" => "EquipmentStaff",
+                _ => "Employee"
+            };
+            Assert.Equal(expectedRole, Assert.Single(value.GetProperty("realm_access").GetProperty("roles").EnumerateArray()).GetString());
+            accounts.Add(username, issued);
+        }
+
+        return accounts;
+    }
+
+    private static void Authenticate(HttpClient client, ProviderTokens tokens)
+    {
+        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", tokens.AccessToken);
+    }
+
+    private static string Key(string issuer, string subject)
+    {
+        return Convert.ToHexStringLower(SHA256.HashData(JsonSerializer.SerializeToUtf8Bytes(new[] { issuer, subject })));
     }
 
     private Dictionary<string, string> ObserveLifecycles(DistributedApplication app, string scope)
@@ -204,7 +298,7 @@ public sealed class BookingSmokeTests(ITestOutputHelper output)
         {
             Database = service,
             Username = service + "_app",
-            Password = secrets[service],
+            Password = secrets[service + "-password"],
             IncludeErrorDetail = false,
             LogParameters = false,
             Timeout = 3,
@@ -221,7 +315,7 @@ public sealed class BookingSmokeTests(ITestOutputHelper output)
             await using NpgsqlConnection permitted = await own.OpenConnectionAsync(token);
             foreach (string other in Services.Where(other => other != service))
             {
-                var settings = new NpgsqlConnectionStringBuilder(own.ConnectionString) { Database = other, Password = secrets[service] };
+                var settings = new NpgsqlConnectionStringBuilder(own.ConnectionString) { Database = other, Password = secrets[service + "-password"] };
                 await using var denied = NpgsqlDataSource.Create(settings.ConnectionString);
                 PostgresException exception = await Assert.ThrowsAsync<PostgresException>(() => denied.OpenConnectionAsync(token).AsTask());
                 Assert.Equal(PostgresErrorCodes.InsufficientPrivilege, exception.SqlState);
@@ -329,7 +423,9 @@ public sealed class BookingSmokeTests(ITestOutputHelper output)
     private static async Task<uint> QueuedAsync(DistributedApplication app, CancellationToken token)
     {
         string? settings = await app.GetConnectionStringAsync("messaging", token);
-        await using IConnection connection = await RabbitConnection.Factory(settings!, TimeSpan.FromSeconds(3)).CreateConnectionAsync(token);
+        ConnectionFactory factory = RabbitConnection.Factory(settings!, TimeSpan.FromSeconds(3));
+        factory.VirtualHost = "equipment";
+        await using IConnection connection = await factory.CreateConnectionAsync(token);
         await using IChannel channel = await connection.CreateChannelAsync(cancellationToken: token);
         return (await channel.QueueDeclarePassiveAsync(ReservationTopology.Queue, token)).MessageCount;
     }

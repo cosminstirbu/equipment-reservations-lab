@@ -1,11 +1,13 @@
 using System.Diagnostics;
 using System.Net;
+using System.Net.Http.Headers;
 using System.Text.Json;
+using IdentityAccess;
 using ReservationMessaging;
 
 namespace Reservations;
 
-public sealed class InventoryClient(IHttpClientFactory clients)
+public sealed class InventoryClient(IHttpClientFactory clients, ServiceTokenClient tokens)
 {
     public async Task<string> OperationalNameAsync(string equipmentId, CancellationToken cancellationToken)
     {
@@ -15,8 +17,11 @@ public sealed class InventoryClient(IHttpClientFactory clients)
         budget.CancelAfter(TimeSpan.FromSeconds(3));
         try
         {
-            using HttpResponseMessage response = await clients.CreateClient("inventory")
-                .GetAsync("/api/equipment/" + equipmentId, HttpCompletionOption.ResponseHeadersRead, budget.Token);
+            using HttpClient client = clients.CreateClient("inventory");
+            var target = new Uri(client.BaseAddress ?? throw new HttpRequestException("Inventory unavailable."), "/api/equipment/" + equipmentId);
+            using var request = new HttpRequestMessage(HttpMethod.Get, target);
+            request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", await tokens.GetTokenAsync(target, budget.Token));
+            using HttpResponseMessage response = await client.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, budget.Token);
             if (response.StatusCode == HttpStatusCode.NotFound)
             {
                 throw new ReservationProblemException(404, "equipment_not_found", "Equipment was not found.", "equipmentId");

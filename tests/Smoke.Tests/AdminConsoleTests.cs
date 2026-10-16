@@ -63,6 +63,15 @@ public sealed class AdminConsoleTests(ITestOutputHelper output)
         RabbitMQServerResource broker = Assert.Single(builder.Resources.OfType<RabbitMQServerResource>());
         Assert.DoesNotContain(broker.Annotations.OfType<EndpointAnnotation>(), endpoint => endpoint.UriScheme == "http");
         Assert.Equal("4.3.6", Assert.Single(broker.Annotations.OfType<ContainerImageAnnotation>()).Tag);
+        if (publish)
+        {
+            Assert.Empty(broker.Annotations.OfType<ContainerFileSystemCallbackAnnotation>());
+        }
+        else
+        {
+            Assert.Equal("/etc/rabbitmq", Assert.Single(broker.Annotations.OfType<ContainerFileSystemCallbackAnnotation>()).DestinationPath);
+        }
+
         PostgresServerResource postgres = Assert.Single(builder.Resources.OfType<PostgresServerResource>());
         EndpointAnnotation[] brokerEndpoints = [.. broker.Annotations.OfType<EndpointAnnotation>()];
         EndpointAnnotation[] postgresEndpoints = [.. postgres.Annotations.OfType<EndpointAnnotation>()];
@@ -80,7 +89,7 @@ public sealed class AdminConsoleTests(ITestOutputHelper output)
             foreach (IResource resource in builder.Resources
                 .Where(resource => resource.Name is
                     "database-bootstrap" or "inventory" or "reservations" or
-                    "notifications" or "web" or "web-installer")
+                    "notifications" or "web" or "web-installer" or "identity" or "identity-bootstrap")
                 .ToArray())
             {
                 _ = builder.Resources.Remove(resource);
@@ -104,6 +113,8 @@ public sealed class AdminConsoleTests(ITestOutputHelper output)
                 JsonElement resources = document.RootElement.GetProperty("resources");
                 Assert.False(resources.TryGetProperty("pgadmin", out _));
                 JsonElement messaging = resources.GetProperty("messaging");
+                Assert.DoesNotContain("equipment-definitions.json", messaging.GetRawText(), StringComparison.Ordinal);
+                Assert.DoesNotContain("password_hash", messaging.GetRawText(), StringComparison.Ordinal);
                 Assert.DoesNotContain("management", messaging.GetProperty("image").GetString(), StringComparison.OrdinalIgnoreCase);
                 Assert.False(messaging.GetProperty("bindings").TryGetProperty("management", out _));
                 Assert.True(resources.TryGetProperty("postgres", out _));
@@ -123,7 +134,8 @@ public sealed class AdminConsoleTests(ITestOutputHelper output)
         await using IDistributedApplicationTestingBuilder builder = await CreateAsync("Development");
         RabbitMQServerResource broker = Assert.Single(builder.Resources.OfType<RabbitMQServerResource>());
         EndpointAnnotation endpoint = Assert.Single(broker.Annotations.OfType<EndpointAnnotation>(), endpoint => endpoint.UriScheme == "http");
-        KeepOnly(builder, "messaging", "broker-password");
+        KeepOnly(builder, "messaging", "broker-password", "reservations-broker-password", "notifications-broker-password",
+            "broker-admin-salt", "reservations-broker-salt", "notifications-broker-salt");
         string container = "admin-rabbit-" + Guid.NewGuid().ToString("N");
         _ = builder.CreateResourceBuilder(broker).WithContainerName(container);
         SmokeStartup.IsolateStorage(builder);

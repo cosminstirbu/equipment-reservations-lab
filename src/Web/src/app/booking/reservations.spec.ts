@@ -9,10 +9,15 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import axe from 'axe-core';
 import { Booking, BOOKING_TIME_ZONE } from './booking';
 import { Reservation } from './booking-api';
+import { AuthSession } from '../auth/auth-session';
+import {
+  ProviderSessionBoundary,
+  sessionBoundaryProviders,
+} from '../auth/auth-test-fixture';
 
 const confirmed: Reservation = {
   id: '310bfc65-7b78-4d28-a91c-1c45d0fbd64a',
-  demoUserId: 'demo-user',
+  userKey: 'a'.repeat(64),
   equipmentId: 'camera-001',
   equipmentName: 'Demo Camera',
   startAt: '2030-01-02T12:00:00Z',
@@ -48,9 +53,11 @@ describe('reservation history and cancellation', () => {
       providers: [
         provideHttpClient(),
         provideHttpClientTesting(),
+        ...sessionBoundaryProviders(new ProviderSessionBoundary()),
         { provide: BOOKING_TIME_ZONE, useValue: 'Europe/Bucharest' },
       ],
     });
+    await TestBed.inject(AuthSession).initialize();
   });
 
   afterEach(() => {
@@ -265,6 +272,34 @@ describe('reservation history and cancellation', () => {
     expect(view().textContent).toContain('Confirmed');
     expect(cancel().disabled).toBe(false);
     http.expectNone(`/api/reservations/${confirmed.id}/cancel`);
+    http.verify();
+  });
+
+  it('distinguishes forbidden cancellation from an uncertain write without replay', () => {
+    const { http, view, cancel } = loaded();
+    cancel().click();
+    http
+      .expectOne(`/api/reservations/${confirmed.id}/cancel`)
+      .flush({}, { status: 403, statusText: 'Forbidden' });
+    expect(view().textContent).toContain('Your account does not allow');
+    expect(view().textContent).not.toContain('response is uncertain');
+    expect(view().textContent).toContain('Confirmed');
+    http.expectNone(`/api/reservations/${confirmed.id}/cancel`);
+    http.verify();
+  });
+
+  it('distinguishes forbidden history from storage failure and permits explicit recovery', () => {
+    const { http, view, refresh } = setup();
+    refresh().click();
+    http
+      .expectOne('/api/reservations')
+      .flush({}, { status: 403, statusText: 'Forbidden' });
+    expect(view().textContent).toContain('Your account does not allow');
+    expect(view().textContent).not.toContain('Check storage');
+    http.expectNone('/api/reservations');
+    refresh().click();
+    http.expectOne('/api/reservations').flush([confirmed]);
+    expect(view().textContent).toContain('Confirmed');
     http.verify();
   });
 

@@ -91,7 +91,7 @@ public sealed class PostgresFixture : IAsyncLifetime
 
     public static WebApplicationFactory<TProgram> Factory<TProgram>(NpgsqlDataSource source) where TProgram : class
     {
-        return new WebApplicationFactory<TProgram>().WithWebHostBuilder(builder => builder.ConfigureServices(services =>
+        return new AuthenticatedApplicationFactory<TProgram>().WithWebHostBuilder(builder => builder.ConfigureServices(services =>
         {
             _ = services.RemoveAll<NpgsqlDataSource>();
             _ = services.AddSingleton(source);

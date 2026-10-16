@@ -95,7 +95,7 @@ The package was checked for TOML/JSON syntax and ZIP integrity. End-to-end execu
 The application extends the walking skeleton with persistent booking,
 cancellation and an asynchronous notification inbox. It uses Angular 22.2.2,
 TypeScript 6.0.3, RxJS 7.8.2, .NET SDK 10.0.301 / C# 14, Aspire 13.6.1, RabbitMQ
-4.3.6 and RabbitMQ.Client 7.2.2. OpenTelemetry exporter 1.19.1 and
+4.3.6, RabbitMQ.Client 7.2.2, Keycloak 26.8.1 and keycloak-js 26.2.4. OpenTelemetry exporter 1.19.1 and
 instrumentation 1.19.0 provide local telemetry. Dependency versions are pinned
 with npm and NuGet lockfiles. Tested prerequisites are Node 24.15.0 / npm
 11.12.1, Aspire CLI 13.6.1 and Podman 6.0.2 with its machine running.
@@ -108,15 +108,19 @@ export ASPIRE_CONTAINER_RUNTIME=podman
 dotnet run --project src/AppHost
 ```
 
-First startup needs network access for NuGet/npm restore and the PostgreSQL 18.6
-and RabbitMQ images. Aspire installs the client with `npm ci`, starts
-PostgreSQL, RabbitMQ, three services and the database bootstrap, and provides
+First startup needs network access for NuGet/npm restore and the PostgreSQL 18.6,
+RabbitMQ and Keycloak images. Aspire installs the client with `npm ci`, starts
+PostgreSQL, RabbitMQ, persistent Keycloak, three services and identity/database provisioning, and provides
 the Web resource link in its token-protected dashboard. Use the printed loopback
 resource links; service ports are allocated dynamically. The local launch
 profile explicitly permits HTTP transport on loopback for the demo dashboard and
-telemetry; dashboard token authentication remains enabled. Five secret
+telemetry; dashboard token authentication remains enabled. Secret
 parameters (`postgres-password`, `inventory-password`, `reservations-password`,
-`notifications-password`, `broker-password`) are generated automatically on
+`notifications-password`, `broker-password`, `reservations-broker-password`,
+`notifications-broker-password`, `broker-admin-salt`, `reservations-broker-salt`,
+`notifications-broker-salt`, `identity-admin-password`, `employee-a-password`,
+`employee-b-password`, `approver-password`, `equipment-staff-password`,
+`reservations-client-secret`) are generated automatically on
 first startup and persisted by Aspire in the AppHost user-secrets store outside
 Git. Ordinary startup reuses them. Do not delete that store or change a password
 independently of its existing database/broker volume. No committed plaintext
@@ -125,6 +129,37 @@ setup uses `AddParameter(..., secret: true, persist: true)` and the AppHost
 `UserSecretsId`; application startup reuses them without manual entry. Keep
 dashboard access tokens and connection strings private. All resource listeners
 are loopback and intended exclusively for a trusted local workstation.
+
+The provider uses stable configurable `IdentityPort` (default 18080). Read its
+actual complete issuer from `/auth-config.json` or the current identity resource:
+Aspire-managed developer TLS can promote its endpoint named `http` to HTTPS.
+Keep the exact scheme, loopback hostname, port and `/realms/equipment` issuer
+unchanged across ordinary restarts. Browser, provider and APIs use that same
+issuer; changing it creates a different identity environment. Trust the local
+development certificate normally; do not disable certificate or issuer checks.
+
+Open Web and choose **Sign in**. These generated local accounts have independent
+roles; Approver and EquipmentStaff do not imply Employee:
+
+| Username | Role | Available actions |
+|---|---|---|
+| employee-a | Employee | Equipment, advisory availability, own reservations/cancellation and inbox |
+| employee-b | Employee | Same actions, isolated from employee-a |
+| approver | Approver | Equipment, advisory availability and own inbox |
+| equipment-staff | EquipmentStaff | Equipment, advisory availability and own inbox |
+
+Retrieve only the intended account's password in a private local terminal:
+
+```sh
+aspire secret get Parameters:employee-a-password --apphost src/AppHost/AppHost.csproj --non-interactive --nologo
+```
+
+Substitute `employee-b-password`, `approver-password` or `equipment-staff-password`
+for the other accounts. This targets the ordinary AppHost store; CLI `--isolated`
+runs use their own per-run store. Do not bulk-list secrets, paste passwords into
+shared output or put them in command arguments, source or screenshots. Identity
+administration and service credentials belong only to their provisioning/service
+resources. There is no registration or password-recovery feature.
 
 Open Web. Inventory seeds operational **Demo Camera**, operational **Demo
 Laptop** and non-operational **Demo Projector**. Bootstrap creates separately
@@ -182,7 +217,9 @@ UTC, finite, with at most six fractional digits; stored intervals use
 microsecond precision. **Check availability** is advisory. **Book equipment**
 atomically stores Confirmed state and one stable confirmation event, with
 PostgreSQL preventing overlapping Confirmed intervals. Adjacent intervals are
-allowed. The fixed visible identity is `demo-user`.
+allowed. Employee reservation history and cancellation use only the validated
+current account; foreign and unknown reservation IDs return the same 404.
+All human roles can read boolean advisory availability without owner details.
 
 Use **Refresh reservations** to view history. Cancel a future Confirmed
 reservation to retain Cancelled history and release the interval. Repeated
@@ -196,6 +233,35 @@ notifications** explicitly reads the durable inbox; only a matching event ID
 means the notification was observed. Missing entries display **not yet
 observed**. There is no automatic booking retry or reservation/inbox browser
 polling.
+
+Sign-out, expiry and account changes immediately clear private browser state and
+cancel pending work. Access, refresh and ID tokens remain in adapter memory;
+they are not stored in browser storage. Code+PKCE callbacks are cleaned. Already
+issued API access tokens may remain valid for at most 125 seconds after issuance
+(120-second lifetime plus 5-second skew); sign-out does not revoke them instantly.
+Provider logout failure leaves local state cleared and presents an explicit
+retry. Sign in again and refresh owned history after an uncertain write; the
+application never replays it automatically. Public configuration contains only
+issuer, realm and public client ID, never a client secret.
+
+Reservations acquires its own Inventory-only service bearer using client
+credentials; it never forwards the human token. Acquisition is bounded at two
+seconds inside the three-second Inventory budget, coalesces concurrent requests,
+refreshes before expiry and fails safely without a cached expired fallback or
+automatic token POST retry. Failed acquisition creates no reservation/outbox row.
+
+RabbitMQ runtime users are separate from administration: `reservations-publisher`
+can write only exchange `reservations`; `notifications-consumer` can read only
+queue `reservation-notifications`, both only in vhost `equipment`. Neither can
+configure topology, use default/unrelated exchanges, use other vhosts or access
+management. Run-mode protected core definitions prepare durable topology and
+stable salted credentials before broker boot; file owner/group 999, files 0600
+and new directories 0700. Readiness forces exact-account channel handshakes and
+administrator passive topology checks under a bounded startup budget.
+Invalid/unreadable definitions block workers with safe failure diagnostics.
+Do not broaden ACLs or enable management outside Development as recovery.
+Publishing excludes local definitions/hash material and secret resolution; it
+does not provision a production environment.
 
 ### Verification
 
@@ -253,6 +319,7 @@ example, on macOS with Microsoft Edge installed:
 
 ```sh
 export API_WEB_URL='<printed loopback Web URL>'
+export IDENTITY_BROWSER_ACCOUNTS_FILE='<private mode0600 JSON fixture path>'
 export BROWSER_EXECUTABLE='/Applications/Microsoft Edge.app/Contents/MacOS/Microsoft Edge'
 npm --prefix src/Web run test:browser
 ```
@@ -267,6 +334,13 @@ responses and unchanged durable history. Test-created future bookings are
 deliberately cancelled afterward; their retained history is expected demo data.
 Native keyboard/focus review remains a separate human acceptance check.
 
+The private JSON fixture maps exactly the four usernames above to their passwords
+from the intended run. Create it locally with restrictive permissions using only
+filtered individual retrieval; never commit or display it. Actual login screens
+and code+PKCE are exercised, not browser password grants. Traces, screenshots and
+videos are disabled to keep authority private. Tests hold tokens only in memory
+and preserve authenticated hostile-origin write checks.
+
 ### Persistence and recovery
 
 The exact production Podman named volumes are:
@@ -274,6 +348,7 @@ The exact production Podman named volumes are:
 - `equipment-reservations-postgres`: equipment, reservations, outbox and inbox.
 - `equipment-reservations-rabbitmq`: durable reservation topology and persistent
   queued reservation messages.
+- `equipment-reservations-identity`: users, opaque subjects, roles and provider state.
 
 Ordinary service, broker and AppHost restarts reuse those volumes and stable
 secret parameters. Booking/cancellation commit while the broker is unavailable.
@@ -332,17 +407,20 @@ deduplicates after repaired restart. Transient database/transport failures and
 uncertain publication outcomes continue bounded recovery without a
 permanent-event reset.
 
-**Destructive reset is separate from ordinary startup.** Stop AppHost,
-explicitly decide to erase demo state, inspect the exact named volumes, then
-remove only these two volumes and restart using the same persisted secrets:
+**The owner performs the one-time early-project reset.** There is no migration
+from the throwaway demo-user schema. Old schema/checksum mismatch fails startup
+safely; neither application startup nor agents reset operator volumes. Stop
+AppHost, explicitly decide to erase local state, inspect the exact named volumes,
+then remove only these three volumes and restart using the same persisted secrets:
 
 ```sh
-podman volume inspect equipment-reservations-postgres equipment-reservations-rabbitmq
-podman volume rm equipment-reservations-postgres equipment-reservations-rabbitmq
+podman volume inspect equipment-reservations-postgres equipment-reservations-rabbitmq equipment-reservations-identity
+podman volume rm equipment-reservations-postgres equipment-reservations-rabbitmq equipment-reservations-identity
 ```
 
 This erases equipment changes, reservation history, outbox/inbox events and
-queued messages. The next startup provisions fresh databases/seeds. Do not add
+queued messages and provider identities/subjects. The next startup provisions fresh
+databases/seeds and accounts. Do not add
 `--force`, prune other volumes, delete the user-secrets store or run these
 commands while AppHost is using the volumes. No reset runs automatically.
 Automated persistence tests use separate randomly named test-owned volumes and
@@ -369,6 +447,13 @@ outcome/dependency metrics and correlated W3C workflow/event spans distinguish
 saved state from delivery. Pending-outbox count/oldest age includes unpublished
 parked events. Metric dimensions are bounded operation/dependency/outcome
 values; event/reservation IDs may correlate traces/logs, never metric tags.
+Provider discovery/JWKS, service-token and administration HTTP dependencies use
+the production native HTTP instrumentation. URLs/query strings, headers, form
+bodies, tokens, login codes, profile and provider session details are excluded.
+Authentication/authorization and provider failures have bounded outcome signals;
+broker file preparation/readiness emits local operation signals rather than
+invented HTTP spans. Native Keycloak session-event/OTel export is disabled to
+preserve privacy. Do not enable it or add token/claim logging for troubleshooting.
 Database command spans come from native Npgsql instrumentation and include API,
 outbox/inbox, health, migrations and administrative provisioning operations.
 Reviewed SQL text is enabled by default locally: placeholders remain intact,
@@ -394,14 +479,14 @@ telemetry → Manage, expand the relevant resources, select only Metrics, then
 Export selected. Keep resource configuration exports private because they can
 contain credentials.
 
-This remains a single-user trusted-workstation demo with no authentication,
-authorization, tenant/user isolation, identity provider, approval workflow, real
-external notification or production deployment. Canonical HTTP(S) loopback
+This remains a trusted-workstation application with local authenticated ownership
+and explicit role checks. It has no approval workflow, real external notification
+or production deployment. Canonical HTTP(S) loopback
 browser origins (`localhost`, `127.0.0.1`, `[::1]`) on any valid local port are
 trusted; this is not isolation from other local applications. Reservations
 POSTs reject hostile/null Origin and originless browser
 metadata with safe 403. Direct local CLI JSON writes without browser metadata
-remain supported. Booking creation requires `application/json` with UTF-8. Proxy
+require a valid bearer and applicable role. Booking creation requires `application/json` with UTF-8. Proxy
 requests preserve Origin/Host; CORS read restrictions alone are not the write
 guard. Do not expose this demo to a shared network or use it with personal data.
 

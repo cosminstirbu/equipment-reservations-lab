@@ -8,6 +8,11 @@ import {
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import axe from 'axe-core';
 import { Booking, BOOKING_TIME_ZONE } from './booking';
+import { AuthSession } from '../auth/auth-session';
+import {
+  ProviderSessionBoundary,
+  sessionBoundaryProviders,
+} from '../auth/auth-test-fixture';
 
 const catalog = [
   { id: 'camera-001', name: 'Demo Camera', operational: true },
@@ -16,7 +21,7 @@ const catalog = [
 ];
 const saved = {
   id: '310bfc65-7b78-4d28-a91c-1c45d0fbd64a',
-  demoUserId: 'demo-user',
+  userKey: 'a'.repeat(64),
   equipmentId: 'camera-001',
   equipmentName: 'Demo Camera',
   startAt: '2030-01-02T12:00:00Z',
@@ -29,9 +34,12 @@ const saved = {
 };
 
 describe('booking equipment', () => {
+  let boundary: ProviderSessionBoundary;
+
   beforeEach(async () => {
     vi.useFakeTimers();
     vi.setSystemTime(new Date('2030-01-01T00:00:00Z'));
+    boundary = new ProviderSessionBoundary();
     TestBed.overrideComponent(Booking, {
       set: {
         template: readFileSync('src/app/booking/booking.html', 'utf8'),
@@ -46,9 +54,11 @@ describe('booking equipment', () => {
       providers: [
         provideHttpClient(),
         provideHttpClientTesting(),
+        ...sessionBoundaryProviders(boundary),
         { provide: BOOKING_TIME_ZONE, useValue: 'Europe/Bucharest' },
       ],
     });
+    await TestBed.inject(AuthSession).initialize();
   });
 
   afterEach(() => {
@@ -95,8 +105,6 @@ describe('booking equipment', () => {
     const { http, view } = setup();
     expect(view().textContent).toContain('Loading equipment');
     http.expectOne('/api/equipment').flush(catalog);
-    expect(view().textContent).toContain('demo-user');
-    expect(view().textContent).toContain('No authentication or user isolation');
     expect(view().textContent).toContain('Europe/Bucharest');
     expect(view().querySelector('label[for="equipment"]')).not.toBeNull();
     expect(view().querySelector('label[for="start-time"]')).not.toBeNull();
@@ -105,6 +113,47 @@ describe('booking equipment', () => {
       view().querySelector<HTMLOptionElement>('option[value="projector-001"]')!
         .disabled,
     ).toBe(true);
+    http.verify();
+  });
+
+  it('offers availability and inbox to an Approver without Employee reservation controls', async () => {
+    boundary.session = { ...boundary.session!, roles: ['Approver'] };
+    await TestBed.inject(AuthSession).initialize();
+    const { http, view, button } = setup();
+    http.expectOne('/api/equipment').flush(catalog);
+    expect(button('availability')).not.toBeNull();
+    expect(button('refresh-notifications')).not.toBeNull();
+    expect(button('book')).toBeNull();
+    expect(button('refresh-reservations')).toBeNull();
+    expect(view().textContent).toContain('Notification inbox');
+    http.verify();
+  });
+
+  it('clears saved private data and cancels pending requests immediately on sign-out while retaining dates', async () => {
+    const { http, view, button, fixture } = ready();
+    button('book').click();
+    http.expectOne('/api/reservations').flush(saved);
+    expect(view().textContent).toContain(saved.id);
+    button('refresh-notifications').click();
+    const pending = http.expectOne('/api/notifications');
+    await TestBed.inject(AuthSession).logout();
+    view();
+    expect(pending.cancelled).toBe(true);
+    expect(view().querySelector('[data-action="book"]')).toBeNull();
+    boundary.session = {
+      ...boundary.session!,
+      subject: 'opaque-employee-b',
+      account: 'employee-b',
+    };
+    await TestBed.inject(AuthSession).initialize();
+    view();
+    http.expectOne('/api/equipment').flush(catalog);
+    expect(view().textContent).not.toContain(saved.id);
+    expect(view().querySelector<HTMLInputElement>('#start-time')!.value).toBe(
+      '2030-01-02T14:00',
+    );
+    http.expectNone('/api/reservations');
+    fixture.destroy();
     http.verify();
   });
 

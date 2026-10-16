@@ -1,0 +1,42 @@
+{
+  "application_snapshot": "8043aa6d07e9f301e9027e01a308da0f4d9d57f30926c09642833a2bd79e3f73",
+  "browser": "Microsoft Edge, real local Keycloak; Playwright-driven inspection with screenshots visually inspected by coordinator",
+  "sessions": [
+    42417,
+    10612,
+    79217
+  ],
+  "automated_browser": {
+    "session": 65844,
+    "passed": 18,
+    "failed": 0,
+    "skipped": 0,
+    "duration": "25.0s",
+    "axe": "passed"
+  },
+  "observations": [
+    "Signed-out Sign in button has a visible focus outline and keyboard activation opens the provider.",
+    "Actual invalid provider login displays explicit Invalid username or password text alongside the labelled fields; failure is not communicated by color alone.",
+    "Successful Employee state displays account/role, labelled equipment/start/end controls, reservation history and inbox.",
+    "Tab order progresses from Sign out to Reload equipment, equipment selection, native start/end date subcontrols, then Check availability.",
+    "Explicit held403 history response produces distinct forbidden text and retains focus on Refresh reservations.",
+    "Explicit held503 equipment response produces distinct dependency-error text and retains focus on Reload equipment.",
+    "Explicit held401 response removes private booking controls and account state, announces Session expired with explicit sign-in/history recovery guidance; next Tab focuses Sign in."
+  ],
+  "screenshots": [
+    "/tmp/identity-manual-006-signed-out.png",
+    "/tmp/identity-manual-006-login-error.png",
+    "/tmp/identity-manual-006-employee.png",
+    "/tmp/identity-manual-006-forbidden.png",
+    "/tmp/identity-manual-006-dependency.png",
+    "/tmp/identity-manual-006-expired.png"
+  ],
+  "limits": [
+    "Manual agent visual/keyboard inspection, not human screen-reader audio verification.",
+    "Held403/503/401 responses inspect UI states only; real authorization/provider/broker outcomes have separate backend, provider and browser evidence.",
+    "Initial inspection harness selectors were corrected before successful observations; no product defect inferred from those harness timeouts.",
+    "Subsequent migration admission digest edits affect telemetry only; final migration tests and required repository checks validate those changes.",
+    "Later production changes add exact-category framework log filters only; final backend/provider/full checks validate those privacy repairs. Browser interface, authentication behavior and keyboard behavior are unchanged."
+  ],
+  "runtime_cleanup": "Exact isolated AppHost stopped cleanly; test volumes preserved, operator state untouched."
+}

@@ -37,11 +37,13 @@ public static class Extensions
 
         _ = builder.Services.AddSingleton<TelemetryRegistration>();
 
-        // These framework information messages contain raw request URLs or local
-        // startup paths. Apply the policy to console and OTLP providers alike.
+        // These framework information messages contain raw URLs, local paths or
+        // validation exceptions. Apply the policy to console and OTLP alike.
         _ = builder.Logging.AddFilter("Microsoft.AspNetCore.Hosting.Diagnostics", LogLevel.Warning);
         _ = builder.Logging.AddFilter("Microsoft.Hosting.Lifetime", LogLevel.Warning);
         _ = builder.Logging.AddFilter("System.Net.Http.HttpClient", LogLevel.Warning);
+        _ = builder.Logging.AddFilter("Microsoft.AspNetCore.DataProtection.KeyManagement.XmlKeyManager", LogLevel.Warning);
+        _ = builder.Logging.AddFilter("Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerHandler", LogLevel.Warning);
 
         _ = builder.Services.AddOpenTelemetry()
             .WithTracing(tracing => tracing
@@ -53,7 +55,7 @@ public static class Extensions
                 .AddAspNetCoreInstrumentation()
                 .AddHttpClientInstrumentation())
             .WithMetrics(metrics => metrics
-                .AddMeter("Equipment.Reservations", "Equipment.ReservationMessaging", "Equipment.Notifications", "Equipment.DatabaseBootstrap")
+                .AddMeter("Equipment.Reservations", "Equipment.ReservationMessaging", "Equipment.Notifications", "Equipment.DatabaseBootstrap", "Equipment.IdentityAccess")
                 .AddAspNetCoreInstrumentation()
                 .AddHttpClientInstrumentation()
                 .AddRuntimeInstrumentation());

@@ -1,0 +1,1146 @@
+{
+  "snapshot": "2e094af021db5f65143a73d4cd24c1fd473437b529fd6a8e48500139e0a95cef",
+  "baseline_revision": "87bd4bc6964ed8dd75b8fdba8a227b530675b22d",
+  "source_snapshot": "fc5d66bedefff1ff2e5a438a5e343b87d3db429aadb055eb094e3a6233c770dc",
+  "source_manifest": "source-freeze-manifest.json",
+  "coder_changed_source_fingerprint": "8b632e01bbc137fe583d6457eed2c13679a2f3baa7bc3bc0399667185e7bbdb1",
+  "scope": "Frozen current repository application/tests/tooling/agreements/evidence; mutable team state/reports, agent bundles and git internals excluded. All source and feature artifacts frozen during independent reviews.",
+  "files": [
+    {
+      "path": ".editorconfig",
+      "sha256": "43710167ef1e01d0818a52f6dec21f8df3c661caecdce71c69632338112c8150"
+    },
+    {
+      "path": ".gitignore",
+      "sha256": "6cb5c84ee8a3ccdac7a0064de6fbfe8e14fa1f67414b3c45b63fe20a4ab4c936"
+    },
+    {
+      "path": ".prettierignore",
+      "sha256": "d167aaf2f13dedf60d10c4ce8add5db0f9c4163d4fa63da1d6b92f02a5b8a96b"
+    },
+    {
+      "path": ".prettierrc.json",
+      "sha256": "f1699db8672e0b4045674ecda4551d225c6a9d61db17103ae75bec2734de9390"
+    },
+    {
+      "path": ".specify/.gitignore",
+      "sha256": "8c908410d177a1ef3d0dee16d7ad55f2ac3333df3104c4d4adee1c9b82f1dbc1"
+    },
+    {
+      "path": ".specify/init-options.json",
+      "sha256": "048215d3f161a6d497144369fb49359c1135e5ccbb7ac222b5b22ff07e043979"
+    },
+    {
+      "path": ".specify/integration.json",
+      "sha256": "b115b649201879fdb964461177233040da6badfa2a3c3181c4edc058264827ae"
+    },
+    {
+      "path": ".specify/integrations/codex.manifest.json",
+      "sha256": "7263b125afd94b286bcd0c1b84d4d20d764cdf9232cb17447e434ca15f144e6c"
+    },
+    {
+      "path": ".specify/integrations/speckit.manifest.json",
+      "sha256": "79c68bb044a8c86c21259fe044636fbb41b8f05f169cf14aabe09932b4c3778c"
+    },
+    {
+      "path": ".specify/memory/.constitution-template.json",
+      "sha256": "8fc4b39294bae0c10d59547ad7d415b6f0e890d656cbf7171dd567f4e9054711"
+    },
+    {
+      "path": ".specify/memory/constitution.md",
+      "sha256": "f89cec1b72730947c070beaae16cdef337f1eccfcfa35aae85d6c7c1df16f6ed"
+    },
+    {
+      "path": ".specify/scripts/bash/check-prerequisites.sh",
+      "sha256": "13be175548848bd84e96a90cf9be87665c2e68603b2eaa3e19187e7ca8b4fcb0"
+    },
+    {
+      "path": ".specify/scripts/bash/common.sh",
+      "sha256": "e3f72d571b8d27088a0aa6a96068eb6583175fbfa7a48bad465be62b9898f09c"
+    },
+    {
+      "path": ".specify/scripts/bash/create-new-feature.sh",
+      "sha256": "972f03ed8ca5ee17b7baad6d56d821d46269d77abc337496beafb0fe85a725f2"
+    },
+    {
+      "path": ".specify/scripts/bash/resolve-template.sh",
+      "sha256": "829e227096abc8bf0889889ec9f792f503ca5d395b7836a8a7eb739ee75214e7"
+    },
+    {
+      "path": ".specify/scripts/bash/setup-plan.sh",
+      "sha256": "d0bd298c026446f3c63167130d65e49e4aa4485de6bef18bcdfd57b19aa0de96"
+    },
+    {
+      "path": ".specify/scripts/bash/setup-tasks.sh",
+      "sha256": "0350b2def158c4dc333cd888fc5a3b10785b3d5c2cf936f93e910242ea9d507d"
+    },
+    {
+      "path": ".specify/templates/checklist-template.md",
+      "sha256": "70bbc48e884fab372ffb09e83e78ff983e28b69caebf8cd9964a02b6836683ac"
+    },
+    {
+      "path": ".specify/templates/constitution-template.md",
+      "sha256": "ce7549540fa45543cca797a150201d868e64495fdff39dc38246fb17bd4024b3"
+    },
+    {
+      "path": ".specify/templates/plan-template.md",
+      "sha256": "a828ad6206526574ab3fc99be6d0154588cb1c9774c5919d71b81ab5b2dbffa0"
+    },
+    {
+      "path": ".specify/templates/spec-template.md",
+      "sha256": "3945437fc35cd30a5b2bf7beea680337c3516826d3efa5a6b92c4a7eca1ba28e"
+    },
+    {
+      "path": ".specify/templates/tasks-template.md",
+      "sha256": "b0f527d41e546af0c31903e04f9b20965b6b497b573792198f663a64ce128863"
+    },
+    {
+      "path": ".specify/workflows/speckit/workflow.yml",
+      "sha256": "177761c5e7df28126beea043b5cb45aeaf7958090c022dc11ac71399422fcfbc"
+    },
+    {
+      "path": ".specify/workflows/workflow-registry.json",
+      "sha256": "6a4ee211082eeac21bd1603c7db331ea78932f0e6f7b7404426ee8e59bc8174f"
+    },
+    {
+      "path": ".vscode/extensions.json",
+      "sha256": "74902e2fe3e8ada02aba8a5483176e81b0562c7fab6790d86884243017e81b13"
+    },
+    {
+      "path": ".vscode/settings.json",
+      "sha256": "9a1de83f7e49791b0d9c96820b50f75ebac7a761cea31bf62082bdd6325225a1"
+    },
+    {
+      "path": "AGENTS.md",
+      "sha256": "0f498268d901b76857b2358f8d11c0c5647de4fa1b9a0b1cfefa95a2d5e3924d"
+    },
+    {
+      "path": "Directory.Build.props",
+      "sha256": "74760aeb75884af152c9a9bc549e280a3669573bfabb8c25bbd052c4b2260d37"
+    },
+    {
+      "path": "EquipmentReservation.slnx",
+      "sha256": "780d0a65acb7e82e13ee73167d275a68565c359960637c72fa73247fcee45a32"
+    },
+    {
+      "path": "docs/agent-team/protocol.md",
+      "sha256": "4fd841d969dcffcc1be912e8261b4b28f507f59d75816a9542269fcc67906a3a"
+    },
+    {
+      "path": "docs/agent-team/resume-feature-prompt.md",
+      "sha256": "0041e2449dcd5f6857ecb27fb611ba4aa3e182f1a0770a394356c3aac1aeef20"
+    },
+    {
+      "path": "docs/agent-team/start-feature-prompt.md",
+      "sha256": "d5642f7f7ffe620183a878125b336c967fed45e62f065ab5ea106e989e10be91"
+    },
+    {
+      "path": "docs/agent-team/templates/finding.example.json",
+      "sha256": "8afd566555976c12d89121ed9a07027834215cf2bea5ee1afa4cca2f61605f90"
+    },
+    {
+      "path": "docs/agent-team/templates/findings.json",
+      "sha256": "8aa973100a15bf817985395637131e838cf84e427be4792583def923f020f5fa"
+    },
+    {
+      "path": "docs/agent-team/templates/review-report.md",
+      "sha256": "c70ebd3d2292935bdf5307b15a582332df81cb82c7b5647d4957a56c21546d57"
+    },
+    {
+      "path": "docs/agent-team/templates/run-state.json",
+      "sha256": "de20176cb9a7f3a58c14cf2ca54a2eb2b5953d95fc524a1cbdcdea6ee54a52ad"
+    },
+    {
+      "path": "docs/engineering/README.md",
+      "sha256": "5efe3cc7acb0223317abe084168f2991ead5b979d492a103abaec48951a11e69"
+    },
+    {
+      "path": "docs/engineering/angular.md",
+      "sha256": "3d335d01aff51b37a0d2925c35b250b4f0cf1c49311a1106b0a63e12764af0ef"
+    },
+    {
+      "path": "docs/engineering/aspire.md",
+      "sha256": "542805a0c44c559d74c639d08edabf29d0444cb1374bb1db30c7dbcdf0cd76bc"
+    },
+    {
+      "path": "docs/engineering/aspnet-core.md",
+      "sha256": "d2ce807e3af539d38e18176f5ad3703307dda8dc83086aa5934fe84898ac8b49"
+    },
+    {
+      "path": "docs/engineering/formatting-and-linting.md",
+      "sha256": "da1718d9fc6c0e47c610bb343c3653a00d6e7ca73bdc00054bc63b0455c6ffc8"
+    },
+    {
+      "path": "docs/engineering/observability.md",
+      "sha256": "8e8b0c9ced684985be849e038554d3bae710c63742c34bc000e93b4691e89b09"
+    },
+    {
+      "path": "docs/engineering/resilience.md",
+      "sha256": "9519a4a9f209732c9e0880aa719621697f955b96897de7cd71153af10903c710"
+    },
+    {
+      "path": "docs/engineering/testing.md",
+      "sha256": "db28fa9df29bee35fd828ff6819c52356f8fcc5d3e3e9939c06bd78a394e1eb4"
+    },
+    {
+      "path": "docs/history/hello-retirement.md",
+      "sha256": "38e6082adb18fe5460620be3bf07780bcd857f854f03d66ccf53ea2fa0c02e9a"
+    },
+    {
+      "path": "eslint.config.mjs",
+      "sha256": "0389dbe79d29a8871d882213778d0d46da4eee81b890f6d05d248cfc8aca4ee3"
+    },
+    {
+      "path": "global.json",
+      "sha256": "a108be058fff8f1836978f10aaeeab71830ad610db4bcab5671eec91b4d5f2d3"
+    },
+    {
+      "path": "package-lock.json",
+      "sha256": "c84ddcc11bf2759ef27320eac0fb66be308501de793bb3de9a111f8db355e426"
+    },
+    {
+      "path": "package.json",
+      "sha256": "c5095484e72f636adcb960485d56874b1277cdfb19f51bd8850a83d5e98e9b55"
+    },
+    {
+      "path": "readme.md",
+      "sha256": "d363e44b1d6ae098305a7130cce6a169e9a1bfd187996935101f9873368301ea"
+    },
+    {
+      "path": "scripts/admin-console-browser.mjs",
+      "sha256": "6a17c59f8ee3307f5f31001585d7f1871f8ff68278865aa24b00ae732afadc23"
+    },
+    {
+      "path": "scripts/quality.mjs",
+      "sha256": "5833dfd498476919cf2b995e989635056b29f638c752a971fb3ec24abcfbe7c5"
+    },
+    {
+      "path": "scripts/quality.test.mjs",
+      "sha256": "ded3e3fb8d3fc8907b253fdd282186f778e6e874b19097f72f06740d7ff1da94"
+    },
+    {
+      "path": "specs/001-hello-world-skeleton/checklists/quality.md",
+      "sha256": "263c42a743db62814a5a7da8ce2c1b8551d46a9495bc479f4049d5f546357c17"
+    },
+    {
+      "path": "specs/001-hello-world-skeleton/checklists/requirements.md",
+      "sha256": "3543680d3e910b7107be3ed2e93c2e1a0f33708b7f1c13964cc91fb403e27501"
+    },
+    {
+      "path": "specs/001-hello-world-skeleton/contracts/hello.md",
+      "sha256": "d288ba06bd7a94430a43b45becd6f7a685409e5c68a23f6f1f7d99c532cbb2c8"
+    },
+    {
+      "path": "specs/001-hello-world-skeleton/data-model.md",
+      "sha256": "08ab99b105f71ca1dca85016a65f34b12da6d2fc6e452ae449138340d7b775f3"
+    },
+    {
+      "path": "specs/001-hello-world-skeleton/plan.md",
+      "sha256": "4eab211cfe659a15f0dc6820c8b6b384ee4391684fe34c9204036ac6fe15b1fa"
+    },
+    {
+      "path": "specs/001-hello-world-skeleton/quickstart.md",
+      "sha256": "469d2fe0283e8f68b5200f3c86951147e89195f90d59fef379a00b79667e8a79"
+    },
+    {
+      "path": "specs/001-hello-world-skeleton/research.md",
+      "sha256": "dd94b42a93aba7e8c3a287a9bd2ae78764fad6e2b27f634b653b3490eb640d16"
+    },
+    {
+      "path": "specs/001-hello-world-skeleton/spec.md",
+      "sha256": "c5be6af2b67fb3afcc1e78d251e4726d15337479bea5a3129f80e10bc5ba856f"
+    },
+    {
+      "path": "specs/001-hello-world-skeleton/tasks.md",
+      "sha256": "b648c612d84a16b63396ffb971b6c31d0b004734f3b3e54ab1058e6dba13e0f9"
+    },
+    {
+      "path": "specs/002-book-cancel-equipment/checklists/quality.md",
+      "sha256": "d3690f4b703041ac208688701227634a74a6fa9efd907fdc2db88aab2c3ab6b0"
+    },
+    {
+      "path": "specs/002-book-cancel-equipment/checklists/requirements.md",
+      "sha256": "5184b2854ac820d9707c5a5b289c9d6a5c1cf4ab35159c67e7acb13a71ecc6f2"
+    },
+    {
+      "path": "specs/002-book-cancel-equipment/contracts/browser-write-policy.md",
+      "sha256": "317ccbf7f7ab00537b248d0629511bac0b6da5c90ef3a426c42d95e3002dbd5b"
+    },
+    {
+      "path": "specs/002-book-cancel-equipment/contracts/events.md",
+      "sha256": "ec5da23ae4ffa5ae2e06cb5974ee31b0121699637813e9f8ab5f45618d12111a"
+    },
+    {
+      "path": "specs/002-book-cancel-equipment/contracts/http.md",
+      "sha256": "a7d8e4d9c9aa8d9b65743d7cb42f4eb0c596a79ddb1dcaaaa834572b6496fe31"
+    },
+    {
+      "path": "specs/002-book-cancel-equipment/data-model.md",
+      "sha256": "0187a3d72ccf21f79946ef2b095a02045f0053b0613eff71bc7985b29b4f9a0f"
+    },
+    {
+      "path": "specs/002-book-cancel-equipment/plan.md",
+      "sha256": "86fd6c0420933ff95962c70c19c55f0f8a9f491d79f2f6fc0510d8e0ef3d74fd"
+    },
+    {
+      "path": "specs/002-book-cancel-equipment/quickstart.md",
+      "sha256": "91bd3c6d6def7d68a0de47869930ff38efd5b5c955e14bddabebfdce9c3e8436"
+    },
+    {
+      "path": "specs/002-book-cancel-equipment/research.md",
+      "sha256": "8ff9a3ec647a1b61afdf9f75b52b4d86a193bc96b245a1852373433140f2bfc6"
+    },
+    {
+      "path": "specs/002-book-cancel-equipment/spec.md",
+      "sha256": "621e369706c1788482d49a73baa8e5c00e9192d125fb4e9ba12934764c26ed21"
+    },
+    {
+      "path": "specs/002-book-cancel-equipment/tasks.md",
+      "sha256": "2fe5d7e5915d0914ebd03538fe8801ad4e49ac67dfc647f6120d9a74910471c9"
+    },
+    {
+      "path": "specs/003-database-tracing/checklists/observability-quality.md",
+      "sha256": "76c381a812fe38d264c1c134f40f4007e0037f02e1456f9c8c1b8b82415f49f6"
+    },
+    {
+      "path": "specs/003-database-tracing/checklists/requirements.md",
+      "sha256": "cb15e2f9397a4552724c588f28422b1c72b392310143bfc87a76c0c3591a0474"
+    },
+    {
+      "path": "specs/003-database-tracing/contracts/database-telemetry.md",
+      "sha256": "2e2ee638e4014be289ff00c033d1c1385f4031f7858a69db0b550942c4f18536"
+    },
+    {
+      "path": "specs/003-database-tracing/data-model.md",
+      "sha256": "f468d27ad62fd3b598a3c0d42a142336dbf9b1f3b3f16b8f26dfea81caed3741"
+    },
+    {
+      "path": "specs/003-database-tracing/plan.md",
+      "sha256": "b7afd589bef6199c790d6c08a730e893c5bcbb4f85a6503cd26d82f8faa7b5ed"
+    },
+    {
+      "path": "specs/003-database-tracing/quickstart.md",
+      "sha256": "c23d2c90c4335b0ef860c0223183a54e8e091f1554fac3eb284df544f20c3121"
+    },
+    {
+      "path": "specs/003-database-tracing/research.md",
+      "sha256": "72d46272949f9ec158477f606e9f99da9b758e6f89363c00047a9a8a871328c1"
+    },
+    {
+      "path": "specs/003-database-tracing/spec.md",
+      "sha256": "8ad6272ea4b521dd3a4bb4a753963e8bc8b3fe977b86d5a02a129ca9ae272f6d"
+    },
+    {
+      "path": "specs/003-database-tracing/tasks.md",
+      "sha256": "ad0840b75574283ce5044c9971b873345eea746e5eee9832206db5a1e83c8f99"
+    },
+    {
+      "path": "specs/004-remove-hello/checklists/removal-quality.md",
+      "sha256": "e44a11d719280df0897967419f78f142dc190c76d52f2e0e393852c8b03f29a4"
+    },
+    {
+      "path": "specs/004-remove-hello/checklists/requirements.md",
+      "sha256": "0bb6df5ad1f58dbde17ad82f4b68948169ff5afd300672f270e565720554c3f3"
+    },
+    {
+      "path": "specs/004-remove-hello/contracts/retirement.md",
+      "sha256": "e4128b54bdff4d305eaa4f08f75c86efa09d1459c723fb1108bb4efa49f22cb3"
+    },
+    {
+      "path": "specs/004-remove-hello/data-model.md",
+      "sha256": "b189e145323a9342e80fb420c2f8db8be9f136e1463564a471c97cfe6e3739b7"
+    },
+    {
+      "path": "specs/004-remove-hello/plan.md",
+      "sha256": "d72ccf84b62cddbf1ac3d1ad0a2e3ce7fd2031bed26b788b87e7fb033c0d823b"
+    },
+    {
+      "path": "specs/004-remove-hello/quickstart.md",
+      "sha256": "7f304db8481c79b1e7a04e1111ef412c69e241c50dbf2a02509df01385df7b50"
+    },
+    {
+      "path": "specs/004-remove-hello/research.md",
+      "sha256": "051acbe4f92b67561688613c777ee5ca5f1e84c5572d3284565d524786be4660"
+    },
+    {
+      "path": "specs/004-remove-hello/spec.md",
+      "sha256": "8e88090999be618249836c5511e3aeea5b73ec4d9c783b1d8b66023962104ca7"
+    },
+    {
+      "path": "specs/004-remove-hello/tasks.md",
+      "sha256": "f476d0abbfa9d1beafda5757a13c061b29153b7b5cf7861835328d4aa26007e6"
+    },
+    {
+      "path": "specs/005-admin-consoles/checklists/quality.md",
+      "sha256": "f0b837d7cd414d635d8da6ebb75d2058c7c812e40b5b2174ca662168de22b947"
+    },
+    {
+      "path": "specs/005-admin-consoles/checklists/requirements.md",
+      "sha256": "ae118ca4ba27bc8d134602b5a82e453834fb1d32c1acc706b751f3221ac35780"
+    },
+    {
+      "path": "specs/005-admin-consoles/contracts/admin-consoles.md",
+      "sha256": "bf3d10a6c2a1498fb3c3c80f980c010954f0ff59a2a5004044399303b8e4145d"
+    },
+    {
+      "path": "specs/005-admin-consoles/data-model.md",
+      "sha256": "7d486832a265d39c5cbccad10fd2c0a89d70ba6878b8200a6da8ac0e7239640c"
+    },
+    {
+      "path": "specs/005-admin-consoles/plan.md",
+      "sha256": "712aead0f78f4af80c9d235ecbdc28b0ce19559904ee3969b36e489c6f03cd34"
+    },
+    {
+      "path": "specs/005-admin-consoles/quickstart.md",
+      "sha256": "b6ac90dcb1a0416851f12e61ced1aff00c7ece6a6fb96eddd4013c0eb939c29d"
+    },
+    {
+      "path": "specs/005-admin-consoles/research.md",
+      "sha256": "7e10f9474e5fa29f503c92176ea84b1eb4df619d07fcf526972252c3475313fb"
+    },
+    {
+      "path": "specs/005-admin-consoles/spec.md",
+      "sha256": "ea8882f6280844ea5d5309ada0a2c5b10ff39c41e82454a085ee02e55556ba91"
+    },
+    {
+      "path": "specs/005-admin-consoles/tasks.md",
+      "sha256": "97dd1cbe50ab005d75aba86b9b49679572f7cc7d1a7f89ebafa46f9f5f162fff"
+    },
+    {
+      "path": "specs/006-identity-access/checklists/quality.md",
+      "sha256": "c086118ebb7a4320dcc72c772aaa121cebca12a0cc5f44cbfc4700201d1214b6"
+    },
+    {
+      "path": "specs/006-identity-access/checklists/requirements.md",
+      "sha256": "8cf05403b06aa8b72538b0f44412b90a306d21cf13ae905775b39ed2866be68a"
+    },
+    {
+      "path": "specs/006-identity-access/contracts/http.md",
+      "sha256": "9ad4f95fc6d324a111a6d0b0883e3d681b0b050645c1214fdcc65aa5ecf7527d"
+    },
+    {
+      "path": "specs/006-identity-access/contracts/identity.md",
+      "sha256": "d0253436747b1b08e12310ce694d5a1bf878097f411289a2494a6d54b79b5e22"
+    },
+    {
+      "path": "specs/006-identity-access/contracts/messaging.md",
+      "sha256": "ae1733a0dd1cd338be912c5d94d6058063c1e4ec44ae26905063551c8c946bad"
+    },
+    {
+      "path": "specs/006-identity-access/data-model.md",
+      "sha256": "96dae9bae41c5147a1c1d29e4d51e9ab27e9c3c0e6e1dfc39919e9bd22483997"
+    },
+    {
+      "path": "specs/006-identity-access/implementation-evidence.md",
+      "sha256": "e4686a6fff07db3a7643b6e398771f12af205a631586c8cc6bc33b90db194ab6"
+    },
+    {
+      "path": "specs/006-identity-access/plan.md",
+      "sha256": "d86390183864402c6e0ebf0f2efc8b68d333083e3a654d3b724ec9a0543662f8"
+    },
+    {
+      "path": "specs/006-identity-access/quickstart.md",
+      "sha256": "1953ff196503bada4418e7d1017884d3b3874c2c0ab6b696a29f6882b3a3425c"
+    },
+    {
+      "path": "specs/006-identity-access/research.md",
+      "sha256": "e6ad6c13299da69c3dc435e80090e3fb56ec0c4c0446f68478843b860ead6f6f"
+    },
+    {
+      "path": "specs/006-identity-access/spec.md",
+      "sha256": "58433d97ceea9f205cc050b4ac8a1906e8aa19b3b6912170f947c2a01c39f731"
+    },
+    {
+      "path": "specs/006-identity-access/tasks.md",
+      "sha256": "8907415eff220345281d065531fe88ad4653fbc18b6d89e7661f9c9773d385c3"
+    },
+    {
+      "path": "src/AppHost/AppHost.csproj",
+      "sha256": "089473baf3f24a6bf08959f1984d9741354c09f2c506cc0ced3382c5dcecb11a"
+    },
+    {
+      "path": "src/AppHost/BrokerDiagnostics.cs",
+      "sha256": "dc7a55f06838053d581041be6a6215dd0afabdcd019f9b19914003e1236affc3"
+    },
+    {
+      "path": "src/AppHost/BrokerReadiness.cs",
+      "sha256": "3fedba74ca002aa8bacdd8d1e6e559940f752859d9b26a85f24eddfc74845340"
+    },
+    {
+      "path": "src/AppHost/Program.cs",
+      "sha256": "a797194c9e6b63d5d801508d76617c55a1849b791570a0abac6aaa22350078bb"
+    },
+    {
+      "path": "src/AppHost/Properties/launchSettings.json",
+      "sha256": "b8b7f1123540c161fbe4a069eb04fc9581fa54609f5ceb1837b3e6041eb04884"
+    },
+    {
+      "path": "src/AppHost/aspire.config.json",
+      "sha256": "799f43daa4217649678032b2cf643a8a86b94cbbdae011bb6292d227772ad263"
+    },
+    {
+      "path": "src/AppHost/packages.lock.json",
+      "sha256": "eeab2b7e3729c04495d8fac1778974318af688d765f15ac5dd204c541cf2c338"
+    },
+    {
+      "path": "src/BrokerBootstrap/BrokerBootstrap.csproj",
+      "sha256": "ee3321ff900977d118d248a8c29ba903015e2c35b4e11b5ea69d1cc90e9e3951"
+    },
+    {
+      "path": "src/BrokerBootstrap/BrokerProvisioning.cs",
+      "sha256": "94f264146a40722fdbcc83eea737c711adab0320aea3a7f4ab39a813d0b0f5cc"
+    },
+    {
+      "path": "src/BrokerBootstrap/packages.lock.json",
+      "sha256": "c7a5e25d5dc0b9eaad4471af8f53854fdbb0ec1def5ab3adc224fcb62cc24967"
+    },
+    {
+      "path": "src/DatabaseBootstrap/BootstrapLog.cs",
+      "sha256": "e86d39070776316c06caba16a477f86f988efe1299f4bd1228ce3db4feaf84a3"
+    },
+    {
+      "path": "src/DatabaseBootstrap/DatabaseBootstrap.csproj",
+      "sha256": "a361119ab90b7a65f9c7127df5a60be4f99e05a9197c28cc1ff46b44d27c2dff"
+    },
+    {
+      "path": "src/DatabaseBootstrap/DatabaseProvisioner.cs",
+      "sha256": "af726d090f8a9a62a2485137371d04626202f70e063deaf573aacbb070383db9"
+    },
+    {
+      "path": "src/DatabaseBootstrap/Program.cs",
+      "sha256": "9162b573a9f5d74437d6fe22631c92b1378051401b19644c6a14f4532a17c9a7"
+    },
+    {
+      "path": "src/DatabaseBootstrap/packages.lock.json",
+      "sha256": "c9c9a1fd395ff12e537aea6d660dbcd29e120b8ec77b5a78e43a42c97545b040"
+    },
+    {
+      "path": "src/IdentityAccess/IdentityAccess.csproj",
+      "sha256": "6eb9179b66905267be07b96b7b525d54a74a1d5ab1c0b273a6262fe05e2d7b46"
+    },
+    {
+      "path": "src/IdentityAccess/IdentityAuthentication.cs",
+      "sha256": "f1880625556e159785a14b2ffc654914cc4ff9abf72d697e6883e8d17a9e0ee2"
+    },
+    {
+      "path": "src/IdentityAccess/IdentityJsonContext.cs",
+      "sha256": "b0277f34b2560d96f9bac9b517db06c5422fff2afdd5b2ef21eb9ee36beb0351"
+    },
+    {
+      "path": "src/IdentityAccess/IdentityLog.cs",
+      "sha256": "6a51849ebe0c9a577ed11a9cc59b230e82ce1e5c82a022798ecad5317c4c1559"
+    },
+    {
+      "path": "src/IdentityAccess/IdentityPrincipal.cs",
+      "sha256": "66c82616ea07934a379f2bcd638236b4e17db5cfbeba085137fc395c5e0bda23"
+    },
+    {
+      "path": "src/IdentityAccess/IdentityTelemetry.cs",
+      "sha256": "f3fb3fb54734478a4ee2b0330aa0c24c6535dbd48f22b0f32f955216bacc5474"
+    },
+    {
+      "path": "src/IdentityAccess/OwnershipInputGuard.cs",
+      "sha256": "4e44d434efdf876a63a8c61d0864522a03362072ea172d7f09f3697a84c267f0"
+    },
+    {
+      "path": "src/IdentityAccess/ServiceTokenClient.cs",
+      "sha256": "178d121d9e75f8c15ff7679817f82858a74f368d19026a28c9b25ee2b4b74622"
+    },
+    {
+      "path": "src/IdentityAccess/packages.lock.json",
+      "sha256": "a120ab1d33d08a31ac63ec98f2bca24a06ae918c3c8982b943b1781cf314178c"
+    },
+    {
+      "path": "src/IdentityBootstrap/IdentityBootstrap.csproj",
+      "sha256": "02c1f9b4966421a2bb2bd44f48d8a785dcb410c057796fc8b4c9177389c8e2fa"
+    },
+    {
+      "path": "src/IdentityBootstrap/IdentityBootstrapLog.cs",
+      "sha256": "5a72c78c4425d3183811aa32b50fbb4a8579875fc174b13c8e3e8cd2c8525ec0"
+    },
+    {
+      "path": "src/IdentityBootstrap/IdentityBootstrapRegistration.cs",
+      "sha256": "f982cc038863e8dacebb7aaf5991d274d3796c05e5adfa66c30bce8b038159da"
+    },
+    {
+      "path": "src/IdentityBootstrap/IdentityContracts.cs",
+      "sha256": "0cdb11f81b8782c64a906d01917b22b7d75ba66c45bd76e9e47d95cb79882f00"
+    },
+    {
+      "path": "src/IdentityBootstrap/IdentityProvisioning.cs",
+      "sha256": "3082c4b5701975fefc2ba1c17e5c50f136fe77adcc6402fa8801b5a1dc505244"
+    },
+    {
+      "path": "src/IdentityBootstrap/Program.cs",
+      "sha256": "0e9af2ead9180ba5deab9fd9356fc94614c9109da0c12ad419f8d96b20e09bc7"
+    },
+    {
+      "path": "src/IdentityBootstrap/packages.lock.json",
+      "sha256": "b5d179977510274da728fdcf2b11f2c622c4539d5b56a9fb2b67a47f43f75df6"
+    },
+    {
+      "path": "src/Inventory/EquipmentStore.cs",
+      "sha256": "2fcaba1663ba9a4a1ee16f121f706f817ec4fe5716c2c0732338f09ec834c1ac"
+    },
+    {
+      "path": "src/Inventory/Inventory.csproj",
+      "sha256": "e23f73677715f5879ddeb9b7a3240b2ba0b8eabffefb2d9e65db4516acba6516"
+    },
+    {
+      "path": "src/Inventory/InventoryJsonContext.cs",
+      "sha256": "7c9f0fbf06f232c4019046bd9910ed55adb714b69f7c5534911ecfbfeeb9fbf8"
+    },
+    {
+      "path": "src/Inventory/Migrations/001_initial.sql",
+      "sha256": "8346d2e4c9e8873dda21c745a75d4642055c7ab8e8a5e4038ffe940e9bb841ad"
+    },
+    {
+      "path": "src/Inventory/Program.cs",
+      "sha256": "81179a4e68af7d5c11eb764c6da5c9fcf1c28ce15180c4d0cc60e34c6b4a1072"
+    },
+    {
+      "path": "src/Inventory/ServiceMigrations.cs",
+      "sha256": "7132c9f06d63a611994de52ffc9af1e7ad743ac6e4af76d3936a99cfe7e4f256"
+    },
+    {
+      "path": "src/Inventory/packages.lock.json",
+      "sha256": "c6ad33ce6eae5ae5c6c8303ea75fc178b8cc1d5db3f9166945e1f70c5c78bcfc"
+    },
+    {
+      "path": "src/Notifications/Migrations/001_initial.sql",
+      "sha256": "820f1ed307350e2457c934b4d965d64af20bd6f05988867925e33c5cc0bffca5"
+    },
+    {
+      "path": "src/Notifications/NotificationContracts.cs",
+      "sha256": "a0bc0545e875d512000a54fed28ce434b2d009ade51f1e5c1ef0f615a9bdf555"
+    },
+    {
+      "path": "src/Notifications/NotificationTelemetry.cs",
+      "sha256": "839a9647287e846cce127d309c1282c44c413f2f17e4e59f02e68006dc4bdbf9"
+    },
+    {
+      "path": "src/Notifications/Notifications.csproj",
+      "sha256": "e23f73677715f5879ddeb9b7a3240b2ba0b8eabffefb2d9e65db4516acba6516"
+    },
+    {
+      "path": "src/Notifications/NotificationsJsonContext.cs",
+      "sha256": "e3c53d012029c91d39cd70935ff9f41efa7b4254936921e3a781cd71e30cdbc4"
+    },
+    {
+      "path": "src/Notifications/NotificationsLog.cs",
+      "sha256": "9cbf166f362bfe6dde75f520ada77e7cf19ca9f9f20b6c0f6103e9c037f7b01e"
+    },
+    {
+      "path": "src/Notifications/Program.cs",
+      "sha256": "e762a3e235efb5e7ebf5f3f20e7e5d5211db77f16eaf0c5d28982a4db5ef7d7c"
+    },
+    {
+      "path": "src/Notifications/ReservationConsumer.cs",
+      "sha256": "901cf6a5295d0a2113cdce1cb4535eaa7f3f78250f1298cf2e59e8ef0c038bc9"
+    },
+    {
+      "path": "src/Notifications/ReservationInbox.cs",
+      "sha256": "39e2c16ad46d9792af021fca80a2773508fca7fa685b2f6fe8569b07505acd84"
+    },
+    {
+      "path": "src/Notifications/ReservationSubscription.cs",
+      "sha256": "6af2ece89710f52d238859d2b37e071dcd54b69f99a0fd4b429a9fea2cb2fc63"
+    },
+    {
+      "path": "src/Notifications/ServiceMigrations.cs",
+      "sha256": "324854cdc048d1ad36ca652015f9db85a5efac38a2ad5053c210fea413eaacee"
+    },
+    {
+      "path": "src/Notifications/packages.lock.json",
+      "sha256": "c6ad33ce6eae5ae5c6c8303ea75fc178b8cc1d5db3f9166945e1f70c5c78bcfc"
+    },
+    {
+      "path": "src/Persistence/DatabaseFailure.cs",
+      "sha256": "4e2f915c1e9e202106a1ab2fef6d2142fe35d18cb8b95516ca55e65afee1b6dd"
+    },
+    {
+      "path": "src/Persistence/DatabaseTracing.cs",
+      "sha256": "fa042a592555670d3fc673fa0e264d9ce2a6b50cf7a0f96012c5c049c410cc86"
+    },
+    {
+      "path": "src/Persistence/Persistence.csproj",
+      "sha256": "2f8f4c4e38ff2bf6a70de77fffa7472cefef17c005adcce6c227bc49acd07cfd"
+    },
+    {
+      "path": "src/Persistence/SqlMigrations.cs",
+      "sha256": "e7a85a31ff4b8f1ca2c7dc54f583b5a18603d59e1a0566fe52ac85a9eefeeaa4"
+    },
+    {
+      "path": "src/Persistence/packages.lock.json",
+      "sha256": "394acf13f58ebe99a2479e010d851af03e7150e08ab645131dcc2edb085f6fad"
+    },
+    {
+      "path": "src/ReservationMessaging/EquipmentIdValidation.cs",
+      "sha256": "effc8e00042ca8566a4612ab3600fe7106aae7a39eb1d46825688c52e47c4753"
+    },
+    {
+      "path": "src/ReservationMessaging/RabbitConnection.cs",
+      "sha256": "dd15e657f31b44779215263c1f22801ab15fa7edfed83afad0e6d48caf03a801"
+    },
+    {
+      "path": "src/ReservationMessaging/RecoverySchedule.cs",
+      "sha256": "8addc68c63b841e1893645fb250b88817b83550c9b145ff4f91386e2580cf564"
+    },
+    {
+      "path": "src/ReservationMessaging/ReservationEvent.cs",
+      "sha256": "80d7e706c0dfe50a4e6622eae924e3bb705101e569a08399dbcfebc8902a3c9f"
+    },
+    {
+      "path": "src/ReservationMessaging/ReservationEventValidation.cs",
+      "sha256": "052aa6812ef0d60b1ed309b9ce6074d1bfd61bc11f916d13e5d09c8868b124b5"
+    },
+    {
+      "path": "src/ReservationMessaging/ReservationFailure.cs",
+      "sha256": "6d90159d43bb18515a7f0972fbf12b0b419880e24ceb28181179fb758d95e657"
+    },
+    {
+      "path": "src/ReservationMessaging/ReservationJsonContext.cs",
+      "sha256": "37d5cc3a76d130f4f9b9e1bbd64e211f26f041d6deaf84ee2a6a39ebcdff5013"
+    },
+    {
+      "path": "src/ReservationMessaging/ReservationMessaging.csproj",
+      "sha256": "335b38725635d110a979bfce56e6ab703d508cb0e0b959284d7bdff6ae50d862"
+    },
+    {
+      "path": "src/ReservationMessaging/ReservationMessagingTelemetry.cs",
+      "sha256": "651ac17a2e79fbb0f3f7927f3b8a35257e6de084fa1f13f4696de957e99c7b34"
+    },
+    {
+      "path": "src/ReservationMessaging/ReservationTimestampConverter.cs",
+      "sha256": "1be3f58c05957c6ac4b15bebde8177cc044d6a92da57720a84d6ada34e83f959"
+    },
+    {
+      "path": "src/ReservationMessaging/ReservationTopology.cs",
+      "sha256": "ce8493f36f757c2fe5e364b09ee2fbd80b02ce86d16799d3af719f8669340b13"
+    },
+    {
+      "path": "src/ReservationMessaging/packages.lock.json",
+      "sha256": "2683fee2f69e55fd960a76389dc16afb0e2fb3e9cd17371c743ba6324432963e"
+    },
+    {
+      "path": "src/Reservations/BrowserWriteGuard.cs",
+      "sha256": "8843d62960b1acf6a4dd1fb0c871112bf57f40ded2ccf5f2f3f03e33870a6f2d"
+    },
+    {
+      "path": "src/Reservations/DependencyHealth.cs",
+      "sha256": "152bcc33b958a676be54f43fa16445d4be2711437dccfb71bf51f58bcbada806"
+    },
+    {
+      "path": "src/Reservations/InventoryClient.cs",
+      "sha256": "e4c3bd7ba4f4615cb15d3056a3d8d9d4b76e46533f7115b2ee2e7c97b8a9caf0"
+    },
+    {
+      "path": "src/Reservations/Migrations/001_initial.sql",
+      "sha256": "9ce4c0fec08d7e10a506f32e4223022492fc83a28bf8bd607cde5033277a0ea0"
+    },
+    {
+      "path": "src/Reservations/OutboxWorker.cs",
+      "sha256": "dd67302456bb6353179d998b924c1317a078d64bfdffd7488d3e2aad1afa790f"
+    },
+    {
+      "path": "src/Reservations/Program.cs",
+      "sha256": "0fc03969dcc4d90550a584d6e58c797e33c1e130a42860ca4f863e29a6f91460"
+    },
+    {
+      "path": "src/Reservations/ReservationContracts.cs",
+      "sha256": "6d21512cf676d1549cf9493a6fe70537ec62ace8aae3022fc16a2d3f912382b3"
+    },
+    {
+      "path": "src/Reservations/ReservationEndpoints.cs",
+      "sha256": "a26df90fbdcd29234371d80ea42e5c298907c56cb8417bb4027171d7bee75884"
+    },
+    {
+      "path": "src/Reservations/ReservationLog.cs",
+      "sha256": "b93c22bf2fd1eca160f60828e5c3d7d6e7be4247b66ba6a525d1d3a302af6ce9"
+    },
+    {
+      "path": "src/Reservations/ReservationPublisher.cs",
+      "sha256": "d6e2293471744338d841c37fe9cabe67332e59d4e9dbc6ee1dceb8a4588c0644"
+    },
+    {
+      "path": "src/Reservations/ReservationStore.cs",
+      "sha256": "be7f623d3313ff6ec0e250f175e730cac099bf9c1baa9ce185e6ff27639e64d0"
+    },
+    {
+      "path": "src/Reservations/ReservationTelemetry.cs",
+      "sha256": "dc6c3c18baa614eb8c50ebfaafc61d87bd7cdf3f61ff45dd37484cf9fdd76a12"
+    },
+    {
+      "path": "src/Reservations/ReservationValidation.cs",
+      "sha256": "b51c8974fdce75df750d8d886ed43bcb0c24f79fd178846577bf38bb2fe53cde"
+    },
+    {
+      "path": "src/Reservations/Reservations.csproj",
+      "sha256": "e23f73677715f5879ddeb9b7a3240b2ba0b8eabffefb2d9e65db4516acba6516"
+    },
+    {
+      "path": "src/Reservations/ReservationsJsonContext.cs",
+      "sha256": "0893470e5b17edddeff8e8c6a4afca7b17f1489ef8e12a48138fea8034dc0c89"
+    },
+    {
+      "path": "src/Reservations/ReservationsLog.cs",
+      "sha256": "895eb67ec16e72f416a5131aea766730e4d2956089dadf1cb7f7647df3b988b1"
+    },
+    {
+      "path": "src/Reservations/ServiceMigrations.cs",
+      "sha256": "45b2c8267ddb04aa725fd708c790c9e69d10bf95c4fbe5272fb786999dbcc1e4"
+    },
+    {
+      "path": "src/Reservations/packages.lock.json",
+      "sha256": "c6ad33ce6eae5ae5c6c8303ea75fc178b8cc1d5db3f9166945e1f70c5c78bcfc"
+    },
+    {
+      "path": "src/ServiceDefaults/DatabaseTelemetryPrivacyProcessor.cs",
+      "sha256": "2028ccb41fe1e678fecbdab5d7728230323c0a2529628af2f765f7b7df9cc0e3"
+    },
+    {
+      "path": "src/ServiceDefaults/Extensions.cs",
+      "sha256": "68af6115f2dac09ee888bd70a3c5b2801ef52fb52fa813194df10c226ace1d40"
+    },
+    {
+      "path": "src/ServiceDefaults/HttpTelemetryPrivacyProcessor.cs",
+      "sha256": "00c7cea0bd223a60fc08e572f715bdc2b03e69e3bc88ab4219eda2a239de454d"
+    },
+    {
+      "path": "src/ServiceDefaults/ServiceDefaults.csproj",
+      "sha256": "d7bb8bca890f455fe7d83e01352453198bfc5d2d2172db0b3d4b1caf91981db0"
+    },
+    {
+      "path": "src/ServiceDefaults/packages.lock.json",
+      "sha256": "267ab5a31070367f145eca1bee88021da63756df14c8294afb5ee2a7cdd5147a"
+    },
+    {
+      "path": "src/Web/angular.json",
+      "sha256": "31899d45487f4cb32389ce4291b66d9f2a6b30cc612c49f1a5f0e4238ac88fa1"
+    },
+    {
+      "path": "src/Web/auth-config.cjs",
+      "sha256": "4be1882ba60e5026ecd3e620549dbaa8e87be5eec05d05a5ddfe519970a73547"
+    },
+    {
+      "path": "src/Web/browser-tests/booking.browser.spec.ts",
+      "sha256": "d99780aecd805b71d8a0a0c71694425b8602f377b83d86dc9f960ef0f7bebf76"
+    },
+    {
+      "path": "src/Web/browser-tests/identity-browser.ts",
+      "sha256": "8cd24dd2a06143695488f84644ac417cb59b2180ff586bb7b1206b4eec60eb75"
+    },
+    {
+      "path": "src/Web/browser-tests/identity.browser.spec.ts",
+      "sha256": "80f5d3490f17088910c17324da03ceaa968fbb59bc2abc7a5a197af607e2c6e1"
+    },
+    {
+      "path": "src/Web/dev-server.cjs",
+      "sha256": "44faaedd7d9da466c7ce9d0387e7200a2459e7a5c44b23dad025b24fdb2f005e"
+    },
+    {
+      "path": "src/Web/package-lock.json",
+      "sha256": "281d684b7a548c1f5a6dab672ab8b451758454ccd4c14500a708ac43d6c69a7d"
+    },
+    {
+      "path": "src/Web/package.json",
+      "sha256": "dd7fef4947da388529b4e247200717bd5048b2817d0153cc25fc84726c72439a"
+    },
+    {
+      "path": "src/Web/playwright.config.ts",
+      "sha256": "ae5005a4eee052256062708d5a3339667abc5bd67863def144159cd3af6ab017"
+    },
+    {
+      "path": "src/Web/proxy.conf.cjs",
+      "sha256": "09dcbba0d2b6e20e4399f623b1054190365c90759a919f05a56fb2e70d6dfeda"
+    },
+    {
+      "path": "src/Web/src/app/app.ts",
+      "sha256": "422a1092042b14de0eb37f26de9a9d43619373855958ad9173829c5b4f385bb6"
+    },
+    {
+      "path": "src/Web/src/app/auth/account-shell.spec.ts",
+      "sha256": "29cc89ca9d6bd8f473b29e494deabcdac326723fa12691cdbf81e876f76c8b53"
+    },
+    {
+      "path": "src/Web/src/app/auth/auth-interceptor.ts",
+      "sha256": "fe27d2ccb86102dc4ce1035af94fb84f922e16be68a338014974ed4959fd951b"
+    },
+    {
+      "path": "src/Web/src/app/auth/auth-session.spec.ts",
+      "sha256": "fab497145fbebf447f526de50fad5900bd7767d02fc9181cb49e74a6940e1d45"
+    },
+    {
+      "path": "src/Web/src/app/auth/auth-session.ts",
+      "sha256": "b5757090b93503af42b423db247ff23c792bd301753d5458ad447ae11a174bf2"
+    },
+    {
+      "path": "src/Web/src/app/auth/auth-test-fixture.ts",
+      "sha256": "7d9d5eafb61bf55bf4a603886850e288b096e84af13a550f2e727919f7da8f04"
+    },
+    {
+      "path": "src/Web/src/app/auth/keycloak-session.ts",
+      "sha256": "d3e05568037bebb224b6dd1022b44f09edd395a09e5c83522ca80516a061506a"
+    },
+    {
+      "path": "src/Web/src/app/booking/booking-api.ts",
+      "sha256": "9bbf994dd78d8528171926fb9a0d5ad0b492f15c1aca63a0c4c6beedcc379f89"
+    },
+    {
+      "path": "src/Web/src/app/booking/booking-time.ts",
+      "sha256": "bac275032196f67045a4dd33012034a649603451d08068820dd06f44059c1c14"
+    },
+    {
+      "path": "src/Web/src/app/booking/booking.css",
+      "sha256": "26fe1c5513cddd45d5b3e519729f84366d418a9cf983ca24fa383702e04975e1"
+    },
+    {
+      "path": "src/Web/src/app/booking/booking.html",
+      "sha256": "95af4463bb8f40dfd86839af2e0086c159f9e5120651678b65416b24b1535c25"
+    },
+    {
+      "path": "src/Web/src/app/booking/booking.spec.ts",
+      "sha256": "c0b46e005dfc31bcb3b74223366b264f64b201d1cd5b44c581c8b29870095ceb"
+    },
+    {
+      "path": "src/Web/src/app/booking/booking.ts",
+      "sha256": "39482595eadd16831ae937cab518e15427f5b5a7714ded434a6ccd20a9d4c2f4"
+    },
+    {
+      "path": "src/Web/src/app/booking/notifications.spec.ts",
+      "sha256": "dbf1014b89738d9cdbeaecb4286b86704a104c5fc6c260c6f484cf16ab45ab7f"
+    },
+    {
+      "path": "src/Web/src/app/booking/reservations.spec.ts",
+      "sha256": "5cb1eecb87c0ee44a8b403b896525f1c5ecdc25ad4e42afc14403d7d8116cf58"
+    },
+    {
+      "path": "src/Web/src/index.html",
+      "sha256": "7ade1fef6bc7191fa9bbfbb48ba32efe3e2c3d750823fefa1206181106342954"
+    },
+    {
+      "path": "src/Web/src/main.ts",
+      "sha256": "93a788cb1858e8e6fa8b76ce9431a44d05282ba998f452116913241de3838f74"
+    },
+    {
+      "path": "src/Web/src/styles.css",
+      "sha256": "470c8c191171a254a4bdc90f1f23309a9052d79c9d4c6bfb6c0549edf137f3c0"
+    },
+    {
+      "path": "src/Web/src/test-setup.ts",
+      "sha256": "7b5017256c16320277b8fcf02921c7c612fd3eea4d15647c1c64f4f7645626d0"
+    },
+    {
+      "path": "src/Web/tsconfig.json",
+      "sha256": "02672bb3688219a7e6da6aee77156616d1b47b2b96bdcee9af6448b40649aa49"
+    },
+    {
+      "path": "src/Web/tsconfig.lint.json",
+      "sha256": "b526af085298ca67113ef283e7d67ac3a58043f536c59c0edf6cef58334c849e"
+    },
+    {
+      "path": "src/Web/vitest.config.ts",
+      "sha256": "348d3b95675ac47cf090f9c56755c055c95f8bb20b32fadb0a9f3090acafb653"
+    },
+    {
+      "path": "tests/Backend.Tests/Backend.Tests.csproj",
+      "sha256": "6edc77414e5d04bd2ebf41fa2987aadad03558fd8b3151f06c176f77462de3bd"
+    },
+    {
+      "path": "tests/Backend.Tests/BookingConcurrencyTests.cs",
+      "sha256": "372f5fec0dafe00dd44f02d218b3d0ebf8f1216077539f4b593a794a3918de87"
+    },
+    {
+      "path": "tests/Backend.Tests/BookingScenario.cs",
+      "sha256": "2410081a89f7f23b5b33117807f5bc398180922aa5a4fdc719968cdaf8048b5d"
+    },
+    {
+      "path": "tests/Backend.Tests/BookingTelemetryTests.cs",
+      "sha256": "3bb1880eb5f6a48066a362c60ec224c080e48bf201210aab84c678314f7e1c90"
+    },
+    {
+      "path": "tests/Backend.Tests/BookingTests.cs",
+      "sha256": "0e16f8e304fa287cc4a457d05fcc53706a1e064238e93342e78082c6dca25215"
+    },
+    {
+      "path": "tests/Backend.Tests/CancellationConcurrencyTests.cs",
+      "sha256": "78bb595072a687f751f573660b45d71f99477f98088da08ad863fe29272d79ba"
+    },
+    {
+      "path": "tests/Backend.Tests/CancellationTelemetryTests.cs",
+      "sha256": "bcac98b687bed21925da9c650c2b555ff17425d37b91bb7833c3e872eefd39a2"
+    },
+    {
+      "path": "tests/Backend.Tests/CancellationTests.cs",
+      "sha256": "722f3889cfd01c511b8f23bd33708906a47cd3386ecdbfdeb0b2c3d37bb66dbd"
+    },
+    {
+      "path": "tests/Backend.Tests/DatabaseBootstrapTracingTests.cs",
+      "sha256": "3f091abf1ef6bad94b999703d35c03a53d7055a6e308794d1191374cba05d33c"
+    },
+    {
+      "path": "tests/Backend.Tests/DatabaseTelemetryCapture.cs",
+      "sha256": "112b16ffc3dcf7f252417c78a05d7b27ee7123ba8db08beaf2885ddce2e5cf04"
+    },
+    {
+      "path": "tests/Backend.Tests/DatabaseTelemetryPrivacyTests.cs",
+      "sha256": "1c07e91997be8b21b4d39399fb87fe36e783549bbf77f34d9f91d4fead6fcc94"
+    },
+    {
+      "path": "tests/Backend.Tests/DatabaseTracingTests.cs",
+      "sha256": "10627cf543084a2e581ea1cd997b4812d79f5480cfdf81418c7bacab0cb997cd"
+    },
+    {
+      "path": "tests/Backend.Tests/DatabaseWorkerTracingTests.cs",
+      "sha256": "f82d95f00f3caef534b9bd3f778eb92934251b3bc31dc77dbcf84c57ddbba240"
+    },
+    {
+      "path": "tests/Backend.Tests/EquipmentPersistenceTests.cs",
+      "sha256": "48612dcad3054e7b971ed7fb98db8f25ed45184e0dcb6ba3d350c457d45bb541"
+    },
+    {
+      "path": "tests/Backend.Tests/IdentityAccessTests.cs",
+      "sha256": "ddd19bbf7c0a7c8686fcf91cbcb05fe8896058bf4ed95f4e8319671db38377a0"
+    },
+    {
+      "path": "tests/Backend.Tests/IdentityAuthorityFixture.cs",
+      "sha256": "a2dd368597a1ea586cfab0c01f4e381a306045cf43d3e77e0d4c0c6b8a41e229"
+    },
+    {
+      "path": "tests/Backend.Tests/IdentityTelemetryTests.cs",
+      "sha256": "e20d92265379d020201c0c3c2eafc87c1c65e341ed242fcc2f055ebb6dd234ac"
+    },
+    {
+      "path": "tests/Backend.Tests/InventoryTests.cs",
+      "sha256": "105733eb07886cc428152efd7a4678d070435f23a567f7d82c98ae0b62028727"
+    },
+    {
+      "path": "tests/Backend.Tests/MigrationTests.cs",
+      "sha256": "da353a6dc884cb7421434062b8e614633411ee3c4f412cd2c1735bc7ab6fd538"
+    },
+    {
+      "path": "tests/Backend.Tests/NotificationOwnershipTests.cs",
+      "sha256": "af4bd47ad5dd1f6b0323f79cc900aad15113ba9e05a271beae1c2c37d7f24ee9"
+    },
+    {
+      "path": "tests/Backend.Tests/OperationalTests.cs",
+      "sha256": "25a8739135a063b0b70c7bba9053d4422ccb664df37845d15b5de2c5804976a9"
+    },
+    {
+      "path": "tests/Backend.Tests/OtlpMessage.cs",
+      "sha256": "f7bbfd29615a8a80e124768217761877088f37c8a4a4e5ed929a3ba51aee0de8"
+    },
+    {
+      "path": "tests/Backend.Tests/OwnershipInputTests.cs",
+      "sha256": "d708a0fdb41b0e9eeb287f7b5e65e04212c50e2a4f13541cfabe3374ed6cb5dc"
+    },
+    {
+      "path": "tests/Backend.Tests/PostgresFixture.cs",
+      "sha256": "c9d9d667b493b25f7d8089f66be6dc995a048db2aff2ea1cbd7ef8a5c3d1137e"
+    },
+    {
+      "path": "tests/Backend.Tests/ReservationOwnershipTests.cs",
+      "sha256": "668be845929eaa7459a55ac034830834baec1dd8f4c25d0bbab8777bf7c64b6a"
+    },
+    {
+      "path": "tests/Backend.Tests/ReservationRecoveryTests.cs",
+      "sha256": "0146125be039f688075fcfdc37593fe0dc1ac873af178bf13e7d5a1391fe2af9"
+    },
+    {
+      "path": "tests/Backend.Tests/ReservationTelemetryTests.cs",
+      "sha256": "d1b4af9d8512054504f2d8310102125b66a4b8a06357eee8c07538a132b82939"
+    },
+    {
+      "path": "tests/Backend.Tests/SecurityBrowserWriteTests.cs",
+      "sha256": "738a9800595fa17fcc8659beb99ca8095814c7b0bf72c7b7076c6df6ae14c1d4"
+    },
+    {
+      "path": "tests/Backend.Tests/ServiceIdentityTests.cs",
+      "sha256": "5ed2f9d61cb0134e5a8bcb90334f9364252354f10bb4c7c9371ab1fb9485d460"
+    },
+    {
+      "path": "tests/Backend.Tests/TelemetryPrivacyTests.cs",
+      "sha256": "a3deab34e32e907068894fbf3e87624f97c58ca7bcbed730bac06f3b641da6a5"
+    },
+    {
+      "path": "tests/Backend.Tests/TestTimeProvider.cs",
+      "sha256": "eb4440069b32d6edbaf2bf8432ca714fbe7e35bdf8b8fb7c59a8b45e4280b00c"
+    },
+    {
+      "path": "tests/Backend.Tests/packages.lock.json",
+      "sha256": "2af38aa49e066f82d59d0835eb013af6394270f4fe3927a4782b217fd20de7eb"
+    },
+    {
+      "path": "tests/Smoke.Tests/AdminConsoleTests.cs",
+      "sha256": "e5def8a67279493762faf38d8e1b220371409cc18c467d0e8aa3353764cf51ea"
+    },
+    {
+      "path": "tests/Smoke.Tests/AssemblyInfo.cs",
+      "sha256": "d75c1598b1fc9292f754e5c3737645ac86257452180d7c49e4ea31b1718b1af7"
+    },
+    {
+      "path": "tests/Smoke.Tests/BookingSmokeTests.cs",
+      "sha256": "5c261de173a139089d50077a8d673eb93326dfee3a95903e1139a818d48db829"
+    },
+    {
+      "path": "tests/Smoke.Tests/BrokerContractTests.cs",
+      "sha256": "28f77b8e1f500a293f492d09488a1d1ca111b5d0c99f8d9e368da2b01166d473"
+    },
+    {
+      "path": "tests/Smoke.Tests/BrokerImportTests.cs",
+      "sha256": "36f1b5029bc638412679966e7cf3bea7422d8afdcc1e8c9f00579f1570a550ad"
+    },
+    {
+      "path": "tests/Smoke.Tests/BrokerMetadata.cs",
+      "sha256": "94fbdb7c7e17a14735d7cd19d1bc7be1a315581cae096ce14c19134e14284bf1"
+    },
+    {
+      "path": "tests/Smoke.Tests/BrokerPublicationTests.cs",
+      "sha256": "271f95c10bca5aa34948c714d753c05a9f03bc34cea950cf83eed39e701797fb"
+    },
+    {
+      "path": "tests/Smoke.Tests/DatabaseProvisioningTests.cs",
+      "sha256": "c04cdb84512e744ceff21459c118183206a6138f5d66754cdecc5cc4bb40e3ef"
+    },
+    {
+      "path": "tests/Smoke.Tests/IdentityProviderFixture.cs",
+      "sha256": "7cbd02ea8fcb7e2fec14099226068dacdbc8d0a0218b5058a31eabcbd4a83fd1"
+    },
+    {
+      "path": "tests/Smoke.Tests/IdentityProviderTelemetryTests.cs",
+      "sha256": "6ee670f1af0d7d9106777afe80679fc94db39127acb9b7954cd9e13d312d5c69"
+    },
+    {
+      "path": "tests/Smoke.Tests/IdentityProviderTests.cs",
+      "sha256": "f8e38712824d43af93b8593e0097eae4c6030c25febc6a714ae8e5bc8525860e"
+    },
+    {
+      "path": "tests/Smoke.Tests/ReservationConsumerTests.cs",
+      "sha256": "c097529a6e26eaf8963e0a8d587f4d29a9a95c13ffe7b7170b7797c7bd286169"
+    },
+    {
+      "path": "tests/Smoke.Tests/ReservationDeliveryFixture.cs",
+      "sha256": "6af7200bb51536336a9ff65bc9005facbc28b90b98f6d2005c1e3743f2d0ae0b"
+    },
+    {
+      "path": "tests/Smoke.Tests/ReservationOutboxTests.cs",
+      "sha256": "e18d13645c77c0221ab8449c7bc4b9d766754902664432854b5b624cc032c644"
+    },
+    {
+      "path": "tests/Smoke.Tests/ServiceIdentityContractTests.cs",
+      "sha256": "961f7e6b122524dbde2b0f14d162e2a1d59362b2eb1450e2f687abd4af06f016"
+    },
+    {
+      "path": "tests/Smoke.Tests/Smoke.Tests.csproj",
+      "sha256": "2481624b201fd3454c1133cd46ff48eb11c41e6c963960438d9efdf42c62ac2d"
+    },
+    {
+      "path": "tests/Smoke.Tests/SmokeStartup.cs",
+      "sha256": "37f2ef8ebf1e2cf11afafce0327a0999064d4fb7b37acc5b61abc8653ff8d5cc"
+    },
+    {
+      "path": "tests/Smoke.Tests/packages.lock.json",
+      "sha256": "dff16b4ced3c34b2c70a529bdfab5bdde7abbc61f91aaeca552079095dab7800"
+    }
+  ]
+}

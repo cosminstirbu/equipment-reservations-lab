@@ -1,7 +1,7 @@
 CREATE TABLE reservation_inbox (
     event_id uuid PRIMARY KEY,
     reservation_id uuid NOT NULL,
-    demo_user_id text NOT NULL CHECK (demo_user_id = 'demo-user'),
+    user_key text NOT NULL CHECK (user_key COLLATE "C" ~ '^[0-9a-f]{64}$'),
     event_type text NOT NULL CHECK (event_type IN ('ReservationConfirmed', 'ReservationCancelled')),
     schema_version integer NOT NULL CHECK (schema_version = 1),
     equipment_id text NOT NULL CHECK (equipment_id COLLATE "C" ~ '^[A-Za-z0-9_-]{1,64}$'),
@@ -14,4 +14,4 @@ CREATE TABLE reservation_inbox (
     CHECK (start_at < end_at)
 );
 
-CREATE INDEX reservation_inbox_history ON reservation_inbox (occurred_at DESC, event_id);
+CREATE INDEX reservation_inbox_history ON reservation_inbox (user_key, occurred_at DESC, event_id);

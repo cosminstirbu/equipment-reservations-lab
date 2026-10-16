@@ -87,7 +87,7 @@ public sealed class ReservationRecoveryTests(PostgresFixture postgres)
 
                 readiness(true);
                 var occurrence = new DateTimeOffset(2030, 1, 1, 12, 0, 0, TimeSpan.Zero);
-                var message = new ReservationEvent(1, Guid.NewGuid(), "ReservationConfirmed", Guid.NewGuid(), "demo-user", "camera-001", "Demo Camera", occurrence.AddDays(1), occurrence.AddDays(1).AddHours(1), occurrence);
+                var message = new ReservationEvent(1, Guid.NewGuid(), "ReservationConfirmed", Guid.NewGuid(), new string('a', 64), "camera-001", "Demo Camera", occurrence.AddDays(1), occurrence.AddDays(1).AddHours(1), occurrence);
                 byte[] body = JsonSerializer.SerializeToUtf8Bytes(message, ReservationJsonContext.Default.ReservationEvent);
                 var delivery = new BrokerDelivery(false, body, "reservation.confirmed", "application/json", message.EventId.ToString(), message.ReservationId.ToString(),
                     new Dictionary<string, object?> { ["schema"] = 1 }, async (accepted, token) =>

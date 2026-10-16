@@ -9,11 +9,18 @@
       Version="10.0.0"
     />
     <ProjectReference Include="../../src/Inventory/Inventory.csproj" />
+    <ProjectReference
+      Include="../../src/IdentityBootstrap/IdentityBootstrap.csproj"
+    />
     <ProjectReference Include="../../src/Reservations/Reservations.csproj" />
     <ProjectReference Include="../../src/Notifications/Notifications.csproj" />
     <Compile
       Include="../Backend.Tests/PostgresFixture.cs"
       Link="Fixtures/PostgresFixture.cs"
+    />
+    <Compile
+      Include="../Backend.Tests/IdentityAuthorityFixture.cs"
+      Link="Fixtures/IdentityAuthorityFixture.cs"
     />
     <Compile
       Include="../Backend.Tests/BookingScenario.cs"

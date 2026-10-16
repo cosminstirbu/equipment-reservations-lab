@@ -8,11 +8,20 @@ import {
   InjectionToken,
   Injector,
   signal,
+  untracked,
 } from '@angular/core';
 import { DOCUMENT } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
 import { disabled, form, FormField, required } from '@angular/forms/signals';
-import { Subscription } from 'rxjs';
+import {
+  catchError,
+  EMPTY,
+  Observable,
+  Subscription,
+  takeWhile,
+  throwError,
+} from 'rxjs';
+import { AuthSession } from '../auth/auth-session';
 import {
   Availability,
   BookingApi,
@@ -38,11 +47,12 @@ export const BOOKING_TIME_ZONE = new InjectionToken<string>(
 })
 export class Booking {
   private readonly api = inject(BookingApi);
-  private readonly lifetime = new Subscription();
+  private lifetime = new Subscription();
   private readonly document = inject(DOCUMENT);
   private readonly injector = inject(Injector);
   private actionFocus: HTMLElement | null = null;
 
+  protected readonly auth = inject(AuthSession);
   protected readonly timeZone = inject(BOOKING_TIME_ZONE);
   protected readonly equipment = signal<BookingEquipment[]>([]);
   protected readonly loading = signal(true);
@@ -99,11 +109,34 @@ export class Booking {
         this.availability.set(null);
       }
     });
-    this.load(false);
+    effect(() => {
+      this.auth.generation();
+      const active = this.auth.active();
+      untracked(() => {
+        this.lifetime.unsubscribe();
+        this.lifetime = new Subscription();
+        this.equipment.set([]);
+        this.availability.set(null);
+        this.saved.set(null);
+        this.reservations.set([]);
+        this.notifications.set([]);
+        this.loading.set(false);
+        this.pending.set(false);
+        this.historyLoading.set(false);
+        this.notificationsLoading.set(false);
+        this.actionFocus = null;
+        this.status.set('Choose equipment and dates after signing in.');
+        this.historyStatus.set('Refresh reservations to load history.');
+        this.notificationsStatus.set(
+          'Refresh notifications to check asynchronous delivery.',
+        );
+        if (active) this.load(false);
+      });
+    });
   }
 
   protected load(restore = true) {
-    if (this.pending()) {
+    if (!this.auth.checkActive() || this.pending()) {
       return;
     }
 
@@ -114,7 +147,7 @@ export class Booking {
     this.loading.set(true);
     this.status.set('Loading equipment…');
     this.lifetime.add(
-      this.api.equipment().subscribe({
+      this.request(this.api.equipment()).subscribe({
         next: (items) => {
           this.equipment.set(items);
           this.loading.set(false);
@@ -138,7 +171,7 @@ export class Booking {
   }
 
   protected refreshNotifications() {
-    if (this.notificationsLoading()) {
+    if (!this.auth.checkActive() || this.notificationsLoading()) {
       return;
     }
 
@@ -149,7 +182,7 @@ export class Booking {
     this.notificationsLoading.set(true);
     this.notificationsStatus.set('Loading notifications…');
     this.lifetime.add(
-      this.api.notifications().subscribe({
+      this.request(this.api.notifications()).subscribe({
         next: (entries) => {
           this.notifications.set(entries);
           this.notificationsLoading.set(false);
@@ -176,7 +209,12 @@ export class Booking {
   }
 
   protected refreshReservations() {
-    if (this.pending() || this.historyLoading()) {
+    if (
+      !this.auth.checkActive() ||
+      !this.auth.employee() ||
+      this.pending() ||
+      this.historyLoading()
+    ) {
       return;
     }
 
@@ -187,7 +225,7 @@ export class Booking {
     this.historyLoading.set(true);
     this.historyStatus.set('Loading reservations…');
     this.lifetime.add(
-      this.api.reservations().subscribe({
+      this.request(this.api.reservations()).subscribe({
         next: (items) => {
           this.reservations.set(items);
           this.historyLoading.set(false);
@@ -202,10 +240,11 @@ export class Booking {
 
           this.restoreFocus(focus);
         },
-        error: () => {
+        error: (error: unknown) => {
           this.historyLoading.set(false);
           this.historyStatus.set(
-            'Unable to load reservations. Check storage and try Refresh reservations.',
+            this.authorityError(error) ??
+              'Unable to load reservations. Check storage and try Refresh reservations.',
           );
           this.restoreFocus(focus);
         },
@@ -215,6 +254,8 @@ export class Booking {
 
   protected cancelReservation(reservation: Reservation) {
     if (
+      !this.auth.checkActive() ||
+      !this.auth.employee() ||
       this.pending() ||
       this.historyLoading() ||
       reservation.status !== 'Confirmed'
@@ -225,7 +266,7 @@ export class Booking {
     this.begin('Cancelling reservation…');
     this.historyStatus.set('Cancelling reservation…');
     this.lifetime.add(
-      this.api.cancel(reservation.id).subscribe({
+      this.request(this.api.cancel(reservation.id)).subscribe({
         next: (cancelled) => {
           this.reservations.update((items) =>
             items.map((item) => (item.id === cancelled.id ? cancelled : item)),
@@ -268,6 +309,11 @@ export class Booking {
   }
 
   private cancellationError(error: unknown) {
+    const authority = this.authorityError(error);
+    if (authority) {
+      return authority;
+    }
+
     if (
       error instanceof HttpErrorResponse &&
       error.error &&
@@ -292,7 +338,7 @@ export class Booking {
   }
 
   protected checkAvailability() {
-    if (this.pending() || this.loading()) {
+    if (!this.auth.checkActive() || this.pending() || this.loading()) {
       return;
     }
 
@@ -303,7 +349,7 @@ export class Booking {
 
     this.begin('Checking availability…');
     this.lifetime.add(
-      this.api.availability(input).subscribe({
+      this.request(this.api.availability(input)).subscribe({
         next: (result) => {
           this.availability.set(result);
           this.status.set(
@@ -322,7 +368,12 @@ export class Booking {
   }
 
   private book() {
-    if (this.pending() || this.loading()) {
+    if (
+      !this.auth.checkActive() ||
+      !this.auth.employee() ||
+      this.pending() ||
+      this.loading()
+    ) {
       return;
     }
 
@@ -333,7 +384,7 @@ export class Booking {
 
     this.begin('Saving reservation…');
     this.lifetime.add(
-      this.api.book(input).subscribe({
+      this.request(this.api.book(input)).subscribe({
         next: (reservation) => {
           this.saved.set(reservation);
           this.availability.set(null);
@@ -447,8 +498,10 @@ export class Booking {
       return;
     }
 
+    const generation = this.auth.generation();
     afterNextRender(
       () => {
+        if (!this.auth.isCurrent(generation)) return;
         if (
           this.document.hasFocus() &&
           this.document.activeElement === this.document.body
@@ -471,7 +524,22 @@ export class Booking {
     );
   }
 
+  private request<T>(operation: Observable<T>) {
+    const generation = this.auth.generation();
+    return operation.pipe(
+      takeWhile(() => this.auth.isCurrent(generation)),
+      catchError((error: unknown) =>
+        this.auth.isCurrent(generation) ? throwError(() => error) : EMPTY,
+      ),
+    );
+  }
+
   private errorMessage(error: unknown, write: boolean) {
+    const authority = this.authorityError(error);
+    if (authority) {
+      return authority;
+    }
+
     if (
       error instanceof HttpErrorResponse &&
       error.error &&
@@ -499,5 +567,19 @@ export class Booking {
     return write
       ? 'The save response is uncertain. Refresh reservations before retrying.'
       : 'Unable to check availability. Check the local services and try again.';
+  }
+
+  private authorityError(error: unknown) {
+    if (!(error instanceof HttpErrorResponse)) {
+      return null;
+    }
+
+    if (error.status === 401) {
+      return 'Your session is no longer accepted. Sign in again, then refresh reservations before another write.';
+    }
+
+    return error.status === 403
+      ? 'Your account does not allow this action. Refresh your session or use an account with the required role.'
+      : null;
   }
 }

@@ -1,6 +1,6 @@
 CREATE TABLE reservations (
     id uuid PRIMARY KEY,
-    demo_user_id text NOT NULL CHECK (demo_user_id = 'demo-user'),
+    user_key text NOT NULL CHECK (user_key COLLATE "C" ~ '^[0-9a-f]{64}$'),
     equipment_id text NOT NULL CHECK (equipment_id COLLATE "C" ~ '^[A-Za-z0-9_-]{1,64}$'),
     equipment_name text NOT NULL CHECK (length(equipment_name) <= 256 AND length(btrim(equipment_name)) >= 1),
     start_at timestamptz NOT NULL CHECK (isfinite(start_at)),
@@ -20,7 +20,7 @@ CREATE TABLE reservation_outbox (
     reservation_id uuid NOT NULL REFERENCES reservations (id),
     event_type text NOT NULL CHECK (event_type IN ('ReservationConfirmed', 'ReservationCancelled')),
     schema_version integer NOT NULL CHECK (schema_version = 1),
-    demo_user_id text NOT NULL CHECK (demo_user_id = 'demo-user'),
+    user_key text NOT NULL CHECK (user_key COLLATE "C" ~ '^[0-9a-f]{64}$'),
     equipment_id text NOT NULL CHECK (equipment_id COLLATE "C" ~ '^[A-Za-z0-9_-]{1,64}$'),
     equipment_name text NOT NULL CHECK (length(equipment_name) <= 256 AND length(btrim(equipment_name)) >= 1),
     start_at timestamptz NOT NULL CHECK (isfinite(start_at)),
@@ -36,4 +36,4 @@ CREATE TABLE reservation_outbox (
 );
 
 CREATE INDEX reservation_outbox_pending ON reservation_outbox (next_attempt_at, event_id) WHERE published_at IS NULL;
-CREATE INDEX reservations_history ON reservations (confirmed_at DESC, id);
+CREATE INDEX reservations_history ON reservations (user_key, confirmed_at DESC, id);

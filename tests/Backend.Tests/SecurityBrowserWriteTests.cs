@@ -206,6 +206,7 @@ public sealed class SecurityBrowserWriteTests(PostgresFixture postgres)
         await using NetworkStream stream = socket.GetStream();
         byte[] body = request.Content is null ? [] : await request.Content.ReadAsByteArrayAsync(deadline.Token);
         var headers = new StringBuilder($"POST {request.RequestUri!.OriginalString} HTTP/1.1\r\nHost: localhost:{endpoint.Port}\r\nConnection: close\r\n{emptyHeader}:\r\n");
+        _ = headers.Append("Authorization: ").Append(scenario.Client.DefaultRequestHeaders.Authorization).Append("\r\n");
         foreach (KeyValuePair<string, System.Net.Http.Headers.HeaderStringValues> header in request.Headers.NonValidated)
         {
             if (!header.Key.Equals(emptyHeader, StringComparison.OrdinalIgnoreCase))

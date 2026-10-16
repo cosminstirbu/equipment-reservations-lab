@@ -3,6 +3,7 @@
     <EnableRequestDelegateGenerator>true</EnableRequestDelegateGenerator>
   </PropertyGroup>
   <ItemGroup>
+    <ProjectReference Include="../IdentityAccess/IdentityAccess.csproj" />
     <ProjectReference Include="../Persistence/Persistence.csproj" />
     <ProjectReference Include="../ServiceDefaults/ServiceDefaults.csproj" />
     <ProjectReference

@@ -31,7 +31,7 @@ internal sealed class DatabaseTelemetryCapture : IDisposable
 
     public WebApplicationFactory<TProgram> App<TProgram>(string database, string connection, bool? captureSql = null) where TProgram : class
     {
-        return new WebApplicationFactory<TProgram>().WithWebHostBuilder(builder =>
+        return new AuthenticatedApplicationFactory<TProgram>().WithWebHostBuilder(builder =>
         {
             _ = builder.ConfigureAppConfiguration((_, configuration) => configuration.AddInMemoryCollection(new Dictionary<string, string?>
             {

@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using IdentityAccess;
 using Npgsql;
 
 namespace Reservations;
@@ -13,9 +14,10 @@ internal static class ReservationEndpoints
                 ReservationInput? input = await ReservationValidation.ReadRequestAsync(request, cancellationToken);
                 ReservationInterval interval = ReservationValidation.Interval(input, time);
                 string equipmentName = await inventory.OperationalNameAsync(interval.EquipmentId, cancellationToken);
-                Reservation result = await ReservationTelemetry.DatabaseAsync(token => store.ConfirmAsync(interval, equipmentName, token), cancellationToken);
+                string userKey = IdentityPrincipal.UserKey(request.HttpContext.User);
+                Reservation result = await ReservationTelemetry.DatabaseAsync(token => store.ConfirmAsync(interval, equipmentName, userKey, token), cancellationToken);
                 return Results.Created($"/api/reservations/{result.Id}", result);
-            }));
+            })).RequireAuthorization(IdentityAuthentication.Employee);
 
         _ = app.MapGet("/api/availability", (HttpRequest request, InventoryClient inventory, ReservationStore store, TimeProvider time) =>
             ExecuteAsync(request, "availability", async cancellationToken =>
@@ -30,7 +32,7 @@ internal static class ReservationEndpoints
                 _ = await inventory.OperationalNameAsync(interval.EquipmentId, cancellationToken);
                 bool available = await ReservationTelemetry.DatabaseAsync(token => store.AvailableAsync(interval, token), cancellationToken);
                 return Results.Ok(new Availability(interval.EquipmentId, interval.StartAt, interval.EndAt, available));
-            }));
+            })).RequireAuthorization(IdentityAuthentication.Human);
 
         _ = app.MapPost("/api/reservations/{id}/cancel", (HttpRequest request, string id, ReservationStore store) =>
             ExecuteAsync(request, "cancel", async cancellationToken =>
@@ -40,12 +42,14 @@ internal static class ReservationEndpoints
                     throw new ReservationProblemException(400, "invalid_request", "Use a valid reservation identifier.");
                 }
 
-                Reservation result = await ReservationTelemetry.DatabaseAsync(token => store.CancelAsync(reservationId, token), cancellationToken);
+                string userKey = IdentityPrincipal.UserKey(request.HttpContext.User);
+                Reservation result = await ReservationTelemetry.DatabaseAsync(token => store.CancelAsync(reservationId, userKey, token), cancellationToken);
                 return Results.Ok(result);
-            }));
+            })).RequireAuthorization(IdentityAuthentication.Employee);
 
         _ = app.MapGet("/api/reservations", (HttpRequest request, ReservationStore store) =>
-            ExecuteAsync(request, "list", async cancellationToken => Results.Ok(await ReservationTelemetry.DatabaseAsync(store.ListAsync, cancellationToken))));
+            ExecuteAsync(request, "list", async cancellationToken => Results.Ok(await ReservationTelemetry.DatabaseAsync(token => store.ListAsync(IdentityPrincipal.UserKey(request.HttpContext.User), token), cancellationToken))))
+            .RequireAuthorization(IdentityAuthentication.Employee);
 
         _ = app.MapGet("/api/reservations/{id}", (HttpRequest request, string id, ReservationStore store) =>
             ExecuteAsync(request, "get", async cancellationToken =>
@@ -55,11 +59,12 @@ internal static class ReservationEndpoints
                     throw new ReservationProblemException(400, "invalid_request", "Use a valid reservation identifier.");
                 }
 
-                Reservation result = await ReservationTelemetry.DatabaseAsync(token => store.FindAsync(reservationId, token), cancellationToken)
+                string userKey = IdentityPrincipal.UserKey(request.HttpContext.User);
+                Reservation result = await ReservationTelemetry.DatabaseAsync(token => store.FindAsync(reservationId, userKey, token), cancellationToken)
                     ?? throw new ReservationProblemException(404, "reservation_not_found", "Reservation was not found.");
 
                 return Results.Ok(result);
-            }));
+            })).RequireAuthorization(IdentityAuthentication.Employee);
     }
 
     private static async Task<IResult> ExecuteAsync(HttpRequest request, string operationName, Func<CancellationToken, Task<IResult>> operation)

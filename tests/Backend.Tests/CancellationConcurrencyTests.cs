@@ -9,6 +9,24 @@ namespace Backend.Tests;
 public sealed class CancellationConcurrencyTests(PostgresFixture postgres)
 {
     [Fact]
+    public async Task ForeignCancellationCannotJoinOwnersConcurrentIdempotentTransition()
+    {
+        await using BookingScenario scenario = await BookingScenario.CreateAsync(postgres);
+        BookedReservation original = (await (await scenario.BookAsync()).Content.ReadFromJsonAsync<BookedReservation>())!;
+        using HttpClient other = scenario.ClientFor("employee-b-subject");
+        HttpResponseMessage[] responses = await Task.WhenAll(
+            scenario.Client.PostAsync($"/api/reservations/{original.Id}/cancel", null),
+            other.PostAsync($"/api/reservations/{original.Id}/cancel", null));
+        Assert.Equal(HttpStatusCode.OK, responses[0].StatusCode);
+        Assert.Equal(HttpStatusCode.NotFound, responses[1].StatusCode);
+        BookedReservation cancelled = (await responses[0].Content.ReadFromJsonAsync<BookedReservation>())!;
+        scenario.Clock.Now = original.EndAt;
+        Assert.Equal(cancelled, await (await scenario.Client.PostAsync($"/api/reservations/{original.Id}/cancel", null)).Content.ReadFromJsonAsync<BookedReservation>());
+        Assert.Equal(2L, await scenario.CountAsync("reservation_outbox"));
+        Assert.Equal(1L, await scenario.CountAsync("reservations"));
+    }
+
+    [Fact]
     public async Task ConcurrentCancellationReturnsOneStableEventAndTimestamp()
     {
         await using BookingScenario scenario = await BookingScenario.CreateAsync(postgres);

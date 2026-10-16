@@ -4,6 +4,7 @@ using System.Diagnostics.Metrics;
 using System.Net;
 using System.Net.Http.Json;
 using System.Text.Json.Nodes;
+using Backend.Tests;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
@@ -194,15 +195,15 @@ public sealed class ReservationConsumerTests(ReservationDeliveryFixture infrastr
         var reservationId = Guid.NewGuid();
         byte[] body = ReservationDeliveryFixture.Envelope(eventId, reservationId);
         ObservedNotification original;
+        await PublishAsync(eventId, reservationId, body, deadline.Token);
         using (WebApplicationFactory<Notifications.Program> app = infrastructure.App<Notifications.Program>(inbox))
         using (HttpClient client = app.CreateClient())
         {
             Assert.Equal(HttpStatusCode.OK, (await client.GetAsync("/api/notifications", deadline.Token)).StatusCode);
-            await PublishAsync(eventId, reservationId, body, deadline.Token);
             original = Assert.Single(await ReservationDeliveryFixture.AwaitInboxAsync(client, 1, deadline.Token));
             Assert.Equal(eventId, original.EventId);
             Assert.Equal(reservationId, original.ReservationId);
-            Assert.Equal("demo-user", original.DemoUserId);
+            Assert.Equal(IdentityAuthorityFixture.UserKeyFor(), original.UserKey);
             Assert.Equal("ReservationConfirmed", original.EventType);
             Assert.Equal("Demo Camera", original.EquipmentName);
             Assert.Contains("Demo Camera", original.Message, StringComparison.Ordinal);
@@ -215,6 +216,8 @@ public sealed class ReservationConsumerTests(ReservationDeliveryFixture infrastr
         using HttpClient receiver = restarted.CreateClient();
         await AwaitQueueEmptyAsync(deadline.Token);
         Assert.Equal(original, Assert.Single((await receiver.GetFromJsonAsync<ObservedNotification[]>("/api/notifications", deadline.Token))!));
+        using HttpClient other = IdentityAuthorityFixture.Shared.Authenticate(restarted.CreateClient(), "notifications-api", "employee-b-subject");
+        Assert.Empty((await other.GetFromJsonAsync<ObservedNotification[]>("/api/notifications", deadline.Token))!);
     }
 
     [Theory]
@@ -235,6 +238,12 @@ public sealed class ReservationConsumerTests(ReservationDeliveryFixture infrastr
     [InlineData("schema_header")]
     [InlineData("malformed_json")]
     [InlineData("unknown_field")]
+    [InlineData("user_key_short")]
+    [InlineData("user_key_uppercase")]
+    [InlineData("user_key_null")]
+    [InlineData("token_field")]
+    [InlineData("session_field")]
+    [InlineData("profile_field")]
     [InlineData("correlation_id")]
     [InlineData("aligned_startAt")]
     [InlineData("aligned_endAt")]
@@ -295,6 +304,24 @@ public sealed class ReservationConsumerTests(ReservationDeliveryFixture infrastr
                 break;
             case "unknown_field":
                 invalid["untrustedText"] = "not accepted";
+                break;
+            case "user_key_short":
+                invalid["userKey"] = new string('a', 63);
+                break;
+            case "user_key_uppercase":
+                invalid["userKey"] = new string('A', 64);
+                break;
+            case "user_key_null":
+                invalid["userKey"] = null;
+                break;
+            case "token_field":
+                invalid["accessToken"] = "untrusted";
+                break;
+            case "session_field":
+                invalid["sessionId"] = "untrusted";
+                break;
+            case "profile_field":
+                invalid["email"] = "untrusted";
                 break;
             default:
                 break;

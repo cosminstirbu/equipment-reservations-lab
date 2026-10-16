@@ -1,8 +1,6 @@
-<main>
-  <h1>Book equipment</h1>
-  <p>
-    Local demo: <strong>demo-user</strong>. No authentication or user isolation.
-  </p>
+@if (auth.active()) {
+<section aria-labelledby="booking-title">
+  <h2 id="booking-title">Book equipment</h2>
   <p id="timezone-help">
     Times use <strong>{{ timeZone }}</strong>. UTC offsets appear below each
     time. Repeated daylight-saving times require an explicit offset.
@@ -81,6 +79,7 @@
       >
         Check availability
       </button>
+      @if (auth.employee()) {
       <button
         type="submit"
         data-action="book"
@@ -88,6 +87,7 @@
       >
         Book equipment
       </button>
+      }
     </div>
   </form>
 
@@ -129,7 +129,7 @@
     </p>
     }
   </section>
-  }
+  } @if (auth.employee()) {
   <section aria-labelledby="history-title">
     <h2 id="history-title">Reservation history</h2>
     <button
@@ -203,6 +203,7 @@
     </article>
     }
   </section>
+  }
   <section aria-labelledby="inbox-title">
     <h2 id="inbox-title">Notification inbox</h2>
     <p>
@@ -245,4 +246,5 @@
     </article>
     }
   </section>
-</main>
+</section>
+}

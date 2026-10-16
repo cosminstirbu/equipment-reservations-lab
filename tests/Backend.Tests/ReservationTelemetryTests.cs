@@ -347,7 +347,7 @@ public sealed class ReservationTelemetryTests(PostgresFixture postgres)
 
                 readiness(true);
                 var occurrence = new DateTimeOffset(2030, 1, 1, 12, 0, 0, TimeSpan.Zero);
-                ReservationEvent message = supplied ?? new ReservationEvent(1, Guid.NewGuid(), "ReservationConfirmed", Guid.NewGuid(), "demo-user", "camera-001", "Demo Camera", occurrence.AddDays(1), occurrence.AddDays(1).AddHours(1), occurrence);
+                ReservationEvent message = supplied ?? new ReservationEvent(1, Guid.NewGuid(), "ReservationConfirmed", Guid.NewGuid(), new string('a', 64), "camera-001", "Demo Camera", occurrence.AddDays(1), occurrence.AddDays(1).AddHours(1), occurrence);
                 byte[] body = JsonSerializer.SerializeToUtf8Bytes(message, ReservationJsonContext.Default.ReservationEvent);
                 var headers = new Dictionary<string, object?> { ["schema"] = 1 };
                 if (parent is not null)

@@ -14,7 +14,7 @@ public static partial class ReservationEventValidation
         return message is not null && message.SchemaVersion == 1
             && message.EventId != Guid.Empty && message.ReservationId != Guid.Empty
             && message.EventType is "ReservationConfirmed" or "ReservationCancelled"
-            && message.DemoUserId == "demo-user"
+            && message.UserKey is { Length: 64 } && message.UserKey.All(character => character is (>= '0' and <= '9') or (>= 'a' and <= 'f'))
             && EquipmentIdValidation.IsEquipmentId(message.EquipmentId)
             && !string.IsNullOrWhiteSpace(message.EquipmentName) && message.EquipmentName.Length <= 256
             && FiniteUtc(message.StartAt) && FiniteUtc(message.EndAt) && FiniteUtc(message.OccurredAt)

@@ -1,7 +1,15 @@
 const { spawn } = require('node:child_process');
+const { writeFileSync } = require('node:fs');
+const { publicConfiguration } = require('./auth-config.cjs');
 const port = process.env.PORT;
 if (!port || !/^\d+$/.test(port))
   throw new Error('Aspire must supply the Web PORT.');
+writeFileSync(
+  'auth-config.json',
+  JSON.stringify(publicConfiguration(process.env)),
+  { mode: 0o600 },
+);
+
 const child = spawn(
   process.execPath,
   [

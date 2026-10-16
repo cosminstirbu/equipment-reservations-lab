@@ -58,10 +58,19 @@ public sealed class BookingConcurrencyTests(PostgresFixture postgres)
             }
         };
         await using BookingScenario scenario = await BookingScenario.CreateAsync(postgres, inventory);
-        HttpResponseMessage[] responses = await Task.WhenAll(scenario.BookAsync(), scenario.BookAsync());
+        using HttpClient other = scenario.ClientFor("employee-b-subject");
+        HttpResponseMessage[] responses = await Task.WhenAll(scenario.BookAsync(), other.PostAsJsonAsync("/api/reservations", new
+        {
+            equipmentId = "camera-001",
+            startAt = "2030-01-02T12:00:00Z",
+            endAt = "2030-01-02T13:00:00Z"
+        }));
         Assert.Equal([HttpStatusCode.Created, HttpStatusCode.Conflict], responses.Select(response => response.StatusCode).Order());
         Assert.Equal(1L, await scenario.CountAsync("reservations"));
         Assert.Equal(1L, await scenario.CountAsync("reservation_outbox"));
+        BookedReservation[] firstHistory = (await scenario.Client.GetFromJsonAsync<BookedReservation[]>("/api/reservations"))!;
+        BookedReservation[] secondHistory = (await other.GetFromJsonAsync<BookedReservation[]>("/api/reservations"))!;
+        _ = Assert.Single(firstHistory.Concat(secondHistory));
         await using NpgsqlCommand guard = scenario.Database.CreateCommand("SELECT count(*) FROM pg_constraint WHERE conname='reservations_no_confirmed_overlap' AND contype='x'");
         Assert.Equal(1L, await guard.ExecuteScalarAsync());
     }

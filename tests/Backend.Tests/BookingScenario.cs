@@ -50,6 +50,11 @@ internal sealed class BookingScenario : IAsyncDisposable
         get;
     }
 
+    public HttpClient ClientFor(string subject)
+    {
+        return IdentityAuthorityFixture.Shared.Authenticate(App.CreateClient(), subject: subject);
+    }
+
     public static async Task<BookingScenario> CreateAsync(PostgresFixture postgres, InventoryBoundary? inventory = null)
     {
         NpgsqlDataSource database = await postgres.CreateMigratedDatabaseAsync("reservations");
@@ -122,9 +127,15 @@ internal sealed class InventoryBoundary : HttpMessageHandler
         get; init;
     }
 
+    public Action<HttpRequestMessage>? InspectRequest
+    {
+        get; init;
+    }
+
     protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
     {
         _ = Interlocked.Increment(ref calls);
+        InspectRequest?.Invoke(request);
         if (BeforeReply is not null)
         {
             await BeforeReply(cancellationToken);
@@ -165,6 +176,6 @@ internal sealed class InventoryBoundary : HttpMessageHandler
     }
 }
 
-internal sealed record BookedReservation(Guid Id, string DemoUserId, string EquipmentId, string EquipmentName, DateTimeOffset StartAt, DateTimeOffset EndAt, string Status, DateTimeOffset ConfirmedAt, DateTimeOffset? CancelledAt, Guid ConfirmationEventId, Guid? CancellationEventId);
+internal sealed record BookedReservation(Guid Id, string UserKey, string EquipmentId, string EquipmentName, DateTimeOffset StartAt, DateTimeOffset EndAt, string Status, DateTimeOffset ConfirmedAt, DateTimeOffset? CancelledAt, Guid ConfirmationEventId, Guid? CancellationEventId);
 
 internal sealed record AvailabilityResult(string EquipmentId, DateTimeOffset StartAt, DateTimeOffset EndAt, bool Available, bool Advisory);

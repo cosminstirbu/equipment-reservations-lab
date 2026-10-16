@@ -7,7 +7,7 @@ public sealed record ReservationInput(string? EquipmentId, string? StartAt, stri
 
 public sealed record ReservationInterval(string EquipmentId, DateTimeOffset StartAt, DateTimeOffset EndAt);
 
-public sealed record Reservation(Guid Id, string DemoUserId, string EquipmentId, string EquipmentName, DateTimeOffset StartAt, DateTimeOffset EndAt, string Status, DateTimeOffset ConfirmedAt, DateTimeOffset? CancelledAt, Guid ConfirmationEventId, Guid? CancellationEventId);
+public sealed record Reservation(Guid Id, string UserKey, string EquipmentId, string EquipmentName, DateTimeOffset StartAt, DateTimeOffset EndAt, string Status, DateTimeOffset ConfirmedAt, DateTimeOffset? CancelledAt, Guid ConfirmationEventId, Guid? CancellationEventId);
 
 public sealed record Availability(string EquipmentId, DateTimeOffset StartAt, DateTimeOffset EndAt, bool Available, bool Advisory = true);
 

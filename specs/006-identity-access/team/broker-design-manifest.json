@@ -1,0 +1,18 @@
+{
+  "snapshot": "183ff764d6cbc017c8f683b4c46781dc0ab994172656f8e495dfd4ddcafce4a0",
+  "supersedes_for_broker_provisioning_only": "fe9a31ced53e73ebb5587f5f8745e8f500cc156056c873879d17aaa929682a63",
+  "finding": "DESIGN-006-001",
+  "files": {
+    "specs/006-identity-access/spec.md": "4ccc350ed0be9c5d0f708ef3c044b63fef6bc57afc95ffbc5bec1378d9913095",
+    "specs/006-identity-access/plan.md": "d86390183864402c6e0ebf0f2efc8b68d333083e3a654d3b724ec9a0543662f8",
+    "specs/006-identity-access/research.md": "e6ad6c13299da69c3dc435e80090e3fb56ec0c4c0446f68478843b860ead6f6f",
+    "specs/006-identity-access/data-model.md": "96dae9bae41c5147a1c1d29e4d51e9ab27e9c3c0e6e1dfc39919e9bd22483997",
+    "specs/006-identity-access/quickstart.md": "1953ff196503bada4418e7d1017884d3b3874c2c0ab6b696a29f6882b3a3425c",
+    "specs/006-identity-access/team/scope-confirmation.md": "67ce30c36c983b82b007a938c3bc5a8050e7e37a97a67f692da468c98d1fbba3",
+    "specs/006-identity-access/contracts/http.md": "9ad4f95fc6d324a111a6d0b0883e3d681b0b050645c1214fdcc65aa5ecf7527d",
+    "specs/006-identity-access/contracts/identity.md": "d0253436747b1b08e12310ce694d5a1bf878097f411289a2494a6d54b79b5e22",
+    "specs/006-identity-access/contracts/messaging.md": "ae1733a0dd1cd338be912c5d94d6058063c1e4ec44ae26905063551c8c946bad",
+    "specs/002-book-cancel-equipment/spec.md": "621e369706c1788482d49a73baa8e5c00e9192d125fb4e9ba12934764c26ed21",
+    "specs/006-identity-access/tasks.md": "73f42e2c0383cafcc58aa0373638d7c0eaf251a11d5ddede800bdd8a3e0a051b"
+  }
+}

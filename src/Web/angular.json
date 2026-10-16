@@ -13,6 +13,9 @@
             "index": "src/index.html",
             "tsConfig": "tsconfig.json",
             "styles": ["src/styles.css"],
+            "assets": [
+              { "glob": "auth-config.json", "input": ".", "output": "/" }
+            ],
             "outputPath": "dist"
           }
         },

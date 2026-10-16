@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using IdentityAccess;
 using Notifications;
 using Npgsql;
 using Persistence;
@@ -7,6 +8,7 @@ using ServiceDefaults;
 
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 builder.AddServiceDefaults();
+_ = builder.Services.AddIdentityAuthentication(builder.Configuration, builder.Environment, "notifications-api");
 builder.AddDatabase("notifications", ReservationInbox.Commands);
 builder.Services.ConfigureHttpJsonOptions(options =>
     options.SerializerOptions.TypeInfoResolverChain.Insert(0, NotificationsJsonContext.Default));
@@ -21,9 +23,12 @@ builder.Services.AddHealthChecks()
     .AddCheck<ReservationConsumerHealth>("reservation-consumer", tags: ["worker"]);
 
 WebApplication app = builder.Build();
+_ = app.UseAuthentication();
+_ = app.UseAuthorization();
+_ = app.UseOwnershipInputGuard();
 app.MapOperationalEndpoints();
 
-app.MapGet("/api/notifications", async (ReservationInbox inbox, ILogger<Notifications.Program> logger, CancellationToken stopped) =>
+app.MapGet("/api/notifications", async (HttpContext context, ReservationInbox inbox, ILogger<Notifications.Program> logger, CancellationToken stopped) =>
 {
     using Activity? activity = NotificationTelemetry.Activities.StartActivity("notification.list");
     long started = Stopwatch.GetTimestamp();
@@ -33,7 +38,8 @@ app.MapGet("/api/notifications", async (ReservationInbox inbox, ILogger<Notifica
     budget.CancelAfter(TimeSpan.FromSeconds(8));
     try
     {
-        IReadOnlyList<InboxEntry> entries = await inbox.ListAsync(budget.Token);
+        string userKey = IdentityPrincipal.UserKey(context.User);
+        IReadOnlyList<InboxEntry> entries = await inbox.ListAsync(userKey, budget.Token);
         _ = activity?.SetStatus(ActivityStatusCode.Ok);
         return Results.Ok(entries);
     }
@@ -56,7 +62,7 @@ app.MapGet("/api/notifications", async (ReservationInbox inbox, ILogger<Notifica
         NotificationTelemetry.Record("list", outcome, started);
         NotificationsLog.Delivery(logger, "list", outcome);
     }
-});
+}).RequireAuthorization(IdentityAuthentication.Human);
 
 app.Run();
 

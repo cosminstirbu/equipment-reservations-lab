@@ -19,7 +19,6 @@ public sealed class ReservationSubscription(IConfiguration configuration) : IRes
             ?? throw new InvalidDataException("Message broker is not configured.");
         await using IConnection connection = await RabbitConnection.Factory(connectionString, TimeSpan.FromSeconds(5)).CreateConnectionAsync(cancellationToken);
         await using IChannel channel = await connection.CreateChannelAsync(cancellationToken: cancellationToken);
-        await ReservationTopology.DeclareAsync(channel, cancellationToken);
         await channel.BasicQosAsync(0, 1, false, cancellationToken);
         var disconnected = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
         connection.ConnectionShutdownAsync += (_, _) =>

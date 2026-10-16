@@ -1,0 +1,93 @@
+{
+  "findings": [
+    {
+      "id": "DESIGN-006-001",
+      "category": "design",
+      "severity": "high",
+      "blocking": false,
+      "status": "resolved_at_implementation_level",
+      "summary": "All-mode RabbitMQ HTTP provisioning contradicts005 FR006 administrative endpoint exclusion.",
+      "evidence": [
+        "005 FR005/FR006 and SC004 retain Development-only loopback administrative endpoints and deployment exclusion.",
+        "006 original T020/T021 finite adminHTTP provisioner would require unconditional management listener.",
+        "RabbitMQ API/UI share management plugin/listener; hidden URL annotations do not remove capability."
+      ],
+      "owner": "architecture",
+      "resolution_plan": "Core definitions import through supported run-mode container file injection; preserve management gating, least-privilege outcomes, restart behavior, no published credentials/hash artifacts; targeted design/task re-review.",
+      "reported_by": "architecture and coder",
+      "closure_required_from": [
+        "quality",
+        "security"
+      ],
+      "related_preparation_round": 2,
+      "closure": {
+        "snapshot": "183ff764d6cbc017c8f683b4c46781dc0ab994172656f8e495dfd4ddcafce4a0",
+        "quality": "quality-broker-design.md",
+        "security": "security-broker-design.md",
+        "limitation": "Implementation verification remains pending under T019\u2013T022 and final independent reviews."
+      },
+      "implementation_closure": {
+        "snapshot": "2e094af021db5f65143a73d4cd24c1fd473437b529fd6a8e48500139e0a95cef",
+        "quality": "quality-implementation-round0.md",
+        "security": "security-implementation-round0.md",
+        "verdict": "Both independent reviewers approve closure; new generator repair has separate finding."
+      }
+    },
+    {
+      "id": "CODE-006-001",
+      "category": "security",
+      "severity": "medium",
+      "blocking": false,
+      "status": "resolved_at_implementation_level",
+      "summary": "Framework information logs expose a private local path or raw JWT validation exception after identity registration.",
+      "evidence": [
+        "Required full check62728: TelemetryPrivacyTests.OutgoingHttpExportAndAllLogProvidersKeepProbeValuesPrivate fails at121/154: Telemetry must omit local user paths.",
+        "Source snapshot93b5681b19c6114ebf88c8eee355589a10e8c58d9e8ce26079d41485d8ee87d4; offending category/event diagnosis pending.",
+        "Targeted diagnostic1310: category Microsoft.AspNetCore.DataProtection.KeyManagement.XmlKeyManager, event62 carries private local path; diagnostics print only category/event, not offending values. Two remaining failures, seven passes; valid query/write fixture correction verified.",
+        "Targeted58364: DataProtection repair passes nine retained cases; invalid-issuer401 regression confirms JwtBearerHandler event1 exports raw validation exception. Exact bounded category policy repair authorized; safe unauthorized outcomes remain required.",
+        "Combined targeted1177 passes12/12, zero skips/warnings. Final source a4944f81d96d3a5d58e68be22eccc68d527b27a581822be1ec761c0ec030c668. Full gates and independent quality/security closure pending."
+      ],
+      "owner": "coder",
+      "reported_by": "coordinator required-check evidence",
+      "resolution_plan": "Confirm category/event without printing private values; repair bounded framework logging privacy policy while retaining application outcomes and original privacy assertions; rerun affected privacy and full checks.",
+      "closure_required_from": [
+        "quality",
+        "security"
+      ],
+      "resolution": "Exact XmlKeyManager and JwtBearerHandler category minimumWarning rules omit confirmed Information path/exception diagnostics while retaining framework warnings/errors and generated safe application outcomes. Original full privacy assertions and query redaction retained.",
+      "implementation_closure": {
+        "snapshot": "2e094af021db5f65143a73d4cd24c1fd473437b529fd6a8e48500139e0a95cef",
+        "quality": "quality-implementation-round0.md",
+        "security": "security-implementation-round0.md",
+        "verdict": "Both independent reviewers approve closure; new generator repair has separate finding."
+      }
+    },
+    {
+      "id": "QUAL-006-001",
+      "category": "code",
+      "severity": "medium",
+      "blocking": false,
+      "status": "resolved_at_implementation_level",
+      "summary": "AppHost compile-time-known ConfigurationBinder.GetValue<int>(IdentityPort) lacks required owning-project configuration-binding generator opt-in.",
+      "evidence": [
+        "src/AppHost/Program.cs28; src/AppHost/AppHost.csproj3; docs/engineering/aspnet-core.md42.",
+        "Direct dotnet msbuild -getProperty:EnableConfigurationBindingGenerator exits0 with empty effectiveproperty, capturef42e2e.",
+        "Root69889 passes16 real AppHost model cases after empty/hex/Unicode whitespace normalization; emittedbuild40021 zero warnings/errors with actual GetValue<int> interception. Mandatory fullgate53004 running; independent quality closure remains pending."
+      ],
+      "owner": "coder",
+      "reported_by": "quality independent implementation review",
+      "closure_required_from": [
+        "quality"
+      ],
+      "related_implementation_round": 1,
+      "resolution_plan": "Enable supported generator, inspect actual generatedhandling/diagnostics, preserve default/override/validation behavior; mandatory revalidation and frozen delta reviews.",
+      "resolution": "Supported generator enabled; actual emitted interception verified; explicit normalization preserves prior port configuration behavior; all required checks pass.",
+      "implementation_closure": {
+        "snapshot": "4d0f13c0e4accb4ba3f8940cc06fde5e66d2968620664f2afab2c3bdcdba4cde",
+        "quality": "quality-implementation-round1.md",
+        "security_delta": "security-implementation-round1.md",
+        "verdict": "Original quality reviewer approved closure; independent security delta PASS."
+      }
+    }
+  ]
+}

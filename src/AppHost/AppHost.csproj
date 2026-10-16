@@ -4,14 +4,29 @@
     <OutputType>Exe</OutputType>
     <IsAspireHost>true</IsAspireHost>
     <AspireUseCliBundle>true</AspireUseCliBundle>
+    <EnableConfigurationBindingGenerator
+    >true</EnableConfigurationBindingGenerator>
     <UserSecretsId>equipment-hello-apphost-local</UserSecretsId>
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="Aspire.Hosting.AppHost" Version="13.6.1" />
+    <PackageReference
+      Include="Aspire.Hosting.Keycloak"
+      Version="13.6.1-preview.1.26506.6"
+    />
     <PackageReference Include="Aspire.Hosting.JavaScript" Version="13.6.1" />
     <PackageReference Include="Aspire.Hosting.RabbitMQ" Version="13.6.1" />
     <PackageReference Include="Aspire.Hosting.PostgreSQL" Version="13.6.1" />
     <ProjectReference Include="../DatabaseBootstrap/DatabaseBootstrap.csproj" />
+    <ProjectReference Include="../IdentityBootstrap/IdentityBootstrap.csproj" />
+    <ProjectReference
+      Include="../BrokerBootstrap/BrokerBootstrap.csproj"
+      IsAspireProjectResource="false"
+    />
+    <ProjectReference
+      Include="../ReservationMessaging/ReservationMessaging.csproj"
+      IsAspireProjectResource="false"
+    />
     <ProjectReference Include="../Inventory/Inventory.csproj" />
     <ProjectReference Include="../Reservations/Reservations.csproj" />
     <ProjectReference Include="../Notifications/Notifications.csproj" />

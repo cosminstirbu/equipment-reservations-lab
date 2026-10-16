@@ -29,7 +29,7 @@ public sealed class ReservationOutboxTests(ReservationDeliveryFixture infrastruc
         BookedReservation original = (await (await scenario.BookAsync()).Content.ReadFromJsonAsync<BookedReservation>())!;
         await using NpgsqlCommand deny = scenario.Database.CreateCommand("CREATE SEQUENCE denied_updates; CREATE FUNCTION deny_metadata() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN IF NEW.published_at IS NOT NULL THEN PERFORM nextval('denied_updates'); RAISE EXCEPTION 'controlled permanent metadata permission' USING ERRCODE='42501'; END IF; RETURN NEW; END $$; CREATE TRIGGER deny_metadata BEFORE UPDATE ON reservation_outbox FOR EACH ROW EXECUTE FUNCTION deny_metadata()");
         _ = await deny.ExecuteNonQueryAsync(deadline.Token);
-        IConfigurationRoot configuration = new ConfigurationBuilder().AddInMemoryCollection(new Dictionary<string, string?> { ["ConnectionStrings:messaging"] = infrastructure.Messaging }).Build();
+        IConfigurationRoot configuration = new ConfigurationBuilder().AddInMemoryCollection(new Dictionary<string, string?> { ["ConnectionStrings:messaging"] = infrastructure.Publisher }).Build();
         var publisher = new ConfigurationPublisher(new ReservationPublisher(configuration));
         var logs = new DeliveryLogCapture();
         using var schedule = new PublicationGate();
@@ -81,7 +81,7 @@ public sealed class ReservationOutboxTests(ReservationDeliveryFixture infrastruc
     }
 
     [Theory]
-    [InlineData("topology")]
+    [InlineData("permission")]
     [InlineData("authentication")]
     public async Task PermanentRealBrokerConfigurationParksAcrossCyclesAndRestartUntilRepaired(string fault)
     {
@@ -90,14 +90,14 @@ public sealed class ReservationOutboxTests(ReservationDeliveryFixture infrastruc
         await using BookingScenario scenario = await BookingScenario.CreateAsync(infrastructure.Postgres);
         scenario.Clock.Now = DateTimeOffset.UtcNow;
         BookedReservation original = (await (await scenario.BookAsync()).Content.ReadFromJsonAsync<BookedReservation>())!;
-        string messaging = infrastructure.Messaging;
+        string messaging = infrastructure.Publisher;
         if (fault == "authentication")
         {
             messaging = new UriBuilder(messaging) { Password = "rejected-fixture-password" }.Uri.AbsoluteUri;
         }
         else
         {
-            await infrastructure.ChangeReservationExchangeAsync(true, deadline.Token);
+            await infrastructure.ChangePublisherPermissionAsync(true, deadline.Token);
         }
 
         try
@@ -110,9 +110,9 @@ public sealed class ReservationOutboxTests(ReservationDeliveryFixture infrastruc
             await schedule.Waiting.Task.WaitAsync(TimeSpan.FromSeconds(10), deadline.Token);
             Assert.Equal(TimeSpan.FromSeconds(10), schedule.FirstDelay);
             Assert.Equal(1, observed.Attempts);
-            if (fault == "topology")
+            if (fault == "permission")
             {
-                Assert.Equal(406, Assert.IsType<OperationInterruptedException>(observed.Failure).ShutdownReason!.ReplyCode);
+                Assert.Equal(403, Assert.IsAssignableFrom<OperationInterruptedException>(observed.Failure).ShutdownReason!.ReplyCode);
             }
             else
             {
@@ -133,7 +133,7 @@ public sealed class ReservationOutboxTests(ReservationDeliveryFixture infrastruc
             await restartedSchedule.Waiting.Task.WaitAsync(TimeSpan.FromSeconds(10), deadline.Token);
             Assert.Equal(1, observed.Attempts);
             await restarted.DisposeAsync();
-            await infrastructure.ChangeReservationExchangeAsync(false, deadline.Token);
+            await infrastructure.ChangePublisherPermissionAsync(false, deadline.Token);
             await using NpgsqlCommand reset = scenario.Database.CreateCommand("UPDATE reservation_outbox SET next_attempt_at=$2 WHERE event_id=$1 AND published_at IS NULL");
             _ = reset.Parameters.AddWithValue(original.ConfirmationEventId);
             _ = reset.Parameters.AddWithValue(DateTimeOffset.UtcNow);
@@ -149,7 +149,7 @@ public sealed class ReservationOutboxTests(ReservationDeliveryFixture infrastruc
         finally
         {
             using var cleanup = new CancellationTokenSource(TimeSpan.FromSeconds(10));
-            await infrastructure.ChangeReservationExchangeAsync(false, cleanup.Token);
+            await infrastructure.ChangePublisherPermissionAsync(false, cleanup.Token);
         }
     }
 
@@ -203,7 +203,7 @@ public sealed class ReservationOutboxTests(ReservationDeliveryFixture infrastruc
         scenario.Clock.Now = DateTimeOffset.UtcNow;
         BookedReservation original = (await (await scenario.BookAsync()).Content.ReadFromJsonAsync<BookedReservation>())!;
         await using NpgsqlDataSource inbox = await infrastructure.Postgres.CreateMigratedDatabaseAsync("notifications");
-        IConfigurationRoot configuration = new ConfigurationBuilder().AddInMemoryCollection(new Dictionary<string, string?> { ["ConnectionStrings:messaging"] = infrastructure.Messaging }).Build();
+        IConfigurationRoot configuration = new ConfigurationBuilder().AddInMemoryCollection(new Dictionary<string, string?> { ["ConnectionStrings:messaging"] = infrastructure.Publisher }).Build();
         var boundary = new UnconfirmedPublisher(new ReservationPublisher(configuration), infrastructure.Messaging, fault);
         using var schedule = new PublicationGate();
         using WebApplicationFactory<Reservations.Program> sender = infrastructure.App<Reservations.Program>(scenario.Database).WithWebHostBuilder(builder => builder.ConfigureServices(services =>
@@ -351,7 +351,7 @@ public sealed class ReservationOutboxTests(ReservationDeliveryFixture infrastruc
         await using NpgsqlDataSource inbox = await infrastructure.Postgres.CreateMigratedDatabaseAsync("notifications");
         using WebApplicationFactory<Reservations.Program> reservations = scenario.App.WithWebHostBuilder(builder => builder.ConfigureAppConfiguration((context, configuration) =>
         {
-            _ = configuration.AddInMemoryCollection(new Dictionary<string, string?> { ["ConnectionStrings:messaging"] = infrastructure.Messaging });
+            _ = configuration.AddInMemoryCollection(new Dictionary<string, string?> { ["ConnectionStrings:messaging"] = infrastructure.Publisher });
         }).ConfigureServices(services =>
         {
             _ = services.RemoveAll<TimeProvider>();

@@ -1,8 +1,10 @@
 using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.Net;
+using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using System.Text;
+using System.Threading.Channels;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Hosting.Server;
@@ -57,11 +59,30 @@ public sealed class TelemetryPrivacyTests(PostgresFixture postgres)
         Assert.Contains(logs.Values, value => value.Message.Contains("inventory_unavailable", StringComparison.Ordinal));
         Assert.Contains(console.Values, value => value.Contains("Reservation book completed (created)", StringComparison.Ordinal));
         string root = host.Services.GetRequiredService<IHostEnvironment>().ContentRootPath;
-        AssertPrivate(logs.Values.SelectMany(value => value.Values.Append(value.Message)), root);
+        AssertLogsPrivate(logs.Values, root);
         AssertPrivate(console.Values, root);
         AssertPrivate(logs.ResourceValues, root);
         Assert.All(logs.Values, value => Assert.False(value.HasException, "Export must not retain raw exception objects."));
         Assert.All(logs.Values, value => Assert.DoesNotContain(value.Values, attribute => attribute.StartsWith("RequestPath=", StringComparison.Ordinal)));
+    }
+
+    [Fact]
+    public async Task InvalidIssuerRetainsSafeUnauthorizedOutcomeWithoutExportingRawValidationExceptions()
+    {
+        await using BookingScenario scenario = await BookingScenario.CreateAsync(postgres);
+        using var logs = new ExportedLogs();
+        using var console = new ConsoleCapture();
+        using WebApplicationFactory<Reservations.Program> host = Capture(scenario, logs, console);
+        using HttpClient client = host.CreateClient();
+        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", IdentityAuthorityFixture.Shared.Token(issuer: "https://untrusted.invalid/realms/equipment"));
+        Assert.Equal(HttpStatusCode.Unauthorized, (await client.GetAsync("/api/reservations")).StatusCode);
+        Assert.Contains(logs.Values, value => value.Message == "API authentication outcome unauthorized");
+        Assert.All(logs.Values, value => Assert.False(value.HasException, $"Raw validation exception diagnostic category={value.Category}; event={value.EventId}."));
+        string root = host.Services.GetRequiredService<IHostEnvironment>().ContentRootPath;
+        AssertLogsPrivate(logs.Values, root);
+        AssertPrivate(console.Values, root);
+        Assert.Equal(0L, await scenario.CountAsync("reservations"));
+        Assert.Equal(0L, await scenario.CountAsync("reservation_outbox"));
     }
 
     [Fact]
@@ -75,12 +96,34 @@ public sealed class TelemetryPrivacyTests(PostgresFixture postgres)
         using HttpClient client = host.CreateClient();
         client.DefaultRequestHeaders.Add("X-Telemetry-Probe", HeaderProbe);
         client.DefaultRequestHeaders.Add("User-Agent", UserAgentProbe);
+        var bookingTraceId = ActivityTraceId.CreateRandom();
+        var bookingParentId = ActivitySpanId.CreateRandom();
+        client.DefaultRequestHeaders.Add("traceparent", $"00-{bookingTraceId}-{bookingParentId}-01");
         Assert.Equal(HttpStatusCode.Created, (await BookAsync(client)).StatusCode);
-        SpanSnapshot incoming = Assert.Single(spans.Values, value => value.Kind == ActivityKind.Server && value.Values.Contains("http.route=/api/reservations"));
+        await spans.WaitForAsync(bookingTraceId, ActivityKind.Server, "/api/reservations");
+        SpanSnapshot incoming = Assert.Single(spans.Values
+            .Where(value => value.TraceId == bookingTraceId && value.Kind == ActivityKind.Server && value.Values.Contains("http.route=/api/reservations"))
+            .DistinctBy(value => (value.TraceId, value.SpanId)));
+        Assert.Equal(bookingParentId, incoming.ParentSpanId);
         Assert.True(incoming.Duration > TimeSpan.Zero);
         Assert.Contains("http.request.method=POST", incoming.Values);
         Assert.Contains("http.response.status_code=201", incoming.Values);
         AssertPrivate(incoming.Values, host.Services.GetRequiredService<IHostEnvironment>().ContentRootPath, false);
+
+        var availabilityTraceId = ActivityTraceId.CreateRandom();
+        var availabilityParentId = ActivitySpanId.CreateRandom();
+        _ = client.DefaultRequestHeaders.Remove("traceparent");
+        client.DefaultRequestHeaders.Add("traceparent", $"00-{availabilityTraceId}-{availabilityParentId}-01");
+        Assert.Equal(HttpStatusCode.OK, (await client.GetAsync("/api/availability?equipmentId=" + QueryProbe + "&startAt=2030-01-02T12:00:00Z&endAt=2030-01-02T13:00:00Z")).StatusCode);
+        await spans.WaitForAsync(availabilityTraceId, ActivityKind.Server, "/api/availability");
+        SpanSnapshot availability = Assert.Single(spans.Values
+            .Where(value => value.TraceId == availabilityTraceId && value.Kind == ActivityKind.Server && value.Values.Contains("http.route=/api/availability"))
+            .DistinctBy(value => (value.TraceId, value.SpanId)));
+        Assert.Equal(availabilityParentId, availability.ParentSpanId);
+        Assert.Contains("http.request.method=GET", availability.Values);
+        Assert.Contains("http.response.status_code=200", availability.Values);
+        Assert.True(availability.Duration > TimeSpan.Zero);
+        AssertPrivate(spans.Values.SelectMany(value => value.Values), host.Services.GetRequiredService<IHostEnvironment>().ContentRootPath, false);
     }
 
     [Fact]
@@ -110,22 +153,27 @@ public sealed class TelemetryPrivacyTests(PostgresFixture postgres)
         };
         request.Headers.Add("X-Telemetry-Probe", HeaderProbe);
         request.Headers.Add("User-Agent", UserAgentProbe);
+        using Activity operation = new Activity("privacy-probe").Start();
         using HttpResponseMessage response = await client.SendAsync(request);
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
-        SpanSnapshot outgoing = Assert.Single(spans.Values, value => value.Kind == ActivityKind.Client);
+        await spans.WaitForAsync(operation.TraceId, ActivityKind.Client);
+        SpanSnapshot outgoing = Assert.Single(spans.Values
+            .Where(value => value.TraceId == operation.TraceId && value.Kind == ActivityKind.Client)
+            .DistinctBy(value => (value.TraceId, value.SpanId)));
+        Assert.Equal(operation.SpanId, outgoing.ParentSpanId);
         Assert.Contains("http.request.method=POST", outgoing.Values);
         Assert.Contains("http.response.status_code=200", outgoing.Values);
         Assert.True(outgoing.Duration > TimeSpan.Zero);
         string root = host.Services.GetRequiredService<IHostEnvironment>().ContentRootPath;
-        AssertPrivate(outgoing.Values, root, false);
-        AssertPrivate(logs.Values.SelectMany(value => value.Values.Append(value.Message)), root);
+        AssertPrivate(spans.Values.SelectMany(value => value.Values), root, false);
+        AssertLogsPrivate(logs.Values, root);
         AssertPrivate(console.Values, root);
         await server.StopAsync();
     }
 
     private static Task<HttpResponseMessage> BookAsync(HttpClient client)
     {
-        return client.PostAsJsonAsync("/api/reservations?harmless_token=" + QueryProbe, new
+        return client.PostAsJsonAsync("/api/reservations", new
         {
             equipmentId = "camera-001",
             startAt = "2030-01-02T12:00:00Z",
@@ -156,6 +204,17 @@ public sealed class TelemetryPrivacyTests(PostgresFixture postgres)
             {
                 Assert.False(value.Contains("http://", StringComparison.Ordinal) || value.Contains("https://", StringComparison.Ordinal), "Application logs must omit raw URLs.");
             }
+        }
+    }
+
+    private static void AssertLogsPrivate(IEnumerable<LogSnapshot> records, string root)
+    {
+        foreach (LogSnapshot record in records)
+        {
+            string[] values = [.. record.Values, record.Message];
+            Assert.False(values.Any(value => value.Contains("/Users/", StringComparison.Ordinal) || value.Contains(root, StringComparison.Ordinal)),
+                $"Private path diagnostic category={record.Category}; event={record.EventId}.");
+            AssertPrivate(values, root);
         }
     }
 
@@ -200,7 +259,7 @@ public sealed class TelemetryPrivacyTests(PostgresFixture postgres)
                         captured.Add(attribute.Key + "=" + attribute.Value);
                     }
                 }, attributes);
-                Values.Enqueue(new LogSnapshot(record.FormattedMessage ?? record.Body?.ToString() ?? "", [.. attributes], record.TraceId, record.SpanId, record.Exception is not null));
+                Values.Enqueue(new LogSnapshot(record.FormattedMessage ?? record.Body?.ToString() ?? "", [.. attributes], record.TraceId, record.SpanId, record.Exception is not null, record.CategoryName ?? "", record.EventId.Id));
             }
 
             return ExportResult.Success;
@@ -209,14 +268,48 @@ public sealed class TelemetryPrivacyTests(PostgresFixture postgres)
 
     private sealed class ExportedActivities : BaseExporter<Activity>
     {
+        private readonly Channel<SpanSnapshot> exported = Channel.CreateUnbounded<SpanSnapshot>();
+
         public ConcurrentQueue<SpanSnapshot> Values { get; } = new();
+
+        public async Task WaitForAsync(ActivityTraceId traceId, ActivityKind kind, string? route = null)
+        {
+            using var budget = new CancellationTokenSource(TimeSpan.FromSeconds(5));
+            try
+            {
+                await foreach (SpanSnapshot value in exported.Reader.ReadAllAsync(budget.Token))
+                {
+                    if (value.TraceId == traceId && value.Kind == kind
+                        && (route is null || value.Values.Contains("http.route=" + route)))
+                    {
+                        return;
+                    }
+                }
+            }
+            catch (OperationCanceledException) when (budget.IsCancellationRequested)
+            {
+                string observed = string.Join("; ", Values.Select(Describe));
+                throw new Xunit.Sdk.XunitException($"Expected completed export trace={traceId},kind={kind},route={route ?? "none"}. Observed {observed}");
+            }
+        }
+
+        private static string Describe(SpanSnapshot value)
+        {
+            IEnumerable<string> semantics = value.Values.Where(attribute =>
+                attribute.StartsWith("http.route=", StringComparison.Ordinal)
+                || attribute.StartsWith("http.request.method=", StringComparison.Ordinal)
+                || attribute.StartsWith("http.response.status_code=", StringComparison.Ordinal));
+            return $"trace={value.TraceId},span={value.SpanId},parent={value.ParentSpanId},kind={value.Kind},{string.Join(",", semantics)}";
+        }
 
         public override ExportResult Export(in Batch<Activity> batch)
         {
             foreach (Activity activity in batch)
             {
                 string[] attributes = [.. activity.TagObjects.Select(attribute => attribute.Key + "=" + attribute.Value), .. activity.Events.SelectMany(value => value.Tags).Select(attribute => attribute.Key + "=" + attribute.Value), activity.StatusDescription ?? ""];
-                Values.Enqueue(new SpanSnapshot(activity.Kind, activity.Duration, attributes));
+                var snapshot = new SpanSnapshot(activity.Kind, activity.Duration, attributes, activity.TraceId, activity.SpanId, activity.ParentSpanId);
+                Values.Enqueue(snapshot);
+                _ = exported.Writer.TryWrite(snapshot);
             }
 
             return ExportResult.Success;
@@ -267,7 +360,7 @@ public sealed class TelemetryPrivacyTests(PostgresFixture postgres)
         }
     }
 
-    private sealed record LogSnapshot(string Message, string[] Values, ActivityTraceId TraceId, ActivitySpanId SpanId, bool HasException);
+    private sealed record LogSnapshot(string Message, string[] Values, ActivityTraceId TraceId, ActivitySpanId SpanId, bool HasException, string Category, int EventId);
 
-    private sealed record SpanSnapshot(ActivityKind Kind, TimeSpan Duration, string[] Values);
+    private sealed record SpanSnapshot(ActivityKind Kind, TimeSpan Duration, string[] Values, ActivityTraceId TraceId, ActivitySpanId SpanId, ActivitySpanId ParentSpanId);
 }

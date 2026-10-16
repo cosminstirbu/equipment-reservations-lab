@@ -1,5 +1,8 @@
 <Solution>
   <Folder Name="/src/">
+    <Project Path="src/IdentityAccess/IdentityAccess.csproj" />
+    <Project Path="src/IdentityBootstrap/IdentityBootstrap.csproj" />
+    <Project Path="src/BrokerBootstrap/BrokerBootstrap.csproj" />
     <Project Path="src/AppHost/AppHost.csproj" />
     <Project Path="src/DatabaseBootstrap/DatabaseBootstrap.csproj" />
     <Project Path="src/Persistence/Persistence.csproj" />

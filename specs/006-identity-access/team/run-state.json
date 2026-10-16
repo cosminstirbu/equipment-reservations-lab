@@ -1,0 +1,1402 @@
+{
+  "feature_directory": "specs/006-identity-access",
+  "status": "complete",
+  "baseline_revision": "87bd4bc6964ed8dd75b8fdba8a227b530675b22d",
+  "preparation_round": 2,
+  "implementation_round": 1,
+  "limits": {
+    "preparation_repairs": 3,
+    "implementation_repairs": 3,
+    "no_progress_recurrences": 2
+  },
+  "required_checks": [
+    "npm run format-check",
+    "npm run lint",
+    "npm run check",
+    "real Keycloak token and authenticated browser checks",
+    "independent quality and security reviews",
+    "speckit-converge",
+    "explicit human acceptance"
+  ],
+  "acceptance_evidence": [
+    {
+      "date": "2026-10-16",
+      "owner": "human owner",
+      "statement": "I accept the feature. Stage the changes and give me a commit message for this work.",
+      "accepted_feature": "006-identity-access",
+      "reviewed_snapshot": "4d0f13c0e4accb4ba3f8940cc06fde5e66d2968620664f2afab2c3bdcdba4cde",
+      "source_snapshot": "8feb2b832ac3392e40773050c08d809e11f247dbe97b352a8519d8f4cd248012",
+      "authorization": "Final feature acceptance and staging; no commit, merge, deployment or publication requested."
+    }
+  ],
+  "quality_review": {
+    "verdict": "pass",
+    "revision": "4d0f13c0e4accb4ba3f8940cc06fde5e66d2968620664f2afab2c3bdcdba4cde",
+    "report": "quality-implementation-round1.md"
+  },
+  "security_review": {
+    "verdict": "pass",
+    "revision": "4d0f13c0e4accb4ba3f8940cc06fde5e66d2968620664f2afab2c3bdcdba4cde",
+    "report": "security-implementation-round1.md"
+  },
+  "convergence": {
+    "verdict": "converged",
+    "revision": "4d0f13c0e4accb4ba3f8940cc06fde5e66d2968620664f2afab2c3bdcdba4cde",
+    "source_snapshot": "8feb2b832ac3392e40773050c08d809e11f247dbe97b352a8519d8f4cd248012",
+    "report": "convergence.md",
+    "tasks_appended": 0,
+    "tasks_sha256_before_after_skill": "b414faca1897865b89cf9d4f772377198dba70b2f5901375be595e88898ce5cd",
+    "functional_requirements": 19,
+    "success_criteria": 11,
+    "acceptance_scenarios": 20,
+    "edge_cases": 10,
+    "tasks_assessed": 42,
+    "plan_decision_groups": 18,
+    "constitution_principles": 6
+  },
+  "human_acceptance_required": true,
+  "human_acceptance": {
+    "date": "2026-10-16",
+    "owner": "human owner",
+    "statement": "I accept the feature. Stage the changes and give me a commit message for this work.",
+    "accepted_feature": "006-identity-access",
+    "reviewed_snapshot": "4d0f13c0e4accb4ba3f8940cc06fde5e66d2968620664f2afab2c3bdcdba4cde",
+    "source_snapshot": "8feb2b832ac3392e40773050c08d809e11f247dbe97b352a8519d8f4cd248012",
+    "authorization": "Final feature acceptance and staging; no commit, merge, deployment or publication requested."
+  },
+  "pending_decisions": [],
+  "scope_confirmation": {
+    "date": "2026-10-16",
+    "statement": "I confirm the scope.",
+    "meaning": "Authorizes implementation; final acceptance pending."
+  },
+  "assignments": {
+    "requirements": "Broker local-only amendment scope-compatible; no product questions.",
+    "architecture": "Targeted broker design amendment independently passed; available for questions.",
+    "quality": "Independent round1 PASS; QUAL-006-001 closed.",
+    "security": "Independent round1 PASS.",
+    "coder": "Implementation and mandatory validation complete; no remaining coder work.",
+    "coordinator": "Final acceptance recorded; completion metadata consistency verified; stage authorized changes without committing."
+  },
+  "pending_gates": [],
+  "baseline_checks": [
+    {
+      "command": "npm run check",
+      "exit_code": 1,
+      "result": "environment blocked before tests: sandbox denies .NET build-host pipe",
+      "log": "/tmp/identity-access-baseline.log"
+    },
+    {
+      "command": "npm run check",
+      "environment": {
+        "ASPIRE_CONTAINER_RUNTIME": "podman",
+        "TESTCONTAINERS_RYUK_DISABLED": "true",
+        "DOCKER_HOST": "local Podman machine API socket"
+      },
+      "status": "pass",
+      "log": "/tmp/identity-access-baseline-elevated.log",
+      "revision": "87bd4bc6964ed8dd75b8fdba8a227b530675b22d",
+      "completed_stages": {
+        "format_check": "pass",
+        "lint": "pass; zero build warnings/errors",
+        "tooling_tests": 4,
+        "frontend_build": "pass",
+        "frontend_tests": 33,
+        "backend_tests": 216,
+        "smoke_tests": 50
+      },
+      "exit_code": 0
+    }
+  ],
+  "preparation_quality": {
+    "verdict": "pass",
+    "scope": "requirements only; design/tasks pending",
+    "spec_sha256": "4ccc350ed0be9c5d0f708ef3c044b63fef6bc57afc95ffbc5bec1378d9913095",
+    "report": "quality-requirements.md",
+    "checklist": "../checklists/quality.md",
+    "items_satisfied": 15
+  },
+  "preparation_security": {
+    "verdict": "pass",
+    "scope": "requirements/threat model only; design/tasks pending",
+    "spec_sha256": "4ccc350ed0be9c5d0f708ef3c044b63fef6bc57afc95ffbc5bec1378d9913095",
+    "report": "security-requirements.md"
+  },
+  "design_review": {
+    "snapshot": "36348a74a4a6ec000d87eb119e99c6d20f04f32866fb0a5f19536e1ccb2d95b2",
+    "quality": {
+      "verdict": "pass",
+      "report": "quality-design.md"
+    },
+    "security": {
+      "verdict": "pass",
+      "report": "security-design.md"
+    }
+  },
+  "baseline_test_totals": {
+    "tooling": 4,
+    "frontend": 33,
+    "backend": 216,
+    "smoke": 50,
+    "failed": 0,
+    "skipped": 0,
+    "build_warnings": 0,
+    "build_errors": 0
+  },
+  "approved_baseline": "183ff764d6cbc017c8f683b4c46781dc0ab994172656f8e495dfd4ddcafce4a0",
+  "task_analysis": {
+    "verdict": "pass",
+    "report": "analysis.md",
+    "snapshot": "2d6f8efcd8884c9dc5e225d77757dd6bf60f9e5fbeb2032e28a58e8feb9ba6ca"
+  },
+  "task_security": {
+    "verdict": "pass",
+    "report": "security-tasks.md",
+    "snapshot": "2d6f8efcd8884c9dc5e225d77757dd6bf60f9e5fbeb2032e28a58e8feb9ba6ca"
+  },
+  "owner_execution_preferences": {
+    "date": "2026-10-16",
+    "instruction": "Run dotnet commands directly without shell redirection or wrapper scripts; use execution tool captured output to avoid repeated approval prompts.",
+    "test_environment": "Direct dotnet test CLI -e options for required Podman settings; no wrapper/redirection. Native temporary settings removed at owner request.",
+    "tool_limitation": "Direct dotnet argv matches saved allow rules; execution layer presents full zsh script causing exact-command approvals. login:false also reproduced. No permission config changed.",
+    "approval_reviewer": "auto_review enabled by owner; scope authorization for normal checks unchanged.",
+    "runsettings_removed": true,
+    "approval_resolution": {
+      "confirmed": "Existing coder agent developer permissions retained manual approval after owner enabled auto_review in primary.",
+      "action": "All new escalated checks/commands routed to coordinator primary; coder continues edits and requests validation. Already-approved in-flight runs may finish.",
+      "permission_config_modified": false,
+      "latest_verification": "Primary direct dotnet test sessions63073 and74009 executed with auto_review; no hand-authored shell wrapper or redirection. Temporary runsettings confirmed absent."
+    }
+  },
+  "implementation_batches": [
+    {
+      "batch": "B1",
+      "tasks": "T001\u2013T006",
+      "status": "complete \u2014 independently reviewed and accepted 2026-10-16",
+      "source_fingerprint": "7536cf9354c205f62acc317ee142c6ee647a999b14ba42f04fc3734c36f77436",
+      "checks": {
+        "focused_tests": {
+          "passed": 104,
+          "failed": 0,
+          "skipped": 0,
+          "scope": "54 new JWT/ownership and 50 retained behavior tests; real isolated PostgreSQL"
+        },
+        "solution_build": "pass, zero warnings/errors",
+        "owned_style_info": "pass",
+        "diff_check": "pass"
+      },
+      "evidence": "../implementation-evidence.md",
+      "reported_by": "coder",
+      "historical_checkpoint_status": "implemented; independent implementation review pending"
+    },
+    {
+      "batch": "B2",
+      "tasks": "T007\u2013T009",
+      "status": "complete \u2014 independently reviewed and accepted 2026-10-16",
+      "source_fingerprint": "c3f53206dd4dc3c5b4310201e24ef79284b4b88e720b19e290c591825a037dbf",
+      "checks": {
+        "targeted_tests": {
+          "passed": 11,
+          "failed": 0,
+          "skipped": 0,
+          "scope": "real Keycloak code+PKCE roles, repeat provisioning and provider restart, callback/password-grant denials, diagnostic privacy, hosting model and affected orchestration tests"
+        },
+        "solution_build": "pass, zero warnings/errors",
+        "owned_style_info": "pass",
+        "diff_check": "pass"
+      },
+      "evidence": "../implementation-evidence.md",
+      "reported_by": "coder",
+      "historical_checkpoint_status": "implemented; independent implementation review pending"
+    },
+    {
+      "batch": "B3",
+      "tasks": "T010\u2013T015",
+      "status": "complete \u2014 independently reviewed and accepted 2026-10-16",
+      "source_fingerprint": "1f55e62cca30f8b42213ae0afc3ca63bb45138f514a19f759b3d6d437eddd9f0",
+      "source_files": 159,
+      "checks": {
+        "actual_provider_browser": {
+          "passed": 5,
+          "failed": 0,
+          "skipped": 0,
+          "session": 74295,
+          "axe": "pass"
+        },
+        "affected_backend": 147,
+        "frontend": 58,
+        "provider_contract": 7,
+        "hosting_publishing": 4,
+        "solution_build": "pass zero warnings/errors session77466",
+        "owned_style_info": "pass session4445",
+        "narrow_eslint": "pass",
+        "diff_check": "pass"
+      },
+      "evidence": "../implementation-evidence.md",
+      "reported_by": "coder and primary captured checks",
+      "historical_checkpoint_status": "implemented; independent implementation review pending"
+    },
+    {
+      "batch": "B4",
+      "tasks": "T016\u2013T018",
+      "status": "complete \u2014 independently reviewed and accepted 2026-10-16",
+      "source_fingerprint": "d1d18704b8a031c5ab433ca678b3ae4debc769110569c2200d6eabb4de1f0e5c",
+      "source_files": 162,
+      "checks": {
+        "affected_backend": {
+          "passed": 66,
+          "failed": 0,
+          "skipped": 0,
+          "warnings": 0,
+          "session": 90529
+        },
+        "actual_provider_service_contract": {
+          "passed": 2,
+          "failed": 0,
+          "skipped": 0,
+          "warnings": 0,
+          "session": 76250
+        },
+        "owned_style_info": {
+          "exit_code": 0,
+          "session": 84680
+        },
+        "solution_build": {
+          "exit_code": 0,
+          "warnings": 0,
+          "errors": 0,
+          "session": 15268
+        }
+      },
+      "evidence": "../implementation-evidence.md",
+      "historical_checkpoint_status": "implemented; independent implementation review pending"
+    },
+    {
+      "batch": "B5",
+      "tasks": "T019\u2013T022",
+      "status": "complete \u2014 independently reviewed and accepted 2026-10-16",
+      "source_fingerprint": "c22c5d08aca26a1311fbb3c9db4594b362ddc8081733fab226d1d79399c8f3c8",
+      "source_files": 167,
+      "approved_design": "183ff764d6cbc017c8f683b4c46781dc0ab994172656f8e495dfd4ddcafce4a0",
+      "checks": {
+        "wide_regression": {
+          "passed": 36,
+          "failed": 0,
+          "skipped": 0,
+          "warnings": 0,
+          "session": 43950,
+          "source": "02db08d852ab1aea981edc78e34717aee310098b4373e205fa30d955986f2feb",
+          "note": "Only later source edit was removal of unused import in BrokerPublicationTests; affected cases revalidated."
+        },
+        "current_affected_delivery_publication_metadata": {
+          "passed": 45,
+          "failed": 0,
+          "skipped": 0,
+          "warnings": 0,
+          "session": 44690
+        },
+        "owned_style_info": {
+          "exit_code": 0,
+          "session": 49871
+        },
+        "solution_build": {
+          "exit_code": 0,
+          "warnings": 0,
+          "errors": 0,
+          "session": 24022
+        }
+      },
+      "runtime_metadata": {
+        "dcp_session_directory_mode": "700",
+        "kubeconfig_mode": "600",
+        "direct_children_observed": 9,
+        "group_other_readable_direct_files": 0,
+        "session_directory_removed_after_awaited_disposal": true,
+        "limits": "Metadata only, no file-content inspection or secure-erasure guarantee; private framework transport/staging beyond observed scope not inferred."
+      },
+      "evidence": "../implementation-evidence.md",
+      "historical_checkpoint_status": "implemented; independent implementation review pending"
+    },
+    {
+      "batch": "B6",
+      "tasks": "T023\u2013T028",
+      "status": "complete \u2014 independently reviewed and accepted 2026-10-16",
+      "source_fingerprint": "9f5cf3eebb150f3b89f2b7e1a5b629facbbeeed83c88c472304e3fbd19fa9e4d",
+      "source_files": 170,
+      "fingerprint_scope": "Includes B6 checkpoint plus B7 RED test; not independent review snapshot.",
+      "checks": {
+        "targeted_backend": {
+          "passed": 65,
+          "failed": 0,
+          "skipped": 0,
+          "session": 74009,
+          "build_warnings": 0
+        },
+        "frontend": {
+          "passed": 60,
+          "failed": 0,
+          "skipped": 0,
+          "reported_by": "coder"
+        },
+        "frontend_build": {
+          "exit_code": 0,
+          "session": 14294
+        },
+        "narrow_eslint": {
+          "exit_code": 0,
+          "session": 77484
+        },
+        "integrated_backend": 151,
+        "actual_booking_browser": 13,
+        "actual_identity_browser": 5,
+        "solution_style_info": "pass19460",
+        "scratch_solution_build": "pass19668 zero warnings/errors",
+        "diff_check": "pass coder handoff"
+      },
+      "evidence": "../implementation-evidence.md",
+      "historical_checkpoint_status": "implemented; independent implementation review pending"
+    },
+    {
+      "batch": "B7",
+      "tasks": "T029\u2013T033",
+      "status": "complete \u2014 independently reviewed and accepted 2026-10-16",
+      "source_fingerprint": "9f5cf3eebb150f3b89f2b7e1a5b629facbbeeed83c88c472304e3fbd19fa9e4d",
+      "source_files": 170,
+      "checks": {
+        "integrated_backend": 151,
+        "real_broker": 47,
+        "frontend": 60,
+        "actual_booking_browser": 13,
+        "actual_identity_browser": 5,
+        "solution_style_info": "pass19460",
+        "scratch_solution_build": "pass19668 zero warnings/errors",
+        "diff_check": "pass coder handoff"
+      },
+      "evidence": "../implementation-evidence.md",
+      "historical_checkpoint_status": "implemented; independent implementation review pending"
+    },
+    {
+      "batch": "B8",
+      "tasks": "T034\u2013T039",
+      "status": "complete \u2014 independently reviewed and accepted 2026-10-16",
+      "source_fingerprint": "8b632e01bbc137fe583d6457eed2c13679a2f3baa7bc3bc0399667185e7bbdb1",
+      "source_files": 174,
+      "complete_source_snapshot": "fc5d66bedefff1ff2e5a438a5e343b87d3db429aadb055eb094e3a6233c770dc",
+      "checks": {
+        "required_full_check_session": 84386,
+        "tooling": 4,
+        "frontend": 60,
+        "backend": 317,
+        "smoke": 94,
+        "failed": 0,
+        "skipped": 0,
+        "build_warnings": 0,
+        "format_session": 13402,
+        "lint_session": 40414,
+        "style_session": 82846,
+        "actual_browser": 18,
+        "manual_report": "manual-accessibility-evidence.json",
+        "trace_report": "runtime-trace-evidence.json",
+        "ordinary_restart_session": 76961
+      },
+      "evidence": "../implementation-evidence.md",
+      "historical_checkpoint_status": "implemented and validated; independent implementation review pending"
+    }
+  ],
+  "implementation_progress": {
+    "batch": "B6",
+    "tasks": "T023\u2013T028",
+    "status": "Meaningful ownership RED6/25; implementing server-derived schema/SQL/contracts and early shared-event dependency",
+    "scope": "Authenticated own-reservation persistence/endpoints, concurrency, UI and actual provider booking/cancel browser",
+    "dependency_extension": {
+      "approved": "T030 shared event userKey property/64hex validation/OutboxWorker and minimal consumer compile+fixture mappings pulled into B6 to prevent parking all new deliveries.",
+      "still_B7": "Strict envelope/recipient privacy tests plus inbox schema/API.",
+      "browser_gate": "Do not weaken retained notification browser assertions; T028 can remain pending until B7 if integration requires it."
+    }
+  },
+  "coordinator_checks": [
+    {
+      "batch": "B3",
+      "command": "dotnet test tests/Backend.Tests --filter FullyQualifiedName~ApiAuthorizationTests -m:1 -e DOCKER_HOST=<local Podman socket> -e ASPIRE_CONTAINER_RUNTIME=podman -e TESTCONTAINERS_RYUK_DISABLED=true",
+      "exit_code": 0,
+      "passed": 5,
+      "failed": 0,
+      "skipped": 0,
+      "warnings": 0,
+      "source_scope": "T014 actual API protection and corrected early WAF authority configuration",
+      "captured_session": 11906,
+      "note": "Prior12673 failed5/5 on fixture configuration timing; no intended-feature green claim until rerun. Primary auto_review executed promptly without new manual approval."
+    },
+    {
+      "batch": "B3",
+      "scope": "Human-only preferred_username display mapper; actual Keycloak provider contracts",
+      "command": "dotnet test tests/Smoke.Tests --filter FullyQualifiedName~IdentityProviderTests -m:1 (Podman -e flags)",
+      "red": {
+        "session": 55777,
+        "exit_code": 1,
+        "failed": 4,
+        "passed": 3,
+        "reason": "preferred_username missing"
+      },
+      "green": {
+        "session": 75274,
+        "exit_code": 0,
+        "passed": 7,
+        "failed": 0,
+        "skipped": 0,
+        "warnings": 0
+      },
+      "note": "Display only; stable ownership and authorization independent of username."
+    },
+    {
+      "batch": "B3",
+      "command": "dotnet test tests/Backend.Tests --filter <six affected suites> -m:1 with Podman -e settings",
+      "captured_session": 47876,
+      "exit_code": 0,
+      "passed": 147,
+      "failed": 0,
+      "skipped": 0,
+      "warnings": 0,
+      "note": "Preserved origin-denial assertions with explicit valid authorization fixture."
+    },
+    {
+      "batch": "B3",
+      "command": "dotnet build EquipmentReservation.slnx --no-restore -m:1",
+      "captured_session": 29620,
+      "exit_code": 0,
+      "warnings": 0,
+      "errors": 0
+    },
+    {
+      "batch": "B3",
+      "command": "dotnet format style EquipmentReservation.slnx --no-restore --severity info --verify-no-changes --include <owned C# files>",
+      "captured_session": 93498,
+      "exit_code": 0
+    },
+    {
+      "batch": "B3",
+      "command": "npm --prefix src/Web run test:browser -- identity.browser.spec.ts",
+      "captured_session": 90811,
+      "exit_code": 1,
+      "passed": 0,
+      "failed": 5,
+      "root_causes": [
+        "Signed-out shell missing main landmark (axe).",
+        "Provider login form advertises identity.dev.internal due container-context EndpointReference rewrite."
+      ],
+      "runtime": "isolated scratch AppHost with separate data volumes; all resources healthy before tests",
+      "status": "fixes underway; no browser green claim"
+    },
+    {
+      "batch": "B3",
+      "command": "dotnet test tests/Smoke.Tests --filter IdentityHostingTests or publishing resources -m:1 with Podman settings",
+      "captured_session": 20289,
+      "exit_code": 0,
+      "passed": 4,
+      "failed": 0,
+      "skipped": 0,
+      "warnings": 0
+    },
+    {
+      "batch": "B3",
+      "command": "dotnet format style --severity info --verify-no-changes --include AppHost/Program.cs IdentityProviderTests.cs",
+      "captured_session": 4445,
+      "exit_code": 0
+    },
+    {
+      "batch": "B3",
+      "command": "dotnet build EquipmentReservation.slnx --no-restore -m:1",
+      "captured_session": 77466,
+      "exit_code": 0,
+      "warnings": 0,
+      "errors": 0
+    },
+    {
+      "batch": "B3",
+      "command": "npm --prefix src/Web run test:browser -- identity.browser.spec.ts",
+      "captured_session": 74295,
+      "exit_code": 0,
+      "passed": 5,
+      "failed": 0,
+      "skipped": 0,
+      "scope": "actual trusted-certificate provider login/codeS256/cancel/account switch/logout/retry/roles/expiry plus axe; same-run private credentials"
+    },
+    {
+      "batch": "B4",
+      "phase": "red",
+      "command": "dotnet test tests/Backend.Tests --filter FullyQualifiedName~ServiceIdentityTests -m:1 with Podman -e settings",
+      "captured_session": 68186,
+      "exit_code": 1,
+      "passed": 0,
+      "failed": 14,
+      "skipped": 0,
+      "warnings": [
+        "IDE0007 test line190; routed to coder"
+      ],
+      "reason": "No dedicated token acquisition; booking incorrectly Created for acquisition/outbound trust failures."
+    },
+    {
+      "batch": "B4",
+      "phase": "first-green",
+      "command": "dotnet test tests/Backend.Tests --filter FullyQualifiedName~ServiceIdentityTests -m:1 with Podman -e settings",
+      "captured_session": 2899,
+      "exit_code": 0,
+      "passed": 14,
+      "failed": 0,
+      "skipped": 0,
+      "warnings": "IDE0011/IDE0022 in ServiceTokenClient; routed for explicit cleanup",
+      "limits": "Real-provider service token and complete public policy contracts pending; not final batch validation."
+    },
+    {
+      "batch": "B4",
+      "phase": "failure-wave-red",
+      "captured_session": 18880,
+      "exit_code": 1,
+      "failed": 1,
+      "reason": "Eight concurrent acquisition POSTs vs required one; no warnings."
+    },
+    {
+      "batch": "B4",
+      "phase": "failure-wave-green",
+      "captured_session": 5377,
+      "exit_code": 0,
+      "passed": 66,
+      "failed": 0,
+      "skipped": 0,
+      "warnings": "IDE0046 two suggestions; explicit cleanup underway.",
+      "scope": "ServiceIdentityTests + BookingTests + CancellationTests + ApiAuthorizationTests"
+    },
+    {
+      "batch": "B5",
+      "phase": "red",
+      "captured_session": 57986,
+      "command": "dotnet test tests/Smoke.Tests --filter FullyQualifiedName~BrokerAccessTests -m:1 with Podman settings",
+      "exit_code": 1,
+      "passed": 0,
+      "failed": 14,
+      "skipped": 0,
+      "warning": "CS8602 BrokerContractTests.cs113; routed to coder",
+      "scope": "Real authored worker connections currently allow administrative/reverse/unrelated operations."
+    },
+    {
+      "batch": "B5",
+      "phase": "first-core-import",
+      "captured_session": 15354,
+      "exit_code": 1,
+      "passed": 10,
+      "failed": 7,
+      "skipped": 0,
+      "notes": "Core import and scoped accounts work; test fixture wrong-vhost and exact exception surfaces corrected; IDE0300 addressed."
+    },
+    {
+      "batch": "B5",
+      "phase": "acl-green",
+      "captured_session": 24455,
+      "exit_code": 0,
+      "passed": 17,
+      "failed": 0,
+      "skipped": 0,
+      "warnings": 0,
+      "scope": "Actual authored worker credentials and effective grants;403 restricted operations,530 wrong-vhost channel rejection,management denial,allowed confirms/mandatory routing/ack/reject."
+    },
+    {
+      "batch": "B5",
+      "phase": "scoped-delivery-green",
+      "command": "dotnet test tests/Smoke.Tests --filter ReservationOutboxTests or ReservationConsumerTests -m:1 with Podman settings",
+      "captured_session": 87539,
+      "exit_code": 0,
+      "passed": 41,
+      "failed": 0,
+      "skipped": 0,
+      "build_warnings": 0,
+      "duration": "1m18s",
+      "scope": "Retained real broker publisher/consumer fault,poison,ack,duplicate,parking,restart/operator-repair behavior using exact scoped accounts and boot-imported topology."
+    },
+    {
+      "batch": "B5",
+      "phase": "import-failure-diagnostic",
+      "captured_session": 71334,
+      "exit_code": 1,
+      "status": "cancelled after first useful failure",
+      "source_snapshot": "1bbb8099e72cef84ee121d9c2cc8af98328612e6212f44f124f91c9bbd4f3734",
+      "failure": "Unreadable import broker Exited, worker Waiting; generic all-healthy startup fixture times out before asserting intended blocked state.",
+      "note": "Exact test session cancelled through tool Ctrl+C; no manual process kill or operator volume changes. No green claim.",
+      "cleanup": "Explicit CA/style/fixture expected-failure changes underway; next run normal verbosity and bounded failure-specific startup."
+    },
+    {
+      "batch": "B5",
+      "phase": "import-checkpoint",
+      "captured_session": 53314,
+      "exit_code": 1,
+      "passed": 2,
+      "failed": 2,
+      "duration": "53.3s",
+      "notes": "Actual protected file/staging and core-import reboot positive cases passed; failed imports block worker but diagnostic-log assertion used logical-name string lookup."
+    },
+    {
+      "batch": "B5",
+      "phase": "import-log-diagnosis",
+      "captured_session": 30375,
+      "exit_code": 1,
+      "passed": 2,
+      "failed": 2,
+      "notes": "Bounded polling confirmed missing lookup data; pinned GetAllAsync(resource) overload resolves actual suffixed runtime names, unlike string overload. Correct resource lookup now authorized, no timeout increase."
+    },
+    {
+      "batch": "B5",
+      "phase": "style",
+      "captured_session": 76185,
+      "exit_code": 0,
+      "scope": "All current B5 sources/tests; later lookup/publication fixes require affected revalidation."
+    },
+    {
+      "batch": "B5",
+      "phase": "publication-red-and-import-green",
+      "captured_session": 61636,
+      "exit_code": 1,
+      "passed": 3,
+      "failed": 2,
+      "skipped": 0,
+      "scope": "Both malformed/unreadable real import cases pass gate/log/no-hash assertions; guard negative control passes. Full publish environments correctly expose current local secret resolution and fail guard.",
+      "warning": "IDE0032 in guard test; explicit cleanup queued.",
+      "resolution": "Use supported symbolic ReferenceExpression :uri for exact scoped credentials; keep run-only file injection and high-entropy generated defaults."
+    },
+    {
+      "batch": "B6",
+      "phase": "red",
+      "command": "dotnet test tests/Backend.Tests --filter ReservationOwnershipTests or BookingConcurrencyTests or CancellationConcurrencyTests -m:1 with Podman settings",
+      "captured_session": 5206,
+      "exit_code": 1,
+      "passed": 19,
+      "failed": 6,
+      "skipped": 0,
+      "warning": "IDE0058 BookingConcurrencyTests73 routed to coder",
+      "reason": "Foreign read/cancel200, histories shared, no userKey contract; role/forgery/advisory controls already passing."
+    },
+    {
+      "batch": "B6",
+      "phase": "first-green-checkpoint",
+      "captured_session": 63073,
+      "exit_code": 1,
+      "passed": 63,
+      "failed": 2,
+      "skipped": 0,
+      "scope": "ReservationOwnershipTests, BookingConcurrencyTests, CancellationConcurrencyTests, BookingTests, CancellationTests",
+      "notes": "Owner behavior passes; two foreign/unknown comparison failures are per-request traceId differences. IDE0048 grouping diagnostics routed to coder. Source freeze released for targeted fixes."
+    },
+    {
+      "batch": "B6",
+      "phase": "backend-green-checkpoint",
+      "captured_session": 74009,
+      "exit_code": 0,
+      "passed": 65,
+      "failed": 0,
+      "skipped": 0,
+      "build_warnings": 0,
+      "scope": "ReservationOwnershipTests, BookingConcurrencyTests, CancellationConcurrencyTests, BookingTests, CancellationTests",
+      "limits": "T028 integrated browser remains pending B7 inbox implementation; no full B6 completion claim."
+    },
+    {
+      "batch": "B7",
+      "phase": "recipient-api-red",
+      "source_fingerprint": "de0d1d5bbfb8e5a585ce3b5941d1d97e22a36d0a39e6a33aff395731f71e5e15",
+      "captured_session": 83673,
+      "exit_code": 1,
+      "passed": 0,
+      "failed": 6,
+      "skipped": 0,
+      "warning": "IDE0007 NotificationOwnershipTests44 routed to coder",
+      "reason": "Real inbox insert rejects 64hex recipient with legacy demo-user CHECK23514. Public boundary assertions remain to validate after schema repair."
+    },
+    {
+      "batch": "B7",
+      "phase": "recipient-api-first-green",
+      "captured_session": 82741,
+      "exit_code": 0,
+      "passed": 6,
+      "failed": 0,
+      "skipped": 0,
+      "build_warnings": 0,
+      "scope": "NotificationOwnershipTests public human roles, durable recipient sessions, changedsubject, forgedheader/query",
+      "limits": "Strict envelope, retained realbroker suites and full browser remain pending."
+    },
+    {
+      "batch": "B6+B7",
+      "phase": "integrated-backend-green",
+      "captured_session": 55366,
+      "exit_code": 0,
+      "passed": 151,
+      "failed": 0,
+      "skipped": 0,
+      "build_warnings": 0,
+      "duration": "56s",
+      "scope": "Ownership+booking/cancel concurrency+retained booking/cancel+notification ownership+recovery+database worker tracing+reservation telemetry"
+    },
+    {
+      "batch": "B6+B7",
+      "phase": "solution-style-info",
+      "captured_session": 19460,
+      "exit_code": 0,
+      "command": "dotnet format style EquipmentReservation.slnx --severity info --verify-no-changes --no-restore"
+    },
+    {
+      "batch": "B7",
+      "phase": "real-broker-green",
+      "captured_session": 75929,
+      "exit_code": 0,
+      "passed": 47,
+      "failed": 0,
+      "skipped": 0,
+      "build_warnings": 0,
+      "duration": "1m20s",
+      "scope": "ReservationOutboxTests|ReservationConsumerTests"
+    },
+    {
+      "batch": "B6+B7",
+      "phase": "actual-authenticated-booking-browser-green",
+      "captured_session": 28251,
+      "exit_code": 0,
+      "passed": 13,
+      "failed": 0,
+      "skipped": 0,
+      "duration": "23.9s",
+      "source_fingerprint": "9f5cf3eebb150f3b89f2b7e1a5b629facbbeeed83c88c472304e3fbd19fa9e4d",
+      "scope": "Real book/conflict/cancel/rebook/eventIDs, A/B isolation, uncertain commit explicit history no replay, nonEmployee advisory/inbox/403, keyboard focus, DST, hostile and nullOrigin403"
+    },
+    {
+      "batch": "B6+B7",
+      "phase": "actual-identity-browser-revalidation",
+      "captured_session": 35661,
+      "exit_code": 0,
+      "passed": 5,
+      "failed": 0,
+      "skipped": 0,
+      "duration": "6.7s",
+      "scope": "Shared helper regression; provider flow, account switch, role controls, outage, expiry; axe"
+    },
+    {
+      "batch": "B8",
+      "phase": "production-identity-metrics-red",
+      "captured_session": 55065,
+      "exit_code": 1,
+      "passed": 0,
+      "failed": 1,
+      "skipped": 0,
+      "build_warnings": 0,
+      "scope": "IdentityTelemetryTests attaches exporter reader to actual production pipeline, authenticated/unauthorized/forbidden public routes",
+      "reason": "Expected bounded identity outcomes absent from production export collection; no test instrumentation added."
+    },
+    {
+      "batch": "B8",
+      "phase": "production-identity-metrics-green",
+      "captured_session": 37212,
+      "exit_code": 0,
+      "passed": 1,
+      "failed": 0,
+      "skipped": 0,
+      "build_warnings": 0
+    },
+    {
+      "batch": "B8",
+      "phase": "telemetry-style-checkpoint",
+      "captured_session": 17271,
+      "exit_code": 2,
+      "finding": "IDE0005 IdentityBootstrapRegistration.cs3 unused using; explicit cleanup routed to coder."
+    },
+    {
+      "batch": "B8",
+      "phase": "actual-provider-telemetry-compile-checkpoint",
+      "captured_session": 70593,
+      "exit_code": 1,
+      "tests_ran": false,
+      "reason": "CS0246 IHostApplicationBuilder required namespace absent in extracted production registration; coder explicitly repairing before rerun.",
+      "style_session": 64000,
+      "style_exit_code": 2,
+      "style_finding": "IDE0005 line2; re-evaluate after successful compilation."
+    },
+    {
+      "batch": "B8",
+      "phase": "actual-provider-http-first-checkpoint",
+      "captured_session": 16101,
+      "exit_code": 1,
+      "passed": 0,
+      "failed": 1,
+      "skipped": 0,
+      "build_warnings": 0,
+      "reason": "3 fixture login HTTP spans legitimately root-level, but all110 captured spans required parent; scope production dependency correlation while retaining full privacy scan. No privacy-green claim.",
+      "style_session": 46852,
+      "style_exit_code": 0
+    },
+    {
+      "batch": "B8",
+      "phase": "actual-provider-http-green",
+      "captured_session": 28039,
+      "exit_code": 0,
+      "passed": 1,
+      "failed": 0,
+      "skipped": 0,
+      "build_warnings": 0,
+      "source_fingerprint": "8694197ba5093a785cc86acae61f276ceb86b47b1203d693530cd2ea2afb068c",
+      "scope": "Actual admin/discovery/JWKS/human/service success and rejection; correlated native HTTP and full privacy scan"
+    },
+    {
+      "batch": "B8",
+      "phase": "production-http-registration-removal-negative-control",
+      "captured_session": 18078,
+      "exit_code": 1,
+      "expected_failure": true,
+      "passed": 0,
+      "failed": 1,
+      "build_warnings": 0,
+      "source_file": "src/ServiceDefaults/Extensions.cs",
+      "original_sha256": "45219199ad39acf3faeb0997cf2d8d5ec6e5d0b73eaf739a8b122fa01d2985d7",
+      "mutated_sha256": "b3b3ff783f6b7ed7b539781fe075f0d043b9c6ad14f4508349fb80f2db588e70",
+      "reason": "Removed only production tracing AddHttpClientInstrumentation; required2discoveryspans become0. Restore and rerun pending."
+    },
+    {
+      "batch": "B8",
+      "phase": "restored-production-http-green",
+      "captured_session": 60174,
+      "exit_code": 0,
+      "passed": 1,
+      "failed": 0,
+      "skipped": 0,
+      "build_warnings": 0,
+      "restored_source_sha256": "45219199ad39acf3faeb0997cf2d8d5ec6e5d0b73eaf739a8b122fa01d2985d7"
+    },
+    {
+      "batch": "B8",
+      "phase": "ordinary-restart-first-checkpoint",
+      "captured_session": 31161,
+      "exit_code": 1,
+      "passed": 0,
+      "failed": 1,
+      "skipped": 0,
+      "reason": "Test orchestrator randomizes chosen identity host port on secondAppHost; stableissuer assertion retained, supported fixture option repair underway."
+    },
+    {
+      "batch": "B8",
+      "phase": "reviewed-migration-and-failure-metrics-green",
+      "captured_session": 20945,
+      "exit_code": 0,
+      "passed": 8,
+      "failed": 0,
+      "skipped": 0,
+      "build_warnings": 0,
+      "duration": "8s"
+    },
+    {
+      "batch": "B8",
+      "phase": "final-browser-green",
+      "captured_session": 65844,
+      "exit_code": 0,
+      "passed": 18,
+      "failed": 0,
+      "skipped": 0,
+      "duration": "25.0s",
+      "application_snapshot": "8043aa6d07e9f301e9027e01a308da0f4d9d57f30926c09642833a2bd79e3f73",
+      "scope": "Actualproviderbooking/identity and axe; migrationadmissiondigestedit later validated separately"
+    },
+    {
+      "batch": "B8",
+      "phase": "manual-accessibility",
+      "status": "pass scoped inspection",
+      "report": "manual-accessibility-evidence.json",
+      "sessions": [
+        42417,
+        10612,
+        79217
+      ]
+    },
+    {
+      "batch": "B8",
+      "phase": "representative-distributed-traces",
+      "status": "captured safe metadata",
+      "report": "runtime-trace-evidence.json"
+    },
+    {
+      "batch": "B8",
+      "phase": "ordinary-restart-green",
+      "captured_session": 76961,
+      "exit_code": 0,
+      "passed": 1,
+      "failed": 0,
+      "skipped": 0,
+      "build_warnings": 0,
+      "duration": "3m3s",
+      "scope": "Three fresh AppHosts retain exactissuer,4accounts/subroles,all16secrets,ownedreservations/inbox/equipment/queueddelivery; logout whilepending; A/Bisolation"
+    },
+    {
+      "batch": "B8",
+      "phase": "final-solution-style-checkpoint",
+      "captured_session": 27531,
+      "exit_code": 0,
+      "limits": "Final test-only IDtoken row pending; global gates will revalidate."
+    },
+    {
+      "batch": "B8",
+      "phase": "final-provider-privacy-green",
+      "captured_session": 2269,
+      "exit_code": 0,
+      "passed": 1,
+      "failed": 0,
+      "skipped": 0,
+      "build_warnings": 0,
+      "source_fingerprint": "93b5681b19c6114ebf88c8eee355589a10e8c58d9e8ce26079d41485d8ee87d4",
+      "scope": "Actualprovider traces + rejectedactualIDtoken401 + fullprivatevaluescan"
+    },
+    {
+      "batch": "B8",
+      "phase": "required-format-check",
+      "captured_session": 94426,
+      "exit_code": 0,
+      "command": "npm run format-check"
+    },
+    {
+      "batch": "B8",
+      "phase": "required-lint",
+      "captured_session": 93217,
+      "exit_code": 0,
+      "command": "npm run lint",
+      "build_warnings": 0,
+      "build_errors": 0
+    },
+    {
+      "batch": "B8",
+      "phase": "required-full-check",
+      "captured_session": 62728,
+      "status": "failed; bounded privacy repair authorized",
+      "command": "npm run check",
+      "environment": "LocalPodman DOCKER_HOST, ASPIRE_CONTAINER_RUNTIME=podman, TESTCONTAINERS_RYUK_DISABLED=true; capturedoutput, no customdotnetwrapper/redirection",
+      "source_fingerprint": "93b5681b19c6114ebf88c8eee355589a10e8c58d9e8ce26079d41485d8ee87d4",
+      "backend": {
+        "passed": 313,
+        "failed": 3,
+        "skipped": 0,
+        "total": 316,
+        "duration": "1m26s"
+      },
+      "preliminary_passes": {
+        "format_check": true,
+        "lint": true,
+        "tooling": 4,
+        "frontend": 60
+      },
+      "failure_scope": "TelemetryPrivacyTests: two Created expectations nowBadRequest due forbiddenoldquery; one localpath captured in logs. Diagnosis read-only until frozenrun completes; no weakening privacy assertions.",
+      "exit_code": 1,
+      "smoke": {
+        "passed": 94,
+        "failed": 0,
+        "skipped": 0,
+        "duration": "8m12s"
+      }
+    },
+    {
+      "batch": "B8",
+      "phase": "retained-privacy-safe-diagnosis",
+      "captured_session": 1310,
+      "exit_code": 1,
+      "passed": 7,
+      "failed": 2,
+      "skipped": 0,
+      "build_warnings": 0,
+      "diagnostic": "Microsoft.AspNetCore.DataProtection.KeyManagement.XmlKeyManager event62; no private values printed. Query/write fixture correction passes."
+    },
+    {
+      "batch": "B8",
+      "phase": "bounded-privacy-repair-checkpoint",
+      "captured_session": 58364,
+      "exit_code": 1,
+      "passed": 9,
+      "failed": 1,
+      "skipped": 0,
+      "build_warnings": 0,
+      "reason": "Originalpathprivacycasesgreen; new invalidissuer confirms JwtBearerHandler event1 HasExceptionTrue. Bounded exactcategory policy authorized; safe application outcomes required."
+    },
+    {
+      "batch": "B8",
+      "phase": "retained-privacy-and-outcomes-green",
+      "captured_session": 1177,
+      "exit_code": 0,
+      "passed": 12,
+      "failed": 0,
+      "skipped": 0,
+      "build_warnings": 0,
+      "duration": "2s",
+      "source_fingerprint": "a4944f81d96d3a5d58e68be22eccc68d527b27a581822be1ec761c0ec030c668"
+    },
+    {
+      "batch": "B8",
+      "phase": "repaired-required-format-check",
+      "captured_session": 27893,
+      "exit_code": 0,
+      "command": "npm run format-check"
+    },
+    {
+      "batch": "B8",
+      "phase": "repaired-required-lint",
+      "captured_session": 60347,
+      "exit_code": 0,
+      "command": "npm run lint",
+      "build_warnings": 0,
+      "build_errors": 0
+    },
+    {
+      "batch": "B8",
+      "phase": "repaired-required-full-check",
+      "captured_session": 29555,
+      "status": "failed only test capture correlation; productionprivacy tests pass",
+      "command": "npm run check",
+      "compiled_source_fingerprint": "a4944f81d96d3a5d58e68be22eccc68d527b27a581822be1ec761c0ec030c668",
+      "reason": "Process-wide exporter captures two matching Server spans; request-specific trace identity repair approved. Original all-capture privacy scan preserved.",
+      "source_exception": "Only TelemetryPrivacyTests source/evidence may be edited after compiled run started; no builds/application/binary edits until currentrun ends. Next gate must test repairedsource.",
+      "exit_code": 1,
+      "backend": {
+        "passed": 316,
+        "failed": 1,
+        "skipped": 0,
+        "total": 317,
+        "duration": "1m26s"
+      },
+      "smoke": {
+        "passed": 94,
+        "failed": 0,
+        "skipped": 0,
+        "duration": "8m9s"
+      }
+    },
+    {
+      "batch": "B8",
+      "phase": "entire-backend-correlation-validation",
+      "captured_session": 92394,
+      "status": "failed only service-failure-wave fixture timing",
+      "source_fingerprint": "bc429505670b4f65c1dea997848d75afc12265217e2a93f4e93af6ce2a4a225a",
+      "command": "dotnet test tests/Backend.Tests -m:1 with standardPodman testenvironment",
+      "exit_code": 1,
+      "passed": 316,
+      "failed": 1,
+      "skipped": 0,
+      "total": 317,
+      "duration": "1m23s",
+      "warning": "IDE0008 Activity type in privacytest; explicit fix authorized",
+      "diagnosis": "Eight scheduled HTTP tasks plus Task.Yield do not prove eight token-client calls overlap. Preserve actual public503/zeroeffects and later publicretry while synchronously joining7registeredclientcalls to first blockedpubliccall."
+    },
+    {
+      "batch": "B8",
+      "phase": "correlation-source-format-check",
+      "captured_session": 40244,
+      "exit_code": 0,
+      "command": "npm run format-check"
+    },
+    {
+      "batch": "B8",
+      "phase": "entire-backend-deterministic-wave-validation",
+      "captured_session": 5574,
+      "exit_code": 1,
+      "passed": 316,
+      "failed": 1,
+      "skipped": 0,
+      "total": 317,
+      "build_warnings": 0,
+      "duration": "1m24s",
+      "source_fingerprint": "d805fcc54e9ac4f05cce120096a3a60367b799bdb51745e1eb65a86b4fbd65de",
+      "reason": "Failurewave nowpasses. Incomingprivacy GET Single empty because no exportercompletion synchronization after response; actualexporter boundedcompletion fix authorized, all request/privacyassertions retained."
+    },
+    {
+      "batch": "B8",
+      "phase": "deterministic-wave-format-check",
+      "captured_session": 54751,
+      "exit_code": 0,
+      "command": "npm run format-check"
+    },
+    {
+      "batch": "B8",
+      "phase": "entire-backend-final-green",
+      "captured_session": 6756,
+      "exit_code": 0,
+      "passed": 317,
+      "failed": 0,
+      "skipped": 0,
+      "build_warnings": 0,
+      "duration": "1m24s",
+      "source_fingerprint": "8b632e01bbc137fe583d6457eed2c13679a2f3baa7bc3bc0399667185e7bbdb1"
+    },
+    {
+      "batch": "B8",
+      "phase": "final-source-format-check",
+      "captured_session": 13402,
+      "exit_code": 0,
+      "command": "npm run format-check"
+    },
+    {
+      "batch": "B8",
+      "phase": "final-source-style-info",
+      "captured_session": 82846,
+      "exit_code": 0,
+      "command": "dotnet format style EquipmentReservation.slnx --severity info --verify-no-changes --no-restore"
+    },
+    {
+      "batch": "B8",
+      "phase": "final-source-required-lint",
+      "captured_session": 40414,
+      "exit_code": 0,
+      "command": "npm run lint",
+      "build_warnings": 0,
+      "build_errors": 0
+    },
+    {
+      "batch": "B8",
+      "phase": "final-source-required-full-check",
+      "captured_session": 84386,
+      "status": "pass",
+      "started_utc": "2026-10-16 12:24:56 UTC",
+      "command": "env DOCKER_HOST=<localPodmanSocket> ASPIRE_CONTAINER_RUNTIME=podman TESTCONTAINERS_RYUK_DISABLED=true npm run check",
+      "source_fingerprint": "8b632e01bbc137fe583d6457eed2c13679a2f3baa7bc3bc0399667185e7bbdb1",
+      "exit_code": 0,
+      "tooling": {
+        "passed": 4,
+        "failed": 0,
+        "skipped": 0
+      },
+      "frontend": {
+        "passed": 60,
+        "failed": 0,
+        "skipped": 0
+      },
+      "backend": {
+        "passed": 317,
+        "failed": 0,
+        "skipped": 0,
+        "duration": "1m24s"
+      },
+      "smoke": {
+        "passed": 94,
+        "failed": 0,
+        "skipped": 0,
+        "duration": "7m54s"
+      },
+      "build_warnings": 0,
+      "build_errors": 0,
+      "format_check": "pass",
+      "lint": "pass"
+    },
+    {
+      "phase": "implementation-round1-generator-parity-red",
+      "captured_session": 4984,
+      "exit_code": 1,
+      "passed": 11,
+      "failed": 4,
+      "total": 15,
+      "reason": "Generated binder rejected three previously supported hex values and silently accepted empty configuration."
+    },
+    {
+      "phase": "implementation-round1-unicode-whitespace-red",
+      "captured_session": 16232,
+      "exit_code": 1,
+      "passed": 15,
+      "failed": 1,
+      "total": 16,
+      "reason": "Generated int parser rejected NBSP whitespace accepted by runtime converter; bounded normalized writeback required. IDE0008 explicitly repaired."
+    },
+    {
+      "phase": "implementation-round1-generator-parity-green",
+      "captured_session": 69889,
+      "exit_code": 0,
+      "passed": 16,
+      "failed": 0,
+      "skipped": 0,
+      "build_warnings": 0,
+      "source_fingerprint": "9c57c665eda738b6fc1f7bacda73bfd5d8a5de196788f76d2ef2a348921cb900"
+    },
+    {
+      "phase": "implementation-round1-generated-build",
+      "captured_session": 40021,
+      "exit_code": 0,
+      "build_warnings": 0,
+      "build_errors": 0,
+      "command": "dotnet build src/AppHost/AppHost.csproj --no-restore --no-incremental -m:1 -warnaserror -p:BuildProjectReferences=false -p:EmitCompilerGeneratedFiles=true -p:CompilerGeneratedFilesOutputPath=/tmp/identity-access-006-apphost-generated-round1",
+      "inspection": "Actual Program.cs64,42 interceptor uses GetValueCore and generated ParseInt; explicit normalization preserves prior empty/hex/Unicode whitespace behavior."
+    },
+    {
+      "phase": "implementation-round1-format-check",
+      "captured_session": 25081,
+      "exit_code": 0,
+      "command": "npm run format-check"
+    },
+    {
+      "phase": "implementation-round1-lint",
+      "captured_session": 62595,
+      "exit_code": 0,
+      "build_warnings": 0,
+      "build_errors": 0,
+      "command": "npm run lint"
+    },
+    {
+      "phase": "implementation-round1-required-full-check",
+      "captured_session": 53004,
+      "status": "pass",
+      "command": "env DOCKER_HOST=<localPodmanSocket> ASPIRE_CONTAINER_RUNTIME=podman TESTCONTAINERS_RYUK_DISABLED=true npm run check",
+      "source_fingerprint": "9c57c665eda738b6fc1f7bacda73bfd5d8a5de196788f76d2ef2a348921cb900",
+      "exit_code": 0,
+      "tooling": {
+        "passed": 4,
+        "failed": 0,
+        "skipped": 0
+      },
+      "frontend": {
+        "passed": 60,
+        "failed": 0,
+        "skipped": 0
+      },
+      "backend": {
+        "passed": 317,
+        "failed": 0,
+        "skipped": 0,
+        "duration": "1m24s"
+      },
+      "smoke": {
+        "passed": 108,
+        "failed": 0,
+        "skipped": 0,
+        "duration": "8m19s"
+      },
+      "build_warnings": 0,
+      "build_errors": 0,
+      "format_check": "pass",
+      "lint": "pass"
+    }
+  ],
+  "browser_runtime": {
+    "worktree": "/tmp/identity-access-browser-006",
+    "isolation": "Scratch-only unique volume names and private credentials; operator volumes untouched.",
+    "state": "All five actual identity browser cases PASS session74295; stopped cleanly after checks; no operator state touched.",
+    "launch": "aspire start --no-build --isolated --launch-profile http --apphost <scratch AppHost>",
+    "readiness": "aspire wait web PASS; both bootstrap jobs exit0; APIs healthy",
+    "browser_session": 90811,
+    "temporary_runsettings_present": false,
+    "credential_diagnostic_correction": "describe redacts secret env values to null; prior false/null comparisons were inconclusive, not credential mismatch proof. Fixture populated privately from only four generated keys in exact isolated run secret store; no resets/secret values output."
+  },
+  "transport_design_review": {
+    "snapshot": "fe9a31ced53e73ebb5587f5f8745e8f500cc156056c873879d17aaa929682a63",
+    "quality": {
+      "verdict": "pass",
+      "report": "quality-transport-design.md"
+    },
+    "security": {
+      "verdict": "pass",
+      "report": "security-transport-design.md"
+    },
+    "scope": "Scheme-aware actual host-network issuer; strict validation/TLS and stable ordinary restart identity retained; historical design/task reports preserved."
+  },
+  "preparation_repairs": [
+    {
+      "round": 1,
+      "scope": "Targeted allocated issuer/TLS transport clarification",
+      "status": "complete; independent quality/security pass",
+      "snapshot": "fe9a31ced53e73ebb5587f5f8745e8f500cc156056c873879d17aaa929682a63"
+    },
+    {
+      "round": 2,
+      "scope": "Resolve broker HTTP provisioning conflict with005 FR006 using core definitions import",
+      "status": "complete; independent quality/security pass",
+      "snapshot": "183ff764d6cbc017c8f683b4c46781dc0ab994172656f8e495dfd4ddcafce4a0"
+    }
+  ],
+  "broker_design_review": {
+    "snapshot": "183ff764d6cbc017c8f683b4c46781dc0ab994172656f8e495dfd4ddcafce4a0",
+    "quality": {
+      "verdict": "pass",
+      "report": "quality-broker-design.md"
+    },
+    "security": {
+      "verdict": "pass",
+      "report": "security-broker-design.md"
+    },
+    "requirements_compatibility": "requirements-broker-local-design.md",
+    "finding": "DESIGN-006-001 closed at design level, runtime checks pending"
+  },
+  "ownership_browser_runtime": {
+    "worktree": "/private/tmp/identity-access-browser-006-ownership",
+    "status": "Final18browser and manual visual/keyboard checks passed; runtime stopped cleanly; no operator state touched.",
+    "test_volume_namespace": "final-browser006-2dc6beb5",
+    "operator_state_touched": false,
+    "source_fingerprint": "9f5cf3eebb150f3b89f2b7e1a5b629facbbeeed83c88c472304e3fbd19fa9e4d",
+    "private_accounts_fixture": "/tmp/identity-browser-final-accounts-006.json",
+    "fixture_mode": "0600",
+    "public_web_url": "http://127.0.0.1:53058",
+    "application_snapshot": "8043aa6d07e9f301e9027e01a308da0f4d9d57f30926c09642833a2bd79e3f73"
+  },
+  "source_freeze": {
+    "manifest": "source-freeze-round1-manifest.json",
+    "snapshot": "8feb2b832ac3392e40773050c08d809e11f247dbe97b352a8519d8f4cd248012",
+    "files": 184,
+    "coder_changed_source_fingerprint": "9c57c665eda738b6fc1f7bacda73bfd5d8a5de196788f76d2ef2a348921cb900",
+    "historical_manifest": "source-freeze-manifest.json"
+  },
+  "completion_metadata_history": [
+    {
+      "date": "2026-10-16",
+      "change": "Spec Status updated to implemented/validationpassed with explicit remainingreview/convergence/acceptance gates. Metadata only; no requirement/design/source change.",
+      "human_acceptance_recorded": false
+    },
+    {
+      "date": "2026-10-16",
+      "change": "Spec Status updated to required-validationpassed with remaining review/convergence/acceptance gates. Metadata only; no requirements changed.",
+      "human_acceptance_recorded": false
+    },
+    {
+      "date": "2026-10-16",
+      "change": "Post-review metadata only: T040 checked and spec status names convergence/acceptance. Frozen review hashes/reports preserved; no source or requirement change.",
+      "human_acceptance_recorded": false
+    },
+    {
+      "date": "2026-10-16",
+      "change": "Post-convergence metadata only: T041 checked and spec Status names final acceptance gate. Historical frozen snapshots/reports retained; source unchanged.",
+      "human_acceptance_recorded": false
+    },
+    {
+      "date": "2026-10-16",
+      "change": "Final explicit human acceptance recorded first; spec Status set to Complete and T042 checked. Metadata-only edits; historical review snapshots/reports preserved and reviewed source unchanged.",
+      "human_acceptance_recorded": true
+    }
+  ],
+  "implementation_review_snapshot": "4d0f13c0e4accb4ba3f8940cc06fde5e66d2968620664f2afab2c3bdcdba4cde",
+  "implementation_review_history": [
+    {
+      "round": 0,
+      "snapshot": "2e094af021db5f65143a73d4cd24c1fd473437b529fd6a8e48500139e0a95cef",
+      "quality": "quality-implementation-round0.md",
+      "security": "security-implementation-round0.md"
+    },
+    {
+      "round": 1,
+      "snapshot": "4d0f13c0e4accb4ba3f8940cc06fde5e66d2968620664f2afab2c3bdcdba4cde",
+      "quality": "quality-implementation-round1.md",
+      "security": "security-implementation-round1.md"
+    }
+  ],
+  "implementation_repairs": [
+    {
+      "round": 1,
+      "finding": "QUAL-006-001",
+      "status": "complete; mandatory revalidation and independent quality/security pass",
+      "snapshot": "4d0f13c0e4accb4ba3f8940cc06fde5e66d2968620664f2afab2c3bdcdba4cde"
+    }
+  ],
+  "completion_metadata_consistency_check": {
+    "date": "2026-10-16",
+    "status": "pass \u2014 feature complete and explicitly accepted",
+    "human_acceptance_recorded_before_complete_status": true,
+    "tasks_complete": 42,
+    "pending_tasks": 0,
+    "pending_gates": [],
+    "open_blocking_findings": 0,
+    "quality": "pass round1",
+    "security": "pass round1",
+    "convergence": "no implementation gaps",
+    "reviewed_source_unchanged": true,
+    "source_files": 184,
+    "historical_reports_preserved": true,
+    "post_review_changes": "completion metadata only"
+  }
+}

@@ -1,11 +1,39 @@
-import { expect, test, Page, APIRequestContext } from '@playwright/test';
+import {
+  expect,
+  test,
+  Page,
+  APIRequestContext,
+  request as apiRequests,
+} from '@playwright/test';
 import { createRequire } from 'node:module';
 import { createServer, Server } from 'node:http';
 import { AddressInfo } from 'node:net';
-import { Reservation } from '../src/app/booking/booking-api';
+import { Availability, Reservation } from '../src/app/booking/booking-api';
+
+import { login, logout } from './identity-browser';
 
 const require = createRequire(import.meta.url);
 test.use({ timezoneId: 'Europe/Bucharest' });
+
+async function visit(page: Page) {
+  await page.goto('/');
+  await login(page, 'employee-a', false);
+}
+
+async function signedRequest(page: Page) {
+  const observed = page.waitForRequest(
+    (request) => new URL(request.url()).pathname === '/api/equipment',
+  );
+  await page.getByRole('button', { name: 'Reload equipment' }).click();
+  const bearer = await (await observed).headerValue('authorization');
+  if (!bearer?.startsWith('Bearer '))
+    throw new Error('Expected authenticated browser request.');
+  const client = await apiRequests.newContext({
+    baseURL: new URL(page.url()).origin,
+    extraHTTPHeaders: { authorization: bearer },
+  });
+  return { client, bearer };
+}
 
 for (const failed of [false, true]) {
   test(`history refresh restores keyboard focus after ${failed ? 'failure' : 'success'}`, async ({
@@ -28,17 +56,17 @@ for (const failed of [false, true]) {
           : { json: [] },
       );
     });
-    await page.goto('/');
+    await visit(page);
     const refresh = page.getByRole('button', { name: 'Refresh reservations' });
     await refresh.focus();
     await page.keyboard.press('Space');
     await expect(refresh).toBeDisabled();
-    await expect(page.getByRole('status').nth(1)).toHaveText(
+    await expect(page.locator('main').getByRole('status').nth(1)).toHaveText(
       'Loading reservations…',
     );
     release();
     await expect(refresh).toBeEnabled();
-    await expect(page.getByRole('status').nth(1)).toContainText(
+    await expect(page.locator('main').getByRole('status').nth(1)).toContainText(
       failed ? 'Unable to load reservations' : 'No reservations yet.',
     );
     await expect(refresh).toBeFocused({ timeout: 1000 });
@@ -67,18 +95,20 @@ for (const failed of [false, true]) {
             },
       );
     });
-    await page.goto('/');
+    await visit(page);
     const reload = page.getByRole('button', { name: 'Reload equipment' });
     await expect(reload).toBeEnabled();
     await reload.focus();
     await page.keyboard.press('Space');
     await expect(reload).toBeDisabled();
-    await expect(page.getByRole('status').first()).toHaveText(
+    await expect(page.locator('main').getByRole('status').first()).toHaveText(
       'Loading equipment…',
     );
     release();
     await expect(reload).toBeEnabled();
-    await expect(page.getByRole('status').first()).toContainText(
+    await expect(
+      page.locator('main').getByRole('status').first(),
+    ).toContainText(
       failed ? 'Unable to load equipment' : 'Choose operational equipment',
     );
     await expect(reload).toBeFocused({ timeout: 1000 });
@@ -149,11 +179,11 @@ async function fill(page: Page, input = futureInterval()) {
 
 test('real services book, conflict, cancel, rebook and explicitly observe both event IDs by keyboard', async ({
   page,
-  request,
 }) => {
+  await visit(page);
+  const { client: request } = await signedRequest(page);
   const created: string[] = [];
   try {
-    await page.goto('/');
     await expect(
       page.getByRole('button', { name: 'Book equipment', exact: true }),
     ).toBeEnabled();
@@ -163,9 +193,9 @@ test('real services book, conflict, cancel, rebook and explicitly observe both e
     });
     await availability.focus();
     await page.keyboard.press('Enter');
-    await expect(page.getByRole('status').first()).toContainText(
-      'Available (advisory)',
-    );
+    await expect(
+      page.locator('main').getByRole('status').first(),
+    ).toContainText('Available (advisory)');
     await expect(availability).toBeFocused();
     const book = page.getByRole('button', {
       name: 'Book equipment',
@@ -184,9 +214,9 @@ test('real services book, conflict, cancel, rebook and explicitly observe both e
     const reservation = (await response.json()) as Reservation;
     created.push(reservation.id);
     await expect(book).toBeFocused();
-    await expect(page.getByRole('status').first()).toContainText(
-      'Reservation saved: Confirmed',
-    );
+    await expect(
+      page.locator('main').getByRole('status').first(),
+    ).toContainText('Reservation saved: Confirmed');
     await expect(
       page
         .getByRole('heading', { name: 'Latest saved reservation' })
@@ -201,9 +231,9 @@ test('real services book, conflict, cancel, rebook and explicitly observe both e
     );
     await page.keyboard.press('Enter');
     expect((await conflict).status()).toBe(409);
-    await expect(page.getByRole('status').first()).toContainText(
-      'now conflicts',
-    );
+    await expect(
+      page.locator('main').getByRole('status').first(),
+    ).toContainText('now conflicts');
     await expect(book).toBeFocused();
     await accessible(page);
 
@@ -267,8 +297,141 @@ test('real services book, conflict, cancel, rebook and explicitly observe both e
         (await request.post(`/api/reservations/${id}/cancel`)).status(),
       ).toBe(200);
     }
+    await request.dispose();
   }
 });
+
+test('real accounts isolate history, foreign reads and cancellation while allocation remains global', async ({
+  page,
+}) => {
+  await visit(page);
+  const input = await fill(page);
+  const reply = page.waitForResponse(
+    (response) =>
+      response.url().endsWith('/api/reservations') &&
+      response.request().method() === 'POST',
+  );
+  await page
+    .getByRole('button', { name: 'Book equipment', exact: true })
+    .click();
+  const response = await reply;
+  expect(response.status()).toBe(201);
+  const own = (await response.json()) as Reservation;
+  expect(own.userKey).toMatch(/^[0-9a-f]{64}$/);
+  await logout(page);
+  await login(page, 'employee-b');
+  const { client: other } = await signedRequest(page);
+  try {
+    await page.getByRole('button', { name: 'Refresh reservations' }).click();
+    await expect(
+      page.getByRole('button', { name: 'Refresh reservations' }),
+    ).toBeEnabled();
+    await expect(page.locator(`[data-reservation-id="${own.id}"]`)).toHaveCount(
+      0,
+    );
+    expect((await other.get(`/api/reservations/${own.id}`)).status()).toBe(404);
+    expect(
+      (await other.post(`/api/reservations/${own.id}/cancel`)).status(),
+    ).toBe(404);
+    const availability = await other.get('/api/availability', {
+      params: input,
+    });
+    expect(availability.status()).toBe(200);
+    const advisory = (await availability.json()) as Availability;
+    expect(advisory.available).toBe(false);
+    expect(
+      (await other.post('/api/reservations', { data: input })).status(),
+    ).toBe(409);
+    await page.getByRole('button', { name: 'Refresh notifications' }).click();
+    await expect(
+      page.getByRole('button', { name: 'Refresh notifications' }),
+    ).toBeEnabled();
+    await expect(
+      page.locator(`[data-event-id="${own.confirmationEventId}"]`),
+    ).toHaveCount(0);
+    await accessible(page);
+  } finally {
+    await other.dispose();
+    await logout(page);
+    await login(page, 'employee-a');
+    const { client: owner } = await signedRequest(page);
+    try {
+      await page.getByRole('button', { name: 'Refresh reservations' }).click();
+      await expect(
+        page.locator(`[data-reservation-id="${own.id}"]`),
+      ).toContainText('Confirmed');
+      expect(
+        (await owner.post(`/api/reservations/${own.id}/cancel`)).status(),
+      ).toBe(200);
+    } finally {
+      await owner.dispose();
+    }
+  }
+});
+
+test('uncertain committed save requires explicit own-history recovery with no replay', async ({
+  page,
+}) => {
+  await visit(page);
+  await fill(page);
+  let writes = 0;
+  let committed: Reservation | undefined;
+  await page.route('**/api/reservations', async (route) => {
+    if (route.request().method() !== 'POST') {
+      await route.continue();
+      return;
+    }
+    writes++;
+    const reply = await route.fetch();
+    expect(reply.status()).toBe(201);
+    committed = (await reply.json()) as Reservation;
+    await route.abort('failed');
+  });
+  await page
+    .getByRole('button', { name: 'Book equipment', exact: true })
+    .click();
+  await expect(page.locator('main').getByRole('status').first()).toContainText(
+    'save response is uncertain',
+  );
+  expect(writes).toBe(1);
+  if (!committed) throw new Error('Expected committed reservation.');
+  await page.getByRole('button', { name: 'Refresh reservations' }).click();
+  const row = page.locator(`[data-reservation-id="${committed.id}"]`);
+  await expect(row).toContainText('Confirmed');
+  expect(writes).toBe(1);
+  await accessible(page);
+  await page.unroute('**/api/reservations');
+  await row.getByRole('button', { name: /^Cancel reservation for/ }).click();
+  await expect(row).toContainText('Cancelled');
+  expect(writes).toBe(1);
+});
+
+for (const username of ['approver', 'equipment-staff']) {
+  test(`real ${username} reads advisory availability and own inbox without reservation authority`, async ({
+    page,
+  }) => {
+    await page.goto('/');
+    await login(page, username);
+    const { client } = await signedRequest(page);
+    try {
+      const input = futureInterval();
+      expect(
+        (await client.get('/api/availability', { params: input })).status(),
+      ).toBe(200);
+      expect((await client.get('/api/notifications')).status()).toBe(200);
+      expect((await client.get('/api/reservations')).status()).toBe(403);
+      expect(
+        (await client.post('/api/reservations', { data: input })).status(),
+      ).toBe(403);
+      await expect(
+        page.getByRole('button', { name: 'Book equipment', exact: true }),
+      ).toHaveCount(0);
+      await accessible(page);
+    } finally {
+      await client.dispose();
+    }
+  });
+}
 
 test('supplementary held boundaries expose accessible loading, empty, pending and dependency states', async ({
   page,
@@ -281,13 +444,13 @@ test('supplementary held boundaries expose accessible loading, empty, pending an
     await gate;
     await route.fulfill({ json: [] });
   });
-  await page.goto('/');
-  await expect(page.getByRole('status').first()).toHaveText(
+  await visit(page);
+  await expect(page.locator('main').getByRole('status').first()).toHaveText(
     'Loading equipment…',
   );
   await accessible(page);
   release();
-  await expect(page.getByRole('status').first()).toHaveText(
+  await expect(page.locator('main').getByRole('status').first()).toHaveText(
     'No equipment available.',
   );
   await expect(
@@ -320,27 +483,27 @@ test('supplementary held boundaries expose accessible loading, empty, pending an
     exact: true,
   });
   await book.click();
-  await expect(page.getByRole('status').first()).toHaveText(
+  await expect(page.locator('main').getByRole('status').first()).toHaveText(
     'Saving reservation…',
   );
   await expect(book).toBeDisabled();
   await expect(page.getByLabel('Equipment', { exact: true })).toBeDisabled();
   await accessible(page);
   releaseWrite();
-  await expect(page.getByRole('status').first()).toContainText(
+  await expect(page.locator('main').getByRole('status').first()).toContainText(
     'Inventory is unavailable. No reservation was created',
   );
   await expect(book).toBeFocused();
   await accessible(page);
   await page.getByRole('button', { name: 'Refresh reservations' }).click();
-  await expect(page.getByRole('status').nth(1)).toHaveText(
+  await expect(page.locator('main').getByRole('status').nth(1)).toHaveText(
     'No reservations yet.',
   );
   await page.route('**/api/notifications', (route) =>
     route.fulfill({ json: [] }),
   );
   await page.getByRole('button', { name: 'Refresh notifications' }).click();
-  await expect(page.getByRole('status').nth(2)).toHaveText(
+  await expect(page.locator('main').getByRole('status').nth(2)).toHaveText(
     'No notifications observed yet.',
   );
   await accessible(page);
@@ -349,21 +512,21 @@ test('supplementary held boundaries expose accessible loading, empty, pending an
 test('supplementary real browser requires explicit repeated DST offsets and rejects nonexistent local times', async ({
   page,
 }) => {
-  await page.goto('/');
+  await visit(page);
   await page
     .getByLabel('Equipment', { exact: true })
     .selectOption('camera-001');
   await page.getByLabel('Start time', { exact: true }).fill('2030-03-31T03:30');
   await page.getByLabel('End time', { exact: true }).fill('2030-03-31T05:00');
   await page.getByRole('button', { name: 'Check availability' }).click();
-  await expect(page.getByRole('status').first()).toContainText(
+  await expect(page.locator('main').getByRole('status').first()).toContainText(
     'does not exist in Europe/Bucharest',
   );
   await accessible(page);
   await page.getByLabel('Start time', { exact: true }).fill('2030-10-27T03:30');
   await page.getByLabel('End time', { exact: true }).fill('2030-10-27T03:45');
   await page.getByRole('button', { name: 'Check availability' }).click();
-  await expect(page.getByRole('status').first()).toContainText(
+  await expect(page.locator('main').getByRole('status').first()).toContainText(
     'Choose an offset for the repeated start time',
   );
   await page.getByLabel('Start timezone offset').selectOption('+03:00');
@@ -412,9 +575,15 @@ async function history(request: APIRequestContext) {
 for (const opaque of [false, true]) {
   test(`actual ${opaque ? 'opaque null' : 'hostile alias'} browser writes receive server 403 with unchanged durable history`, async ({
     page,
-    request,
     baseURL,
   }) => {
+    await visit(page);
+    const { client: request, bearer } = await signedRequest(page);
+    await page.route(new URL('/api/**', baseURL).toString(), (route) =>
+      route.continue({
+        headers: { ...route.request().headers(), authorization: bearer },
+      }),
+    );
     const localFixture = await fixture();
     const input = futureInterval();
     const creation = await request.post('/api/reservations', { data: input });
@@ -536,6 +705,7 @@ for (const opaque of [false, true]) {
           expectedTransitions: ['ReservationConfirmed', 'ReservationCancelled'],
         }),
       );
+      await request.dispose();
       localFixture.server.closeAllConnections();
       await new Promise<void>((resolve, reject) =>
         localFixture.server.close((error) =>

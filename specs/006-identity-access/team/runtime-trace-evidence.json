@@ -1,0 +1,900 @@
+{
+  "application_snapshot": "8043aa6d07e9f301e9027e01a308da0f4d9d57f30926c09642833a2bd79e3f73",
+  "scope": "Isolated application snapshot with browser-driven actual flows. Safe completed trace metadata only; credential privacy independently tested through actual-provider export scans. Later migration admission hash and exact-category framework log-filter repairs are validated by final pipeline checks; business, HTTP and broker trace relationships are unchanged.",
+  "traces": [
+    {
+      "trace_id": "8f42c7235c9928b290eb231255b30030",
+      "duration_ms": 1876,
+      "has_error": false,
+      "spans": [
+        {
+          "name": "POST /api/reservations",
+          "kind": "Server",
+          "source": "reservations",
+          "destination": "127.0.0.1:53058",
+          "duration_ms": 11
+        },
+        {
+          "name": "reservation.book",
+          "kind": "Internal",
+          "source": "reservations",
+          "duration_ms": 11
+        },
+        {
+          "name": "postgresql.reservation.insert",
+          "kind": "Client",
+          "source": "reservations",
+          "duration_ms": 1
+        },
+        {
+          "name": "postgresql.outbox.insert.confirmed",
+          "kind": "Client",
+          "source": "reservations",
+          "duration_ms": 1
+        },
+        {
+          "name": "postgresql.outbox.published",
+          "kind": "Client",
+          "source": "reservations",
+          "duration_ms": 1
+        },
+        {
+          "name": "reservation.publish",
+          "kind": "Producer",
+          "source": "reservations",
+          "duration_ms": 9
+        },
+        {
+          "name": "GET",
+          "kind": "Client",
+          "source": "reservations",
+          "destination": "inventory-dmhdkbur",
+          "duration_ms": 3
+        },
+        {
+          "name": "reservation.consume",
+          "kind": "Consumer",
+          "source": "notifications",
+          "duration_ms": 2
+        },
+        {
+          "name": "postgresql.inbox.insert",
+          "kind": "Client",
+          "source": "notifications",
+          "duration_ms": 1
+        },
+        {
+          "name": "GET /api/equipment/{id}",
+          "kind": "Server",
+          "source": "inventory",
+          "destination": "127.0.0.1:53055",
+          "duration_ms": 2
+        },
+        {
+          "name": "postgresql.equipment.find",
+          "kind": "Client",
+          "source": "inventory",
+          "duration_ms": 2
+        }
+      ]
+    },
+    {
+      "trace_id": "c2ac38c95b8446b4c0a1e87a51c4ea39",
+      "duration_ms": 6319,
+      "has_error": false,
+      "spans": [
+        {
+          "name": "POST /api/reservations/{id}/cancel",
+          "kind": "Server",
+          "source": "reservations",
+          "destination": "127.0.0.1:53058",
+          "duration_ms": 10
+        },
+        {
+          "name": "reservation.cancel",
+          "kind": "Internal",
+          "source": "reservations",
+          "duration_ms": 9
+        },
+        {
+          "name": "postgresql.reservation.lock",
+          "kind": "Client",
+          "source": "reservations",
+          "duration_ms": 2
+        },
+        {
+          "name": "postgresql.reservation.find",
+          "kind": "Client",
+          "source": "reservations",
+          "duration_ms": 1
+        },
+        {
+          "name": "postgresql.reservation.cancel",
+          "kind": "Client",
+          "source": "reservations",
+          "duration_ms": 1
+        },
+        {
+          "name": "postgresql.outbox.insert.cancelled",
+          "kind": "Client",
+          "source": "reservations",
+          "duration_ms": 1
+        },
+        {
+          "name": "postgresql.outbox.published",
+          "kind": "Client",
+          "source": "reservations",
+          "duration_ms": 1
+        },
+        {
+          "name": "reservation.publish",
+          "kind": "Producer",
+          "source": "reservations",
+          "duration_ms": 11
+        },
+        {
+          "name": "reservation.consume",
+          "kind": "Consumer",
+          "source": "notifications",
+          "duration_ms": 2
+        },
+        {
+          "name": "postgresql.inbox.insert",
+          "kind": "Client",
+          "source": "notifications",
+          "duration_ms": 1
+        }
+      ]
+    },
+    {
+      "trace_id": "1b47b42150ac8f2c29e65f811972c3ec",
+      "duration_ms": 4,
+      "has_error": true,
+      "spans": [
+        {
+          "name": "GET /api/reservations/{id}",
+          "kind": "Server",
+          "source": "reservations",
+          "destination": "127.0.0.1:53058",
+          "duration_ms": 4
+        },
+        {
+          "name": "reservation.get",
+          "kind": "Internal",
+          "source": "reservations",
+          "duration_ms": 3
+        },
+        {
+          "name": "postgresql.reservation.find",
+          "kind": "Client",
+          "source": "reservations",
+          "duration_ms": 2
+        }
+      ]
+    },
+    {
+      "trace_id": "7b4eeee036b1b8382a829fc21bc2d50f",
+      "duration_ms": 6,
+      "has_error": true,
+      "spans": [
+        {
+          "name": "POST /api/reservations",
+          "kind": "Server",
+          "source": "reservations",
+          "destination": "127.0.0.1:53058",
+          "duration_ms": 6
+        },
+        {
+          "name": "reservation.book",
+          "kind": "Internal",
+          "source": "reservations",
+          "duration_ms": 5
+        },
+        {
+          "name": "postgresql.reservation.insert",
+          "kind": "Client",
+          "source": "reservations",
+          "duration_ms": 1
+        },
+        {
+          "name": "GET",
+          "kind": "Client",
+          "source": "reservations",
+          "destination": "inventory-dmhdkbur",
+          "duration_ms": 3
+        },
+        {
+          "name": "GET /api/equipment/{id}",
+          "kind": "Server",
+          "source": "inventory",
+          "destination": "127.0.0.1:53055",
+          "duration_ms": 2
+        },
+        {
+          "name": "postgresql.equipment.find",
+          "kind": "Client",
+          "source": "inventory",
+          "duration_ms": 1
+        }
+      ]
+    },
+    {
+      "trace_id": "d4a5bb27ebe9108a5008b960e4e7d2fd",
+      "duration_ms": 2102,
+      "has_error": true,
+      "spans": [
+        {
+          "name": "identity.bootstrap",
+          "kind": "Internal",
+          "source": "identity-bootstrap",
+          "duration_ms": 2102
+        },
+        {
+          "name": "POST",
+          "kind": "Client",
+          "source": "identity-bootstrap",
+          "destination": "127.0.0.1:53059",
+          "duration_ms": 426
+        },
+        {
+          "name": "GET",
+          "kind": "Client",
+          "source": "identity-bootstrap",
+          "destination": "127.0.0.1:53059",
+          "duration_ms": 51
+        },
+        {
+          "name": "POST",
+          "kind": "Client",
+          "source": "identity-bootstrap",
+          "destination": "127.0.0.1:53059",
+          "duration_ms": 544
+        },
+        {
+          "name": "PUT",
+          "kind": "Client",
+          "source": "identity-bootstrap",
+          "destination": "127.0.0.1:53059",
+          "duration_ms": 49
+        },
+        {
+          "name": "PUT",
+          "kind": "Client",
+          "source": "identity-bootstrap",
+          "destination": "127.0.0.1:53059",
+          "duration_ms": 26
+        },
+        {
+          "name": "GET",
+          "kind": "Client",
+          "source": "identity-bootstrap",
+          "destination": "127.0.0.1:53059",
+          "duration_ms": 23
+        },
+        {
+          "name": "POST",
+          "kind": "Client",
+          "source": "identity-bootstrap",
+          "destination": "127.0.0.1:53059",
+          "duration_ms": 8
+        },
+        {
+          "name": "GET",
+          "kind": "Client",
+          "source": "identity-bootstrap",
+          "destination": "127.0.0.1:53059",
+          "duration_ms": 10
+        },
+        {
+          "name": "GET",
+          "kind": "Client",
+          "source": "identity-bootstrap",
+          "destination": "127.0.0.1:53059",
+          "duration_ms": 6
+        },
+        {
+          "name": "POST",
+          "kind": "Client",
+          "source": "identity-bootstrap",
+          "destination": "127.0.0.1:53059",
+          "duration_ms": 7
+        },
+        {
+          "name": "GET",
+          "kind": "Client",
+          "source": "identity-bootstrap",
+          "destination": "127.0.0.1:53059",
+          "duration_ms": 6
+        },
+        {
+          "name": "GET",
+          "kind": "Client",
+          "source": "identity-bootstrap",
+          "destination": "127.0.0.1:53059",
+          "duration_ms": 5
+        },
+        {
+          "name": "POST",
+          "kind": "Client",
+          "source": "identity-bootstrap",
+          "destination": "127.0.0.1:53059",
+          "duration_ms": 8
+        },
+        {
+          "name": "GET",
+          "kind": "Client",
+          "source": "identity-bootstrap",
+          "destination": "127.0.0.1:53059",
+          "duration_ms": 8
+        },
+        {
+          "name": "GET",
+          "kind": "Client",
+          "source": "identity-bootstrap",
+          "destination": "127.0.0.1:53059",
+          "duration_ms": 10
+        },
+        {
+          "name": "GET",
+          "kind": "Client",
+          "source": "identity-bootstrap",
+          "destination": "127.0.0.1:53059",
+          "duration_ms": 10
+        },
+        {
+          "name": "POST",
+          "kind": "Client",
+          "source": "identity-bootstrap",
+          "destination": "127.0.0.1:53059",
+          "duration_ms": 58
+        },
+        {
+          "name": "GET",
+          "kind": "Client",
+          "source": "identity-bootstrap",
+          "destination": "127.0.0.1:53059",
+          "duration_ms": 12
+        },
+        {
+          "name": "PUT",
+          "kind": "Client",
+          "source": "identity-bootstrap",
+          "destination": "127.0.0.1:53059",
+          "duration_ms": 25
+        },
+        {
+          "name": "GET",
+          "kind": "Client",
+          "source": "identity-bootstrap",
+          "destination": "127.0.0.1:53059",
+          "duration_ms": 7
+        },
+        {
+          "name": "POST",
+          "kind": "Client",
+          "source": "identity-bootstrap",
+          "destination": "127.0.0.1:53059",
+          "duration_ms": 16
+        },
+        {
+          "name": "GET",
+          "kind": "Client",
+          "source": "identity-bootstrap",
+          "destination": "127.0.0.1:53059",
+          "duration_ms": 18
+        },
+        {
+          "name": "PUT",
+          "kind": "Client",
+          "source": "identity-bootstrap",
+          "destination": "127.0.0.1:53059",
+          "duration_ms": 9
+        },
+        {
+          "name": "GET",
+          "kind": "Client",
+          "source": "identity-bootstrap",
+          "destination": "127.0.0.1:53059",
+          "duration_ms": 6
+        },
+        {
+          "name": "POST",
+          "kind": "Client",
+          "source": "identity-bootstrap",
+          "destination": "127.0.0.1:53059",
+          "duration_ms": 14
+        },
+        {
+          "name": "GET",
+          "kind": "Client",
+          "source": "identity-bootstrap",
+          "destination": "127.0.0.1:53059",
+          "duration_ms": 8
+        },
+        {
+          "name": "PUT",
+          "kind": "Client",
+          "source": "identity-bootstrap",
+          "destination": "127.0.0.1:53059",
+          "duration_ms": 9
+        },
+        {
+          "name": "GET",
+          "kind": "Client",
+          "source": "identity-bootstrap",
+          "destination": "127.0.0.1:53059",
+          "duration_ms": 7
+        },
+        {
+          "name": "POST",
+          "kind": "Client",
+          "source": "identity-bootstrap",
+          "destination": "127.0.0.1:53059",
+          "duration_ms": 16
+        },
+        {
+          "name": "GET",
+          "kind": "Client",
+          "source": "identity-bootstrap",
+          "destination": "127.0.0.1:53059",
+          "duration_ms": 9
+        },
+        {
+          "name": "PUT",
+          "kind": "Client",
+          "source": "identity-bootstrap",
+          "destination": "127.0.0.1:53059",
+          "duration_ms": 8
+        },
+        {
+          "name": "POST",
+          "kind": "Client",
+          "source": "identity-bootstrap",
+          "destination": "127.0.0.1:53059",
+          "duration_ms": 10
+        },
+        {
+          "name": "GET",
+          "kind": "Client",
+          "source": "identity-bootstrap",
+          "destination": "127.0.0.1:53059",
+          "duration_ms": 8
+        },
+        {
+          "name": "GET",
+          "kind": "Client",
+          "source": "identity-bootstrap",
+          "destination": "127.0.0.1:53059",
+          "duration_ms": 7
+        },
+        {
+          "name": "POST",
+          "kind": "Client",
+          "source": "identity-bootstrap",
+          "destination": "127.0.0.1:53059",
+          "duration_ms": 9
+        },
+        {
+          "name": "GET",
+          "kind": "Client",
+          "source": "identity-bootstrap",
+          "destination": "127.0.0.1:53059",
+          "duration_ms": 7
+        },
+        {
+          "name": "GET",
+          "kind": "Client",
+          "source": "identity-bootstrap",
+          "destination": "127.0.0.1:53059",
+          "duration_ms": 5
+        },
+        {
+          "name": "POST",
+          "kind": "Client",
+          "source": "identity-bootstrap",
+          "destination": "127.0.0.1:53059",
+          "duration_ms": 7
+        },
+        {
+          "name": "GET",
+          "kind": "Client",
+          "source": "identity-bootstrap",
+          "destination": "127.0.0.1:53059",
+          "duration_ms": 6
+        },
+        {
+          "name": "GET",
+          "kind": "Client",
+          "source": "identity-bootstrap",
+          "destination": "127.0.0.1:53059",
+          "duration_ms": 4
+        },
+        {
+          "name": "POST",
+          "kind": "Client",
+          "source": "identity-bootstrap",
+          "destination": "127.0.0.1:53059",
+          "duration_ms": 7
+        },
+        {
+          "name": "GET",
+          "kind": "Client",
+          "source": "identity-bootstrap",
+          "destination": "127.0.0.1:53059",
+          "duration_ms": 6
+        },
+        {
+          "name": "GET",
+          "kind": "Client",
+          "source": "identity-bootstrap",
+          "destination": "127.0.0.1:53059",
+          "duration_ms": 5
+        },
+        {
+          "name": "POST",
+          "kind": "Client",
+          "source": "identity-bootstrap",
+          "destination": "127.0.0.1:53059",
+          "duration_ms": 8
+        },
+        {
+          "name": "GET",
+          "kind": "Client",
+          "source": "identity-bootstrap",
+          "destination": "127.0.0.1:53059",
+          "duration_ms": 6
+        },
+        {
+          "name": "GET",
+          "kind": "Client",
+          "source": "identity-bootstrap",
+          "destination": "127.0.0.1:53059",
+          "duration_ms": 4
+        },
+        {
+          "name": "POST",
+          "kind": "Client",
+          "source": "identity-bootstrap",
+          "destination": "127.0.0.1:53059",
+          "duration_ms": 7
+        },
+        {
+          "name": "GET",
+          "kind": "Client",
+          "source": "identity-bootstrap",
+          "destination": "127.0.0.1:53059",
+          "duration_ms": 7
+        },
+        {
+          "name": "GET",
+          "kind": "Client",
+          "source": "identity-bootstrap",
+          "destination": "127.0.0.1:53059",
+          "duration_ms": 6
+        },
+        {
+          "name": "POST",
+          "kind": "Client",
+          "source": "identity-bootstrap",
+          "destination": "127.0.0.1:53059",
+          "duration_ms": 19
+        },
+        {
+          "name": "GET",
+          "kind": "Client",
+          "source": "identity-bootstrap",
+          "destination": "127.0.0.1:53059",
+          "duration_ms": 8
+        },
+        {
+          "name": "PUT",
+          "kind": "Client",
+          "source": "identity-bootstrap",
+          "destination": "127.0.0.1:53059",
+          "duration_ms": 11
+        },
+        {
+          "name": "GET",
+          "kind": "Client",
+          "source": "identity-bootstrap",
+          "destination": "127.0.0.1:53059",
+          "duration_ms": 8
+        },
+        {
+          "name": "POST",
+          "kind": "Client",
+          "source": "identity-bootstrap",
+          "destination": "127.0.0.1:53059",
+          "duration_ms": 6
+        },
+        {
+          "name": "GET",
+          "kind": "Client",
+          "source": "identity-bootstrap",
+          "destination": "127.0.0.1:53059",
+          "duration_ms": 7
+        },
+        {
+          "name": "GET",
+          "kind": "Client",
+          "source": "identity-bootstrap",
+          "destination": "127.0.0.1:53059",
+          "duration_ms": 4
+        },
+        {
+          "name": "POST",
+          "kind": "Client",
+          "source": "identity-bootstrap",
+          "destination": "127.0.0.1:53059",
+          "duration_ms": 7
+        },
+        {
+          "name": "GET",
+          "kind": "Client",
+          "source": "identity-bootstrap",
+          "destination": "127.0.0.1:53059",
+          "duration_ms": 7
+        },
+        {
+          "name": "GET",
+          "kind": "Client",
+          "source": "identity-bootstrap",
+          "destination": "127.0.0.1:53059",
+          "duration_ms": 7
+        },
+        {
+          "name": "POST",
+          "kind": "Client",
+          "source": "identity-bootstrap",
+          "destination": "127.0.0.1:53059",
+          "duration_ms": 7
+        },
+        {
+          "name": "GET",
+          "kind": "Client",
+          "source": "identity-bootstrap",
+          "destination": "127.0.0.1:53059",
+          "duration_ms": 6
+        },
+        {
+          "name": "POST",
+          "kind": "Client",
+          "source": "identity-bootstrap",
+          "destination": "127.0.0.1:53059",
+          "duration_ms": 7
+        },
+        {
+          "name": "GET",
+          "kind": "Client",
+          "source": "identity-bootstrap",
+          "destination": "127.0.0.1:53059",
+          "duration_ms": 6
+        },
+        {
+          "name": "GET",
+          "kind": "Client",
+          "source": "identity-bootstrap",
+          "destination": "127.0.0.1:53059",
+          "duration_ms": 10
+        },
+        {
+          "name": "POST",
+          "kind": "Client",
+          "source": "identity-bootstrap",
+          "destination": "127.0.0.1:53059",
+          "duration_ms": 11
+        },
+        {
+          "name": "GET",
+          "kind": "Client",
+          "source": "identity-bootstrap",
+          "destination": "127.0.0.1:53059",
+          "duration_ms": 6
+        },
+        {
+          "name": "GET",
+          "kind": "Client",
+          "source": "identity-bootstrap",
+          "destination": "127.0.0.1:53059",
+          "duration_ms": 8
+        },
+        {
+          "name": "POST",
+          "kind": "Client",
+          "source": "identity-bootstrap",
+          "destination": "127.0.0.1:53059",
+          "duration_ms": 35
+        },
+        {
+          "name": "GET",
+          "kind": "Client",
+          "source": "identity-bootstrap",
+          "destination": "127.0.0.1:53059",
+          "duration_ms": 11
+        },
+        {
+          "name": "GET",
+          "kind": "Client",
+          "source": "identity-bootstrap",
+          "destination": "127.0.0.1:53059",
+          "duration_ms": 15
+        },
+        {
+          "name": "POST",
+          "kind": "Client",
+          "source": "identity-bootstrap",
+          "destination": "127.0.0.1:53059",
+          "duration_ms": 8
+        },
+        {
+          "name": "GET",
+          "kind": "Client",
+          "source": "identity-bootstrap",
+          "destination": "127.0.0.1:53059",
+          "duration_ms": 5
+        },
+        {
+          "name": "PUT",
+          "kind": "Client",
+          "source": "identity-bootstrap",
+          "destination": "127.0.0.1:53059",
+          "duration_ms": 13
+        },
+        {
+          "name": "GET",
+          "kind": "Client",
+          "source": "identity-bootstrap",
+          "destination": "127.0.0.1:53059",
+          "duration_ms": 7
+        },
+        {
+          "name": "POST",
+          "kind": "Client",
+          "source": "identity-bootstrap",
+          "destination": "127.0.0.1:53059",
+          "duration_ms": 27
+        },
+        {
+          "name": "GET",
+          "kind": "Client",
+          "source": "identity-bootstrap",
+          "destination": "127.0.0.1:53059",
+          "duration_ms": 9
+        },
+        {
+          "name": "GET",
+          "kind": "Client",
+          "source": "identity-bootstrap",
+          "destination": "127.0.0.1:53059",
+          "duration_ms": 7
+        },
+        {
+          "name": "POST",
+          "kind": "Client",
+          "source": "identity-bootstrap",
+          "destination": "127.0.0.1:53059",
+          "duration_ms": 6
+        },
+        {
+          "name": "GET",
+          "kind": "Client",
+          "source": "identity-bootstrap",
+          "destination": "127.0.0.1:53059",
+          "duration_ms": 5
+        },
+        {
+          "name": "PUT",
+          "kind": "Client",
+          "source": "identity-bootstrap",
+          "destination": "127.0.0.1:53059",
+          "duration_ms": 8
+        },
+        {
+          "name": "GET",
+          "kind": "Client",
+          "source": "identity-bootstrap",
+          "destination": "127.0.0.1:53059",
+          "duration_ms": 6
+        },
+        {
+          "name": "POST",
+          "kind": "Client",
+          "source": "identity-bootstrap",
+          "destination": "127.0.0.1:53059",
+          "duration_ms": 30
+        },
+        {
+          "name": "GET",
+          "kind": "Client",
+          "source": "identity-bootstrap",
+          "destination": "127.0.0.1:53059",
+          "duration_ms": 8
+        },
+        {
+          "name": "GET",
+          "kind": "Client",
+          "source": "identity-bootstrap",
+          "destination": "127.0.0.1:53059",
+          "duration_ms": 6
+        },
+        {
+          "name": "POST",
+          "kind": "Client",
+          "source": "identity-bootstrap",
+          "destination": "127.0.0.1:53059",
+          "duration_ms": 5
+        },
+        {
+          "name": "GET",
+          "kind": "Client",
+          "source": "identity-bootstrap",
+          "destination": "127.0.0.1:53059",
+          "duration_ms": 4
+        },
+        {
+          "name": "PUT",
+          "kind": "Client",
+          "source": "identity-bootstrap",
+          "destination": "127.0.0.1:53059",
+          "duration_ms": 7
+        },
+        {
+          "name": "GET",
+          "kind": "Client",
+          "source": "identity-bootstrap",
+          "destination": "127.0.0.1:53059",
+          "duration_ms": 6
+        },
+        {
+          "name": "POST",
+          "kind": "Client",
+          "source": "identity-bootstrap",
+          "destination": "127.0.0.1:53059",
+          "duration_ms": 27
+        },
+        {
+          "name": "GET",
+          "kind": "Client",
+          "source": "identity-bootstrap",
+          "destination": "127.0.0.1:53059",
+          "duration_ms": 8
+        },
+        {
+          "name": "GET",
+          "kind": "Client",
+          "source": "identity-bootstrap",
+          "destination": "127.0.0.1:53059",
+          "duration_ms": 5
+        },
+        {
+          "name": "POST",
+          "kind": "Client",
+          "source": "identity-bootstrap",
+          "destination": "127.0.0.1:53059",
+          "duration_ms": 6
+        },
+        {
+          "name": "GET",
+          "kind": "Client",
+          "source": "identity-bootstrap",
+          "destination": "127.0.0.1:53059",
+          "duration_ms": 5
+        },
+        {
+          "name": "PUT",
+          "kind": "Client",
+          "source": "identity-bootstrap",
+          "destination": "127.0.0.1:53059",
+          "duration_ms": 9
+        },
+        {
+          "name": "GET",
+          "kind": "Client",
+          "source": "identity-bootstrap",
+          "destination": "127.0.0.1:53059",
+          "duration_ms": 14
+        }
+      ]
+    }
+  ]
+}

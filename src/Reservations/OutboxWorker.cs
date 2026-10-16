@@ -8,7 +8,7 @@ namespace Reservations;
 public sealed class OutboxWorker(NpgsqlDataSource database, IReservationPublisher publisher, IRecoverySchedule schedule, TimeProvider time, IConfiguration configuration, ILogger<OutboxWorker> logger) : BackgroundService
 {
     private const string SnapshotSql = "SELECT count(*), min(occurred_at) FROM reservation_outbox WHERE published_at IS NULL";
-    private const string SelectSql = "SELECT event_id,reservation_id,event_type,schema_version,demo_user_id,equipment_id,equipment_name,start_at,end_at,occurred_at,attempt_count,traceparent,tracestate FROM reservation_outbox WHERE published_at IS NULL AND next_attempt_at <= $1 ORDER BY next_attempt_at,event_id FOR UPDATE SKIP LOCKED LIMIT 1";
+    private const string SelectSql = "SELECT event_id,reservation_id,event_type,schema_version,user_key,equipment_id,equipment_name,start_at,end_at,occurred_at,attempt_count,traceparent,tracestate FROM reservation_outbox WHERE published_at IS NULL AND next_attempt_at <= $1 ORDER BY next_attempt_at,event_id FOR UPDATE SKIP LOCKED LIMIT 1";
     private const string PublishedSql = "UPDATE reservation_outbox SET published_at=$2,attempt_count=attempt_count+1 WHERE event_id=$1";
     private const string RescheduleSql = "UPDATE reservation_outbox SET attempt_count=attempt_count+1,next_attempt_at=$2 WHERE event_id=$1 AND published_at IS NULL";
 

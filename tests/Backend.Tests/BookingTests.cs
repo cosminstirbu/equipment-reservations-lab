@@ -18,7 +18,7 @@ public sealed class BookingTests(PostgresFixture postgres)
         Assert.Equal(HttpStatusCode.Created, response.StatusCode);
         BookedReservation result = (await response.Content.ReadFromJsonAsync<BookedReservation>())!;
         Assert.Equal("Confirmed", result.Status);
-        Assert.Equal("demo-user", result.DemoUserId);
+        Assert.Matches("^[0-9a-f]{64}$", result.UserKey);
         Assert.Equal("Demo Camera", result.EquipmentName);
         Assert.Equal(DateTimeOffset.Parse("2030-01-02T12:00:00Z", System.Globalization.CultureInfo.InvariantCulture), result.StartAt);
         Assert.Equal(TimeSpan.Zero, result.StartAt.Offset);

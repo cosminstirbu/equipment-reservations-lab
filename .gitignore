@@ -11,3 +11,4 @@ TestResults/
 playwright-report/
 test-results/
 .cache/
+src/Web/auth-config.json

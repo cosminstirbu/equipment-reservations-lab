@@ -23,7 +23,7 @@ public sealed class DatabaseWorkerTracingTests(PostgresFixture postgres)
         await using NpgsqlDataSource fixture = await postgres.CreateMigratedDatabaseAsync("reservations");
         var clock = new TestTimeProvider(new DateTimeOffset(2030, 1, 1, 0, 0, 0, TimeSpan.Zero));
         var store = new ReservationStore(fixture, clock);
-        _ = await store.ConfirmAsync(new ReservationInterval("camera-001", clock.Now.AddDays(1), clock.Now.AddDays(1).AddHours(1)), "Demo Camera", CancellationToken.None);
+        _ = await store.ConfirmAsync(new ReservationInterval("camera-001", clock.Now.AddDays(1), clock.Now.AddDays(1).AddHours(1)), "Demo Camera", new string('a', 64), CancellationToken.None);
         const string parent = "00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01";
         await using (NpgsqlCommand seedContext = fixture.CreateCommand("UPDATE reservation_outbox SET traceparent=$1"))
         {
@@ -74,7 +74,7 @@ public sealed class DatabaseWorkerTracingTests(PostgresFixture postgres)
     {
         await using NpgsqlDataSource fixture = await postgres.CreateMigratedDatabaseAsync("notifications");
         var now = new DateTimeOffset(2030, 1, 1, 0, 0, 0, TimeSpan.Zero);
-        var message = new ReservationEvent(1, Guid.NewGuid(), "ReservationConfirmed", Guid.NewGuid(), "demo-user", "camera-001", "Demo Camera", now.AddDays(1), now.AddDays(2), now);
+        var message = new ReservationEvent(1, Guid.NewGuid(), "ReservationConfirmed", Guid.NewGuid(), new string('a', 64), "camera-001", "Demo Camera", now.AddDays(1), now.AddDays(2), now);
         var subscription = new Subscription(message);
         using var capture = new DatabaseTelemetryCapture();
         using WebApplicationFactory<Notifications.Program> host = capture.App<Notifications.Program>("notifications", postgres.ConnectionStringFor(fixture))
@@ -85,7 +85,7 @@ public sealed class DatabaseWorkerTracingTests(PostgresFixture postgres)
             }));
         using HttpClient client = host.CreateClient();
         await subscription.Completed.Task.WaitAsync(TimeSpan.FromSeconds(10));
-        _ = Assert.Single(await host.Services.GetRequiredService<ReservationInbox>().ListAsync(CancellationToken.None));
+        _ = Assert.Single(await host.Services.GetRequiredService<ReservationInbox>().ListAsync(new string('a', 64), CancellationToken.None));
         Assert.True((await client.GetAsync("/api/notifications")).IsSuccessStatusCode);
         _ = await client.GetAsync("/health");
         await host.DisposeAsync();

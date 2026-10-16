@@ -16,7 +16,7 @@ export interface BookingInput {
 
 export interface Reservation {
   id: string;
-  demoUserId: string;
+  userKey: string;
   equipmentId: string;
   equipmentName: string;
   startAt: string;
@@ -31,7 +31,7 @@ export interface Reservation {
 export interface InboxEntry {
   eventId: string;
   reservationId: string;
-  demoUserId: string;
+  userKey: string;
   equipmentId: string;
   equipmentName: string;
   eventType: 'ReservationConfirmed' | 'ReservationCancelled';

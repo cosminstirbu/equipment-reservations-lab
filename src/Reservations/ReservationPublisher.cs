@@ -46,7 +46,6 @@ public sealed class ReservationPublisher(IConfiguration configuration) : IReserv
         budget.CancelAfter(TimeSpan.FromSeconds(3));
         await using IConnection connection = await RabbitConnection.Factory(connectionString, TimeSpan.FromSeconds(3)).CreateConnectionAsync(budget.Token);
         await using IChannel channel = await connection.CreateChannelAsync(new CreateChannelOptions(true, true), budget.Token);
-        await ReservationTopology.DeclareAsync(channel, budget.Token);
         var properties = new BasicProperties
         {
             ContentType = "application/json",
