@@ -1,0 +1,60 @@
+{
+  "findings": [
+    {
+      "id": "QA-005-A1",
+      "category": "design",
+      "severity": "high",
+      "blocking": true,
+      "status": "closed",
+      "reported_by": "verifier_reviewer",
+      "owner": "architect_planner",
+      "revision": "1075133e6b819a3ddd992944c66825189d6f8b960251f350fcd3f3f2c2f93102",
+      "requirement_ids": [
+        "FR-005"
+      ],
+      "location": "specs/005-admin-consoles/tasks.md T009\u2013T011/dependencies",
+      "summary": "Console browser workflows precede first effective exposure proof.",
+      "evidence": [
+        "T009/T010 execute pgAdmin UI before T011 actual binding proof; model assertions cannot establish effective isolation."
+      ],
+      "recommended_fix": "Require immediate binding and non-loopback proof at first console startup before admin workflows; stop affected console on failure.",
+      "closure_evidence": {
+        "report": "analysis-repair1.md",
+        "snapshot": "17a5d717a339037ab7ea40ac353761cce49be3b5a81c16d2f620a4312ba2e301",
+        "validated_by": "verifier_reviewer"
+      }
+    },
+    {
+      "id": "SEC-005-D1",
+      "category": "security",
+      "severity": "high",
+      "blocking": true,
+      "status": "closed",
+      "reported_by": "security_reviewer",
+      "owner": "architect_planner/coder",
+      "revision": "intermediate implementation using default pgAdmin9.15.0",
+      "requirement_ids": [
+        "FR-003",
+        "FR-005",
+        "FR-011"
+      ],
+      "location": "src/AppHost/Program.cs pgAdmin integration image selection",
+      "summary": "New default pgAdmin dependency predates relevant stored-XSS/credential fixes.",
+      "evidence": [
+        "security-dependency-review.md",
+        "https://www.pgadmin.org/docs/pgadmin4/9.18/release_notes_9_16.html",
+        "https://www.pgadmin.org/docs/pgadmin4/9.18/release_notes_9_18.html"
+      ],
+      "recommended_fix": "Explicitly select verified published9.18 image tag and revalidate runtime/browser/recreation/isolation/publish behavior.",
+      "closure_evidence": {
+        "report": "security-implementation.md",
+        "snapshot": "d5077147322621335dc4af6d24063f84b7fd88a697f2d66f118d2c8ca8577947",
+        "artifact_snapshot": "d0ea0a2eed62b268806bda4287d505fe38d0e74750633a892e0e2b70648fc03a",
+        "validated_by": "security_reviewer",
+        "date": "2026-10-16",
+        "disposition": "remediated; no risk acceptance"
+      },
+      "human_risk_acceptance": null
+    }
+  ]
+}

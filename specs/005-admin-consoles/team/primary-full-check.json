@@ -1,0 +1,35 @@
+{
+  "date": "2026-10-16",
+  "timezone": "Europe/Bucharest",
+  "note": "Full command started October15 and completed after local midnight October16. Source unchanged throughout.",
+  "source_snapshot": "d5077147322621335dc4af6d24063f84b7fd88a697f2d66f118d2c8ca8577947",
+  "head": "4ff571c6ccdf19f010994035815d2b9e443c7883",
+  "command": "DOCKER_HOST=unix:///var/folders/6k/z9rq_rsj7gj5ghmy_rx43nzh0000gp/T/podman/podman-machine-default-api.sock TESTCONTAINERS_RYUK_DISABLED=true ASPIRE_CONTAINER_RUNTIME=podman npm run check > /tmp/admin-consoles-full-check.log 2>&1",
+  "exit_code": 0,
+  "log_sha256": "ce46ae00cceb98a4f8e7fc5ce1029e44bf5a50d8f66b5fa815641999ebaca5a5",
+  "result": {
+    "tooling": 4,
+    "frontend": 33,
+    "backend": 216,
+    "smoke": 50,
+    "failed": 0,
+    "skipped": 0,
+    "build_warnings": 0,
+    "build_errors": 0
+  },
+  "coverage": "Tooling hooks, frontend build/tests, backend, full real Podman smoke including multi-AppHost retained volumes/queued messages/state/roles, admin default runtime recreation and exposure. Focused actual UI6/6 separately documented in implementation-evidence.md.",
+  "known_output": "Existing jsdom canvas getContext notices printed; frontend suite33/33 passed.",
+  "source_hashes_verified_after_check": true,
+  "source_aggregate_encoding": "SHA256 of sorted compact JSON file-hash mapping",
+  "raw_log": "/tmp/admin-consoles-full-check.log",
+  "post_check": {
+    "git_diff_check": {
+      "exit_code": 0
+    },
+    "podman_ps": {
+      "exit_code": 0,
+      "running_containers": 0,
+      "note": "Read-only verification required sandbox escalation; no lifecycle mutation performed."
+    }
+  }
+}

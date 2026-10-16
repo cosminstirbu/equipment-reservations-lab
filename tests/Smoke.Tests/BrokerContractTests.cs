@@ -1,5 +1,6 @@
 using Aspire.Hosting;
 using Aspire.Hosting.ApplicationModel;
+using Aspire.Hosting.Postgres;
 using Aspire.Hosting.Testing;
 using RabbitMQ.Client;
 using RabbitMQ.Client.Exceptions;
@@ -17,10 +18,14 @@ public class BrokerContractTests
         Environment.SetEnvironmentVariable("ASPIRE_CONTAINER_RUNTIME", "podman");
         IDistributedApplicationTestingBuilder builder = await DistributedApplicationTestingBuilder.CreateAsync<Projects.AppHost>(["--environment=Development"], deadline.Token);
         RabbitMQServerResource broker = Assert.Single(builder.Resources.OfType<RabbitMQServerResource>());
-        EndpointAnnotation endpoint = Assert.Single(broker.Annotations.OfType<EndpointAnnotation>());
+        EndpointAnnotation endpoint = broker.PrimaryEndpoint.EndpointAnnotation;
         Assert.Equal("tcp", endpoint.Name);
         Assert.Equal(5672, endpoint.TargetPort);
-        foreach (IResource? resource in builder.Resources.Where(r => r.Name is "postgres" or "database-bootstrap" or "inventory" or "reservations" or "notifications" or "web" or "web-installer").ToArray())
+        foreach (IResource? resource in builder.Resources
+            .Where(resource => resource is PgAdminContainerResource ||
+                resource.Name is "postgres" or "database-bootstrap" or "inventory" or
+                    "reservations" or "notifications" or "web" or "web-installer")
+            .ToArray())
         {
             _ = builder.Resources.Remove(resource);
         }

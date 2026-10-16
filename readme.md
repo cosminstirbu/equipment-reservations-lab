@@ -122,7 +122,7 @@ Git. Ordinary startup reuses them. Do not delete that store or change a password
 independently of its existing database/broker volume. No committed plaintext
 password file or manual password setup is required. Normal generated-secret
 setup uses `AddParameter(..., secret: true, persist: true)` and the AppHost
-`UserSecretsId`; it does not require reading passwords into the browser. Keep
+`UserSecretsId`; application startup reuses them without manual entry. Keep
 dashboard access tokens and connection strings private. All resource listeners
 are loopback and intended exclusively for a trusted local workstation.
 
@@ -134,10 +134,46 @@ preserves existing equipment and reservations rather than duplicating or
 overwriting seeds. Each service receives only its own database role
 (`inventory_app`, `reservations_app` or `notifications_app`); it cannot connect
 to the other service databases or the administrative `postgres`/`template1`
-databases. Bootstrap alone receives the administrator connection. Applied
+databases. Bootstrap and the local pgAdmin console receive administrator access;
+application services retain their separate restricted roles. Applied
 migration SQL must not be edited: checksum mismatch fails startup rather than
 silently changing the existing schema; add a new numbered migration for
 subsequent changes.
+
+### Local administration consoles
+
+In Development run mode, ordinary AppHost startup also enables RabbitMQ
+Management and pgAdmin (image `dpage/pgadmin4:9.18.0`). Open the current HTTP
+link on **messaging** for RabbitMQ or **pgadmin** for pgAdmin in the Aspire
+dashboard. Both use dynamically
+allocated ports; use the current links after each startup. They are excluded
+from non-Development runs and deployment manifests. No data-volume reset or
+separate startup flag is needed.
+
+RabbitMQ uses its normal sign-in page. Its default username is `guest`; obtain
+the existing `broker-password` privately from the AppHost user-secrets store
+(`UserSecretsId` in `src/AppHost/AppHost.csproj`) or reveal that parameter in
+your private Aspire dashboard session. Do not copy credentials into source,
+URLs, shell arguments/history, shared logs or screenshots. Do not change the
+persisted password independently of the broker volume. Management supports
+inspection of queues, exchanges, bindings, consumers and messages, test-message
+publication/get and queue purging.
+
+pgAdmin opens without a separate console login and automatically registers the
+existing PostgreSQL server with administrator credentials. Expand its server
+and **Databases** to browse `inventory`, `reservations` and `notifications`;
+use **Query Tool** for SQL. Administrator access permits edits, schema changes
+and deletion across all three databases. RabbitMQ management likewise permits
+destructive queue/message operations. Prefer uniquely named disposable objects
+when experimenting and deliberately select the intended database or queue.
+
+These interfaces are restricted to loopback, including their backing host
+ports. The dashboard token does not protect their direct URLs; local OS users
+and containers on the local Aspire network remain trusted. Keep them on this
+computer without tunnels or LAN forwarding. pgAdmin preferences, saved queries
+and UI history are disposable when its container is recreated; Aspire
+regenerates the automatic connection. Existing PostgreSQL and RabbitMQ data
+remain in their original named volumes.
 
 Choose equipment and future start/end times. The browser displays its IANA
 timezone and UTC offsets. A repeated daylight-saving time requires an explicit

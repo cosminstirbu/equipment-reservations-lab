@@ -1,0 +1,18 @@
+{
+  "head": "4ff571c6ccdf19f010994035815d2b9e443c7883",
+  "source_sha256": "d5077147322621335dc4af6d24063f84b7fd88a697f2d66f118d2c8ca8577947",
+  "files": {
+    "readme.md": "16e8e9ba2035663125c2131f57b61235a3023be16271bf093d040a220e6fc753",
+    "src/AppHost/Program.cs": "411ab073f9717c3d1d774f326292b2c0d9a27c6fe0f1e000c61422067a390155",
+    "tests/Smoke.Tests/AdminConsoleTests.cs": "eea60bc87b336395a07327307d589f623e9ff8faaaa68a3bb55844251dd79a4b",
+    "tests/Smoke.Tests/BrokerContractTests.cs": "62ce01ffccfabfd03d853dd1797a5b8e4d4d4341ac024251e54bbbc9182e1dff",
+    "scripts/admin-console-browser.mjs": "6a17c59f8ee3307f5f31001585d7f1871f8ff68278865aa24b00ae732afadc23"
+  },
+  "note": "Source unchanged after focused UI6/6, format-check, lint and primary fullcheck PASS. Independent reviews/convergence/human acceptance pending.",
+  "freeze_note": "Application/test/browser/readme source frozen after focused UI6/6, format-check and lint pass; primary fullcheck and independent reviews pending.",
+  "full_check_verification": {
+    "date": "2026-10-16",
+    "record": "primary-full-check.json",
+    "source_hashes_unchanged": true
+  }
+}

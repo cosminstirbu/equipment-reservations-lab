@@ -1,0 +1,14 @@
+{
+  "snapshot": "4845ae8bdf6738b0b4ade3bac85582d650d17044ac66ef59052ea2d9629e7309",
+  "files": {
+    "specs/005-admin-consoles/checklists/quality.md": "f0b837d7cd414d635d8da6ebb75d2058c7c812e40b5b2174ca662168de22b947",
+    "specs/005-admin-consoles/checklists/requirements.md": "ae118ca4ba27bc8d134602b5a82e453834fb1d32c1acc706b751f3221ac35780",
+    "specs/005-admin-consoles/contracts/admin-consoles.md": "bf3d10a6c2a1498fb3c3c80f980c010954f0ff59a2a5004044399303b8e4145d",
+    "specs/005-admin-consoles/data-model.md": "7d486832a265d39c5cbccad10fd2c0a89d70ba6878b8200a6da8ac0e7239640c",
+    "specs/005-admin-consoles/plan.md": "712aead0f78f4af80c9d235ecbdc28b0ce19559904ee3969b36e489c6f03cd34",
+    "specs/005-admin-consoles/quickstart.md": "b6ac90dcb1a0416851f12e61ced1aff00c7ece6a6fb96eddd4013c0eb939c29d",
+    "specs/005-admin-consoles/research.md": "7e10f9474e5fa29f503c92176ea84b1eb4df619d07fcf526972252c3475313fb",
+    "specs/005-admin-consoles/spec.md": "3a3e1e199feb4e5abad634adede774a02fac67eb9613aa6f58ba96821023bec8",
+    "specs/005-admin-consoles/tasks.md": "65ab2d43406581594e954c9907521232f3dbc2404fc1f93a822e7e3156c7032b"
+  }
+}

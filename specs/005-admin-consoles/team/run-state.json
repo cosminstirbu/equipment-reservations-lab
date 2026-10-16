@@ -1,0 +1,204 @@
+{
+  "feature_directory": "specs/005-admin-consoles",
+  "status": "complete",
+  "baseline_revision": "9878407026878e966c0b442cd0f62f9f409f140d",
+  "preparation_round": 2,
+  "implementation_round": 0,
+  "limits": {
+    "preparation_repairs": 3,
+    "implementation_repairs": 3,
+    "no_progress_recurrences": 2
+  },
+  "required_checks": [
+    "npm run format-check",
+    "npm run lint",
+    "npm run check",
+    "admin console behavior and loopback exposure",
+    "publish model excludes consoles",
+    "independent quality and security reviews",
+    "speckit-converge",
+    "explicit human acceptance"
+  ],
+  "acceptance_evidence": [
+    "implementation-source-manifest.json",
+    "implementation-review-manifest.json",
+    "implementation-evidence.md",
+    "primary-full-check.json",
+    "quality-implementation.md",
+    "security-implementation.md",
+    "convergence.md",
+    "human-acceptance.md"
+  ],
+  "quality_review": {
+    "verdict": "pass",
+    "revision": "d5077147322621335dc4af6d24063f84b7fd88a697f2d66f118d2c8ca8577947",
+    "artifact_snapshot": "d0ea0a2eed62b268806bda4287d505fe38d0e74750633a892e0e2b70648fc03a",
+    "report": "quality-implementation.md",
+    "report_sha256": "3a3110624fc03fea2cec64d5254cbdb897bcc70c559e4ad78aeb48671e949918",
+    "reviewer": "quality_reviewer",
+    "date": "2026-10-16"
+  },
+  "security_review": {
+    "verdict": "pass",
+    "revision": "d5077147322621335dc4af6d24063f84b7fd88a697f2d66f118d2c8ca8577947",
+    "artifact_snapshot": "d0ea0a2eed62b268806bda4287d505fe38d0e74750633a892e0e2b70648fc03a",
+    "report": "security-implementation.md",
+    "report_sha256": "669f5c8885ffc93dee2e1eebcf0cd694d16ab7c3237a403462c041347a33e9cd",
+    "reviewer": "security_reviewer",
+    "date": "2026-10-16"
+  },
+  "convergence": {
+    "verdict": "pass",
+    "revision": "d5077147322621335dc4af6d24063f84b7fd88a697f2d66f118d2c8ca8577947",
+    "report": "convergence.md",
+    "report_sha256": "2553200f37233d147e4470f6ab6ca09f08466a5252ec6183a1ddd2334e4206df",
+    "date": "2026-10-16",
+    "buildable_gaps": 0,
+    "tasks_appended": 0
+  },
+  "human_acceptance_required": true,
+  "human_acceptance": {
+    "date": "2026-10-16",
+    "timezone": "Europe/Bucharest",
+    "owner": "human owner",
+    "statement": "I approve the current implementation. Stage the changes and give me a commit message.",
+    "source_snapshot": "d5077147322621335dc4af6d24063f84b7fd88a697f2d66f118d2c8ca8577947",
+    "scope": "Explicit acceptance of current implementation; authorizes staging and a proposed commit message."
+  },
+  "pending_decisions": [],
+  "scope_confirmation": {
+    "date": "2026-10-15",
+    "status": "confirmed",
+    "statement": "Yes. Move forward with the team.",
+    "note": "Authorizes agreed scope and implementation; final implementation acceptance pending."
+  },
+  "assignments": {
+    "requirements": "REQ-005: complete, requirements clarified",
+    "architecture": "design/tasks complete",
+    "security": "final independent implementation pass; SEC-005-D1 closed",
+    "quality": "final independent implementation pass",
+    "coder": "assigned implementation tasks complete; source frozen",
+    "coordinator_browser": "complete; both UI scenarios passed with recreation"
+  },
+  "preparation_checks": [
+    {
+      "command": "npm run format-check",
+      "exit_code": 0,
+      "scope": "requirements-only preparation; not final source evidence",
+      "reported_by": "requirements_analyst"
+    },
+    {
+      "command": "npm run lint",
+      "exit_code": 0,
+      "scope": "requirements-only preparation; not final source evidence",
+      "reported_by": "requirements_analyst"
+    }
+  ],
+  "preparation_snapshot": "05ff34664501fbc8667ff9e177f5f4e350f594c253d48c9663c279bdb1d141f4",
+  "preparation_quality": {
+    "verdict": "pass",
+    "snapshot": "4845ae8bdf6738b0b4ade3bac85582d650d17044ac66ef59052ea2d9629e7309",
+    "report": "quality-dependency-preparation.md"
+  },
+  "preparation_security": {
+    "verdict": "pass",
+    "snapshot": "4845ae8bdf6738b0b4ade3bac85582d650d17044ac66ef59052ea2d9629e7309",
+    "report": "security-dependency-preparation.md"
+  },
+  "task_analysis": {
+    "verdict": "pass",
+    "report": "analysis-repair1.md",
+    "snapshot": "17a5d717a339037ab7ea40ac353761cce49be3b5a81c16d2f620a4312ba2e301"
+  },
+  "approved_baseline": "4845ae8bdf6738b0b4ade3bac85582d650d17044ac66ef59052ea2d9629e7309",
+  "task_security": {
+    "verdict": "pass",
+    "report": "security-tasks-repair1.md",
+    "snapshot": "17a5d717a339037ab7ea40ac353761cce49be3b5a81c16d2f620a4312ba2e301"
+  },
+  "concurrent_owner_changes": {
+    "note": "Owner quality-runner changes committed during implementation; preserved. Historical approved baseline remains recorded; final evidence uses actual HEAD plus source hashes.",
+    "files": [
+      "scripts/quality.mjs",
+      "docs/engineering/formatting-and-linting.md"
+    ],
+    "committed_revision": "4ff571c6ccdf19f010994035815d2b9e443c7883"
+  },
+  "test_first": {
+    "command": "dotnet test tests/Smoke.Tests --filter FullyQualifiedName~AdminConsoleTests -m:1",
+    "exit_code": 1,
+    "failed": 4,
+    "passed": 2,
+    "skipped": 0,
+    "reason": "Four expected missing Rabbit management endpoint / pgAdmin resource failures before production wiring.",
+    "canonical_session": 94511,
+    "primary_confirmation_session": 71758,
+    "notes": "Initial sandbox socket failure was not accepted as red evidence. Successful elevated test execution produced intended behavioral failures."
+  },
+  "runtime_progress": {
+    "rabbit_ui": "pass, login/topology/publish/get/purge/live consumer; isolated fixture cleanup",
+    "rabbit_boundary": "pass, actual proxy/backing loopback, 9 nonloopback addresses refused/timed out",
+    "publish": "full original model + emitted infrastructure manifest pass; full application manifest pre-existing callback timeout disclosed"
+  },
+  "pending_technical_findings": [],
+  "source_snapshot": "d5077147322621335dc4af6d24063f84b7fd88a697f2d66f118d2c8ca8577947",
+  "source_manifest": "implementation-source-manifest.json",
+  "current_head": "4ff571c6ccdf19f010994035815d2b9e443c7883",
+  "check_results": [
+    {
+      "command": "npm run format-check",
+      "exit_code": 0,
+      "revision": "d5077147322621335dc4af6d24063f84b7fd88a697f2d66f118d2c8ca8577947",
+      "reported_by": "coder",
+      "report": "implementation-evidence.md"
+    },
+    {
+      "command": "npm run lint",
+      "exit_code": 0,
+      "revision": "d5077147322621335dc4af6d24063f84b7fd88a697f2d66f118d2c8ca8577947",
+      "reported_by": "coder",
+      "build_warnings": 0,
+      "build_errors": 0,
+      "report": "implementation-evidence.md"
+    },
+    {
+      "command": "dotnet test tests/Smoke.Tests --filter FullyQualifiedName~AdminConsoleTests -m:1 -e ADMIN_CONSOLE_BROWSER=1",
+      "exit_code": 0,
+      "passed": 6,
+      "failed": 0,
+      "skipped": 0,
+      "revision": "d5077147322621335dc4af6d24063f84b7fd88a697f2d66f118d2c8ca8577947",
+      "report": "implementation-evidence.md"
+    },
+    {
+      "command": "npm run check",
+      "status": "pass",
+      "revision": "d5077147322621335dc4af6d24063f84b7fd88a697f2d66f118d2c8ca8577947",
+      "environment": {
+        "ASPIRE_CONTAINER_RUNTIME": "podman",
+        "TESTCONTAINERS_RYUK_DISABLED": "true",
+        "DOCKER_HOST": "local Podman machine API socket"
+      },
+      "log": "/tmp/admin-consoles-full-check.log",
+      "exit_code": 0,
+      "date": "2026-10-16",
+      "report": "primary-full-check.json"
+    }
+  ],
+  "test_results": {
+    "tooling": 4,
+    "frontend": 33,
+    "backend": 216,
+    "smoke": 50,
+    "failed": 0,
+    "skipped": 0,
+    "build_warnings": 0,
+    "build_errors": 0
+  },
+  "pending_gates": [],
+  "metadata_update": {
+    "date": "2026-10-16",
+    "kind": "metadata-only",
+    "note": "Explicit human acceptance recorded before Complete status; T021/T022 complete; reviewed source and historical review hashes/reports preserved."
+  }
+}

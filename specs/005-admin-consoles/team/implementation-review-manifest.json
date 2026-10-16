@@ -1,0 +1,21 @@
+{
+  "date": "2026-10-16",
+  "head": "4ff571c6ccdf19f010994035815d2b9e443c7883",
+  "source_snapshot": "d5077147322621335dc4af6d24063f84b7fd88a697f2d66f118d2c8ca8577947",
+  "artifact_snapshot": "d0ea0a2eed62b268806bda4287d505fe38d0e74750633a892e0e2b70648fc03a",
+  "files": {
+    "specs/005-admin-consoles/checklists/quality.md": "f0b837d7cd414d635d8da6ebb75d2058c7c812e40b5b2174ca662168de22b947",
+    "specs/005-admin-consoles/checklists/requirements.md": "ae118ca4ba27bc8d134602b5a82e453834fb1d32c1acc706b751f3221ac35780",
+    "specs/005-admin-consoles/contracts/admin-consoles.md": "bf3d10a6c2a1498fb3c3c80f980c010954f0ff59a2a5004044399303b8e4145d",
+    "specs/005-admin-consoles/data-model.md": "7d486832a265d39c5cbccad10fd2c0a89d70ba6878b8200a6da8ac0e7239640c",
+    "specs/005-admin-consoles/plan.md": "712aead0f78f4af80c9d235ecbdc28b0ce19559904ee3969b36e489c6f03cd34",
+    "specs/005-admin-consoles/quickstart.md": "b6ac90dcb1a0416851f12e61ced1aff00c7ece6a6fb96eddd4013c0eb939c29d",
+    "specs/005-admin-consoles/research.md": "7e10f9474e5fa29f503c92176ea84b1eb4df619d07fcf526972252c3475313fb",
+    "specs/005-admin-consoles/spec.md": "9904000424a680da3935f5b87194106b1220a27445b2ee1288dca6eac71b4866",
+    "specs/005-admin-consoles/tasks.md": "57162a9731962153c32b641dd3da3b3e65c6ee12319491aced1536e5d8d53bf9",
+    "specs/005-admin-consoles/team/implementation-evidence.md": "10509fed1409286b79839b02681e70e254416eff221765d2bb67cbef2f41881e",
+    "specs/005-admin-consoles/team/implementation-source-manifest.json": "b24db2a9ef9ca36414453ee6acb8e5c5d027b2787f8db2929d1a6815b322a587",
+    "specs/005-admin-consoles/team/primary-full-check.json": "917f5b00391751bfcef5d32efd0d73d040cbe9de260111df8cf32c6aead6e6fd"
+  },
+  "note": "Frozen implementation review input; future gate metadata updates do not alter source or historical reports."
+}

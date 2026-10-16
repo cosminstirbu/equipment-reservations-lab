@@ -1,3 +1,4 @@
+using Microsoft.Extensions.Hosting;
 using Npgsql;
 
 IDistributedApplicationBuilder builder = DistributedApplication.CreateBuilder(args);
@@ -29,6 +30,34 @@ IResourceBuilder<RabbitMQServerResource> messaging = builder.AddRabbitMQ("messag
         endpoint.TargetHost = "127.0.0.1";
     })
     .WithEndpointProxySupport(true);
+
+if (builder.ExecutionContext.IsRunMode && builder.Environment.IsDevelopment())
+{
+    _ = postgres.WithPgAdmin(pgAdmin =>
+    {
+        _ = pgAdmin
+            .WithImageTag("9.18.0")
+            .WithEndpoint("http", endpoint =>
+            {
+                endpoint.TargetHost = "127.0.0.1";
+                endpoint.IsProxied = true;
+                endpoint.IsExternal = false;
+                endpoint.ExcludeReferenceEndpoint = true;
+            })
+            .WithEndpointProxySupport(true)
+            .WaitFor(postgres)
+            .ExcludeFromManifest();
+    });
+
+    _ = messaging.WithManagementPlugin()
+        .WithEndpoint(messaging.Resource.ManagementEndpoint.EndpointName, endpoint =>
+        {
+            endpoint.TargetHost = "127.0.0.1";
+            endpoint.IsProxied = true;
+            endpoint.IsExternal = false;
+            endpoint.ExcludeReferenceEndpoint = true;
+        });
+}
 
 IResourceBuilder<ProjectResource> bootstrap = builder.AddProject<Projects.DatabaseBootstrap>("database-bootstrap")
     .WithReference(postgres)
