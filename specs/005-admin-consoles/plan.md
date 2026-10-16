@@ -99,3 +99,8 @@ src/Web/                       # existing browser tooling, no product UI changes
 ## Complexity Tracking
 
 No constitutional violations or exceptions. Effective runtime binding remains a proof obligation, not an approved assumption.
+
+
+## Prospective testing-policy supersession — feature 007
+
+On 2026-10-16, the owner approved [feature 007’s testing policy](../007-aspire-independent-tests/supersession.md), which supersedes this document’s automated Aspire/AppHost and manifest-publication obligations and retired Smoke.Tests paths. Retained application/provider guarantees have [replacement coverage](../007-aspire-independent-tests/team/coverage-disposition.md); local orchestration is verified manually. Deployment manifest support is outside scope. In particular, US3.2 and FR-006/FR-011/SC-004 deployment-output obligations are superseded; local Development-only console behavior, effective loopback exposure, access, and persistence remain manual guarantees. Original requirements, task markers, acceptance status, review hashes, and evidence above remain historical records; they do not approve feature 007.

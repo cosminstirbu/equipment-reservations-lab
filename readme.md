@@ -181,8 +181,7 @@ In Development run mode, ordinary AppHost startup also enables RabbitMQ
 Management and pgAdmin (image `dpage/pgadmin4:9.18.0`). Open the current HTTP
 link on **messaging** for RabbitMQ or **pgadmin** for pgAdmin in the Aspire
 dashboard. Both use dynamically
-allocated ports; use the current links after each startup. They are excluded
-from non-Development runs and deployment manifests. No data-volume reset or
+allocated ports; use the current links after each startup. They are enabled only for local Development run mode. No data-volume reset or
 separate startup flag is needed.
 
 RabbitMQ uses its normal sign-in page. Its default username is `guest`; obtain
@@ -260,8 +259,8 @@ and new directories 0700. Readiness forces exact-account channel handshakes and
 administrator passive topology checks under a bounded startup budget.
 Invalid/unreadable definitions block workers with safe failure diagnostics.
 Do not broaden ACLs or enable management outside Development as recovery.
-Publishing excludes local definitions/hash material and secret resolution; it
-does not provision a production environment.
+Aspire is used only for local development. Manifest generation and cloud deployment
+are outside the supported testing policy.
 
 ### Verification
 
@@ -288,13 +287,12 @@ npm run lint
 npm run check
 ```
 
-The full check includes frontend build/rendered tests and all .NET suites. For
+The full check includes frontend build/rendered tests and the complete Backend.Tests suite. For
 focused checks and dependency inspection:
 
 ```sh
 dotnet build
 dotnet test tests/Backend.Tests -m:1
-dotnet test tests/Smoke.Tests -m:1
 npm --prefix src/Web ci
 npm --prefix src/Web run build
 npm --prefix src/Web test
@@ -306,11 +304,15 @@ databases and production migrations; external HTTP/broker doubles are backed by
 provider contracts. Database concurrency tests send competing public requests to
 verify the exclusion constraint. Tests control time for date/cancellation rules.
 Rendered Angular tests exercise user actions, deadlines, cancellation and axe
-accessibility checks. Smoke tests start isolated AppHost processes and actual
-PostgreSQL/RabbitMQ, verify booking delivery and correlation, exercise broker
-contracts and use fresh AppHosts with test-owned named volumes to check durable
-state and queued-event recovery. These tests do not reset the normal application
-volumes. Missing runtime/dependencies fail the check; they are never skipped.
+accessibility checks. Backend.Tests also exercises real RabbitMQ and Keycloak
+contracts, correlated private-safe telemetry, scoped provider permissions and
+cross-service recovery. Separate WebApplicationFactory service hosts retain the
+production authentication/service-token pipeline; Testcontainers supplies isolated
+providers. Tests recreate hosts with the same durable state and restart real
+providers to verify pending/queued-event recovery. They never construct, inspect,
+start or publish Aspire, and never reset normal application volumes. Assembly-wide
+and existing collection serialization remain in force; parallelization is deferred.
+Missing runtime/dependencies fail the check; they are never skipped.
 
 With the application running, browser verification requires Playwright Chromium
 (`npx --prefix src/Web playwright install chromium`) or an installed
@@ -340,6 +342,46 @@ filtered individual retrieval; never commit or display it. Actual login screens
 and code+PKCE are exercised, not browser password grants. Traces, screenshots and
 videos are disabled to keep authority private. Tests hold tokens only in memory
 and preserve authenticated hostile-origin write checks.
+
+### Manual local-development check
+
+Aspire startup, resource configuration and local console wiring are checked manually.
+No automated AppHost or manifest-publication checks are required. Use the ordinary
+startup procedure above with the same existing user secrets and named volumes; do not
+replace them with fresh test state or erase them to obtain a passing observation.
+
+1. Identify the exact `src/AppHost/AppHost.csproj` session and who owns it. Start a
+   session only if needed; stop/restart only one you own. In the printed authenticated
+   dashboard expect PostgreSQL/database bootstrap, RabbitMQ/broker bootstrap, Keycloak/
+   identity bootstrap, Inventory, Reservations, Notifications and Web ready. Record
+   failed resources with safe diagnostics rather than calling the check passed.
+2. Open the current Web/API/dashboard links. Expect the normal login and equipment
+   catalogue. Sign in with the intended private fixture account and verify booking,
+   history and explicit inbox refresh. Never capture passwords, tokens or callbacks
+   in shared logs/screenshots.
+3. Open the current messaging-management and pgAdmin links. Expect RabbitMQ to reject
+   unauthenticated administration and accept the existing privately retrieved broker
+   credential; expect pgAdmin to open without a separate login and register the
+   existing PostgreSQL server/databases. Before using password-free pgAdmin, inspect
+   both current proxy/listener and backing container publications (for example,
+   `podman port <exact-container-name>`); expect loopback addresses only. Record any
+   unexpected non-loopback binding or failed access observation.
+4. Record existing equipment edits, booking/history and observed inbox when available.
+   Restart only your owned session using the same ordinary storage and secrets. Expect
+   those observations and account identities to persist. If there is no existing state,
+   use disposable sample data only when approved for this check; restore only its edit
+   or remove only sample objects created by this procedure when appropriate, retaining
+   normal booking history. Providers have separate automated outage/recovery coverage.
+5. Stop only the session you started and record its actual stop result. Preserve
+   ordinary volumes/secrets and other developers' sessions. Do not prune/reset data.
+
+Record expected/actual observations, failed or unavailable steps, the tested revision
+and cleanup. The [feature quickstart](specs/007-aspire-independent-tests/quickstart.md)
+and [testing guide](docs/engineering/testing.md) describe this boundary and its
+replacement coverage. Historical acceptance/review records apply to their original
+revisions; the [supersession register](specs/007-aspire-independent-tests/supersession.md)
+records the prospective policy change. Manifest generation is unsupported, with no
+manual publishing step.
 
 ### Persistence and recovery
 
@@ -424,7 +466,7 @@ databases/seeds and accounts. Do not add
 `--force`, prune other volumes, delete the user-secrets store or run these
 commands while AppHost is using the volumes. No reset runs automatically.
 Automated persistence tests use separate randomly named test-owned volumes and
-clean them up after their AppHosts stop.
+clean them up after service hosts and providers are disposed.
 
 Application JSON contracts, structured logs and supported constant patterns use
 .NET source generators; see [ASP.NET Core

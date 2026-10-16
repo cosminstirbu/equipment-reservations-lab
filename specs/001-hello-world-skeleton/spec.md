@@ -79,3 +79,8 @@ As a developer trying the initial application locally, I can see the seeded equi
 - Polling is an explicit observation loop, not an automatic retry of sending. A new click after completion/error is a new operation.
 - This is a connectivity demonstration, with no uptime, production throughput, or cross-restart recovery promise.
 - Human final feature acceptance remains required by the constitution; it is not inferred from the request or automated checks.
+
+
+## Prospective testing-policy supersession — feature 007
+
+On 2026-10-16, the owner approved [feature 007’s testing policy](../007-aspire-independent-tests/supersession.md), which supersedes this document’s automated Aspire/AppHost and manifest-publication obligations and retired Smoke.Tests paths. Retained application/provider guarantees have [replacement coverage](../007-aspire-independent-tests/team/coverage-disposition.md); local orchestration is verified manually. Deployment manifest support is outside scope. Original requirements, task markers, acceptance status, review hashes, and evidence above remain historical records; they do not approve feature 007.

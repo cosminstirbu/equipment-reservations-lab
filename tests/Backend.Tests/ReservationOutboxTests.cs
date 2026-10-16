@@ -1,7 +1,6 @@
 using System.Net;
 using System.Net.Http.Json;
 using System.Text.Json;
-using Backend.Tests;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -14,7 +13,7 @@ using ReservationMessaging;
 using Reservations;
 using Xunit;
 
-namespace Smoke.Tests;
+namespace Backend.Tests;
 
 [Collection("Reservation delivery")]
 public sealed class ReservationOutboxTests(ReservationDeliveryFixture infrastructure)

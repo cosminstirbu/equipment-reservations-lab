@@ -107,3 +107,8 @@ Use faithful signed OIDC/JWKS boundary fixtures for deterministic token-edge cas
 ## Complexity Tracking
 
 No constitutional violation proposed. A finite identity provisioning executable and broker definitions-builder library keep administration credentials out of long-lived user-facing services. The shared library prevents divergent validation/ownership algorithms; ServiceDefaults remains operational only. The memory-only SPA was chosen over a BFF to preserve the existing architecture and accepted local scope; risk evaluation is in research.
+
+
+## Prospective testing-policy supersession — feature 007
+
+On 2026-10-16, the owner approved [feature 007’s testing policy](../007-aspire-independent-tests/supersession.md), which supersedes this document’s automated Aspire/AppHost and manifest-publication obligations and retired Smoke.Tests paths. Retained application/provider guarantees have [replacement coverage](../007-aspire-independent-tests/team/coverage-disposition.md); local orchestration is verified manually. Deployment manifest support is outside scope. Original requirements, task markers, acceptance status, review hashes, and evidence above remain historical records; they do not approve feature 007.

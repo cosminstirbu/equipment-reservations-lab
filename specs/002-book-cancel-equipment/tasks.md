@@ -185,3 +185,8 @@ Implementation repair round 2 of 3; this is a targeted correction of the earlier
 - [X] T048 Add intended failing real-broker poison-then-valid regressions for Q-B4-002 covering offset-free timestamps under controlled UTC and excessive fractional digits that align or truncate, then enforce original timestamp grammar before conversion while preserving generated JSON metadata, explicit UTC semantics, six-digit maximum precision, finite bounds, zero invalid inbox writes and continued valid delivery. Refresh consumer/provider checks, full gates and original reviewer closure (FR-019, data-model validation boundary).
 
 These two findings form one bounded implementation repair batch, round 3 of 3. Preserve completed task history and approved feature intent; SEC-001 browser evidence and final feature acceptance remain pending.
+
+
+## Prospective testing-policy supersession — feature 007
+
+On 2026-10-16, the owner approved [feature 007’s testing policy](../007-aspire-independent-tests/supersession.md), which supersedes this document’s automated Aspire/AppHost and manifest-publication obligations and retired Smoke.Tests paths. Retained application/provider guarantees have [replacement coverage](../007-aspire-independent-tests/team/coverage-disposition.md); local orchestration is verified manually. Deployment manifest support is outside scope. Original requirements, task markers, acceptance status, review hashes, and evidence above remain historical records; they do not approve feature 007.

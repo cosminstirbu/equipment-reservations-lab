@@ -1,16 +1,13 @@
 using System.Net;
 using System.Net.Http.Headers;
 using System.Text.Json;
-using Aspire.Hosting.ApplicationModel;
-using Aspire.Hosting.Testing;
 using IdentityAccess;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
 
-namespace Smoke.Tests;
+namespace Backend.Tests;
 
 [Collection("Identity provider")]
 public sealed class IdentityProviderTests(IdentityProviderFixture provider)
@@ -53,16 +50,39 @@ public sealed class IdentityProviderTests(IdentityProviderFixture provider)
     {
         using var deadline = new CancellationTokenSource(TimeSpan.FromSeconds(60));
         await provider.ProvisionAsync(cancellationToken: deadline.Token);
-        ProviderTokens before = await provider.LoginAsync("employee-a", cancellationToken: deadline.Token);
+        var subjects = new Dictionary<string, string>();
+        foreach (string username in provider.Settings.UserPasswords.Keys)
+        {
+            ProviderTokens before = await provider.LoginAsync(username, cancellationToken: deadline.Token);
+            using JsonDocument claims = IdentityProviderFixture.Claims(before.AccessToken);
+            Assert.Equal(provider.Settings.Authority, claims.RootElement.GetProperty("iss").GetString());
+            subjects[username] = claims.RootElement.GetProperty("sub").GetString()!;
+        }
+
         await provider.RestartAsync(deadline.Token);
         await provider.ProvisionAsync(provider.Settings with
         {
             UserPasswords = provider.Settings.UserPasswords.ToDictionary(pair => pair.Key, _ => Guid.NewGuid().ToString("N"))
         }, deadline.Token);
-        ProviderTokens after = await provider.LoginAsync("employee-a", cancellationToken: deadline.Token);
-        using JsonDocument first = IdentityProviderFixture.Claims(before.AccessToken);
-        using JsonDocument second = IdentityProviderFixture.Claims(after.AccessToken);
-        Assert.Equal(first.RootElement.GetProperty("sub").GetString(), second.RootElement.GetProperty("sub").GetString());
+        foreach (string username in provider.Settings.UserPasswords.Keys)
+        {
+            ProviderTokens after = await provider.LoginAsync(username, cancellationToken: deadline.Token);
+            using JsonDocument claims = IdentityProviderFixture.Claims(after.AccessToken);
+            Assert.Equal(subjects[username], claims.RootElement.GetProperty("sub").GetString());
+            Assert.Equal(provider.Settings.Authority, claims.RootElement.GetProperty("iss").GetString());
+            string expectedRole = username switch
+            {
+                "approver" => "Approver",
+                "equipment-staff" => "EquipmentStaff",
+                _ => "Employee"
+            };
+            Assert.Equal(expectedRole, Assert.Single(claims.RootElement.GetProperty("realm_access").GetProperty("roles").EnumerateArray()).GetString());
+        }
+
+        using var client = new HttpClient { Timeout = TimeSpan.FromSeconds(5) };
+        using var metadata = JsonDocument.Parse(await client.GetStringAsync(provider.Settings.Authority + "/.well-known/openid-configuration", deadline.Token));
+        Assert.Equal(provider.Settings.Authority, metadata.RootElement.GetProperty("issuer").GetString());
+        Assert.Equal(provider.Settings.Authority + "/protocol/openid-connect/token", metadata.RootElement.GetProperty("token_endpoint").GetString());
     }
 
     [Fact]
@@ -112,76 +132,5 @@ public sealed class IdentityProviderTests(IdentityProviderFixture provider)
         _ = app.MapGet("/employee", () => "owned reservation").RequireAuthorization(IdentityAuthentication.Employee);
         await app.StartAsync();
         return app;
-    }
-}
-
-public sealed class IdentityHostingTests
-{
-    [Theory]
-    [InlineData("18081")]
-    [InlineData(" 18081 ")]
-    [InlineData("\u00a018081\u00a0")]
-    [InlineData("0x46A1")]
-    [InlineData("#46A1")]
-    [InlineData("&h46A1")]
-    public async Task ConfiguredPortPreservesSupportedIntegerFormats(string value)
-    {
-        await using IDistributedApplicationTestingBuilder builder = await DistributedApplicationTestingBuilder.CreateAsync<Projects.AppHost>(["--environment=Development", "--IdentityPort=" + value]);
-        KeycloakResource identity = Assert.Single(builder.Resources.OfType<KeycloakResource>());
-        EndpointAnnotation endpoint = Assert.Single(identity.Annotations.OfType<EndpointAnnotation>(), item => item.Name == "http");
-        Assert.Equal(18081, endpoint.Port);
-    }
-
-    [Theory]
-    [InlineData("")]
-    [InlineData(" ")]
-    [InlineData("0")]
-    [InlineData("65536")]
-    [InlineData("-1")]
-    [InlineData("not-a-port")]
-    [InlineData("0x10000")]
-    [InlineData("0xinvalid")]
-    public async Task InvalidConfiguredPortFailsBeforeProviderStartup(string value)
-    {
-        _ = await Assert.ThrowsAsync<InvalidOperationException>(async () =>
-        {
-            await using IDistributedApplicationTestingBuilder builder = await DistributedApplicationTestingBuilder.CreateAsync<Projects.AppHost>(["--environment=Development", "--IdentityPort=" + value]);
-        });
-    }
-
-    [Fact]
-    public async Task LocalProviderUsesStableAuthorityPersistentStateAndExplicitProvisioningGate()
-    {
-        await using IDistributedApplicationTestingBuilder builder = await DistributedApplicationTestingBuilder.CreateAsync<Projects.AppHost>(["--environment=Development"]);
-        KeycloakResource identity = Assert.Single(builder.Resources.OfType<KeycloakResource>());
-        Assert.Equal("26.8.1", Assert.Single(identity.Annotations.OfType<ContainerImageAnnotation>()).Tag);
-        Assert.Equal("equipment-reservations-identity", Assert.Single(identity.Annotations.OfType<ContainerMountAnnotation>()).Source);
-        EndpointAnnotation endpoint = Assert.Single(identity.Annotations.OfType<EndpointAnnotation>(), item => item.Name == "http");
-        Assert.Equal(18080, endpoint.Port);
-        Assert.Equal("127.0.0.1", endpoint.TargetHost);
-        EndpointAnnotation management = Assert.Single(identity.Annotations.OfType<EndpointAnnotation>(), item => item.Name == "management");
-        Assert.Equal("127.0.0.1", management.TargetHost);
-        Assert.True(management.ExcludeReferenceEndpoint);
-        Assert.Contains(builder.Resources, resource => resource.Name == "identity-bootstrap");
-    }
-
-    [Fact]
-    public async Task ProviderAdvertisesAllocatedBrowserAddressInsteadOfContainerNetworkAddress()
-    {
-        using var deadline = new CancellationTokenSource(TimeSpan.FromSeconds(10));
-        await using IDistributedApplicationTestingBuilder builder = await DistributedApplicationTestingBuilder.CreateAsync<Projects.AppHost>(["--environment=Development"]);
-        KeycloakResource identity = Assert.Single(builder.Resources.OfType<KeycloakResource>());
-        foreach (EndpointAnnotation endpoint in identity.Annotations.OfType<EndpointAnnotation>())
-        {
-            endpoint.UriScheme = "https";
-            endpoint.AllocatedEndpoint = new AllocatedEndpoint(endpoint, "127.0.0.1", 18443);
-            endpoint.AllAllocatedEndpoints.AddOrUpdateAllocatedEndpoint(KnownNetworkIdentifiers.DefaultAspireContainerNetwork,
-                new AllocatedEndpoint(endpoint, "identity.dev.internal", 8443, EndpointBindingMode.SingleAddress, null, KnownNetworkIdentifiers.DefaultAspireContainerNetwork));
-        }
-
-        IExecutionConfigurationResult configuration = await ExecutionConfigurationBuilder.Create(identity)
-            .WithEnvironmentVariablesConfig()
-            .BuildAsync(builder.ExecutionContext, NullLogger.Instance, deadline.Token);
-        Assert.Equal("https://127.0.0.1:18443", configuration.EnvironmentVariables.Single(variable => variable.Key == "KC_HOSTNAME").Value);
     }
 }

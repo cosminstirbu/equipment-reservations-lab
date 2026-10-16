@@ -113,3 +113,8 @@ As a maintainer, I can rely on automated checks and representative runtime evide
 - Existing trace sampling is retained; acceptance evidence uses a configuration that records the representative operations.
 - Connection establishment is distinct from executed SQL commands; the plan records the driver-supported connection and transaction signals without inventing guarantees.
 - This feature does not modify Spec Kit templates or relax constitutional telemetry privacy requirements.
+
+
+## Prospective testing-policy supersession — feature 007
+
+On 2026-10-16, the owner approved [feature 007’s testing policy](../007-aspire-independent-tests/supersession.md), which supersedes this document’s automated Aspire/AppHost and manifest-publication obligations and retired Smoke.Tests paths. Retained application/provider guarantees have [replacement coverage](../007-aspire-independent-tests/team/coverage-disposition.md); local orchestration is verified manually. Deployment manifest support is outside scope. Original requirements, task markers, acceptance status, review hashes, and evidence above remain historical records; they do not approve feature 007.

@@ -2,9 +2,8 @@ using RabbitMQ.Client;
 using RabbitMQ.Client.Exceptions;
 using ReservationMessaging;
 using Xunit;
-using Xunit.Abstractions;
 
-namespace Smoke.Tests;
+namespace Backend.Tests;
 
 [Collection("Reservation delivery")]
 public sealed class BrokerImportTests(ReservationDeliveryFixture infrastructure)
@@ -48,7 +47,7 @@ public sealed class BrokerImportTests(ReservationDeliveryFixture infrastructure)
     }
 }
 
-public sealed class BrokerStartupTests(ITestOutputHelper output)
+public sealed class BrokerStartupTests
 {
     [Theory]
     [InlineData(false)]
@@ -82,34 +81,33 @@ public sealed class BrokerStartupTests(ITestOutputHelper output)
     }
 
     [Fact]
-    public async Task ActualAppHostProtectsInjectedFilesAndObservesManagedStagingLifetime()
+    public async Task ImportedProviderFilesHaveRestrictedOwnershipAndModes()
     {
         var fixture = new BrokerAccessFixture();
         try
         {
             await fixture.InitializeAsync();
             using var deadline = new CancellationTokenSource(TimeSpan.FromSeconds(15));
-            output.WriteLine(await fixture.InspectStorageAsync(deadline.Token));
+            await fixture.AssertProtectedFilesAsync(deadline.Token);
         }
         finally
         {
             await fixture.DisposeAsync();
         }
 
-        output.WriteLine("DCP session directory removed after awaited disposal: " + fixture.SessionRemoved + ". This does not assert secure erasure.");
     }
 
     [Theory]
     [InlineData("malformed")]
     [InlineData("unreadable")]
-    public async Task FailedCoreImportBlocksActualWorkerAndReportsNoHashMaterial(string failure)
+    public async Task FailedCoreImportRejectsStartupAndReportsNoHashMaterial(string failure)
     {
         var fixture = new BrokerAccessFixture();
         try
         {
             await fixture.InitializeWithFailureAsync(failure);
             using var deadline = new CancellationTokenSource(TimeSpan.FromSeconds(15));
-            await fixture.AssertImportBlockedWorkerAsync(deadline.Token);
+            await fixture.AssertImportRejectedAsync(deadline.Token);
         }
         finally
         {

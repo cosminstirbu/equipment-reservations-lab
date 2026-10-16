@@ -94,3 +94,8 @@ Use one bounded coder batch, retaining positive behavior test-first/green checkp
 ## Completion metadata — 2026-10-15
 
 T001–T022 implemented and validated. T023 passed independent quality/security reviews and coordinator convergence on source manifest `2d340fae1e3d9849b9729d38772bdc3735ead780e130d73438d5365dea031a07`; no unresolved findings or buildable gaps. T024 completed after the owner explicitly accepted the completed result on 2026-10-15; see team/human-acceptance.md. Acceptance was recorded before setting spec Status to Complete. These completion metadata, task-marker and Status updates are metadata-only; reviewed source and historical review reports/hashes remain unchanged.
+
+
+## Prospective testing-policy supersession — feature 007
+
+On 2026-10-16, the owner approved [feature 007’s testing policy](../007-aspire-independent-tests/supersession.md), which supersedes this document’s automated Aspire/AppHost and manifest-publication obligations and retired Smoke.Tests paths. Retained application/provider guarantees have [replacement coverage](../007-aspire-independent-tests/team/coverage-disposition.md); local orchestration is verified manually. Deployment manifest support is outside scope. Original requirements, task markers, acceptance status, review hashes, and evidence above remain historical records; they do not approve feature 007.

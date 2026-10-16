@@ -125,3 +125,8 @@ As a maintainer, I can use current instructions and checks to understand and val
 - Ordinary not-found, fallback, or shared security responses at obsolete addresses are technical planning choices; no successful hello operation or compatibility promise is required.
 - The owner's explicit evidence-strategy update excludes tests whose purpose is to prove an old feature is absent. This does not change retirement outcomes, retained positive booking coverage, state preservation, security requirements, or constitutional policy.
 - No additional product decisions remain after the owner's six confirmed interview answers. Missing implementation details are planning choices bounded by these requirements and the constitution.
+
+
+## Prospective testing-policy supersession — feature 007
+
+On 2026-10-16, the owner approved [feature 007’s testing policy](../007-aspire-independent-tests/supersession.md), which supersedes this document’s automated Aspire/AppHost and manifest-publication obligations and retired Smoke.Tests paths. Retained application/provider guarantees have [replacement coverage](../007-aspire-independent-tests/team/coverage-disposition.md); local orchestration is verified manually. Deployment manifest support is outside scope. Original requirements, task markers, acceptance status, review hashes, and evidence above remain historical records; they do not approve feature 007.

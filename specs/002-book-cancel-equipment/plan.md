@@ -155,3 +155,8 @@ These are planned checks, not claimed passes. Tasks must map each row to explici
 ## Complexity Tracking
 
 No requested constitutional exceptions. Privileged bootstrap and tiny migration library serve concrete cross-database provisioning/test reuse. This plan does not approve itself, waive accessibility, grant final acceptance, or authorize external actions.
+
+
+## Prospective testing-policy supersession — feature 007
+
+On 2026-10-16, the owner approved [feature 007’s testing policy](../007-aspire-independent-tests/supersession.md), which supersedes this document’s automated Aspire/AppHost and manifest-publication obligations and retired Smoke.Tests paths. Retained application/provider guarantees have [replacement coverage](../007-aspire-independent-tests/team/coverage-disposition.md); local orchestration is verified manually. Deployment manifest support is outside scope. Original requirements, task markers, acceptance status, review hashes, and evidence above remain historical records; they do not approve feature 007.

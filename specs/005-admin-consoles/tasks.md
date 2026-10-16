@@ -90,3 +90,8 @@ Original IDs/check states are preserved. Completed pre-repair pgAdmin work recor
 Use US1 as the first internal demonstration, with foundation's local/publish safety assertions; then add US2 and finish US3 runtime guarantees. The authorized delivery includes all three P1 stories, not a reduced MVP. Do not deploy any increment. Prefer one bounded coder batch; preserve stable task IDs/status after implementation begins. Coordinator-only acceptance/review metadata stays outside coder self-approval.
 
 Task count: 24 (original22 preserved; appended security repair2). No extension hooks are registered (`.specify/extensions.yml` absent).
+
+
+## Prospective testing-policy supersession — feature 007
+
+On 2026-10-16, the owner approved [feature 007’s testing policy](../007-aspire-independent-tests/supersession.md), which supersedes this document’s automated Aspire/AppHost and manifest-publication obligations and retired Smoke.Tests paths. Retained application/provider guarantees have [replacement coverage](../007-aspire-independent-tests/team/coverage-disposition.md); local orchestration is verified manually. Deployment manifest support is outside scope. In particular, US3.2 and FR-006/FR-011/SC-004 deployment-output obligations are superseded; local Development-only console behavior, effective loopback exposure, access, and persistence remain manual guarantees. Original requirements, task markers, acceptance status, review hashes, and evidence above remain historical records; they do not approve feature 007.

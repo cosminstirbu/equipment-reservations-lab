@@ -137,3 +137,8 @@ First reviewable increment is US1 with anonymous APIs closed and real-provider s
 ## Targeted design amendment: DESIGN-006-001
 
 T019–T022 and T035 text now implement core boot definitions import in local run mode instead of the original finite admin-HTTP proposal. Existing IDs/checkmarks/history, including completed BrokerBootstrap skeleton T002, are preserved; T020 repurposes that project as a pure library. Runtime secrets/hashes are never generated into publish output; production provisioning/deployment remains outside scope. Feature005 Development-only console/administrative-endpoint boundary remains mandatory. Follow the updated plan/research/messaging contract; independent targeted reviewers own closure before dependent source implementation.
+
+
+## Prospective testing-policy supersession — feature 007
+
+On 2026-10-16, the owner approved [feature 007’s testing policy](../007-aspire-independent-tests/supersession.md), which supersedes this document’s automated Aspire/AppHost and manifest-publication obligations and retired Smoke.Tests paths. Retained application/provider guarantees have [replacement coverage](../007-aspire-independent-tests/team/coverage-disposition.md); local orchestration is verified manually. Deployment manifest support is outside scope. Original requirements, task markers, acceptance status, review hashes, and evidence above remain historical records; they do not approve feature 007.

@@ -2,7 +2,6 @@ using System.Collections.Concurrent;
 using System.Net.Http.Json;
 using System.Text.Json;
 using System.Threading.Channels;
-using Backend.Tests;
 using BrokerBootstrap;
 using DotNet.Testcontainers.Builders;
 using DotNet.Testcontainers.Configurations;
@@ -15,7 +14,7 @@ using RabbitMQ.Client;
 using ReservationMessaging;
 using Xunit;
 
-namespace Smoke.Tests;
+namespace Backend.Tests;
 
 [CollectionDefinition("Reservation delivery")]
 public sealed class ReservationDeliveryTests : ICollectionFixture<ReservationDeliveryFixture>;
@@ -42,22 +41,30 @@ public sealed class ReservationDeliveryFixture : IAsyncLifetime
     public async Task InitializeAsync()
     {
         using var deadline = new CancellationTokenSource(TimeSpan.FromSeconds(60));
-        await Postgres.InitializeAsync();
-        string definitions = Definitions();
-        Assert.True(string.Equals(definitions, Definitions(), StringComparison.Ordinal), "Unchanged secret and salt inputs must produce byte-stable definitions.");
-        broker = new ContainerBuilder("rabbitmq:4.3.6")
-            .WithEnvironment("RABBITMQ_DEFAULT_USER", "fixture")
-            .WithEnvironment("RABBITMQ_DEFAULT_PASS", password)
-            .WithResourceMapping(System.Text.Encoding.UTF8.GetBytes(definitions), "/etc/rabbitmq/equipment-definitions.json", 999, 999, UnixFileModes.UserRead | UnixFileModes.UserWrite)
-            .WithResourceMapping(System.Text.Encoding.UTF8.GetBytes(BrokerProvisioning.Configuration), "/etc/rabbitmq/conf.d/20-equipment.conf", 999, 999, UnixFileModes.UserRead | UnixFileModes.UserWrite)
-            .WithPortBinding(5672, true)
-            .WithWaitStrategy(Wait.ForUnixContainer().UntilInternalTcpPortIsAvailable(5672))
-            .Build();
-        await broker.StartAsync(deadline.Token);
-        Messaging = $"amqp://fixture:{password}@{broker.Hostname}:{broker.GetMappedPublicPort(5672)}/equipment";
-        Publisher = $"amqp://reservations-publisher:{publisherPassword}@{broker.Hostname}:{broker.GetMappedPublicPort(5672)}/equipment";
-        Consumer = $"amqp://notifications-consumer:{consumerPassword}@{broker.Hostname}:{broker.GetMappedPublicPort(5672)}/equipment";
-        await ResetQueueAsync(deadline.Token);
+        try
+        {
+            await Postgres.InitializeAsync();
+            string definitions = Definitions();
+            Assert.True(string.Equals(definitions, Definitions(), StringComparison.Ordinal), "Unchanged secret and salt inputs must produce byte-stable definitions.");
+            broker = new ContainerBuilder("rabbitmq:4.3.6")
+                .WithEnvironment("RABBITMQ_DEFAULT_USER", "fixture")
+                .WithEnvironment("RABBITMQ_DEFAULT_PASS", password)
+                .WithResourceMapping(System.Text.Encoding.UTF8.GetBytes(definitions), "/etc/rabbitmq/equipment-definitions.json", 999, 999, UnixFileModes.UserRead | UnixFileModes.UserWrite)
+                .WithResourceMapping(System.Text.Encoding.UTF8.GetBytes(BrokerProvisioning.Configuration), "/etc/rabbitmq/conf.d/20-equipment.conf", 999, 999, UnixFileModes.UserRead | UnixFileModes.UserWrite)
+                .WithPortBinding(5672, true)
+                .WithWaitStrategy(Wait.ForUnixContainer().UntilInternalTcpPortIsAvailable(5672))
+                .Build();
+            await broker.StartAsync(deadline.Token);
+            Messaging = $"amqp://fixture:{password}@{broker.Hostname}:{broker.GetMappedPublicPort(5672)}/equipment";
+            Publisher = $"amqp://reservations-publisher:{publisherPassword}@{broker.Hostname}:{broker.GetMappedPublicPort(5672)}/equipment";
+            Consumer = $"amqp://notifications-consumer:{consumerPassword}@{broker.Hostname}:{broker.GetMappedPublicPort(5672)}/equipment";
+            await ResetQueueAsync(deadline.Token);
+        }
+        catch
+        {
+            await DisposeAsync();
+            throw;
+        }
     }
 
     public async Task ResetQueueAsync(CancellationToken cancellationToken)

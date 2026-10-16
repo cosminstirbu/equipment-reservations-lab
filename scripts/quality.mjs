@@ -1,4 +1,4 @@
-import { spawn, spawnSync } from 'node:child_process';
+import { spawnSync } from 'node:child_process';
 import { mkdirSync, readdirSync, realpathSync, rmSync } from 'node:fs';
 import { dirname, extname, isAbsolute, relative, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -85,46 +85,6 @@ function run(command, args, quiet = false) {
     throw new Error(
       `${command} exited ${result.status ?? result.signal}\n${quiet ? (result.stdout + result.stderr).slice(-2000) : ''}`,
     );
-}
-
-function runAsync(command, args) {
-  return new Promise((resolve, reject) => {
-    const child = spawn(command, args, { cwd: root, stdio: 'inherit' });
-
-    child.once('error', reject);
-    child.once('close', (code, signal) => {
-      if (code === 0) {
-        resolve();
-        return;
-      }
-
-      reject(
-        new Error(`${command} ${args.join(' ')} exited ${code ?? signal}`),
-      );
-    });
-  });
-}
-
-async function testBackendAndSmoke() {
-  // lint() already built the solution. Avoid concurrent writes to shared build outputs.
-  const results = await Promise.allSettled(
-    ['Backend.Tests', 'Smoke.Tests'].map((project) =>
-      runAsync('dotnet', [
-        'test',
-        `tests/${project}/${project}.csproj`,
-        '--no-build',
-        '-m:1',
-      ]),
-    ),
-  );
-
-  const failures = results.filter((result) => result.status === 'rejected');
-  if (failures.length) {
-    throw new AggregateError(
-      failures.map((result) => result.reason),
-      failures.map((result) => result.reason.message).join('\n'),
-    );
-  }
 }
 
 async function withFormattingLock(action) {
@@ -228,7 +188,12 @@ if (
       run('npm', ['run', 'test:tooling']);
       run('npm', ['--prefix', 'src/Web', 'run', 'build']);
       run('npm', ['--prefix', 'src/Web', 'test']);
-      await testBackendAndSmoke();
+      run('dotnet', [
+        'test',
+        'tests/Backend.Tests/Backend.Tests.csproj',
+        '--no-build',
+        '-m:1',
+      ]);
     } else
       throw new Error(
         'Usage: npm run format|format-check|lint|check [-- files...]',

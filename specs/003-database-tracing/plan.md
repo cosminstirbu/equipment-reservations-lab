@@ -133,3 +133,8 @@ tests/Smoke.Tests/                # bootstrap/runtime evidence where needed
 ## Complexity Tracking
 
 No policy exceptions. The non-sampling exception listener is necessary because supported Activity APIs do not remove existing events; lifetime and missing-subscription regression checks prevent unintended activation.
+
+
+## Prospective testing-policy supersession — feature 007
+
+On 2026-10-16, the owner approved [feature 007’s testing policy](../007-aspire-independent-tests/supersession.md), which supersedes this document’s automated Aspire/AppHost and manifest-publication obligations and retired Smoke.Tests paths. Retained application/provider guarantees have [replacement coverage](../007-aspire-independent-tests/team/coverage-disposition.md); local orchestration is verified manually. Deployment manifest support is outside scope. Original requirements, task markers, acceptance status, review hashes, and evidence above remain historical records; they do not approve feature 007.

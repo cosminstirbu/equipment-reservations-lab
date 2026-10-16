@@ -1,0 +1,92 @@
+[
+  {
+    "path": "specs/001-hello-world-skeleton/spec.md",
+    "bytes": 9347,
+    "sha256": "c5be6af2b67fb3afcc1e78d251e4726d15337479bea5a3129f80e10bc5ba856f"
+  },
+  {
+    "path": "specs/001-hello-world-skeleton/plan.md",
+    "bytes": 9596,
+    "sha256": "4eab211cfe659a15f0dc6820c8b6b384ee4391684fe34c9204036ac6fe15b1fa"
+  },
+  {
+    "path": "specs/001-hello-world-skeleton/tasks.md",
+    "bytes": 13002,
+    "sha256": "b648c612d84a16b63396ffb971b6c31d0b004734f3b3e54ab1058e6dba13e0f9"
+  },
+  {
+    "path": "specs/002-book-cancel-equipment/spec.md",
+    "bytes": 23027,
+    "sha256": "621e369706c1788482d49a73baa8e5c00e9192d125fb4e9ba12934764c26ed21"
+  },
+  {
+    "path": "specs/002-book-cancel-equipment/plan.md",
+    "bytes": 26191,
+    "sha256": "86fd6c0420933ff95962c70c19c55f0f8a9f491d79f2f6fc0510d8e0ef3d74fd"
+  },
+  {
+    "path": "specs/002-book-cancel-equipment/tasks.md",
+    "bytes": 31031,
+    "sha256": "2fe5d7e5915d0914ebd03538fe8801ad4e49ac67dfc647f6120d9a74910471c9"
+  },
+  {
+    "path": "specs/003-database-tracing/spec.md",
+    "bytes": 12040,
+    "sha256": "8ad6272ea4b521dd3a4bb4a753963e8bc8b3fe977b86d5a02a129ca9ae272f6d"
+  },
+  {
+    "path": "specs/003-database-tracing/plan.md",
+    "bytes": 15307,
+    "sha256": "b7afd589bef6199c790d6c08a730e893c5bcbb4f85a6503cd26d82f8faa7b5ed"
+  },
+  {
+    "path": "specs/003-database-tracing/tasks.md",
+    "bytes": 16576,
+    "sha256": "ad0840b75574283ce5044c9971b873345eea746e5eee9832206db5a1e83c8f99"
+  },
+  {
+    "path": "specs/004-remove-hello/spec.md",
+    "bytes": 16835,
+    "sha256": "8e88090999be618249836c5511e3aeea5b73ec4d9c783b1d8b66023962104ca7"
+  },
+  {
+    "path": "specs/004-remove-hello/plan.md",
+    "bytes": 15972,
+    "sha256": "d72ccf84b62cddbf1ac3d1ad0a2e3ce7fd2031bed26b788b87e7fb033c0d823b"
+  },
+  {
+    "path": "specs/004-remove-hello/tasks.md",
+    "bytes": 14129,
+    "sha256": "f476d0abbfa9d1beafda5757a13c061b29153b7b5cf7861835328d4aa26007e6"
+  },
+  {
+    "path": "specs/005-admin-consoles/spec.md",
+    "bytes": 14177,
+    "sha256": "ea8882f6280844ea5d5309ada0a2c5b10ff39c41e82454a085ee02e55556ba91"
+  },
+  {
+    "path": "specs/005-admin-consoles/plan.md",
+    "bytes": 12242,
+    "sha256": "712aead0f78f4af80c9d235ecbdc28b0ce19559904ee3969b36e489c6f03cd34"
+  },
+  {
+    "path": "specs/005-admin-consoles/tasks.md",
+    "bytes": 17389,
+    "sha256": "97dd1cbe50ab005d75aba86b9b49679572f7cc7d1a7f89ebafa46f9f5f162fff"
+  },
+  {
+    "path": "specs/006-identity-access/spec.md",
+    "bytes": 23837,
+    "sha256": "fbc94077852c96e6cb223783ba6babd56b233a5b120d23456a594bd2c032816c"
+  },
+  {
+    "path": "specs/006-identity-access/plan.md",
+    "bytes": 21750,
+    "sha256": "d86390183864402c6e0ebf0f2efc8b68d333083e3a654d3b724ec9a0543662f8"
+  },
+  {
+    "path": "specs/006-identity-access/tasks.md",
+    "bytes": 25837,
+    "sha256": "cb6757d4b814aa8121e6102e0a2837e3940dbd450c19ef1a5ac307d7ea9b256f"
+  }
+]

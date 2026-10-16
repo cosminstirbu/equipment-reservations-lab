@@ -30,9 +30,9 @@ npm run test:tooling
 npm run check
 ```
 
-`lint` runs ESLint with zero warnings, .NET build with warnings treated as errors, and the suggestion-level IDE verification gate. `check` adds hook tests, frontend build/tests and the complete backend/real RabbitMQ smoke suite, requiring running Podman. Browser checks remain documented in the application README.
+`lint` runs ESLint with zero warnings, .NET build with warnings treated as errors, and the suggestion-level IDE verification gate. `check` adds hook tests, frontend build/tests and the complete backend integration suite (real PostgreSQL, RabbitMQ and Keycloak), requiring running Podman. Browser checks remain documented in the application README.
 
-After the solution build and frontend checks, `check` runs Backend.Tests and Smoke.Tests concurrently in separate processes using `--no-build` to avoid competing writes to shared build outputs. Each suite keeps its existing sequential test execution. The command waits for both suites and fails if either fails.
+After the solution build and frontend checks, `check` runs `dotnet test tests/Backend.Tests/Backend.Tests.csproj --no-build -m:1`. Backend.Tests keeps assembly-wide and existing collection serialization. The command propagates a backend failure; parallelization changes are deferred. Automated checks never start or inspect Aspire or publish a manifest.
 
 To format only edited files after each edit:
 

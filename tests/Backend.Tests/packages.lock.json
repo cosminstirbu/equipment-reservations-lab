@@ -701,6 +701,12 @@
           "xunit.extensibility.core": "[2.9.3]"
         }
       },
+      "brokerbootstrap": {
+        "type": "Project",
+        "dependencies": {
+          "ServiceDefaults": "[1.0.0, )"
+        }
+      },
       "databasebootstrap": {
         "type": "Project",
         "dependencies": {
@@ -716,6 +722,13 @@
         "type": "Project",
         "dependencies": {
           "Microsoft.AspNetCore.Authentication.JwtBearer": "[10.0.9, )"
+        }
+      },
+      "identitybootstrap": {
+        "type": "Project",
+        "dependencies": {
+          "IdentityAccess": "[1.0.0, )",
+          "ServiceDefaults": "[1.0.0, )"
         }
       },
       "inventory": {

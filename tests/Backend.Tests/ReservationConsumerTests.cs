@@ -4,7 +4,6 @@ using System.Diagnostics.Metrics;
 using System.Net;
 using System.Net.Http.Json;
 using System.Text.Json.Nodes;
-using Backend.Tests;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
@@ -14,7 +13,7 @@ using RabbitMQ.Client;
 using ReservationMessaging;
 using Xunit;
 
-namespace Smoke.Tests;
+namespace Backend.Tests;
 
 [Collection("Reservation delivery")]
 public sealed class ReservationConsumerTests(ReservationDeliveryFixture infrastructure)

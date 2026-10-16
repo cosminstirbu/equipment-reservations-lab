@@ -1,0 +1,27 @@
+{
+  "findings": [
+    {
+      "id": "Q007-001",
+      "category": "code",
+      "severity": "medium",
+      "blocking": true,
+      "owner": "coder",
+      "reviewer": "verifier_reviewer",
+      "status": "closed",
+      "description": "Nine exact executable names in coverage evidence use nested helper types rather than actual consumer/outbox test classes. No behavior loss or source fix needed.",
+      "evidence": "coverage-disposition.md lines40\u201345,48\u201350",
+      "source_refs": [
+        "FR-002",
+        "SC-001",
+        "T017"
+      ],
+      "review_report": "quality-implementation-round0.md",
+      "closure": {
+        "owner": "verifier_reviewer",
+        "report": "quality-implementation-round1.md",
+        "coverage_map_sha256": "188f981ffe777de98445947a7fb8993675fb0f1919b36c5dac4cd6de6a98f950",
+        "source_changes": false
+      }
+    }
+  ]
+}

@@ -1,0 +1,215 @@
+{
+  "feature_directory": "specs/007-aspire-independent-tests",
+  "status": "complete",
+  "baseline_revision": "e1952952e82aa1a32e79285923db68f26f995aed",
+  "preparation_round": 0,
+  "implementation_round": 1,
+  "limits": {
+    "preparation_repairs": 3,
+    "implementation_repairs": 3,
+    "no_progress_recurrences": 2
+  },
+  "required_checks": [
+    "npm run format-check",
+    "npm run lint",
+    "npm run check",
+    "independent quality and security reviews",
+    "speckit-converge",
+    "explicit human acceptance"
+  ],
+  "acceptance_evidence": [
+    {
+      "date": "2026-10-16",
+      "owner": "human owner",
+      "statement": "I confirm the feature. Please stage the files and give me a commit message.",
+      "accepted_feature": "007-aspire-independent-tests",
+      "reviewed_snapshot": "5880d24a7e85530f32eab527f897642ad090933b48a6dc659707b071505c2d1b",
+      "tested_source_snapshot": "193a7726e4fb19d84310c3b91f4c59f4a7356d714a112045e80a59daceb2d0d7",
+      "coverage_map_sha256": "188f981ffe777de98445947a7fb8993675fb0f1919b36c5dac4cd6de6a98f950",
+      "authorization": "Final feature acceptance and staging; commit message requested, no commit/merge/deploy/publish authorized."
+    }
+  ],
+  "quality_review": {
+    "verdict": "pass",
+    "revision": "5880d24a7e85530f32eab527f897642ad090933b48a6dc659707b071505c2d1b",
+    "report": "quality-implementation-round1.md",
+    "original_report": "quality-implementation-round0.md",
+    "coverage_map_sha256": "188f981ffe777de98445947a7fb8993675fb0f1919b36c5dac4cd6de6a98f950"
+  },
+  "security_review": {
+    "verdict": "pass",
+    "revision": "5880d24a7e85530f32eab527f897642ad090933b48a6dc659707b071505c2d1b",
+    "report": "security-implementation-round0.md",
+    "supplement": "security-implementation-round1.md",
+    "coverage_map_sha256": "188f981ffe777de98445947a7fb8993675fb0f1919b36c5dac4cd6de6a98f950"
+  },
+  "convergence": {
+    "verdict": "converged",
+    "revision": "5880d24a7e85530f32eab527f897642ad090933b48a6dc659707b071505c2d1b",
+    "coverage_map_sha256": "188f981ffe777de98445947a7fb8993675fb0f1919b36c5dac4cd6de6a98f950",
+    "report": "convergence.md",
+    "tasks_appended": 0,
+    "tasks_sha256_before_after_skill": "c6b56d2884d4434fd43702a564937eea3216b7f34fbfe8ce1709fd2899385145",
+    "functional_requirements": 13,
+    "success_criteria": 6,
+    "acceptance_scenarios": 9,
+    "edge_cases": 6,
+    "tasks_assessed": 22,
+    "plan_decision_groups": 12,
+    "constitution_principles": 6
+  },
+  "human_acceptance_required": true,
+  "human_acceptance": {
+    "date": "2026-10-16",
+    "owner": "human owner",
+    "statement": "I confirm the feature. Please stage the files and give me a commit message.",
+    "accepted_feature": "007-aspire-independent-tests",
+    "reviewed_snapshot": "5880d24a7e85530f32eab527f897642ad090933b48a6dc659707b071505c2d1b",
+    "tested_source_snapshot": "193a7726e4fb19d84310c3b91f4c59f4a7356d714a112045e80a59daceb2d0d7",
+    "coverage_map_sha256": "188f981ffe777de98445947a7fb8993675fb0f1919b36c5dac4cd6de6a98f950",
+    "authorization": "Final feature acceptance and staging; commit message requested, no commit/merge/deploy/publish authorized."
+  },
+  "pending_decisions": [],
+  "scope_confirmation": {
+    "date": "2026-10-16",
+    "owner": "human owner",
+    "statement": "It does capture it. I confirm. Move forward with the team of agents.",
+    "meaning": "Authorizes agreed scope and team work; completed-feature acceptance pending."
+  },
+  "assignments": {
+    "requirements": "T015 complete: central supersession and18 append-only historical notices",
+    "architecture": "Design complete; terminology and non-destructive manual procedure clarified",
+    "verification": "Independent quality PASS after original-reviewer closure of Q007-001",
+    "security": "Independent security PASS plus evidence correction supplement",
+    "coordinator": "Actual final acceptance recorded first; completion metadata consistent; stage authorized feature changes without committing.",
+    "coder": "Implementation and evidence-only Q007-001 correction finished; writes stopped"
+  },
+  "pending_gates": [],
+  "preparation": {
+    "requirements": "specify and clarify complete; no remaining owner decisions",
+    "spec_sha256": "347b6f2eef317513929b7fc70dc16a7c6a14e20d08c1f8bc466754d6400da807",
+    "requirements_quality": "All12 custom checklist items explicitly reviewer-approved; quality-preparation.md",
+    "architecture": "Plan and tasks complete; independent preparation reviews and analyze passed",
+    "security": "Formal preparation and task-security verdicts passed; preserved reports linked in dedicated fields"
+  },
+  "scope_boundaries": [
+    "No src runtime behavior changes",
+    "No automated Aspire/AppHost/model/publish/manifest checks",
+    "Real-provider application and security guarantees retained",
+    "All retained tests in Backend.Tests; no new execution concurrency",
+    "Historical review/acceptance records preserved; prospective supersession only"
+  ],
+  "preparation_quality_review": {
+    "verdict": "pass",
+    "revision": "80c04f3afd6a9a06e80c1105b940676d18a8fddb59dddef76e4de9115ed4201a",
+    "report": "quality-preparation.md"
+  },
+  "preparation_security_review": {
+    "verdict": "pass",
+    "revision": "80c04f3afd6a9a06e80c1105b940676d18a8fddb59dddef76e4de9115ed4201a",
+    "report": "security-preparation.md"
+  },
+  "task_analysis": {
+    "verdict": "pass",
+    "report": "analyze.md",
+    "tasks_sha256": "26fb0febba31624bd5dbcf57daedaad314d6f8f8a8cb8d06a7ef84d1f30c10a2"
+  },
+  "task_security_review": {
+    "verdict": "pass",
+    "report": "security-tasks.md"
+  },
+  "historical_supersession": {
+    "status": "pass append-only audit",
+    "prefix_manifest": "historical-prefix-baselines.json",
+    "files": 18,
+    "original_baseline": "e1952952e82aa1a32e79285923db68f26f995aed",
+    "historical_review_and_acceptance_records_modified": false
+  },
+  "design_clarifications": [
+    {
+      "date": "2026-10-16",
+      "owner": "architect_planner",
+      "change": "Corrected plan production auth terminology to InventoryClient -> ServiceTokenClient acquisition/authentication pipeline; no separate token-handler class exists. Same approved real authentication guarantee, no runtime or behavioral design change.",
+      "files": [
+        "plan.md"
+      ],
+      "plan_sha256": "59eb929620985efcee838b3a4d2d3333af746ff13946c1aed2bc5bcd1cab2644",
+      "historical_preparation_snapshot_preserved": true,
+      "final_implementation_reviews_must_assess_current_plan": true
+    }
+  ],
+  "manual_development_check": {
+    "verdict": "pass local-wiring and read-only persistence procedure observation",
+    "report": "manual-development-check.md",
+    "ordinary_storage_preserved": true,
+    "coordinator_session_stopped": true,
+    "source_runtime_unchanged": true
+  },
+  "validation": {
+    "snapshot": "193a7726e4fb19d84310c3b91f4c59f4a7356d714a112045e80a59daceb2d0d7",
+    "format_check": {
+      "exit": 0,
+      "log": "/tmp/007-format-check.log"
+    },
+    "lint": {
+      "exit": 0,
+      "warnings": 0,
+      "errors": 0,
+      "log": "/tmp/007-lint.log"
+    },
+    "check": {
+      "status": "pass",
+      "exit": 0,
+      "backend_passed": 400,
+      "backend_failed": 0,
+      "backend_skipped": 0,
+      "frontend_passed": 60,
+      "tooling_passed": 4,
+      "log": "/tmp/007-check.log"
+    },
+    "runtime_scope_audit": "git diff baseline -- src empty",
+    "retired_harness_audit": "no active references in tests/scripts/solution",
+    "report": "validation.md"
+  },
+  "implementation_review_snapshot": "5880d24a7e85530f32eab527f897642ad090933b48a6dc659707b071505c2d1b",
+  "completion_metadata_history": [
+    {
+      "date": "2026-10-16",
+      "change": "Spec Status updated to implemented and required-validation passed, accurately naming review/convergence/acceptance gates; T018 checked. Metadata only; frozen tested source unchanged."
+    },
+    {
+      "date": "2026-10-16",
+      "change": "After actual independent reviews/convergence passed, T019/T020 checked and spec Status names only remaining human acceptance. Metadata only; no source changes; historical review/test snapshots preserved."
+    },
+    {
+      "date": "2026-10-16",
+      "change": "Actual final human acceptance recorded first, then spec Status set to exact Complete accepted date and T021/T022 checked. Metadata-only changes; historical reviewed/tested hashes/reports preserved. Staging authorized; no commit."
+    }
+  ],
+  "implementation_repairs": [
+    {
+      "round": 1,
+      "finding": "Q007-001",
+      "scope": "coverage mapping document qualifiers only; source/check evidence remains valid if hashes unchanged",
+      "status": "closed by original quality reviewer; security supplement pass; source unchanged"
+    }
+  ],
+  "completion_metadata_consistency_check": {
+    "date": "2026-10-16",
+    "status": "pass \u2014 complete and explicitly accepted",
+    "tasks_complete": 22,
+    "pending_tasks": [],
+    "pending_gates": [],
+    "open_blocking_findings": 0,
+    "quality": "pass",
+    "security": "pass",
+    "convergence": "converged",
+    "human_acceptance_recorded": true,
+    "human_acceptance_recorded_before_complete_status": true,
+    "spec_status": "Complete \u2014 implemented, independently reviewed, and accepted 2026-10-16",
+    "reviewed_source_unchanged": true,
+    "unchanged_frozen_files_excluding_spec_tasks_metadata": 344,
+    "historical_reports_preserved": true,
+    "post_review_changes": "coverage evidence correction separately approved by reviewers; completion metadata only"
+  }
+}

@@ -14,6 +14,5 @@
   </Folder>
   <Folder Name="/tests/">
     <Project Path="tests/Backend.Tests/Backend.Tests.csproj" />
-    <Project Path="tests/Smoke.Tests/Smoke.Tests.csproj" />
   </Folder>
 </Solution>

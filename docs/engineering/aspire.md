@@ -33,10 +33,13 @@ Source: [C# service defaults](https://aspire.dev/get-started/csharp-service-defa
 
 ## Tests and versions
 
-Application behavior tests must remain runnable without a developer's running AppHost.
-Use Testcontainers for their databases; use AppHost-level tests only when the orchestration
-itself needs verification. Neither a dashboard showing healthy resources nor successful
-startup replaces application acceptance tests.
+Automated application tests do not construct, inspect, start or publish AppHosts.
+Backend.Tests uses service factories and real provider containers independently of
+Aspire. Verify local startup, dashboard/client/admin access, loopback bindings and
+persistent state manually with [the documented procedure](../../README.md#manual-local-development-check).
+Local wiring regressions may first surface during development. Neither dashboard
+health nor successful startup replaces application/provider acceptance checks.
+Manifest generation and cloud deployment through Aspire are outside this policy.
 
 Pin a compatible Aspire version at setup. Aspire evolves independently from the .NET
 runtime; do not assume matching major version numbers are required.

@@ -8,7 +8,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Xunit;
 
-namespace Smoke.Tests;
+namespace Backend.Tests;
 
 [Collection("Identity provider")]
 public sealed class ServiceIdentityContractTests(IdentityProviderFixture provider)
@@ -17,6 +17,8 @@ public sealed class ServiceIdentityContractTests(IdentityProviderFixture provide
     public async Task RealClientCredentialsIssueInventoryOnlyAuthorityAndNeverHumanPrivileges()
     {
         using var deadline = new CancellationTokenSource(TimeSpan.FromSeconds(60));
+        await provider.ProvisionAsync(cancellationToken: deadline.Token);
+        await provider.RestartAsync(deadline.Token);
         await provider.ProvisionAsync(cancellationToken: deadline.Token);
         await using WebApplication app = await ApiAsync(provider.Settings.ServiceSecret);
         ServiceTokenClient service = app.Services.GetRequiredService<ServiceTokenClient>();

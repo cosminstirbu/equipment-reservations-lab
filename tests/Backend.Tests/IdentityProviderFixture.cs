@@ -9,7 +9,7 @@ using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.IdentityModel.Tokens;
 using Xunit;
 
-namespace Smoke.Tests;
+namespace Backend.Tests;
 
 [CollectionDefinition("Identity provider")]
 public sealed class IdentityProviderScenarios : ICollectionFixture<IdentityProviderFixture>;
@@ -31,16 +31,24 @@ public sealed class IdentityProviderFixture : IAsyncLifetime
             .WithPortBinding(8080, true)
             .WithWaitStrategy(Wait.ForUnixContainer().UntilHttpRequestIsSucceeded(request => request.ForPort(8080).ForPath("/realms/master")))
             .Build();
-        await provider.StartAsync(deadline.Token);
-        string root = $"http://{provider.Hostname}:{provider.GetMappedPublicPort(8080)}";
-        Settings = new IdentityProvisioningSettings(root + "/realms/equipment", "http://localhost:19876/", "fixture-admin", adminPassword,
-            new Dictionary<string, string>
-            {
-                ["employee-a"] = Guid.NewGuid().ToString("N"),
-                ["employee-b"] = Guid.NewGuid().ToString("N"),
-                ["approver"] = Guid.NewGuid().ToString("N"),
-                ["equipment-staff"] = Guid.NewGuid().ToString("N")
-            }, Guid.NewGuid().ToString("N"));
+        try
+        {
+            await provider.StartAsync(deadline.Token);
+            string root = $"http://{provider.Hostname}:{provider.GetMappedPublicPort(8080)}";
+            Settings = new IdentityProvisioningSettings(root + "/realms/equipment", "http://localhost:19876/", "fixture-admin", adminPassword,
+                new Dictionary<string, string>
+                {
+                    ["employee-a"] = Guid.NewGuid().ToString("N"),
+                    ["employee-b"] = Guid.NewGuid().ToString("N"),
+                    ["approver"] = Guid.NewGuid().ToString("N"),
+                    ["equipment-staff"] = Guid.NewGuid().ToString("N")
+                }, Guid.NewGuid().ToString("N"));
+        }
+        catch
+        {
+            await DisposeAsync();
+            throw;
+        }
     }
 
     public async Task ProvisionAsync(IdentityProvisioningSettings? settings = null, CancellationToken cancellationToken = default)

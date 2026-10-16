@@ -5,7 +5,7 @@ using Npgsql;
 using Testcontainers.PostgreSql;
 using Xunit;
 
-namespace Smoke.Tests;
+namespace Backend.Tests;
 
 public sealed class DatabaseProvisioningTests
 {

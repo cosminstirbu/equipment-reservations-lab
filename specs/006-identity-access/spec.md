@@ -157,3 +157,8 @@ As the local operator, I can run authenticated service communication and constra
 - Provider discovery/key retrieval, token acquisition, cache behavior, timeout/retry policy, exact expiry duration, event contract changes and broker resource permission expressions are routine design choices. They must meet the constitution, fail closed and obtain independent review; no new product decision is delegated to the implementer.
 - No new production uptime/scale, localization, self-service identity lifecycle or immediate universal token-revocation guarantee is introduced. Existing booking responsiveness and bounded recovery requirements remain.
 - Completion requires explicit human acceptance of the result; the confirmed interview is scope authorization only.
+
+
+## Prospective testing-policy supersession — feature 007
+
+On 2026-10-16, the owner approved [feature 007’s testing policy](../007-aspire-independent-tests/supersession.md), which supersedes this document’s automated Aspire/AppHost and manifest-publication obligations and retired Smoke.Tests paths. Retained application/provider guarantees have [replacement coverage](../007-aspire-independent-tests/team/coverage-disposition.md); local orchestration is verified manually. Deployment manifest support is outside scope. Original requirements, task markers, acceptance status, review hashes, and evidence above remain historical records; they do not approve feature 007.

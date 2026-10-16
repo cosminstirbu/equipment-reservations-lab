@@ -1,0 +1,11 @@
+{
+  "snapshot": "80c04f3afd6a9a06e80c1105b940676d18a8fddb59dddef76e4de9115ed4201a",
+  "baseline_revision": "e1952952e82aa1a32e79285923db68f26f995aed",
+  "files": {
+    "spec.md": "347b6f2eef317513929b7fc70dc16a7c6a14e20d08c1f8bc466754d6400da807",
+    "plan.md": "60ab5f02699ac3c074b886ba6def251c86f04c182be77a74caf35583da82e2e0",
+    "research.md": "0f8da197765baf8090057b95d9870fe6910ac9e2db940e97618214fb34c35e4f",
+    "data-model.md": "e7a7df7f64c68bfd27e0f557daafa4b06b8f51b3c3a7ec9bfc0510ab4bd7bec3",
+    "quickstart.md": "ea41d1a7ef44218bad125f0088dfee99ad4799c29e261bd2d732b8b27875cca1"
+  }
+}

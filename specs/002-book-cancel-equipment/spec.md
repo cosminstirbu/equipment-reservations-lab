@@ -158,3 +158,8 @@ As an authenticated user, I can see only my own inbox entries for successful boo
 - The request's existing tooling, service responsibilities and named infrastructure constraints pass to the implementation plan unchanged. They constrain implementation, not additional user journeys.
 - Dependency retry timing, contract formats, database concurrency mechanism, migration tooling and deterministic bounded recovery deadlines are routine planning decisions. They cannot weaken atomic allocation, repeat safety or eventual recovery requirements.
 - Human final feature acceptance remains required by constitution 1.1.0 and is not inferred from this request or automated checks. The walking skeleton's open manual accessibility finding remains an independent review concern until explicitly closed.
+
+
+## Prospective testing-policy supersession — feature 007
+
+On 2026-10-16, the owner approved [feature 007’s testing policy](../007-aspire-independent-tests/supersession.md), which supersedes this document’s automated Aspire/AppHost and manifest-publication obligations and retired Smoke.Tests paths. Retained application/provider guarantees have [replacement coverage](../007-aspire-independent-tests/team/coverage-disposition.md); local orchestration is verified manually. Deployment manifest support is outside scope. Original requirements, task markers, acceptance status, review hashes, and evidence above remain historical records; they do not approve feature 007.

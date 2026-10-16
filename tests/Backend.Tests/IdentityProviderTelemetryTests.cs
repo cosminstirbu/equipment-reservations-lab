@@ -17,7 +17,7 @@ using OpenTelemetry.Trace;
 using ServiceDefaults;
 using Xunit;
 
-namespace Smoke.Tests;
+namespace Backend.Tests;
 
 [Collection("Identity provider")]
 public sealed class IdentityProviderTelemetryTests(IdentityProviderFixture provider)

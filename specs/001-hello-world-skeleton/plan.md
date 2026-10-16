@@ -86,3 +86,8 @@ OTEL ASP.NET/HttpClient traces/logs/metrics export to the Aspire dashboard; loca
 ## Complexity Tracking
 
 No constitutional violations identified. Three services are explicitly requested. No deployment artifacts or extra infrastructure are planned.
+
+
+## Prospective testing-policy supersession — feature 007
+
+On 2026-10-16, the owner approved [feature 007’s testing policy](../007-aspire-independent-tests/supersession.md), which supersedes this document’s automated Aspire/AppHost and manifest-publication obligations and retired Smoke.Tests paths. Retained application/provider guarantees have [replacement coverage](../007-aspire-independent-tests/team/coverage-disposition.md); local orchestration is verified manually. Deployment manifest support is outside scope. Original requirements, task markers, acceptance status, review hashes, and evidence above remain historical records; they do not approve feature 007.
