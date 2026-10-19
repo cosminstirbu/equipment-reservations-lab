@@ -61,8 +61,9 @@ Sources: [Accessibility guidance](https://angular.dev/ai/develop-with-ai) and
 ## Tests
 
 Prefer the Angular CLI's supported test setup; current new projects use Vitest.
-Exercise rendered output, user actions, and component inputs/outputs through TestBed.
-Keep internal collaborators real; double HTTP boundaries. Use browser tests when behavior
-requires actual browser capabilities. Do not assert private fields or component internals.
+Apply the [test boundary selection](testing.md#choose-the-boundary) through TestBed for
+rendered output, user actions, and component inputs/outputs. Use HTTP transport doubles
+for external HTTP services and browser tests when behavior requires actual browser
+capabilities.
 
 Source: [Angular testing](https://angular.dev/guide/testing).

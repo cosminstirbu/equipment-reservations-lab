@@ -29,6 +29,19 @@ Review outcomes: pass, changes_requested, needs_information. Absence of findings
 ## Completion contract
 All acceptance criteria have revision-matched evidence; tasks are complete; required checks pass; no unresolved blocking quality/security findings remain; latest convergence finds no gaps; artifacts agree; any required human acceptance is recorded. Report done only when every condition holds. Done means feature ready for the next authorized action, not automatically merged or deployed.
 
+### Completion metadata
+
+The coordinator owns the final completion-metadata consistency check. Before reporting a
+feature complete, inspect `spec.md`, `tasks.md`, and the team state together. They must
+consistently reflect implementation, independent reviews, convergence, and explicit human
+acceptance; task checkboxes alone are insufficient evidence.
+
+Record human acceptance before changing the spec's Status to
+`Complete — implemented, independently reviewed, and accepted YYYY-MM-DD`. Preserve
+historical review hashes and reports, and identify this status edit as metadata-only.
+If a required gate remains pending, name that gate accurately in the status instead of
+leaving a generic Draft status or claiming completion.
+
 ## Bounded execution
 Default limits: three preparation repair rounds and three implementation repair rounds. A round is one repair batch followed by revalidation, not one agent message. Stop early if the same blocking root cause recurs twice with no materially new evidence or fix. Budget exhaustion yields needs_intervention, not done. Report blocker, attempted fixes, current evidence and the specific decision/action needed. Resume from persisted state after human input; do not reset limits silently.
 

@@ -1,7 +1,10 @@
 # Testing
 
-Applies to client and backend changes. The constitution requires test-first development
-and behavior tests through public interfaces; this guide describes practical boundaries.
+Applies to client and backend changes. This guide implements the constitution's
+[test-first](../../.specify/memory/constitution.md#ii-test-first-development),
+[public-interface](../../.specify/memory/constitution.md#iii-public-interface-behavior-tests), and
+[test-feedback](../../.specify/memory/constitution.md#iv-useful-maintainable-test-feedback) principles
+through concrete test boundaries, provider setup, and review practices.
 
 ## Choose the boundary
 
@@ -20,6 +23,53 @@ boundaries deliberately. Tests must not accidentally call live third-party servi
 
 Source: [ASP.NET Core integration testing](https://learn.microsoft.com/en-us/aspnet/core/test/integration-tests?view=aspnetcore-10.0).
 
+## Test design and review
+
+Before adding or changing tests, check the existing suite and extend or consolidate cases
+that already cover the intended behavior. Record a concise design rationale in the existing
+plan or review record; for ordinary work, use the task response or a comment where the
+boundary choice is non-obvious. Group cases that share a behavior and boundary. The
+record must identify:
+
+- The behavior and contractual outcome being verified, and the stable public entry point.
+- The real internal collaborators retained by the test.
+- Each double, the external responsibility it replaces, and the provider contract evidence
+  establishing its fidelity. Classify the responsibility rather than assuming that a
+  public interface is an external boundary.
+- For each solitary test, the specific reason isolation is necessary under Principle III.
+  Deterministic parsing or validation algorithms can justify this boundary; public
+  visibility, convenience, or an uncovered line alone cannot.
+- The observable result or contractual effect whose regression makes the test fail.
+
+Keep application-owned serialization, validation, routing, persistence, and error handling
+real in integration tests that claim to verify those behaviors. Scope a component test's
+claims to the component actually exercised. A database integration test can verify storage
+behavior without establishing HTTP authorization or endpoint behavior. A broker adapter
+contract test can verify a real connection without establishing readiness registration.
+
+### Failure scenarios
+
+Cause failures at the resource or external boundary responsible for them. Examples include
+PostgreSQL schema/permission faults, blocked database statements cancelled by the actual
+request budget, or HTTP transport failures from a faithful handler double. Use isolated
+real providers for the broker delivery/recovery contracts selected by the feature plan.
+Control time and scheduling at their boundaries while retaining the production behavior
+being verified.
+
+Do not manufacture a database exception inside a request-body stream or publisher double
+to enter an unrelated catch block. Test coordination must tolerate internal refactoring:
+observe scoped provider state or contractual signals rather than depending on middleware
+rewinds, private SQL text, or an incidental internal call sequence.
+
+### Review evidence
+
+For each added or changed test, review the design record against the actual fixture and
+assertions. Verify that the double is faithful at the stated boundary, that claimed
+production collaborators remain real, and that failures occur at the stated resource.
+Check the reason for each solitary case and whether an internal refactor would require
+changing its behavioral expectations. Use the existing review process and preserve
+independent reviewer ownership where required.
+
 ## Database fixtures
 
 Required: use the chosen engine with production-representative schema and migrations.
@@ -32,15 +82,14 @@ Source: [Testcontainers for .NET](https://dotnet.testcontainers.org/).
 
 ## Keep tests useful
 
-Start with a failure for the intended reason, implement, then refactor with passing tests.
-Assert outcomes and contractual effects, not private methods or incidental call sequences.
-A class rename or internal extraction must not require changing behavior expectations.
+For new behavior or a regression fix, retain the failing test command/result before
+implementation as evidence for Principle II. During refactoring, retain the relevant
+behavior expectations and rerun the affected tests.
 
 Control time and randomness at boundaries; avoid timing sleeps and shared mutable state.
 Cover relevant failure and concurrency behavior as well as successful paths. Keep test
-setup local and readable; use shared fixtures when they reduce real duplication.
-Record why a solitary test is necessary. Decide Redis, Kafka, RabbitMQ, and other
-infrastructure testing approaches individually in the feature plan.
+setup local and readable; use shared fixtures when they reduce real duplication. Use
+condition-based observations with bounded deadlines when waiting for external progress.
 
 ## Automated application boundary
 
@@ -63,8 +112,18 @@ AppHost. Aspire is local development orchestration and is verified manually usin
 Manifest generation/cloud deployment is outside the supported testing policy.
 Existing frontend and browser checks remain required at their documented boundaries.
 
-Coverage numbers alone are not an acceptance gate; review the failure each assertion
-detects.
+## Coverage work
+
+Apply the same boundary selection and design review to coverage-driven changes. Use the
+report to identify unverified behavior, then choose the test boundary from that behavior.
+A numeric target does not justify a different boundary or a weaker solitary-test rationale.
+Record remaining gaps and their causes, including generated sequence points and unreachable
+defensive paths. Keep coverage exclusions governed by the committed configuration and
+review any proposed exclusion change on its merits.
+
+Passing tests, formatting, lint, and coverage checks establish only what those checks
+measure. Review the behavioral failure each assertion detects and the design evidence
+above before claiming compliance with the testing principles.
 
 ## Backend code coverage in VS Code and CI
 

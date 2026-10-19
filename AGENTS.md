@@ -1,32 +1,39 @@
-# Spec Kit agent team
+# Repository agent instructions
 
-For requests explicitly starting the feature-team loop, the primary agent acts as coordinator. Read docs/agent-team/protocol.md and .codex/agents/coordinator.toml, and delegate using the five specialist roles. Do not create an additional coordinator subagent. Ordinary small tasks do not require the team loop.
+## Required reading and verification
 
-Feature documents and the project constitution are shared agreements. Missing product decisions go to the human owner. Reviewers own custom requirements-quality and security verdicts; the coder cannot self-approve them. Preserve existing repository instructions when integrating this file.
+Before editing, read the [constitution](.specify/memory/constitution.md) and use the
+[engineering index](docs/engineering/README.md#required-reading-by-task) to read every
+applicable guide. For review-only work, do this before assessing the changes. Follow
+required cross-references in those guides; linked requirements remain binding regardless
+of document depth. Reuse material already read in this session while it remains current.
 
-Do not merge, deploy, publish, or create external issues merely because a feature passes the loop. These actions require their own authorization.
+Before implementation, identify the applicable standards and the evidence needed to verify
+them. Record task-specific decisions in the existing plan or review artifacts, or briefly
+in the task response for ordinary work. Use the testing guide's design record when changing
+tests. Resolve policy conflicts and obtain required exception approval before dependent
+work; continue unaffected work where possible.
 
-## Feature-team completion rules
+During editing, follow the formatting guide's
+[per-edit workflow](docs/engineering/formatting-and-linting.md#per-edit-workflow).
+Before handoff, run its [required checks](docs/engineering/formatting-and-linting.md#required-checks-for-handoff)
+and inspect the changes against every applicable requirement, including those automated
+checks cannot establish. Report evidence, remaining deviations, and unavailable checks.
+This author check does not replace independent reviewer verdicts or human acceptance
+required by the feature-team workflow.
 
-The coordinator owns the final completion-metadata consistency check.
+When updating instructions or standards, use the constitution's
+[artifact ownership and amendment rules](.specify/memory/constitution.md#governance).
+Edit a requirement in its authoritative document and update discovery links as needed.
 
-**Synchronize completion metadata.** Before reporting a feature complete, verify that `spec.md`, `tasks.md`, and the team state consistently reflect implementation, independent reviews, convergence, and explicit human acceptance. After acceptance, update the spec's Status to `Complete — implemented, independently reviewed, and accepted YYYY-MM-DD`. Record acceptance before changing that status. Preserve historical review hashes and reports; identify the status edit as a metadata-only change. If a required gate remains pending, name that gate accurately instead of leaving a generic Draft status. Completion checks must inspect these files, not rely solely on task checkboxes.
+## Spec Kit agent team
 
-## .NET source generation
+For requests explicitly starting the feature-team loop, the primary agent acts as
+coordinator. Read the [protocol](docs/agent-team/protocol.md) and
+[coordinator role](.codex/agents/coordinator.toml) before delegating to the five specialist
+roles. Do not create an additional coordinator subagent. Ordinary small tasks do not
+require the team loop.
 
-Follow the source-generation rules in docs/engineering/aspnet-core.md. Use supported
-.NET generators for compile-time-known JSON contracts, logging, regular expressions,
-and other applicable features. Preserve behavior and wire contracts, inspect generator
-diagnostics, and document unsupported or dynamic cases for owner review.
-
-## Formatting and static analysis
-
-Follow docs/engineering/formatting-and-linting.md and the committed formatter/linter configuration. After each source-file edit, format that exact file before reading, testing or editing it again: `npm run format -- <edited paths>`. The trusted Codex post-edit hook handles apply_patch/Edit/Write automatically; shell writes and clients without hooks must invoke this command explicitly. Re-read files after formatting. Never format another worker's files or run a whole-repository formatter while workers are writing; formatter commands serialize themselves.
-
-Use Microsoft C# conventions, Angular conventions and the configured Prettier layout. Address CA and IDE diagnostics, including suggestions, rather than suppressing them. Semantic analyzer/ESLint fixes must be explicit and verified; the edit hook only changes layout. Do not disable rules or add suppressions just to pass a gate; document any justified exception for owner review. Generated files and lockfiles are excluded from formatting. After changing formatter configuration, format the owned source scope again.
-
-Blank lines are an authoring responsibility: separate imports from declarations, types and methods from their neighbors, and logical phases such as setup, validation, execution and result handling. Keep related declarations together. Replace nested conditional expressions used for control flow with guard clauses; use multiline callbacks and fluent chains when they obscure the flow. Inspect readability after formatting; a clean formatter check alone is insufficient.
-
-Do not compress multiple declarations/statements into one line. Write block callbacks and exception handlers across readable lines and separate members with blank lines, even when a formatter preserves the original layout. Break long conditions and fluent expressions at natural boundaries. Prefer `var` when the type is apparent; otherwise follow the configured explicit-type rule.
-
-Before handing off changes, run `npm run format-check` and `npm run lint`; run `npm run check` for application changes (requires a running Podman runtime for the real provider integration tests). Keep independent review snapshots frozen: any source or analyzer fix invalidates affected evidence and requires revalidation. Preserve the existing feature-team workflow and human acceptance gates.
+Before reporting a feature complete, apply the protocol's
+[completion contract and metadata procedure](docs/agent-team/protocol.md#completion-contract)
+under the constitution's [quality gates](.specify/memory/constitution.md#development-workflow-and-quality-gates).

@@ -1,7 +1,8 @@
 # Resilience
 
 Applies to backend operations, external dependencies, and relevant client workflows.
-Read with the constitution's repeat-safety rules and [observability](observability.md).
+Read with the constitution's [resilience policy](../../.specify/memory/constitution.md#vi-bounded-safe-resilience)
+and [observability](observability.md).
 
 ## Configure each dependency
 
@@ -11,11 +12,11 @@ The standard handler supplies timeouts, retries, and a circuit breaker, but its 
 are not our policy. Disable unsafe-method retries with `DisableForUnsafeHttpMethods()`
 until repeat safety is established; method names alone do not prove repeat safety.
 
-Required: retry only transient failures, with bounded attempts, exponential backoff, and
-jitter. Set an overall time budget and per-attempt timeout. Respect cancellation.
-Do not retry business rejection or permanent errors. Record whether a circuit breaker
-is warranted and its settings. Do not hedge side-effecting operations without an explicit
-repeat-safety design.
+Configure transient-failure classification, retry limits, and backoff/jitter explicitly
+under Principle VI. Set an overall time budget and per-attempt timeout, and propagate
+cancellation through the handler pipeline. Record whether a circuit breaker is warranted
+and its settings. Do not hedge side-effecting operations without an explicit repeat-safety
+design.
 
 Source: [HTTP resilience](https://learn.microsoft.com/en-us/dotnet/core/resilience/http-resilience).
 

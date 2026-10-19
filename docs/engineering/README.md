@@ -1,14 +1,26 @@
 # Engineering standards
 
-These guides apply the [constitution](../../.specify/memory/constitution.md) to our stack.
-Read the relevant guides during planning, implementation, and review. Feature plans must
-list which guides apply and record decisions the guides deliberately leave open.
+These guides define concrete engineering practices under the
+[constitution's artifact ownership and governance rules](../../.specify/memory/constitution.md#governance).
+Use this index to select required reading; follow the selected guides' required
+cross-references. The routing table is cumulative: read every row that applies.
 
-All source changes must follow [formatting and static analysis](formatting-and-linting.md), including suggestion-level .NET IDE diagnostics, per-edit formatting, and final quality checks.
+## Required reading by task
 
-Backend tests run in parallel by default, including tests within the same project.
-Sequential execution requires a hard documented isolation constraint; see the
-[testing rules](testing.md#backend-parallelism-is-the-default).
+| Task or changed area | Required guide |
+| --- | --- |
+| Any source, test, or tooling/configuration work, including review | [Formatting and static analysis](formatting-and-linting.md) |
+| Add, change, or review tests; investigate or increase coverage | [Testing](testing.md) |
+| Backend behavior, contracts, serialization, logging, or source generation | [ASP.NET Core](aspnet-core.md) |
+| Client behavior, components, templates, accessibility, or browser interaction | [Angular](angular.md) |
+| Traces, logs, metrics, correlation, or telemetry privacy | [Observability](observability.md) |
+| Dependency calls, messaging, timeouts, cancellation, retries, or recovery | [Resilience](resilience.md), [Observability](observability.md), and [Testing](testing.md) |
+| AppHost wiring or local orchestration | [Aspire](aspire.md) |
+| Change instructions, standards, or policy | [Constitution governance](../../.specify/memory/constitution.md#governance) and the guide that owns the affected requirement |
+
+Apply the same routing during planning, implementation, and review. Feature plans list
+the applicable guides and record decisions they leave open. For ordinary work, use the
+existing task response or review record; a new feature-team loop is not implied.
 
 ## Approved stack
 
@@ -36,10 +48,11 @@ Source: [Microsoft support policy](https://dotnet.microsoft.com/en-us/platform/s
 - **Defaults** use “prefer” and allow an alternative with a rationale in the feature plan.
 - Examples illustrate an approach; they do not prescribe application architecture.
 
-The constitution takes precedence. Raise conflicts with the human owner. Changes to
-required rules or the approved stack, and exceptions to required rules, need explicit
-human-owner approval. Clarifications and example corrections follow ordinary review.
-Upstream documentation changes do not automatically amend these standards.
+Use the constitution's [amendment and exception procedure](../../.specify/memory/constitution.md#governance)
+when changing mandatory rules or the approved stack. Keep each concrete rule in its
+owning guide and update this index when its discovery conditions change. Clarifications
+and example corrections follow ordinary review. Upstream documentation changes do not
+automatically amend these standards.
 
 Guides were checked against official documentation on 2026-10-13. Recheck version-sensitive
 advice when selecting or upgrading dependencies; do not copy prerelease APIs into the

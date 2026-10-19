@@ -1,10 +1,12 @@
 <!--
 Sync Impact Report (temporary; remove before committing this amendment)
-Version change: 1.0.0 -> 1.1.0
-Modified principles: III and V retain their intent; concrete tools moved to engineering guides.
-Added sections: engineering standards compliance and amendment rules in Governance.
-Removed sections: none; stack details relocated to docs/engineering/README.md.
-Follow-up TODOs: none. Implementation versions and unselected infrastructure remain planning decisions.
+Version change: 1.1.0 -> 1.1.1 (clarification of existing compliance obligations).
+Modified principles: none; Principles I–VI and feature acceptance gates are unchanged.
+Modified sections: Governance clarifies artifact ownership and reference-based enforcement.
+Related documents: AGENTS.md; engineering index and guides; team protocol.
+Approval: human owner requested alignment with the agreed documentation model on 2026-10-19.
+Impact: future work uses explicit discovery and review steps; historical feature evidence is preserved.
+Follow-up TODOs: none.
 -->
 # Equipment Reservations Constitution
 
@@ -136,10 +138,24 @@ or external issue creation. Each action requires its own authorization.
 
 ## Governance
 
-This constitution is the governing application-policy agreement. Feature specifications,
-plans, tasks, implementation, and reviews MUST comply with it. Repository workflow
-instructions remain applicable; conflicts MUST be raised with the human owner rather
-than silently resolved by relaxing either agreement.
+This constitution owns application principles, mandatory policy constraints, amendment
+rules, and exception authority. Engineering guides own the concrete practices, tools,
+and verification procedures that implement those principles. `AGENTS.md` owns the agent
+workflow for discovering, applying, and verifying applicable requirements; the feature-team
+protocol owns the detailed team execution procedure.
+
+Each requirement MUST have one authoritative home. Other documents MUST link to that
+requirement or elaborate its application within their scope, rather than maintain a
+competing copy. Engineering guides and agent workflows MUST NOT weaken constitutional
+policy. A requirement remains binding when reached through a required reference; its
+location or link depth does not make compliance optional.
+
+Feature specifications, plans, tasks, implementation, and reviews MUST comply with this
+constitution and applicable engineering rules. Repository workflow instructions remain
+applicable. Conflicts MUST be raised with the human owner before dependent work proceeds,
+rather than silently resolved by relaxing an agreement. Ordinary work as well as
+feature-team work is subject to these obligations; the team loop is required only when
+explicitly invoked as defined in the development workflow.
 
 Amendments MUST document the proposed policy change, rationale, and impact on existing
 work and obtain explicit approval from the human owner. Agents MUST NOT amend or relax
@@ -151,16 +167,17 @@ removals or redefinitions, MINOR for new principles or materially expanded guida
 and PATCH for non-semantic clarifications. Amendments MUST update the version and last
 amended date while preserving the original ratification date.
 
-Engineering guides MUST NOT weaken constitutional principles. Changes to mandatory
-engineering rules or the approved stack, and exceptions to those rules, MUST obtain
-explicit human-owner approval. Non-semantic clarifications and example corrections
-follow ordinary review. Engineering updates do not require a constitution version bump
+Changes to mandatory engineering rules or the approved stack, and exceptions to those
+rules, MUST obtain explicit human-owner approval. Non-semantic clarifications and example
+corrections follow ordinary review. Engineering updates do not require a constitution version bump
 unless they change constitutional policy.
 
-Planning and independent reviews MUST explicitly assess constitution and applicable
-engineering standards compliance.
+Planning and reviews MUST explicitly assess constitution and applicable engineering
+standards compliance, including requirements that automated checks cannot establish.
+Passing automated checks alone MUST NOT be treated as evidence of full policy compliance.
+Independent reviews retain the ownership defined in the development workflow.
 Violations MUST be resolved or receive a recorded human-approved exception before
 completion. References explain adopted principles; their future revisions MUST NOT
 automatically change this constitution.
 
-**Version**: 1.1.0 | **Ratified**: 2026-10-13 | **Last Amended**: 2026-10-13
+**Version**: 1.1.1 | **Ratified**: 2026-10-13 | **Last Amended**: 2026-10-19

@@ -1,7 +1,8 @@
 # Observability
 
 Applies to backend operations, external dependencies, and relevant client workflows.
-Read with the constitution's telemetry privacy rules and [resilience](resilience.md).
+Read with the constitution's [telemetry policy](../../.specify/memory/constitution.md#v-correlated-observability)
+and [resilience](resilience.md).
 
 ## Instrument behavior
 
@@ -12,14 +13,15 @@ Propagate trace context across service calls and correlate logs where context ex
 
 Add business signals for reservation, approval, collection, and return outcomes alongside
 request latency, errors, and dependency health. Keep metric dimensions bounded, such as
-operation and outcome; do not use user IDs, equipment IDs, or raw URLs as dimensions.
+operation and outcome. Inspect labels from automatic instrumentation as well as custom
+metrics against the constitutional cardinality constraint. Use bounded operation names
+or route templates rather than raw URLs as metric dimensions.
 
 Source: [.NET OpenTelemetry](https://learn.microsoft.com/en-us/dotnet/core/diagnostics/observability-with-otel).
 
-Required: exclude credentials, tokens, request bodies, and unapproved personal data from
-all telemetry, including URLs, tags, exception details, and automatic instrumentation.
-User/equipment identifiers are allowed for correlation in traces or logs under the
-constitution. Browser instrumentation must follow the same privacy rules.
+Apply the constitutional privacy policy to URLs, tags, exception details, and automatic
+instrumentation on both server and browser. Review the actual exported fields; configuring
+a safe custom log message does not establish that automatic instrumentation is safe.
 
 ## Instrument every external dependency
 
