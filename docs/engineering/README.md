@@ -12,6 +12,7 @@ cross-references. The routing table is cumulative: read every row that applies.
 | Any source, test, or tooling/configuration work, including review | [Formatting and static analysis](formatting-and-linting.md) |
 | Add, change, or review tests; investigate or increase coverage | [Testing](testing.md) |
 | Backend behavior, contracts, serialization, logging, or source generation | [ASP.NET Core](aspnet-core.md) |
+| Application HTTP API contracts, generated documentation, or interactive API testing | [OpenAPI](openapi.md) |
 | Client behavior, components, templates, accessibility, or browser interaction | [Angular](angular.md) |
 | Traces, logs, metrics, correlation, or telemetry privacy | [Observability](observability.md) |
 | Dependency calls, messaging, timeouts, cancellation, retries, or recovery | [Resilience](resilience.md), [Observability](observability.md), and [Testing](testing.md) |

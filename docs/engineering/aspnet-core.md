@@ -64,8 +64,8 @@ Prefer built-in capabilities before adding equivalent libraries:
 
 - Minimal APIs support validation through `AddValidation()` and DataAnnotations.
   Keep business rules separate from request-shape validation.
-- Built-in OpenAPI generation supports OpenAPI 3.1. Check compatibility with Angular
-  client-generation tools before selecting the document version.
+- For generated API documents and interactive testing, follow the
+  [OpenAPI guide](openapi.md).
 - Known API endpoints using cookie authentication return 401/403 instead of redirects.
   Test authentication behavior with the chosen endpoint style.
 - Handled exceptions can have diagnostics suppressed by default. Verify important failures
