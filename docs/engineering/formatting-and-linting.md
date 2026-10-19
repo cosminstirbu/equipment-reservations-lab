@@ -50,6 +50,8 @@ dotnet format style EquipmentReservation.slnx --no-restore --severity info
 
 VS Code workspace settings enable format-on-save with Microsoft C# and Prettier formatters and explicit ESLint fixes. Install the recommended extensions. EditorConfig-aware editors such as Rider can use the same C# settings; command-line checks remain authoritative.
 
+The workspace also points C# Dev Kit's coverage runner to `coverage.runsettings`, which excludes `obj` source paths. CLI and CI runs must pass coverage settings explicitly and install the Microsoft Testing Platform coverage extension in the test projects; see [backend code coverage](testing.md#backend-code-coverage-in-vs-code-and-ci) for prerequisites and commands.
+
 The repository `.codex/hooks.json` runs a synchronous formatter after `apply_patch`, `Edit`, or `Write`, limited to paths identified by that edit. Formatter runs share a serialization lock; deleted, generated, external, and symlinked-outside paths are excluded. Failure returns explicit feedback. Shell writes cannot be safely inferred from arbitrary shell code, so AGENTS.md requires agents to invoke the same per-file formatter explicitly after shell writes. The instructions are also the fallback when hooks are unavailable/untrusted.
 
 Codex requires review/trust of the exact hook definition and a trusted project configuration layer before it executes local hooks. Review and trust the hook in Codex, then start/reload the repository session. Do not record hook registration as proof it fired; the test suite exercises the actual handler separately. Changing the hook definition requires trust review again. [Official hook documentation](https://learn.chatgpt.com/docs/hooks).

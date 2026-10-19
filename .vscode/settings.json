@@ -1,5 +1,6 @@
 {
   "editor.formatOnSave": true,
+  "dotnet.unitTests.runSettingsPath": "${workspaceFolder}/coverage.runsettings",
   "dotnet.server.sourceGeneratorExecution": "Automatic",
   "editor.codeActionsOnSave": {
     "source.fixAll.eslint": "explicit"

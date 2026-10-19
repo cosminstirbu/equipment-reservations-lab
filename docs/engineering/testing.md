@@ -66,6 +66,51 @@ Existing frontend and browser checks remain required at their documented boundar
 Coverage numbers alone are not an acceptance gate; review the failure each assertion
 detects.
 
+## Backend code coverage in VS Code and CI
+
+[coverage.runsettings](../../coverage.runsettings) configures Microsoft Code Coverage
+to exclude source files under `obj` directories. Its source-path expression handles
+both Windows and Unix separators. C# Dev Kit uses Microsoft's collector rather than
+Coverlet; Coverlet exclusion settings are not interchangeable with this configuration.
+
+The workspace's `dotnet.unitTests.runSettingsPath` setting points C# Dev Kit to this
+file. Use **Run Tests with Coverage** to regenerate IDE results after changing it.
+VS Code workspace settings do not configure command-line or CI test runs; pass the
+coverage settings explicitly there.
+
+The CLI uses the native .NET 10 Microsoft Testing Platform runner. Before enabling
+CLI coverage, add a pinned, MTP-compatible `Microsoft.Testing.Extensions.CodeCoverage`
+package reference to the test projects through the existing test-only item group in
+`tests/Directory.Build.props`, excluding TestSupport, and update their package lockfiles.
+The repository does not currently reference this extension, so the following command
+requires that setup first. Installing C# Dev Kit does not install the CLI extension
+into the test projects.
+
+From the repository root, with the normal container runtime environment from the README:
+
+```sh
+dotnet test --solution EquipmentReservation.slnx \
+  --max-parallel-test-modules 9 \
+  --coverage \
+  --coverage-settings "$PWD/coverage.runsettings" \
+  --coverage-output-format cobertura
+```
+
+This example uses a POSIX shell; in PowerShell, pass an absolute settings path using
+`(Join-Path $PWD 'coverage.runsettings')` and use PowerShell line continuation syntax.
+Use `dotnet test --project <project> --help` after adding the extension to confirm
+the available coverage options. CI still needs the pinned SDK and the container
+prerequisites for real PostgreSQL, RabbitMQ and Keycloak integration tests.
+
+Publish the generated Cobertura reports from the test results directories as pipeline
+artifacts. Each test module produces its own report; preserve distinct report paths
+and merge them with a compatible reporting tool if the pipeline needs one solution-wide
+coverage percentage. Do not direct parallel modules to the same output filename.
+`npm run check` continues to run the normal suite without collecting coverage.
+
+Sources: [Microsoft Testing Platform coverage options and package compatibility](https://learn.microsoft.com/en-us/dotnet/core/testing/microsoft-testing-platform-code-coverage),
+[Microsoft Code Coverage configuration](https://github.com/microsoft/codecoverage/blob/main/docs/configuration.md).
+
 ## Backend parallelism is the default
 
 Backend tests must be designed to run concurrently within the same test project,
