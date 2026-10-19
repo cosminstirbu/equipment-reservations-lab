@@ -240,14 +240,14 @@ public sealed class ReservationRecoveryTests(PostgresFixture postgres)
         await using NpgsqlCommand pending = scenario.Database.CreateCommand("SELECT published_at IS NULL FROM reservation_outbox");
         Assert.True((bool)(await pending.ExecuteScalarAsync(deadline.Token))!);
         schedule.Advance();
-        Assert.Equal(TimeSpan.FromSeconds(10), await schedule.NextAsync(deadline.Token));
+        Assert.Equal(TimeSpan.FromSeconds(30), await schedule.NextAsync(deadline.Token));
         _ = Assert.Single(boundary.Events);
         await host.DisposeAsync();
 
         using var restartedSchedule = new ControlledSchedule(scenario.Clock);
         using WebApplicationFactory<Reservations.Program> restarted = PublisherHost(scenario, boundary, restartedSchedule);
         using HttpClient restartedClient = restarted.CreateClient();
-        Assert.Equal(TimeSpan.FromSeconds(10), await restartedSchedule.NextAsync(deadline.Token));
+        Assert.Equal(TimeSpan.FromSeconds(30), await restartedSchedule.NextAsync(deadline.Token));
         _ = Assert.Single(boundary.Events);
         await using NpgsqlCommand stillPending = scenario.Database.CreateCommand("SELECT published_at IS NULL FROM reservation_outbox");
         Assert.True((bool)(await stillPending.ExecuteScalarAsync(deadline.Token))!);

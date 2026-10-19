@@ -1,0 +1,30 @@
+{
+  "findings": [
+    {
+      "id": "Q008-001",
+      "category": "code",
+      "severity": "medium",
+      "blocking": true,
+      "status": "closed",
+      "owner": "coder",
+      "evidence": "quality-implementation-round0.md",
+      "description": "Missing deterministic empty-scan-to-wait insertion coverage.",
+      "closed_by": "verifier_reviewer",
+      "closure_report": "quality-implementation-round1.md",
+      "closure_revision": "8dcd843745c284b962b4b46f891c0f3a2e95a55e1276e2edd0f7cfece71bceda"
+    },
+    {
+      "id": "Q008-002",
+      "category": "code",
+      "severity": "medium",
+      "blocking": true,
+      "status": "closed",
+      "owner": "coder",
+      "evidence": "quality-implementation-round0.md",
+      "description": "Missing production-exported transient recovery/degraded telemetry coverage.",
+      "closed_by": "verifier_reviewer",
+      "closure_report": "quality-implementation-round1.md",
+      "closure_revision": "8dcd843745c284b962b4b46f891c0f3a2e95a55e1276e2edd0f7cfece71bceda"
+    }
+  ]
+}

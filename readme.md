@@ -487,6 +487,29 @@ failures. Inventory validation and broker publication have three-second budgets;
 client calls have five seconds. Booking errors stay visible; refresh saved
 state before deliberately retrying an uncertain write.
 
+Outbox workers use PostgreSQL `LISTEN`/`NOTIFY` as an advisory wake-up signal.
+An insert-only statement trigger emits an empty notification after commit; event
+contents remain in the durable outbox. Each worker leases one additional listener
+connection, so five replicas need five additional connections. All replicas wake,
+then existing `FOR UPDATE SKIP LOCKED` locks distribute rows; each replica publishes
+one event at a time. Delivery remains at least once: an uncertain publication can
+repeat with the same event ID, and consumers must retain duplicate suppression.
+
+A healthy idle worker scans every 30 seconds as fallback for missed notifications,
+removed triggers or manual row repairs. Persisted future retry deadlines wake it
+sooner. Startup and reconnection establish listening before scanning existing work.
+Temporary listener failure restores ten-second polling while independent reconnect
+bursts use three bounded attempts with jittered 1s/2s delays, then ten seconds before
+a fresh burst. Inserts/reconnection cannot shorten publication failure backoff.
+Permanent database configuration failures halt the worker until repaired/restarted.
+Listener setup and cleanup each have a three-second budget; shutdown explicitly
+unregisters the channel before returning a healthy connection to its pool.
+Disabled messaging starts no listener. Payloads, notifying process IDs and raw
+provider errors are excluded from telemetry. The bounded wake-cause and listener
+outcome metrics distinguish healthy notification operation from degraded polling.
+Pending/oldest gauges refresh on scans and can lag 30 seconds while idle.
+See [notification validation and evidence](specs/008-outbox-notifications/quickstart.md).
+
 Reservation APIs have eight-second request budgets. Outbox publication has three
 seconds, consumer setup/database calls five seconds and ACK three seconds. Safe
 outcome/dependency metrics and correlated W3C workflow/event spans distinguish

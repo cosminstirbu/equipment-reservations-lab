@@ -13,6 +13,8 @@ public static class ReservationTelemetry
     private static readonly Histogram<double> Duration = Meter.CreateHistogram<double>("reservation.duration", "ms");
     private static readonly Counter<long> Dependencies = Meter.CreateCounter<long>("reservation.dependency.outcomes");
     private static readonly Histogram<double> DependencyDuration = Meter.CreateHistogram<double>("reservation.dependency.duration", "ms");
+    private static readonly Counter<long> Wakeups = Meter.CreateCounter<long>("reservation.outbox.wakeups");
+    private static readonly Counter<long> ListenerTransitions = Meter.CreateCounter<long>("reservation.outbox.listener.transitions");
     private static long pending;
     private static double oldestAge;
 
@@ -20,6 +22,16 @@ public static class ReservationTelemetry
     {
         _ = Meter.CreateObservableGauge("reservation.outbox.pending", () => Volatile.Read(ref pending));
         _ = Meter.CreateObservableGauge("reservation.outbox.oldest_age", () => Volatile.Read(ref oldestAge), "s");
+    }
+
+    public static void OutboxWakeup(string cause)
+    {
+        Wakeups.Add(1, new KeyValuePair<string, object?>("cause", cause));
+    }
+
+    public static void ListenerTransition(string outcome)
+    {
+        ListenerTransitions.Add(1, new KeyValuePair<string, object?>("outcome", outcome));
     }
 
     public static void OutboxSnapshot(long count, double seconds)

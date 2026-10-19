@@ -1,0 +1,25 @@
+{
+  "snapshot_id": "164c3c3f56995c5dfe2fe0f90271e02c6a427891c74e60f7e64efa46e38564ed",
+  "base_revision": "5ab2ed2800b95a69f1522d617b510e3aeff47701",
+  "files": {
+    "readme.md": "691179b0d3f9f9f0894d5471d67f241a9cdcf5801747be369c3453ffe09077c3",
+    "specs/008-outbox-notifications/checklists/requirements.md": "f9ad3c70e510bc8741d080fdfa216a2cb4c779aa066c4b1789b5a2dd97c28265",
+    "specs/008-outbox-notifications/checklists/reviewer-quality.md": "0d688ce7c56ddd8cfdcbea4b88612ce4dc6a08f7cfcc5824fb109899c8b54952",
+    "specs/008-outbox-notifications/contracts/notifications.md": "25050344fe079c47f565a147a118c6452dd09bd741506a7497adea794fa5da12",
+    "specs/008-outbox-notifications/data-model.md": "b629e8a1f18561204c7e78d7aab588819e5121a874d9986ff0a4acbb6f2c5dba",
+    "specs/008-outbox-notifications/plan.md": "1e4ff773d427720058c599b314478c62ee3a77bd60a1300b18278d39dfe807a5",
+    "specs/008-outbox-notifications/quickstart.md": "326ff511f5937890a577328501ec8892fb803c15eab0d8e697bac66f5b6c9bd3",
+    "specs/008-outbox-notifications/research.md": "a5ab2d45514bdd211065a0cef35fe3519abca4403b52b52939da910de6bc441e",
+    "specs/008-outbox-notifications/spec.md": "0d3bb58f5404b2e1f383cf7dd17cf4d1d6b953da8fa7f0b3a45277df2777ccbc",
+    "specs/008-outbox-notifications/tasks.md": "4c8ed0d1492362e61698f9cab98647a05586d5355598bbe31aa907055e168b2b",
+    "src/Reservations/Migrations/002_outbox_notifications.sql": "b2d7ee7284706734b271a2c8159323862f3832b717277ec9d3d6190fa96cd9d8",
+    "src/Reservations/OutboxListener.cs": "0a8f0c492f3e8f3203b5102e21519312bdd0ee5db8a30a1ea30ae7e17bd76214",
+    "src/Reservations/OutboxWorker.cs": "8fc3250e0119588b28245b28f3a5ca024bf4288be2bc3528a5c3bf9e3508d6aa",
+    "src/Reservations/ReservationTelemetry.cs": "8d321adb2ea60cbadbb3d88a79eb5cac64ebc3fb8bd32623addcc0395fb941db",
+    "src/Reservations/ReservationsLog.cs": "2e1166250c46e0b9338cda29c65afafb178802768b250a202ebb0c70fc18f3a0",
+    "src/Reservations/ServiceMigrations.cs": "7973356cc13cf354037ffdaf82d340df505d819eb2c04da275304d416a3036f6",
+    "tests/Integration.Tests/OutboxNotificationTelemetryTests.cs": "2afbe913a5ed518027e99f603269722a1aaf4d20e535d2d14853f19c177b8308",
+    "tests/Integration.Tests/OutboxNotificationTests.cs": "d4b82cbafab781e0f049e7bef50a0b65908284691f195cafa52fc1efb9529f50",
+    "tests/Integration.Tests/ReservationRecoveryTests.cs": "1ad2d36a2f6c3bfcbd1dc3c5e7c77b855ff87124e4fc85ad4c2f2433250d9ce6"
+  }
+}

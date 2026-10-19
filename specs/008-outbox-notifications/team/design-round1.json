@@ -1,0 +1,11 @@
+{
+  "files": {
+    "specs/008-outbox-notifications/spec.md": "0d3bb58f5404b2e1f383cf7dd17cf4d1d6b953da8fa7f0b3a45277df2777ccbc",
+    "specs/008-outbox-notifications/plan.md": "7208019b207a273724e0a9979decef92e81ef35f8407f6bc5beac8a32d0a0e90",
+    "specs/008-outbox-notifications/research.md": "a5ab2d45514bdd211065a0cef35fe3519abca4403b52b52939da910de6bc441e",
+    "specs/008-outbox-notifications/data-model.md": "b629e8a1f18561204c7e78d7aab588819e5121a874d9986ff0a4acbb6f2c5dba",
+    "specs/008-outbox-notifications/contracts/notifications.md": "6ef9a686d48fa5d0a7b92e472cf1d3626ac176355c295ff1afc5ad9d147f5048",
+    "specs/008-outbox-notifications/quickstart.md": "2c7c2c34d10ba8dd2261165207b6f8f945f9ced8c01ffc115698f17192d43a67"
+  },
+  "task_change": "T018 failure boundary wording only; preserve implementation task progress"
+}

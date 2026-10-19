@@ -1,0 +1,13 @@
+{
+  "base_revision": "5ab2ed2800b95a69f1522d617b510e3aeff47701",
+  "files": {
+    "specs/008-outbox-notifications/checklists/requirements.md": "f9ad3c70e510bc8741d080fdfa216a2cb4c779aa066c4b1789b5a2dd97c28265",
+    "specs/008-outbox-notifications/checklists/reviewer-quality.md": "0d688ce7c56ddd8cfdcbea4b88612ce4dc6a08f7cfcc5824fb109899c8b54952",
+    "specs/008-outbox-notifications/contracts/notifications.md": "6ef9a686d48fa5d0a7b92e472cf1d3626ac176355c295ff1afc5ad9d147f5048",
+    "specs/008-outbox-notifications/data-model.md": "b629e8a1f18561204c7e78d7aab588819e5121a874d9986ff0a4acbb6f2c5dba",
+    "specs/008-outbox-notifications/plan.md": "f5c6e48237b3b900ffdf99c95fd11e309d57d0dbe55bcde03a77b914ee78dd27",
+    "specs/008-outbox-notifications/quickstart.md": "2c7c2c34d10ba8dd2261165207b6f8f945f9ced8c01ffc115698f17192d43a67",
+    "specs/008-outbox-notifications/research.md": "a5ab2d45514bdd211065a0cef35fe3519abca4403b52b52939da910de6bc441e",
+    "specs/008-outbox-notifications/spec.md": "0d3bb58f5404b2e1f383cf7dd17cf4d1d6b953da8fa7f0b3a45277df2777ccbc"
+  }
+}

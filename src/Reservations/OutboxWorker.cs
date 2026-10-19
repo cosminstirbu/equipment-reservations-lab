@@ -7,7 +7,7 @@ namespace Reservations;
 
 public sealed class OutboxWorker(NpgsqlDataSource database, IReservationPublisher publisher, IRecoverySchedule schedule, TimeProvider time, IConfiguration configuration, ILogger<OutboxWorker> logger) : BackgroundService
 {
-    private const string SnapshotSql = "SELECT count(*), min(occurred_at) FROM reservation_outbox WHERE published_at IS NULL";
+    private const string SnapshotSql = "SELECT count(*), min(occurred_at), min(next_attempt_at) FILTER (WHERE next_attempt_at > $1) FROM reservation_outbox WHERE published_at IS NULL";
     private const string SelectSql = "SELECT event_id,reservation_id,event_type,schema_version,user_key,equipment_id,equipment_name,start_at,end_at,occurred_at,attempt_count,traceparent,tracestate FROM reservation_outbox WHERE published_at IS NULL AND next_attempt_at <= $1 ORDER BY next_attempt_at,event_id FOR UPDATE SKIP LOCKED LIMIT 1";
     private const string PublishedSql = "UPDATE reservation_outbox SET published_at=$2,attempt_count=attempt_count+1 WHERE event_id=$1";
     private const string RescheduleSql = "UPDATE reservation_outbox SET attempt_count=attempt_count+1,next_attempt_at=$2 WHERE event_id=$1 AND published_at IS NULL";
@@ -17,11 +17,16 @@ public sealed class OutboxWorker(NpgsqlDataSource database, IReservationPublishe
         get;
     } =
     [
+        new("outbox.listen", OutboxListener.ListenSql),
+        new("outbox.unlisten", OutboxListener.UnlistenSql),
         new("outbox.snapshot", SnapshotSql),
         new("outbox.select", SelectSql),
         new("outbox.published", PublishedSql),
         new("outbox.reschedule", RescheduleSql)
     ];
+
+    private bool idle;
+    private DateTimeOffset? nextRetry;
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
@@ -30,19 +35,28 @@ public sealed class OutboxWorker(NpgsqlDataSource database, IReservationPublishe
             return;
         }
 
+        using var listener = new OutboxListener(database, schedule, logger);
+        using var lifetime = CancellationTokenSource.CreateLinkedTokenSource(stoppingToken);
+        Task receiving = listener.RunAsync(lifetime.Token);
+        await listener.Ready;
+        using var processing = CancellationTokenSource.CreateLinkedTokenSource(stoppingToken, listener.TerminalToken);
+        CancellationToken token = processing.Token;
+        ReservationTelemetry.OutboxWakeup("startup");
         int failures = 0;
         try
         {
-            while (!stoppingToken.IsCancellationRequested)
+            while (!token.IsCancellationRequested)
             {
                 TimeSpan delay;
                 long started = Stopwatch.GetTimestamp();
                 try
                 {
-                    delay = await AttemptAsync(stoppingToken);
+                    listener.ConsumeSignal();
+                    idle = false;
+                    delay = await AttemptAsync(token);
                     failures = 0;
                 }
-                catch (Exception exception) when (!stoppingToken.IsCancellationRequested)
+                catch (Exception exception) when (!token.IsCancellationRequested)
                 {
                     if (DatabaseFailure.IsPermanent(exception) || ReservationFailure.IsPermanent(exception))
                     {
@@ -57,24 +71,58 @@ public sealed class OutboxWorker(NpgsqlDataSource database, IReservationPublishe
 
                 if (delay > TimeSpan.Zero)
                 {
-                    await schedule.DelayAsync(delay, stoppingToken);
+                    if (idle)
+                    {
+                        TimeSpan fallback = listener.IsListening ? TimeSpan.FromSeconds(30) : TimeSpan.FromSeconds(10);
+                        TimeSpan remaining = nextRetry is { } due ? due - ReservationValidation.UtcNow(time) : fallback;
+                        bool retry = nextRetry.HasValue && remaining <= fallback;
+                        TimeSpan wait = remaining < TimeSpan.Zero ? TimeSpan.Zero : TimeSpan.FromTicks(Math.Min(fallback.Ticks, remaining.Ticks));
+                        string timerCause = listener.IsListening ? "fallback" : "degraded_poll";
+                        if (retry)
+                        {
+                            timerCause = "retry";
+                        }
+
+                        string cause = await WaitAsync(listener, wait, timerCause, token);
+                        ReservationTelemetry.OutboxWakeup(cause);
+                    }
+                    else
+                    {
+                        await schedule.DelayAsync(delay, token);
+                    }
                 }
             }
         }
-        catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested)
+        catch (OperationCanceledException) when (token.IsCancellationRequested)
         {
+            if (listener.TerminalToken.IsCancellationRequested && !stoppingToken.IsCancellationRequested)
+            {
+                ReservationsLog.Delivery(logger, "outbox", "permanent_error");
+            }
+        }
+        catch (Exception) when (listener.TerminalToken.IsCancellationRequested)
+        {
+            ReservationsLog.Delivery(logger, "outbox", "permanent_error");
+        }
+        finally
+        {
+            await lifetime.CancelAsync();
+            await receiving;
         }
     }
 
     private async Task<TimeSpan> AttemptAsync(CancellationToken stoppingToken)
     {
+        DateTimeOffset scannedAt = ReservationValidation.UtcNow(time);
         await using NpgsqlConnection connection = await ReservationTelemetry.DatabaseAsync(token => database.OpenConnectionAsync(token).AsTask(), stoppingToken);
         await using (var snapshot = new NpgsqlCommand(SnapshotSql, connection))
         {
+            _ = snapshot.Parameters.AddWithValue(scannedAt);
             await using NpgsqlDataReader reader = await ReservationTelemetry.DatabaseAsync(snapshot.ExecuteReaderAsync, stoppingToken);
             _ = await reader.ReadAsync(stoppingToken);
             long count = reader.GetInt64(0);
             double age = reader.IsDBNull(1) ? 0 : (ReservationValidation.UtcNow(time) - reader.GetFieldValue<DateTimeOffset>(1)).TotalSeconds;
+            nextRetry = reader.IsDBNull(2) ? null : reader.GetFieldValue<DateTimeOffset>(2);
             ReservationTelemetry.OutboxSnapshot(count, age);
         }
 
@@ -85,10 +133,11 @@ public sealed class OutboxWorker(NpgsqlDataSource database, IReservationPublishe
         string? state;
         await using (var command = new NpgsqlCommand(SelectSql, connection, transaction))
         {
-            _ = command.Parameters.AddWithValue(ReservationValidation.UtcNow(time));
+            _ = command.Parameters.AddWithValue(scannedAt);
             await using NpgsqlDataReader reader = await ReservationTelemetry.DatabaseAsync(command.ExecuteReaderAsync, stoppingToken);
             if (!await reader.ReadAsync(stoppingToken))
             {
+                idle = true;
                 return TimeSpan.FromSeconds(10);
             }
 
@@ -147,6 +196,25 @@ public sealed class OutboxWorker(NpgsqlDataSource database, IReservationPublishe
             ReservationsLog.Delivery(logger, "publish", outcome);
             return delay;
         }
+    }
+
+    private async Task<string> WaitAsync(OutboxListener listener, TimeSpan delay, string timerCause, CancellationToken cancellationToken)
+    {
+        using var wait = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+        Task timer = schedule.DelayAsync(delay, wait.Token);
+        Task<string> signal = listener.WaitAsync(wait.Token);
+        Task completed = await Task.WhenAny(timer, signal);
+        await wait.CancelAsync();
+        try
+        {
+            await Task.WhenAll(timer, signal);
+        }
+        catch (OperationCanceledException) when (!cancellationToken.IsCancellationRequested)
+        {
+        }
+
+        await completed;
+        return completed == signal ? await signal : timerCause;
     }
 
     private TimeSpan Backoff(int failures)
