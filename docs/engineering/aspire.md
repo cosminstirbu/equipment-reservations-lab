@@ -34,9 +34,9 @@ Source: [C# service defaults](https://aspire.dev/get-started/csharp-service-defa
 ## Tests and versions
 
 Automated application tests do not construct, inspect, start or publish AppHosts.
-Backend.Tests uses service factories and real provider containers independently of
-Aspire. Verify local startup, dashboard/client/admin access, loopback bindings and
-persistent state manually with [the documented procedure](../../README.md#manual-local-development-check).
+The backend test projects use service factories and real provider containers
+independently of Aspire. Verify local startup, dashboard/client/admin access,
+loopback bindings and persistent state manually with [the documented procedure](../../README.md#manual-local-development-check).
 Local wiring regressions may first surface during development. Neither dashboard
 health nor successful startup replaces application/provider acceptance checks.
 Manifest generation and cloud deployment through Aspire are outside this policy.

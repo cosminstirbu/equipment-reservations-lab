@@ -20,3 +20,9 @@ Full check totals: tooling4 passed; Angular production build passed; frontend5 f
 Focused migration evidence remains in implementation-evidence.md (86 broad cases,8 strengthened recovery/provider cases,2 service-identity cases). Those checkpoints do not replace the final400-case current-source run.
 
 Manual local-development observations and cleanup are recorded separately in manual-development-check.md. No automated Aspire tests or publication were run by the required gate.
+
+## Testing amendment validation — 2026-10-19
+
+Original results above apply only to their frozen source. Subsequent implementation validation is recorded separately: `npm run check` passed with 401 backend cases (0 failed, 0 skipped), 60 frontend tests and tooling checks, including builds, formatting and lint. Backend duration: 173.423 seconds. Local ignored log: `TestResults/project-split/uncapped-check.log`; this is available workspace evidence, not a committed portable artifact or a fresh independent review. `TestResults/project-split/discovery.log`, `source-inventory.json` and `comparison.json` record discovery/source identity checks at the split; the comparison's earlier concurrency caps are superseded by the final uncapped run. The extra case relative to original acceptance is the concurrent authority-signing regression.
+
+The final full run used all nine modules and native unrestricted assembly parallelism, scenario-specific databases and test-only PostgreSQL capacity of 512 connections. This reconciliation changes only Spec Kit artifacts; it does not alter tested source. After artifact reconciliation, `npm run format-check` passed; `npm run lint` built with zero warnings/errors and completed successfully; `git diff --check` passed. Independent quality/security review, current convergence and explicit owner acceptance of this amendment remain pending; original reports and manual observations are not reissued as current evidence.

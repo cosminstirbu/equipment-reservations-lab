@@ -1,6 +1,6 @@
 {
   "feature_directory": "specs/007-aspire-independent-tests",
-  "status": "complete",
+  "status": "amendment_implemented_pending_review_convergence_acceptance",
   "baseline_revision": "e1952952e82aa1a32e79285923db68f26f995aed",
   "preparation_round": 0,
   "implementation_round": 1,
@@ -84,7 +84,12 @@
     "coordinator": "Actual final acceptance recorded first; completion metadata consistent; stage authorized feature changes without committing.",
     "coder": "Implementation and evidence-only Q007-001 correction finished; writes stopped"
   },
-  "pending_gates": [],
+  "pending_gates": [
+    "Independent quality review of testing amendment",
+    "Independent security review of testing amendment",
+    "Current-revision convergence of testing amendment",
+    "Explicit human acceptance of testing amendment"
+  ],
   "preparation": {
     "requirements": "specify and clarify complete; no remaining owner decisions",
     "spec_sha256": "347b6f2eef317513929b7fc70dc16a7c6a14e20d08c1f8bc466754d6400da807",
@@ -211,5 +216,34 @@
     "unchanged_frozen_files_excluding_spec_tasks_metadata": 344,
     "historical_reports_preserved": true,
     "post_review_changes": "coverage evidence correction separately approved by reviewers; completion metadata only"
+  },
+  "post_acceptance_amendment": {
+    "date": "2026-10-19",
+    "authority": "supersession.md#testing-organization-and-concurrency-amendment--2026-10-19",
+    "status": "amendment_implemented_pending_review_convergence_acceptance",
+    "completed_tasks": [
+      "T023",
+      "T024",
+      "T025"
+    ],
+    "pending_tasks": [
+      "T026",
+      "T027"
+    ],
+    "validation_report": "validation.md#testing-amendment-validation--2026-10-19",
+    "backend_passed": 401,
+    "backend_failed": 0,
+    "backend_skipped": 0,
+    "backend_seconds": 173.423,
+    "original_acceptance_applies_to_amendment": false,
+    "historical_reviews_apply_to_amendment": false,
+    "current_spec_status": "Implemented amendment \u2014 automated validation passed; independent quality/security review, convergence, and explicit acceptance pending (original revision accepted 2026-10-16)",
+    "current_scope": [
+      "Nine backend test projects plus non-test TestSupport",
+      "Native xUnit v3/MTP, all modules and intra-project tests parallel by default",
+      "Smallest justified sequential scopes with hard documented constraints",
+      "No production runtime or automated Aspire boundary changes"
+    ],
+    "historical_fields_note": "Existing acceptance, reviews, convergence, scope_boundaries, validation and completion_metadata_consistency_check retain the original 2026-10-16 snapshot meaning; they do not certify this amendment."
   }
 }

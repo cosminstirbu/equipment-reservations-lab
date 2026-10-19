@@ -6,6 +6,10 @@ list which guides apply and record decisions the guides deliberately leave open.
 
 All source changes must follow [formatting and static analysis](formatting-and-linting.md), including suggestion-level .NET IDE diagnostics, per-edit formatting, and final quality checks.
 
+Backend tests run in parallel by default, including tests within the same project.
+Sequential execution requires a hard documented isolation constraint; see the
+[testing rules](testing.md#backend-parallelism-is-the-default).
+
 ## Approved stack
 
 | Area | Technology | Guide |
@@ -13,7 +17,7 @@ All source changes must follow [formatting and static analysis](formatting-and-l
 | Client | Angular | [Angular](angular.md) |
 | Backend | ASP.NET Core | [ASP.NET Core](aspnet-core.md) |
 | Local orchestration | .NET Aspire | [Aspire](aspire.md) |
-| Database testing | Testcontainers | [Testing](testing.md) |
+| Backend testing | xUnit v3, Microsoft Testing Platform, Testcontainers | [Testing](testing.md) |
 | Telemetry | OpenTelemetry | [Observability](observability.md) |
 
 See [Resilience](resilience.md) for dependency timeouts, retries, and repeat safety.

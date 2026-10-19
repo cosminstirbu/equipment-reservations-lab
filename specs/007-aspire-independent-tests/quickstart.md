@@ -8,11 +8,11 @@ Use the existing .NET/Node dependencies and supported running Podman runtime. Re
 
 ## Automated validation
 
-1. Establish baseline Smoke method/case inventory from research.md before deletion and record baseline validation evidence.
-2. During migration run focused tests, for example `dotnet test tests/Backend.Tests --filter FullyQualifiedName~ReservationOutboxTests -m:1`, and corresponding consumer, provisioning, broker, provider and recovery classes using actual final names. Diagnose failures; never use repeated reruns as proof of correctness.
-3. Run `npm run format-check`, `npm run lint`, `npm run check` and `git diff --check` on final source. Expected: tooling/frontend and all retained backend checks pass, zero failed/skipped required checks, build/analyzer gates clean; check waits for the single backend invocation and propagates failures.
+1. Use the historical coverage disposition and its current-location addendum to verify retained guarantees; the original migration inventory and acceptance evidence remain historical.
+2. Run focused tests, for example `dotnet test --project tests/Integration.Tests/Integration.Tests.csproj --filter-class Integration.Tests.ReservationOutboxTests`, and corresponding consumer, provisioning, broker, provider and recovery classes using actual final names. Diagnose failures; never use repeated reruns as proof of correctness.
+3. Run `npm run format-check`, `npm run lint`, `npm run check` and `git diff --check` on final source. Expected: tooling/frontend and all retained backend checks pass, zero failed/skipped required checks, build/analyzer gates clean; check runs all nine modules through native MTP and propagates failures. The direct backend command is `dotnet test --solution EquipmentReservation.slnx --max-parallel-test-modules 9`; a single project also runs directly with `dotnet test --project tests/Reservations.Tests/Reservations.Tests.csproj`.
 4. Audit `tests/`, scripts, active solution/project/package references: no Aspire testing package, AppHost test construction/inspection/startup/resource commands, publication checks or Smoke.Tests invocation remain. Ordinary solution AppHost build and historical evidence references are expected.
-5. Verify every research.md row/case and mixed guarantee has final executable evidence or explicit Aspire-only/owner-approved disposition. Confirm unchanged assembly/collection serialization and no `src/` behavior changes.
+5. Verify every research.md row/case and mixed guarantee has final executable evidence or explicit Aspire-only/owner-approved disposition. Confirm native `ParallelMode.All` / `MaxThreads = -1`, documented narrow sequential exclusions, scenario isolation, and no `src/` behavior changes.
 6. Freeze exact source snapshot, capture command/runtime/exits/counts, obtain independent quality/security review and convergence. Code fixes require affected evidence/reviews again. Final acceptance is a separate owner decision.
 
 ## Manual local-development procedure

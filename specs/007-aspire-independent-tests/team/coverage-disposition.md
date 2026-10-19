@@ -92,3 +92,46 @@ Focused outcomes are recorded in implementation-evidence.md. The coordinator rec
 - **Messaging contracts/telemetry**: all original `ReservationOutboxTests` and `ReservationConsumerTests` methods/theory arguments are retained verbatim apart from namespace/imports, as are exact envelopes/IDs, permanent/transient failure, interrupted commit/ACK, duplicate/poison progression and correlated bounded privacy signals.
 
 No distinct application/provider guarantee is approved for removal. Only the explicitly accepted orchestration/publication surface is removed; pure original methods and all theory arguments remain listed above for complete40-method/108-case accounting.
+
+## Current executable locations — 2026-10-19
+
+The original disposition and its reviewed hashes above remain historical evidence. Apply the following class-to-source index to retained method/theory identities; moves preserve assertions and case arguments. `ApiAuthorizationTests` was extracted from the original identity source. Shared infrastructure/helpers now live in `tests/TestSupport/`. Native discovery and the project-split comparison recorded 401 cases, including the concurrent signing-authority regression added after the original accepted 400-case suite; this count does not replace guarantee-level review. The comparison's earlier scheduling limits are historical and do not describe current concurrency.
+
+| Current fully qualified class | Executable source |
+| --- | --- |
+| `BrokerBootstrap.Tests.BrokerContractTests` | `tests/BrokerBootstrap.Tests/BrokerContractTests.cs` |
+| `BrokerBootstrap.Tests.BrokerAccessTests` | `tests/BrokerBootstrap.Tests/BrokerContractTests.cs` |
+| `BrokerBootstrap.Tests.BrokerImportTests` | `tests/BrokerBootstrap.Tests/BrokerImportTests.cs` |
+| `BrokerBootstrap.Tests.BrokerStartupTests` | `tests/BrokerBootstrap.Tests/BrokerImportTests.cs` |
+| `DatabaseBootstrap.Tests.DatabaseBootstrapTracingTests` | `tests/DatabaseBootstrap.Tests/DatabaseBootstrapTracingTests.cs` |
+| `DatabaseBootstrap.Tests.DatabaseProvisioningTests` | `tests/DatabaseBootstrap.Tests/DatabaseProvisioningTests.cs` |
+| `IdentityAccess.Tests.IdentityAccessTests` | `tests/IdentityAccess.Tests/IdentityAccessTests.cs` |
+| `IdentityAccess.Tests.IdentityTelemetryTests` | `tests/IdentityAccess.Tests/IdentityTelemetryTests.cs` |
+| `IdentityAccess.Tests.OwnershipInputTests` | `tests/IdentityAccess.Tests/OwnershipInputTests.cs` |
+| `IdentityAccess.Tests.ServiceIdentityTests` | `tests/IdentityAccess.Tests/ServiceIdentityTests.cs` |
+| `IdentityBootstrap.Tests.IdentityProviderTelemetryTests` | `tests/IdentityBootstrap.Tests/IdentityProviderTelemetryTests.cs` |
+| `IdentityBootstrap.Tests.IdentityProviderTests` | `tests/IdentityBootstrap.Tests/IdentityProviderTests.cs` |
+| `IdentityBootstrap.Tests.ServiceIdentityContractTests` | `tests/IdentityBootstrap.Tests/ServiceIdentityContractTests.cs` |
+| `Integration.Tests.ApiAuthorizationTests` | `tests/Integration.Tests/ApiAuthorizationTests.cs` |
+| `Integration.Tests.BookingRecoveryTests` | `tests/Integration.Tests/BookingRecoveryTests.cs` |
+| `Integration.Tests.DatabaseWorkerTracingTests` | `tests/Integration.Tests/DatabaseWorkerTracingTests.cs` |
+| `Integration.Tests.OperationalTests` | `tests/Integration.Tests/OperationalTests.cs` |
+| `Integration.Tests.ReservationOutboxTests` | `tests/Integration.Tests/ReservationOutboxTests.cs` |
+| `Integration.Tests.ReservationRecoveryTests` | `tests/Integration.Tests/ReservationRecoveryTests.cs` |
+| `Integration.Tests.ReservationTelemetryTests` | `tests/Integration.Tests/ReservationTelemetryTests.cs` |
+| `Inventory.Tests.EquipmentPersistenceTests` | `tests/Inventory.Tests/EquipmentPersistenceTests.cs` |
+| `Inventory.Tests.InventoryTests` | `tests/Inventory.Tests/InventoryTests.cs` |
+| `Notifications.Tests.NotificationOwnershipTests` | `tests/Notifications.Tests/NotificationOwnershipTests.cs` |
+| `Notifications.Tests.ReservationConsumerTests` | `tests/Notifications.Tests/ReservationConsumerTests.cs` |
+| `Persistence.Tests.DatabaseTelemetryPrivacyTests` | `tests/Persistence.Tests/DatabaseTelemetryPrivacyTests.cs` |
+| `Persistence.Tests.DatabaseTracingTests` | `tests/Persistence.Tests/DatabaseTracingTests.cs` |
+| `Persistence.Tests.MigrationTests` | `tests/Persistence.Tests/MigrationTests.cs` |
+| `Reservations.Tests.BookingConcurrencyTests` | `tests/Reservations.Tests/BookingConcurrencyTests.cs` |
+| `Reservations.Tests.BookingTelemetryTests` | `tests/Reservations.Tests/BookingTelemetryTests.cs` |
+| `Reservations.Tests.BookingTests` | `tests/Reservations.Tests/BookingTests.cs` |
+| `Reservations.Tests.CancellationConcurrencyTests` | `tests/Reservations.Tests/CancellationConcurrencyTests.cs` |
+| `Reservations.Tests.CancellationTelemetryTests` | `tests/Reservations.Tests/CancellationTelemetryTests.cs` |
+| `Reservations.Tests.CancellationTests` | `tests/Reservations.Tests/CancellationTests.cs` |
+| `Reservations.Tests.ReservationOwnershipTests` | `tests/Reservations.Tests/ReservationOwnershipTests.cs` |
+| `Reservations.Tests.SecurityBrowserWriteTests` | `tests/Reservations.Tests/SecurityBrowserWriteTests.cs` |
+| `Reservations.Tests.TelemetryPrivacyTests` | `tests/Reservations.Tests/TelemetryPrivacyTests.cs` |

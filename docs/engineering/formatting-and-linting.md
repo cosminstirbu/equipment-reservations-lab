@@ -32,7 +32,7 @@ npm run check
 
 `lint` runs ESLint with zero warnings, .NET build with warnings treated as errors, and the suggestion-level IDE verification gate. `check` adds hook tests, frontend build/tests and the complete backend integration suite (real PostgreSQL, RabbitMQ and Keycloak), requiring running Podman. Browser checks remain documented in the application README.
 
-After the solution build and frontend checks, `check` runs `dotnet test tests/Backend.Tests/Backend.Tests.csproj --no-build -m:1`. Backend.Tests keeps assembly-wide and existing collection serialization. The command propagates a backend failure; parallelization changes are deferred. Automated checks never start or inspect Aspire or publish a manifest.
+After the solution build and frontend checks, `check` runs `dotnet test --solution EquipmentReservation.slnx --max-parallel-test-modules <test-project-count> --no-build`. Backend tests run in parallel by default within and across test projects. Sequential exclusions require a concrete, documented constraint and the smallest justified scope; follow the [testing parallelism rules](testing.md#backend-parallelism-is-the-default). The command uses Microsoft Testing Platform selected in `global.json` and propagates a backend failure. Automated checks never start or inspect Aspire or publish a manifest.
 
 To format only edited files after each edit:
 

@@ -90,11 +90,11 @@ test('unrecognized hook payload fails visibly rather than silently skipping an e
 test('C# edits use Allman braces and four-space indentation', () => {
   const path = resolve(
     root,
-    `tests/Backend.Tests/FormatterFixture${process.pid}.cs`,
+    `tests/TestSupport/FormatterFixture${process.pid}.cs`,
   );
   writeFileSync(
     path,
-    'namespace Backend.Tests;\ninternal static class FormatterFixture{\ninternal static void Run(){\nSystem.Console.WriteLine("one");\nSystem.Console.WriteLine("two");\n}\n}',
+    'namespace TestSupport;\ninternal static class FormatterFixture{\ninternal static void Run(){\nSystem.Console.WriteLine("one");\nSystem.Console.WriteLine("two");\n}\n}',
     { flag: 'wx' },
   );
   const event = {

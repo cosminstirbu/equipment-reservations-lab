@@ -188,11 +188,18 @@ if (
       run('npm', ['run', 'test:tooling']);
       run('npm', ['--prefix', 'src/Web', 'run', 'build']);
       run('npm', ['--prefix', 'src/Web', 'test']);
+
+      const testModuleCount = sources().filter((path) =>
+        path.endsWith('.Tests.csproj'),
+      ).length;
+
       run('dotnet', [
         'test',
-        'tests/Backend.Tests/Backend.Tests.csproj',
+        '--solution',
+        'EquipmentReservation.slnx',
+        '--max-parallel-test-modules',
+        String(testModuleCount),
         '--no-build',
-        '-m:1',
       ]);
     } else
       throw new Error(

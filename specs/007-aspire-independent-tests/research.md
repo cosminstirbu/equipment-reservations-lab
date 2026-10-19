@@ -2,6 +2,10 @@
 
 **Date**: 2026-10-16. **Baseline**: `e1952952e82aa1a32e79285923db68f26f995aed`.
 
+## Current decision amendment — 2026-10-19
+
+The [owner-authorized amendment](supersession.md#testing-organization-and-concurrency-amendment--2026-10-19) replaces the original “another integration-test project unnecessary”, fixed test-framework version, and “preserve serialization” decisions below. The current plan defines nine test projects, TestSupport, xUnit v3/MTP, and full default parallelism with documented narrow exclusions. Scenario-specific PostgreSQL databases, synchronized signing-key lifecycle, sufficient test-only connection capacity and isolated provider diagnostic capture support concurrency without weakening assertions. The inventory and original reasoning below remain historical baseline evidence, not current restrictions or new external API research.
+
 ## Decisions
 
 ### Remove orchestration from automated application tests

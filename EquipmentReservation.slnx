@@ -13,6 +13,19 @@
     <Project Path="src/ServiceDefaults/ServiceDefaults.csproj" />
   </Folder>
   <Folder Name="/tests/">
-    <Project Path="tests/Backend.Tests/Backend.Tests.csproj" />
+    <Project Path="tests/Inventory.Tests/Inventory.Tests.csproj" />
+    <Project Path="tests/Reservations.Tests/Reservations.Tests.csproj" />
+    <Project Path="tests/Notifications.Tests/Notifications.Tests.csproj" />
+    <Project Path="tests/IdentityAccess.Tests/IdentityAccess.Tests.csproj" />
+    <Project Path="tests/Persistence.Tests/Persistence.Tests.csproj" />
+    <Project
+      Path="tests/DatabaseBootstrap.Tests/DatabaseBootstrap.Tests.csproj"
+    />
+    <Project Path="tests/BrokerBootstrap.Tests/BrokerBootstrap.Tests.csproj" />
+    <Project
+      Path="tests/IdentityBootstrap.Tests/IdentityBootstrap.Tests.csproj"
+    />
+    <Project Path="tests/Integration.Tests/Integration.Tests.csproj" />
+    <Project Path="tests/TestSupport/TestSupport.csproj" />
   </Folder>
 </Solution>

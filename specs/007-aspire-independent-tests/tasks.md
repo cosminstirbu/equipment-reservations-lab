@@ -4,6 +4,8 @@
 
 **Preparation baseline**: design independently quality/security approved at snapshot `80c04f3afd6a9a06e80c1105b940676d18a8fddb59dddef76e4de9115ed4201a`; implementation tasks and resulting source require their own reviews. Use `SPECIFY_FEATURE_DIRECTORY=specs/007-aspire-independent-tests` for every Spec Kit command.
 
+**Current scope**: the 2026-10-19 [amendment](supersession.md#testing-organization-and-concurrency-amendment--2026-10-19) supersedes the original single-project, fixed-dependency and serialization constraints below. T001–T022 remain the completed history of the accepted original revision; they do not certify the later implementation. Current work is tracked separately in T023–T027.
+
 **Scope**: behavior-preserving test migration. Existing tests are the behavior baseline; no invented failing product behavior is required. Preserve distinct assertions; test code changes and focused replacement tests are expressly requested. No runtime `src/` edits, dependency upgrades, parallelization optimization, external publication, merging or issue creation.
 
 **Ownership**: coder owns tests, solution, quality tooling and contributor guidance; analyst owns central supersession register and 18 prospective historical notices; coordinator owns evidence/state, runtime ownership, independent review/convergence orchestration and acceptance. Reviewers alone own their verdicts. No worker is alone; do not overwrite another worker or format their files. `[P]` denotes disjoint document work, never test scheduling.
@@ -84,3 +86,13 @@
 ## Implementation strategy and task accounting
 
 The first independently useful increment is US1 migrated provider/delivery coverage (5 tasks); it cannot alone satisfy full feature completion. Add US2 durable recovery (3 tasks), then retire obsolete harness and complete US3 guidance/tooling/agreements/manual validation (5 tasks). Setup/foundation comprise 3 tasks; final validation/review/convergence/acceptance comprise 6 tasks: **22 total**. Existing behavior expectations are retained throughout refactoring; do not add product behavior to manufacture a red phase. Freeze final source before review. No merge/deploy/publish follows automatically.
+
+## Post-acceptance testing amendment — 2026-10-19
+
+- [x] T023 Adopt native xUnit v3/MTP and split coverage across the nine responsibility-based projects and non-test TestSupport; retain scenario identities and provider/application assertions (amended FR-006/011).
+- [x] T024 Enable all test modules and full native intra-project parallelism; preserve documented narrow exclusions, safe signing-key concurrency, scenario databases, provider cleanup, and isolated identity diagnostic capture (amended FR-011).
+- [x] T025 Reconcile current specification, plan, quickstart, supersession, research, coverage locations and team state with the authorized implementation and engineering policy; record available automated validation without reissuing historical verdicts.
+- [ ] T026 Obtain independent quality/security review of the amended source and artifact snapshot, then current-revision convergence; resolve findings and revalidate affected evidence (FR-012).
+- [ ] T027 Record explicit owner acceptance of the amended completed result after T026, then synchronize spec/tasks/state completion metadata. Original 2026-10-16 acceptance remains scoped to its frozen revision (FR-012).
+
+T023 precedes T024; T025 records both. T026 requires current checks and a frozen revision covering T023–T025; T027 follows actual review/convergence and acceptance. No review or acceptance is inferred from authorization to implement.

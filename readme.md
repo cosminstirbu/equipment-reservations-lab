@@ -287,12 +287,13 @@ npm run lint
 npm run check
 ```
 
-The full check includes frontend build/rendered tests and the complete Backend.Tests suite. For
+The full check includes frontend build/rendered tests and all nine backend test projects. For
 focused checks and dependency inspection:
 
 ```sh
 dotnet build
-dotnet test tests/Backend.Tests -m:1
+dotnet test --solution EquipmentReservation.slnx --max-parallel-test-modules 9
+dotnet test --project tests/Reservations.Tests/Reservations.Tests.csproj
 npm --prefix src/Web ci
 npm --prefix src/Web run build
 npm --prefix src/Web test
@@ -304,14 +305,17 @@ databases and production migrations; external HTTP/broker doubles are backed by
 provider contracts. Database concurrency tests send competing public requests to
 verify the exclusion constraint. Tests control time for date/cancellation rules.
 Rendered Angular tests exercise user actions, deadlines, cancellation and axe
-accessibility checks. Backend.Tests also exercises real RabbitMQ and Keycloak
+accessibility checks. The backend projects also exercise real RabbitMQ and Keycloak
 contracts, correlated private-safe telemetry, scoped provider permissions and
 cross-service recovery. Separate WebApplicationFactory service hosts retain the
 production authentication/service-token pipeline; Testcontainers supplies isolated
 providers. Tests recreate hosts with the same durable state and restart real
 providers to verify pending/queued-event recovery. They never construct, inspect,
-start or publish Aspire, and never reset normal application volumes. Assembly-wide
-and existing collection serialization remain in force; parallelization is deferred.
+start or publish Aspire, and never reset normal application volumes. MTP allows
+all test projects to run concurrently in the quality gate, with uncapped parallel
+test cases per project. Sequential execution is reserved for hard documented
+constraints at the smallest justified scope; see the
+[parallelism rules](docs/engineering/testing.md#backend-parallelism-is-the-default).
 Missing runtime/dependencies fail the check; they are never skipped.
 
 With the application running, browser verification requires Playwright Chromium
