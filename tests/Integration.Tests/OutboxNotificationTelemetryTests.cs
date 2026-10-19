@@ -391,8 +391,8 @@ public sealed class OutboxNotificationTelemetryTests(PostgresFixture postgres)
 
     private sealed class ScanSchedule : IRecoverySchedule, IDisposable
     {
-        private readonly Channel<TimeSpan> delays = Channel.CreateUnbounded<TimeSpan>();
-        private readonly SemaphoreSlim resume = new(0);
+        private readonly Channel<RecoveryDelay> delays = Channel.CreateUnbounded<RecoveryDelay>();
+        private RecoveryDelay? current;
 
         public double Jitter()
         {
@@ -401,23 +401,33 @@ public sealed class OutboxNotificationTelemetryTests(PostgresFixture postgres)
 
         public async Task DelayAsync(TimeSpan delay, CancellationToken cancellationToken)
         {
-            await delays.Writer.WriteAsync(delay, cancellationToken);
-            await resume.WaitAsync(cancellationToken);
+            var gate = new RecoveryDelay(delay, new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously));
+            using CancellationTokenRegistration registration = cancellationToken.Register(() => gate.Resume.TrySetCanceled(cancellationToken));
+            await delays.Writer.WriteAsync(gate, cancellationToken);
+            await gate.Resume.Task;
         }
 
         public async Task<TimeSpan> NextAsync()
         {
-            return await delays.Reader.ReadAsync(TestContext.Current.CancellationToken).AsTask().WaitAsync(TimeSpan.FromSeconds(10), TestContext.Current.CancellationToken);
+            using var deadline = CancellationTokenSource.CreateLinkedTokenSource(TestContext.Current.CancellationToken);
+            deadline.CancelAfter(TimeSpan.FromSeconds(10));
+            do
+            {
+                current = await delays.Reader.ReadAsync(deadline.Token);
+            }
+            while (current.Resume.Task.IsCanceled);
+
+            return current.Delay;
         }
 
         public void Advance()
         {
-            _ = resume.Release();
+            _ = current!.Resume.TrySetResult();
         }
 
         public void Dispose()
         {
-            resume.Dispose();
+            _ = current?.Resume.TrySetCanceled();
         }
     }
 

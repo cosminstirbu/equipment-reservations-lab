@@ -31,13 +31,16 @@ public sealed class CancellationConcurrencyTests(PostgresFixture postgres)
     {
         await using BookingScenario scenario = await BookingScenario.CreateAsync(postgres);
         BookedReservation original = (await (await scenario.BookAsync()).Content.ReadFromJsonAsync<BookedReservation>(cancellationToken: TestContext.Current.CancellationToken))!;
+        const int requestCount = 6;
+        // Prepare the request, blocker and observer sessions before starting SQL lock-wait budgets.
+        await WarmConnectionsAsync(scenario.Database, requestCount + 2);
         await using NpgsqlConnection blocker = await scenario.Database.OpenConnectionAsync(TestContext.Current.CancellationToken);
         await using NpgsqlTransaction transaction = await blocker.BeginTransactionAsync(TestContext.Current.CancellationToken);
         await using var locked = new NpgsqlCommand("SELECT id FROM reservations WHERE id=$1 FOR UPDATE", blocker, transaction);
         _ = locked.Parameters.AddWithValue(original.Id);
         _ = await locked.ExecuteScalarAsync(TestContext.Current.CancellationToken);
         using var deadline = new CancellationTokenSource(TimeSpan.FromSeconds(10));
-        Task<HttpResponseMessage>[] requests = [.. Enumerable.Range(0, 6).Select(_ => scenario.Client.PostAsync($"/api/reservations/{original.Id}/cancel", null, deadline.Token))];
+        Task<HttpResponseMessage>[] requests = [.. Enumerable.Range(0, requestCount).Select(_ => scenario.Client.PostAsync($"/api/reservations/{original.Id}/cancel", null, deadline.Token))];
         await WaitForLockAsync(scenario, requests[0], deadline.Token, requests.Length);
         await transaction.CommitAsync(TestContext.Current.CancellationToken);
         HttpResponseMessage[] responses = await Task.WhenAll(requests);
@@ -97,16 +100,41 @@ public sealed class CancellationConcurrencyTests(PostgresFixture postgres)
 
     private static async Task WaitForLockAsync(BookingScenario scenario, Task<HttpResponseMessage> request, CancellationToken cancellationToken, int waiters = 1)
     {
+        await using NpgsqlConnection observer = await scenario.Database.OpenConnectionAsync(cancellationToken);
+        await using var pending = new NpgsqlCommand("SELECT count(*) FROM pg_stat_activity WHERE datname=current_database() AND wait_event_type='Lock'", observer);
         while (true)
         {
-            Assert.False(request.IsCompleted, "Request completed instead of waiting for the controlled database lock.");
-            await using NpgsqlCommand pending = scenario.Database.CreateCommand("SELECT count(*) FROM pg_stat_activity WHERE datname=current_database() AND wait_event_type='Lock'");
+            if (request.IsCompleted)
+            {
+                HttpResponseMessage response = await request;
+                Assert.Fail($"Request returned HTTP {(int)response.StatusCode} instead of waiting for the controlled database lock.");
+            }
+
             if ((long)(await pending.ExecuteScalarAsync(cancellationToken))! >= waiters)
             {
                 return;
             }
 
             await Task.Delay(TimeSpan.FromMilliseconds(20), cancellationToken);
+        }
+    }
+
+    private static async Task WarmConnectionsAsync(NpgsqlDataSource database, int count)
+    {
+        var connections = new List<NpgsqlConnection>();
+        try
+        {
+            for (int index = 0; index < count; index++)
+            {
+                connections.Add(await database.OpenConnectionAsync(TestContext.Current.CancellationToken));
+            }
+        }
+        finally
+        {
+            foreach (NpgsqlConnection connection in connections)
+            {
+                await connection.DisposeAsync();
+            }
         }
     }
 }
