@@ -85,6 +85,7 @@ public sealed class BookingTests(PostgresFixture postgres)
 
     [Theory]
     [InlineData("{")]
+    [InlineData("null")]
     [InlineData("{}")]
     // lang=json
     [InlineData("{\"equipmentId\":\"camera-001\",\"startAt\":null,\"endAt\":\"2030-01-02T13:00:00Z\"}")]

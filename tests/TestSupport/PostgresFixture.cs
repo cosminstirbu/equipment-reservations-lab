@@ -58,6 +58,9 @@ public sealed class PostgresFixture : IAsyncLifetime
                 case "reservations":
                     await using (NpgsqlCommand extension = source.CreateCommand("CREATE EXTENSION btree_gist"))
                     {
+                        // Extension installation is setup work and can exceed the application
+                        // command budget when independent databases initialize concurrently.
+                        extension.CommandTimeout = 30;
                         _ = await extension.ExecuteNonQueryAsync();
                     }
 
