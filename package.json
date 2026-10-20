@@ -7,11 +7,15 @@
     "format-check": "node scripts/quality.mjs format-check",
     "lint": "node scripts/quality.mjs lint",
     "check": "node scripts/quality.mjs check",
-    "test:tooling": "node --test scripts/quality.test.mjs"
+    "check:openapi": "node scripts/quality.mjs check:openapi",
+    "test:tooling": "node --test scripts/quality.test.mjs scripts/openapi-lint.test.mjs"
   },
   "devDependencies": {
     "@eslint/js": "10.0.1",
     "@prettier/plugin-xml": "3.4.2",
+    "@stoplight/spectral-core": "1.24.0",
+    "@stoplight/spectral-parsers": "1.0.5",
+    "@stoplight/spectral-rulesets": "1.23.0",
     "@types/node": "24.19.2",
     "angular-eslint": "22.6.0",
     "eslint": "10.12.0",

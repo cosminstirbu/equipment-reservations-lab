@@ -1,0 +1,15 @@
+{
+  "findings": [
+    {
+      "id": "CODE-001",
+      "category": "code",
+      "severity": "low",
+      "blocking": true,
+      "evidence": "Final npm run lint exit 1: SpectralValidation.cs(102,9) IDE0008 Use explicit type instead of var. Log /private/tmp/spectral-final-lint.log",
+      "owner": "coder",
+      "status": "closed",
+      "revision": "b8d660fa6c49f4465e1f0dd3b073986dd8985af06141bcfa8c5da3dfd0ccf34c",
+      "closure": "Explicit char[] declaration inspected by verifier_reviewer; final npm run lint exit 0 on a1ab9d snapshot."
+    }
+  ]
+}

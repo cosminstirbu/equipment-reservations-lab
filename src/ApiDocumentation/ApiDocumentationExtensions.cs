@@ -32,6 +32,9 @@ public static class ApiDocumentationExtensions
             });
             _ = options.AddDocumentTransformer((document, _, _) =>
             {
+                document.Info.Description = "Business operations for the Equipment Reservations application.";
+                document.Info.Contact = new OpenApiContact { Name = "Equipment Reservations team" };
+
                 document.Components ??= new OpenApiComponents();
                 document.Components.SecuritySchemes = new Dictionary<string, IOpenApiSecurityScheme>
                 {

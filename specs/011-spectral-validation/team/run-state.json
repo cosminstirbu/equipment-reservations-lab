@@ -1,0 +1,70 @@
+{
+  "feature_directory": "specs/011-spectral-validation",
+  "status": "awaiting_human_acceptance",
+  "baseline_revision": "0036cbccad665b2a2e1aec96183c172baa837425",
+  "preparation_round": 0,
+  "implementation_round": 1,
+  "limits": {
+    "preparation_repairs": 3,
+    "implementation_repairs": 3,
+    "no_progress_recurrences": 2
+  },
+  "required_checks": [
+    {
+      "command": "npm run check:openapi",
+      "status": "pass",
+      "revision": "a1ab9d871674c5d8a4a8b56422570b8cc81ea1883e12c19adf3932f9155d6291"
+    },
+    {
+      "command": "npm run format-check",
+      "status": "pass",
+      "revision": "a1ab9d871674c5d8a4a8b56422570b8cc81ea1883e12c19adf3932f9155d6291"
+    },
+    {
+      "command": "npm run lint",
+      "status": "pass",
+      "revision": "a1ab9d871674c5d8a4a8b56422570b8cc81ea1883e12c19adf3932f9155d6291"
+    },
+    {
+      "command": "npm run check",
+      "status": "pass",
+      "result": "tooling19, frontend60, backend513 all passed; zero skipped",
+      "revision": "a1ab9d871674c5d8a4a8b56422570b8cc81ea1883e12c19adf3932f9155d6291"
+    }
+  ],
+  "acceptance_evidence": [
+    "implementation-evidence.md",
+    "final-checks.md",
+    "quality-review.md",
+    "security-review.md",
+    "convergence.md"
+  ],
+  "quality_review": {
+    "verdict": "pass",
+    "revision": "a1ab9d871674c5d8a4a8b56422570b8cc81ea1883e12c19adf3932f9155d6291",
+    "report": "quality-review.md"
+  },
+  "security_review": {
+    "verdict": "pass",
+    "revision": "a1ab9d871674c5d8a4a8b56422570b8cc81ea1883e12c19adf3932f9155d6291",
+    "report": "security-review.md"
+  },
+  "convergence": {
+    "verdict": "converged",
+    "revision": "a1ab9d871674c5d8a4a8b56422570b8cc81ea1883e12c19adf3932f9155d6291",
+    "report": "convergence.md"
+  },
+  "human_acceptance_required": true,
+  "human_acceptance": null,
+  "pending_decisions": [
+    "Explicit human acceptance of the implemented feature"
+  ],
+  "preparation": {
+    "quality": "pass",
+    "security": "pass",
+    "analysis": "pass",
+    "snapshot": "base 0036cbcc + frozen preparation artifacts 2026-10-20"
+  },
+  "tested_snapshot": "a1ab9d871674c5d8a4a8b56422570b8cc81ea1883e12c19adf3932f9155d6291",
+  "completion_metadata": "Spec status and team state reflect pending human acceptance; task work complete. Metadata edits only after frozen source snapshot."
+}

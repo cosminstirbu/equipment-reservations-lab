@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
 import {
   mkdtempSync,
+  chmodSync,
   readFileSync,
   rmSync,
   symlinkSync,
@@ -117,5 +118,57 @@ test('C# edits use Allman braces and four-space indentation', () => {
     );
   } finally {
     rmSync(path);
+  }
+});
+
+test('focused OpenAPI command builds all three contract classes and propagates a failed module', () => {
+  const directory = mkdtempSync(resolve(tmpdir(), 'openapi-command-'));
+  const log = resolve(directory, 'calls.jsonl');
+  const executable = resolve(directory, 'dotnet');
+  writeFileSync(
+    executable,
+    `#!/usr/bin/env node
+require('node:fs').appendFileSync(process.env.OPENAPI_COMMAND_LOG, JSON.stringify(process.argv.slice(2)) + '\\n');
+process.exit(process.argv[2] === 'test' && process.argv.some(arg => arg.includes('Reservations.Tests')) ? 7 : 0);
+`,
+  );
+  chmodSync(executable, 0o755);
+  try {
+    const result = spawnSync(
+      process.execPath,
+      [resolve(root, 'scripts/quality.mjs'), 'check:openapi'],
+      {
+        encoding: 'utf8',
+        env: {
+          ...process.env,
+          PATH: `${directory}:${process.env.PATH}`,
+          OPENAPI_COMMAND_LOG: log,
+        },
+      },
+    );
+    assert.notEqual(result.status, 0);
+    const calls = readFileSync(log, 'utf8')
+      .trim()
+      .split('\n')
+      .map((line) => JSON.parse(line));
+    assert.equal(calls.length, 4);
+    assert.deepEqual(calls[0], ['build', 'EquipmentReservation.slnx', '-m:1']);
+    for (const service of ['Inventory', 'Reservations', 'Notifications']) {
+      assert.ok(
+        calls.some(
+          (args) =>
+            args.includes(`tests/${service}.Tests/${service}.Tests.csproj`) &&
+            args.includes(`${service}.Tests.OpenApiTests`),
+        ),
+      );
+    }
+    assert.ok(
+      calls
+        .slice(1)
+        .every((args) => args[0] === 'test' && args.includes('--no-build')),
+    );
+    assert.match(result.stderr, /dotnet.*7/);
+  } finally {
+    rmSync(directory, { recursive: true });
   }
 });

@@ -300,6 +300,28 @@ npm --prefix src/Web test
 npm --prefix src/Web audit
 ```
 
+To validate the current OpenAPI documents for Inventory, Reservations and Notifications:
+
+```sh
+npm run check:openapi
+```
+
+After `npm ci`, this command builds the solution and runs the three HTTP OpenAPI
+contract test classes concurrently with real isolated PostgreSQL. Use the pinned
+SDK and Node versions and the Podman/Testcontainers environment above; no separately
+running Aspire application is required. `npm run check` reaches the same validation
+through the complete backend suite and also runs the validator tooling tests.
+
+Spectral's pinned, locally installed recommended OpenAPI rules run alongside the
+existing Microsoft.OpenApi and service-specific C# assertions. Both warnings and
+errors fail the command. Findings identify the service, severity, rule (for example
+`info-contact`) and JSON path (for example `$["info"]`). Correct metadata in the
+authoritative endpoint definitions or `src/ApiDocumentation/ApiDocumentationExtensions.cs`,
+then rerun the command. Missing tools/dependencies, invalid input and a validator
+exceeding its 30-second budget fail explicitly; restore prerequisites with `npm ci`
+and the documented SDK/container setup. Validation uses stdin and local fragment
+references, without saved schema exports. CI workflows and custom rules are deferred.
+
 Backend tests exercise public HTTP behavior with real isolated PostgreSQL
 databases and production migrations; external HTTP/broker doubles are backed by
 provider contracts. Database concurrency tests send competing public requests to

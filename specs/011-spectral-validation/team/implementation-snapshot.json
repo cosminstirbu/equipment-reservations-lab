@@ -1,0 +1,18 @@
+{
+  "base": "0036cbccad665b2a2e1aec96183c172baa837425",
+  "snapshot": "a1ab9d871674c5d8a4a8b56422570b8cc81ea1883e12c19adf3932f9155d6291",
+  "files": {
+    "package-lock.json": "ca521909e0a3e1068c7a0df9f7c2de21305ea5a8e82fef226118be11d2493f37",
+    "package.json": "1fdeac229fbc43a1020288c5da3ebd9adf5363f8f7ab11cfda2bc7937d4f5997",
+    "readme.md": "6da2db16cc24b5115af62cc49e3af46351fc579d077124f72c8d849c7b905ab3",
+    "scripts/openapi-lint.mjs": "e1fdb416c18bf4bd065f74ead5c4f0a0fa69d713bff49a24b5aacca1eaf9e0ad",
+    "scripts/openapi-lint.test.mjs": "c9d30d7ce058af33c93ecd6ea5b83a726284ed2136a9e8a1f79641f12598cae9",
+    "scripts/quality.mjs": "f3a6c54d4d08ea4a43bf3119f2ad05734bb013802a60dd50bf8b280d2683c433",
+    "scripts/quality.test.mjs": "62e673955acbd6eabe1511c672b157f83f035270b229634ba6a520f0d6dab998",
+    "src/ApiDocumentation/ApiDocumentationExtensions.cs": "90ba46c10bc7a202557b389310c589c57aec6d5336a8b03489e361bc08958251",
+    "tests/Inventory.Tests/OpenApiTests.cs": "692e51cdb83dac4bb2df1699d3421e3328811e142b3f08f5467a1b7ef217c70e",
+    "tests/Inventory.Tests/SpectralValidationTests.cs": "ecdf0997b3df5e1dc6dc3ed4d4d8d66d2c2b95c96a04ad1eb474142c8952a625",
+    "tests/TestSupport/OpenApiAssertions.cs": "a1f1df884d325fc0c49c03d6eeb531d51bad2b1f80e0112495cb2638e66c9c31",
+    "tests/TestSupport/SpectralValidation.cs": "216012816e4a4980771d88ac31bf11be5e37a0489210c44b2d10f099345f0399"
+  }
+}

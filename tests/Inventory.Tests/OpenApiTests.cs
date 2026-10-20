@@ -1,4 +1,5 @@
 using System.Net;
+using System.Text.Json.Nodes;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Npgsql;
@@ -49,6 +50,23 @@ public sealed class OpenApiTests(PostgresFixture postgres)
         {
             Assert.Equal(HttpStatusCode.NotFound, (await client.GetAsync(route, TestContext.Current.CancellationToken)).StatusCode);
         }
+    }
+
+    [Fact]
+    public async Task ServiceContractStillRejectsAnUndocumentedErrorWhenSpectralPasses()
+    {
+        await using NpgsqlDataSource database = await postgres.CreateMigratedDatabaseAsync("inventory");
+        using WebApplicationFactory<Program> app = Host(database, "Development");
+        using HttpClient client = app.CreateClient();
+        string json = await client.GetStringAsync("/openapi/v1.json", TestContext.Current.CancellationToken);
+        JsonNode document = JsonNode.Parse(json)!;
+        _ = document["paths"]!["/api/equipment"]!["get"]!["responses"]!.AsObject().Remove("503");
+        string mutated = document.ToJsonString();
+
+        await SpectralValidation.AssertValidAsync(mutated, "Inventory", TestContext.Current.CancellationToken);
+        Exception? failure = await Record.ExceptionAsync(() => OpenApiAssertions.AssertDocumentAsync(mutated, "Inventory"));
+        Assert.NotNull(failure);
+        Assert.Contains("503", failure.Message, StringComparison.Ordinal);
     }
 
     private static WebApplicationFactory<Program> Host(NpgsqlDataSource database, string environment)

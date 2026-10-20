@@ -12,6 +12,8 @@ public static class OpenApiAssertions
 
     public static async Task AssertDocumentAsync(string json, string service)
     {
+        await SpectralValidation.AssertValidAsync(json, service, TestContext.Current.CancellationToken);
+
         using var stream = new MemoryStream(Encoding.UTF8.GetBytes(json));
         Microsoft.OpenApi.Reader.ReadResult result = await OpenApiDocument.LoadAsync(stream, "json", cancellationToken: TestContext.Current.CancellationToken);
         Assert.NotNull(result.Diagnostic);

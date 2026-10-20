@@ -1,4 +1,4 @@
-import { spawnSync } from 'node:child_process';
+import { spawn, spawnSync } from 'node:child_process';
 import { mkdirSync, readdirSync, realpathSync, rmSync } from 'node:fs';
 import { dirname, extname, isAbsolute, relative, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -170,6 +170,36 @@ function lint() {
   ]);
 }
 
+async function checkOpenApi() {
+  run('dotnet', ['build', 'EquipmentReservation.slnx', '-m:1']);
+  const results = await Promise.all(
+    ['Inventory', 'Reservations', 'Notifications'].map(
+      (service) =>
+        new Promise((resolve, reject) => {
+          const child = spawn(
+            'dotnet',
+            [
+              'test',
+              '--project',
+              `tests/${service}.Tests/${service}.Tests.csproj`,
+              '--no-build',
+              '--filter-class',
+              `${service}.Tests.OpenApiTests`,
+            ],
+            { cwd: root, stdio: 'inherit' },
+          );
+          child.on('error', reject);
+          child.on('close', (code, signal) => resolve({ code, signal }));
+        }),
+    ),
+  );
+  const failure = results.find((result) => result.code !== 0);
+  if (failure)
+    throw new Error(
+      `dotnet OpenAPI tests exited ${failure.code ?? failure.signal}`,
+    );
+}
+
 if (
   process.argv[1] &&
   resolve(process.argv[1]) === fileURLToPath(import.meta.url)
@@ -182,6 +212,7 @@ if (
         command === 'format-check',
       );
     else if (command === 'lint') lint();
+    else if (command === 'check:openapi') await checkOpenApi();
     else if (command === 'check') {
       await format(undefined, true);
       lint();
@@ -203,7 +234,7 @@ if (
       ]);
     } else
       throw new Error(
-        'Usage: npm run format|format-check|lint|check [-- files...]',
+        'Usage: npm run format|format-check|lint|check|check:openapi [-- files...]',
       );
   } catch (error) {
     console.error(error.message);
