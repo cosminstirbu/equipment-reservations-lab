@@ -1,3 +1,4 @@
+using ApiDocumentation;
 using IdentityAccess;
 using ReservationMessaging;
 using Reservations;
@@ -5,6 +6,8 @@ using ServiceDefaults;
 
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 builder.AddServiceDefaults();
+builder.AddApiDocumentation();
+builder.AddReservationDocumentation();
 _ = builder.Services.AddIdentityAuthentication(builder.Configuration, builder.Environment, "reservations-api");
 builder.AddDatabase("reservations", ReservationStore.Commands.Concat(OutboxWorker.Commands));
 builder.Services.AddSingleton(TimeProvider.System);
@@ -32,6 +35,7 @@ WebApplication app = builder.Build();
 _ = app.UseAuthentication();
 _ = app.UseAuthorization();
 app.MapOperationalEndpoints();
+app.MapApiDocumentation();
 app.UseBrowserWriteGuard();
 _ = app.UseOwnershipInputGuard();
 app.MapReservations();

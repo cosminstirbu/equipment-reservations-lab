@@ -1,7 +1,7 @@
 import { expect, Page } from '@playwright/test';
 import { readFileSync } from 'node:fs';
 
-function password(username: string) {
+export function password(username: string) {
   const path = process.env.IDENTITY_BROWSER_ACCOUNTS_FILE;
   if (!path)
     throw new Error(

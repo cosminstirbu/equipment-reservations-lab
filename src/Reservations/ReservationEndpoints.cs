@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using ApiDocumentation;
 using IdentityAccess;
 using Npgsql;
 
@@ -17,7 +18,9 @@ internal static class ReservationEndpoints
                 string userKey = IdentityPrincipal.UserKey(request.HttpContext.User);
                 Reservation result = await ReservationTelemetry.DatabaseAsync(token => store.ConfirmAsync(interval, equipmentName, userKey, token), cancellationToken);
                 return Results.Created($"/api/reservations/{result.Id}", result);
-            })).RequireAuthorization(IdentityAuthentication.Employee);
+            })).RequireAuthorization(IdentityAuthentication.Employee)
+            .DescribeBusinessOperation<Reservation>("CreateReservation", "Reserve equipment", "Reservations", "Employee role required. JSON body limited to 4 KiB; no duplicate, additional or ownership fields; timestamps require an explicit offset and at most six fractional digits, start before end and not past. Authorization 403 is empty; browser guard 403 returns Problem Details.", 201, 400, 404, 409, 413, 415, 500, 503)
+            .Accepts<ReservationInput>("application/json");
 
         _ = app.MapGet("/api/availability", (HttpRequest request, InventoryClient inventory, ReservationStore store, TimeProvider time) =>
             ExecuteAsync(request, "availability", async cancellationToken =>
@@ -32,7 +35,8 @@ internal static class ReservationEndpoints
                 _ = await inventory.OperationalNameAsync(interval.EquipmentId, cancellationToken);
                 bool available = await ReservationTelemetry.DatabaseAsync(token => store.AvailableAsync(interval, token), cancellationToken);
                 return Results.Ok(new Availability(interval.EquipmentId, interval.StartAt, interval.EndAt, available));
-            })).RequireAuthorization(IdentityAuthentication.Human);
+            })).RequireAuthorization(IdentityAuthentication.Human)
+            .DescribeBusinessOperation<Availability>("GetAvailability", "Check equipment availability", "Availability", "Validated human identity; no additional role required. Exactly equipmentId, startAt and endAt query strings; start before end and not past.", 200, 400, 404, 500, 503);
 
         _ = app.MapPost("/api/reservations/{id}/cancel", (HttpRequest request, string id, ReservationStore store) =>
             ExecuteAsync(request, "cancel", async cancellationToken =>
@@ -45,11 +49,13 @@ internal static class ReservationEndpoints
                 string userKey = IdentityPrincipal.UserKey(request.HttpContext.User);
                 Reservation result = await ReservationTelemetry.DatabaseAsync(token => store.CancelAsync(reservationId, userKey, token), cancellationToken);
                 return Results.Ok(result);
-            })).RequireAuthorization(IdentityAuthentication.Employee);
+            })).RequireAuthorization(IdentityAuthentication.Employee)
+            .DescribeBusinessOperation<Reservation>("CancelReservation", "Cancel my reservation", "Reservations", "Employee role required. Nonempty GUID id. Empty or JSON null body only; authorization 403 is empty, browser guard 403 returns Problem Details.", 200, 400, 404, 409, 413, 500, 503);
 
         _ = app.MapGet("/api/reservations", (HttpRequest request, ReservationStore store) =>
             ExecuteAsync(request, "list", async cancellationToken => Results.Ok(await ReservationTelemetry.DatabaseAsync(token => store.ListAsync(IdentityPrincipal.UserKey(request.HttpContext.User), token), cancellationToken))))
-            .RequireAuthorization(IdentityAuthentication.Employee);
+            .RequireAuthorization(IdentityAuthentication.Employee)
+            .DescribeBusinessOperation<Reservation[]>("ListReservations", "List my reservations", "Reservations", "Employee role required.", 200, 400, 500, 503);
 
         _ = app.MapGet("/api/reservations/{id}", (HttpRequest request, string id, ReservationStore store) =>
             ExecuteAsync(request, "get", async cancellationToken =>
@@ -64,7 +70,8 @@ internal static class ReservationEndpoints
                     ?? throw new ReservationProblemException(404, "reservation_not_found", "Reservation was not found.");
 
                 return Results.Ok(result);
-            })).RequireAuthorization(IdentityAuthentication.Employee);
+            })).RequireAuthorization(IdentityAuthentication.Employee)
+            .DescribeBusinessOperation<Reservation>("GetReservation", "Find my reservation", "Reservations", "Employee role required. Nonempty GUID id.", 200, 400, 404, 500, 503);
     }
 
     private static async Task<IResult> ExecuteAsync(HttpRequest request, string operationName, Func<CancellationToken, Task<IResult>> operation)

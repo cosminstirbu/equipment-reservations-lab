@@ -14,6 +14,108 @@ public sealed class IdentityProviderTests(IdentityProviderFixture provider)
 {
     private static readonly string[] HumanAudiences = ["inventory-api", "notifications-api", "reservations-api"];
 
+    [Fact]
+    public async Task DocumentationCodeFlowUsesExistingHumanRolesAudiencesAndSubject()
+    {
+        using var deadline = new CancellationTokenSource(TimeSpan.FromSeconds(60));
+        await provider.ProvisionAsync(cancellationToken: deadline.Token);
+        ProviderTokens web = await provider.LoginAsync("employee-a", cancellationToken: deadline.Token);
+        ProviderTokens docs = await IdentityProviderFixture.LoginAsync(provider.Settings, "employee-a", cancellationToken: deadline.Token, clientId: "equipment-docs", callbackUri: "http://localhost:19877/oauth/callback");
+        using JsonDocument webClaims = IdentityProviderFixture.Claims(web.AccessToken);
+        using JsonDocument claims = IdentityProviderFixture.Claims(docs.AccessToken);
+        Assert.Equal("equipment-docs", claims.RootElement.GetProperty("azp").GetString());
+        Assert.Equal("human", claims.RootElement.GetProperty("principal_kind").GetString());
+        Assert.Equal(webClaims.RootElement.GetProperty("sub").GetString(), claims.RootElement.GetProperty("sub").GetString());
+        Assert.Equal(HumanAudiences, claims.RootElement.GetProperty("aud").EnumerateArray().Select(item => item.GetString()).Order());
+        Assert.Equal("Employee", Assert.Single(claims.RootElement.GetProperty("realm_access").GetProperty("roles").EnumerateArray()).GetString());
+    }
+
+    [Fact]
+    public async Task DocumentationReconciliationReplacesStaleCallbackAndOrigin()
+    {
+        using var deadline = new CancellationTokenSource(TimeSpan.FromSeconds(60));
+        await provider.ProvisionAsync(cancellationToken: deadline.Token);
+        const string changed = "http://localhost:19880/oauth/callback";
+        try
+        {
+            await provider.ProvisionAsync(provider.Settings with
+            {
+                DocumentationCallbacks = [changed]
+            }, deadline.Token);
+            _ = await IdentityProviderFixture.LoginAsync(provider.Settings, "employee-a", clientId: "equipment-docs", callbackUri: changed, cancellationToken: deadline.Token);
+            using var client = new HttpClient(new HttpClientHandler { AllowAutoRedirect = false }) { Timeout = TimeSpan.FromSeconds(5) };
+            string stale = provider.Settings.Authority + "/protocol/openid-connect/auth?client_id=equipment-docs&response_type=code&redirect_uri="
+                + Uri.EscapeDataString("http://localhost:19877/oauth/callback") + "&code_challenge=abcdefghijklmnopqrstuvwxyz012345678901234567890&code_challenge_method=S256";
+            Assert.Equal(HttpStatusCode.BadRequest, (await client.GetAsync(stale, deadline.Token)).StatusCode);
+        }
+        finally
+        {
+            await provider.ProvisionAsync(cancellationToken: deadline.Token);
+        }
+    }
+
+    [Theory]
+    [InlineData("missing")]
+    [InlineData("plain")]
+    [InlineData("redirect")]
+    [InlineData("implicit")]
+    public async Task DocumentationAuthorizationRejectsUnsafeRequests(string fault)
+    {
+        using var deadline = new CancellationTokenSource(TimeSpan.FromSeconds(60));
+        await provider.ProvisionAsync(cancellationToken: deadline.Token);
+        using var client = new HttpClient(new HttpClientHandler { AllowAutoRedirect = false }) { Timeout = TimeSpan.FromSeconds(5) };
+        string callback = "http://localhost:19877/oauth/callback";
+        string authorize = provider.Settings.Authority + "/protocol/openid-connect/auth?client_id=equipment-docs&scope=openid&response_type="
+            + (fault == "implicit" ? "token" : "code") + "&redirect_uri=" + Uri.EscapeDataString(fault == "redirect" ? callback + "unregistered" : callback)
+            + (fault == "missing" ? "" : "&code_challenge=abcdefghijklmnopqrstuvwxyz012345678901234567890&code_challenge_method=" + (fault == "plain" ? "plain" : "S256"));
+        using HttpResponseMessage response = await client.GetAsync(authorize, deadline.Token);
+        Assert.NotEqual(HttpStatusCode.OK, response.StatusCode);
+        if (response.Headers.Location is { } redirect)
+        {
+            Assert.Contains("error=", redirect.AbsoluteUri, StringComparison.Ordinal);
+        }
+    }
+
+    [Theory]
+    [InlineData("password")]
+    [InlineData("client_credentials")]
+    public async Task DocumentationClientRejectsNonCodeGrantsAndUnregisteredCors(string grant)
+    {
+        using var deadline = new CancellationTokenSource(TimeSpan.FromSeconds(60));
+        await provider.ProvisionAsync(cancellationToken: deadline.Token);
+        using var client = new HttpClient { Timeout = TimeSpan.FromSeconds(5) };
+        foreach (string origin in new[] { "http://localhost:19877", "http://localhost:19999" })
+        {
+            using var request = new HttpRequestMessage(HttpMethod.Post, provider.Settings.Authority + "/protocol/openid-connect/token");
+            request.Headers.Add("Origin", origin);
+            request.Content = new FormUrlEncodedContent(new Dictionary<string, string> { ["client_id"] = "equipment-docs", ["grant_type"] = grant });
+            using HttpResponseMessage response = await client.SendAsync(request, deadline.Token);
+            Assert.False(response.IsSuccessStatusCode);
+            bool allowed = response.Headers.TryGetValues("Access-Control-Allow-Origin", out IEnumerable<string>? values);
+            Assert.Equal(origin.EndsWith(":19877", StringComparison.Ordinal), allowed);
+            if (allowed)
+            {
+                Assert.Equal(origin, Assert.Single(values!));
+            }
+        }
+    }
+
+    [Theory]
+    [InlineData("http://localhost:0/oauth/callback")]
+    [InlineData("http://example.com/oauth/callback")]
+    [InlineData("http://127.1/oauth/callback")]
+    [InlineData("http://localhost:19877/oauth/callback*")]
+    [InlineData("http://localhost:19877/oauth/callback?code=secret")]
+    [InlineData("http://user@localhost:19877/oauth/callback")]
+    [InlineData("http://localhost:19877/oauth/callback#token")]
+    [InlineData("http://localhost:19877/wrong/")]
+    public async Task InvalidDocumentationCallbackFailsBeforeAnyProviderRequest(string callback)
+    {
+        using var client = new HttpClient { Timeout = TimeSpan.FromSeconds(5) };
+        _ = await Assert.ThrowsAsync<InvalidOperationException>(() => new IdentityProvisioning(client).ReconcileAsync(provider.Settings with { DocumentationCallbacks = [callback] }, TestContext.Current.CancellationToken));
+        Assert.Null(client.BaseAddress);
+    }
+
     [Theory]
     [InlineData("employee-a", "Employee")]
     [InlineData("employee-b", "Employee")]

@@ -102,7 +102,7 @@ public sealed class OutboxNotificationTests(PostgresFixture postgres, ITestOutpu
         await restarted.StartAsync(TestContext.Current.CancellationToken);
         Assert.Equal(TimeSpan.FromSeconds(4), await restartedSchedule.NextAsync());
         scenario.Clock.Now = due;
-        restartedSchedule.Advance();
+        await restartedSchedule.AdvanceAsync();
         _ = await publisher.NextAsync();
         await restarted.StopAsync(TestContext.Current.CancellationToken);
     }
@@ -178,6 +178,33 @@ public sealed class OutboxNotificationTests(PostgresFixture postgres, ITestOutpu
         }
     }
 
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task ManualScheduleAdvancesReplacementWhenPreviousDelayIsCancelled(bool cancelAfterSelection)
+    {
+        using var schedule = new ManualSchedule();
+        using var cancellation = new CancellationTokenSource();
+        Task cancelled = schedule.DelayAsync(TimeSpan.FromSeconds(30), cancellation.Token);
+        if (cancelAfterSelection)
+        {
+            Assert.Equal(TimeSpan.FromSeconds(30), await schedule.NextAsync());
+        }
+
+        await cancellation.CancelAsync();
+        _ = await Assert.ThrowsAnyAsync<OperationCanceledException>(() => cancelled);
+        Task replacement = schedule.DelayAsync(TimeSpan.FromSeconds(10), TestContext.Current.CancellationToken);
+        if (!cancelAfterSelection)
+        {
+            Assert.Equal(TimeSpan.FromSeconds(10), await schedule.NextAsync());
+        }
+
+        await schedule.AdvanceAsync();
+        await replacement.WaitAsync(TimeSpan.FromSeconds(5), TestContext.Current.CancellationToken);
+        Assert.True(cancelled.IsCanceled);
+        Assert.True(replacement.IsCompletedSuccessfully);
+    }
+
     [Fact]
     public async Task MissingTriggerAndManualRepairAreRecoveredByFallback()
     {
@@ -191,14 +218,14 @@ public sealed class OutboxNotificationTests(PostgresFixture postgres, ITestOutpu
         Assert.Equal(TimeSpan.FromSeconds(30), await schedule.NextAsync());
         _ = await scenario.BookAsync();
         Assert.Empty(publisher.Events);
-        schedule.Advance();
+        await schedule.AdvanceAsync();
         ReservationEvent original = await publisher.NextAsync();
         await AwaitPublishedAsync(scenario.Database, 1);
         _ = await schedule.NextAsync();
         await using NpgsqlCommand repair = scenario.Database.CreateCommand("UPDATE reservation_outbox SET published_at=NULL WHERE event_id=$1");
         _ = repair.Parameters.AddWithValue(original.EventId);
         _ = await repair.ExecuteNonQueryAsync(TestContext.Current.CancellationToken);
-        schedule.Advance();
+        await schedule.AdvanceAsync();
         Assert.Equal(original, await publisher.NextAsync());
         await worker.StopAsync(TestContext.Current.CancellationToken);
     }
@@ -294,7 +321,7 @@ public sealed class OutboxNotificationTests(PostgresFixture postgres, ITestOutpu
         await AwaitDifferentListenerAsync(scenario.Database, pid);
         _ = Assert.Single(publisher.Events);
         scenario.Clock.Now = scenario.Clock.Now.AddSeconds(1);
-        schedule.Advance();
+        await schedule.AdvanceAsync();
         _ = await publisher.NextAsync();
         _ = await publisher.NextAsync();
         await worker.StopAsync(TestContext.Current.CancellationToken);
@@ -356,7 +383,7 @@ public sealed class OutboxNotificationTests(PostgresFixture postgres, ITestOutpu
         foreach (int seconds in new[] { 1, 2 })
         {
             Assert.Equal(TimeSpan.FromSeconds(seconds), await schedule.NextAsync());
-            schedule.Advance();
+            await schedule.AdvanceAsync();
         }
 
         Assert.Equal(TimeSpan.FromSeconds(10), await schedule.NextAsync());
@@ -387,7 +414,7 @@ public sealed class OutboxNotificationTests(PostgresFixture postgres, ITestOutpu
         _ = await scenario.BookAsync();
         _ = await scenario.BookAsync(equipment: "laptop-001");
         ReservationEvent first = await modernPublisher.NextAsync();
-        legacySchedule.Advance();
+        await legacySchedule.AdvanceAsync();
         ReservationEvent second = await legacyPublisher.NextAsync();
         Assert.NotEqual(first.EventId, second.EventId);
         modernPublisher.Release();
@@ -629,19 +656,38 @@ public sealed class OutboxNotificationTests(PostgresFixture postgres, ITestOutpu
         public async Task DelayAsync(TimeSpan delay, CancellationToken cancellationToken)
         {
             var completion = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+            using CancellationTokenRegistration registration = cancellationToken.Register(() => completion.TrySetCanceled(cancellationToken));
             await delays.Writer.WriteAsync((delay, completion), cancellationToken);
-            await completion.Task.WaitAsync(cancellationToken);
+            await completion.Task;
         }
 
         public async Task<TimeSpan> NextAsync()
         {
-            (TimeSpan delay, current) = await delays.Reader.ReadAsync(TestContext.Current.CancellationToken).AsTask().WaitAsync(TimeSpan.FromSeconds(5), TestContext.Current.CancellationToken);
-            return delay;
+            using var budget = CancellationTokenSource.CreateLinkedTokenSource(TestContext.Current.CancellationToken);
+            budget.CancelAfter(TimeSpan.FromSeconds(5));
+            return await SelectLiveDelayAsync(budget.Token);
         }
 
-        public void Advance()
+        public async Task AdvanceAsync()
         {
-            _ = current!.TrySetResult();
+            using var budget = CancellationTokenSource.CreateLinkedTokenSource(TestContext.Current.CancellationToken);
+            budget.CancelAfter(TimeSpan.FromSeconds(5));
+            while (current is null || !current.TrySetResult())
+            {
+                _ = await SelectLiveDelayAsync(budget.Token);
+            }
+        }
+
+        private async Task<TimeSpan> SelectLiveDelayAsync(CancellationToken cancellationToken)
+        {
+            while (true)
+            {
+                (TimeSpan delay, current) = await delays.Reader.ReadAsync(cancellationToken);
+                if (!current.Task.IsCanceled)
+                {
+                    return delay;
+                }
+            }
         }
 
         public void Dispose()

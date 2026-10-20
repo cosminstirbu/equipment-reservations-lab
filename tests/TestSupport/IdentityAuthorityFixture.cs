@@ -94,7 +94,7 @@ internal sealed class IdentityAuthorityFixture(string authority = IdentityAuthor
 
     public void Configure(IConfigurationBuilder configuration)
     {
-        _ = configuration.AddInMemoryCollection(new Dictionary<string, string?> { ["Identity:Authority"] = Authority });
+        _ = configuration.AddInMemoryCollection(new Dictionary<string, string?> { ["Identity:Authority"] = Authority, ["Documentation:Callback"] = "http://localhost:5100/oauth/callback" });
     }
 
     public void Configure(IServiceCollection services)

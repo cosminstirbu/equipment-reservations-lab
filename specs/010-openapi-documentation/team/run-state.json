@@ -1,0 +1,190 @@
+{
+  "feature_directory": "specs/010-openapi-documentation",
+  "status": "complete",
+  "baseline_revision": "ffe638bd394262db2bb3a3bc7c1f3bb5596d8d3e",
+  "preparation_round": 1,
+  "implementation_round": 3,
+  "limits": {
+    "preparation_repairs": 3,
+    "implementation_repairs": 3,
+    "no_progress_recurrences": 2
+  },
+  "required_checks": [
+    {
+      "command": "npm run format-check",
+      "exit_status": 0,
+      "result": "pass",
+      "revision": "b485c18cd86b77bbf28e87b16960d98aad2c609d3868def74bd46412b982fa6a"
+    },
+    {
+      "command": "npm run lint",
+      "exit_status": 0,
+      "result": "pass",
+      "revision": "b485c18cd86b77bbf28e87b16960d98aad2c609d3868def74bd46412b982fa6a"
+    },
+    {
+      "command": "DOCKER_HOST=<documented Podman socket> TESTCONTAINERS_RYUK_DISABLED=true npm run check",
+      "result": "fail",
+      "backend_exit_status": 2,
+      "backend_total": 509,
+      "backend_passed": 475,
+      "backend_failed": 34,
+      "backend_skipped": 0,
+      "revision": "b485c18cd86b77bbf28e87b16960d98aad2c609d3868def74bd46412b982fa6a",
+      "evidence": "implementation-evidence.md; /tmp/openapi-t024-final-check.txt",
+      "exit_status": 1,
+      "frontend_passed": 60,
+      "tooling_passed": 4,
+      "backend_duration": "2m46.70s"
+    },
+    {
+      "command": "DOCKER_HOST=<documented Podman socket> TESTCONTAINERS_RYUK_DISABLED=true npm run check",
+      "date": "2026-10-20",
+      "result": "fail",
+      "exit_status": 1,
+      "backend_exit_status": 2,
+      "backend_total": 509,
+      "backend_passed": 508,
+      "backend_failed": 1,
+      "backend_skipped": 0,
+      "backend_duration": "2m50.21s",
+      "revision": "b485c18cd86b77bbf28e87b16960d98aad2c609d3868def74bd46412b982fa6a",
+      "evidence": "implementation-evidence.md; /tmp/openapi-resume-final-check.txt",
+      "failure": "PublisherAttemptHasThreeSecondBudgetAndHostDisposalCancelsBackoff: no backoff observed before shared test deadline."
+    },
+    {
+      "command": "npm run format-check",
+      "date": "2026-10-20",
+      "result": "pass",
+      "exit_status": 0,
+      "revision": "b485c18cd86b77bbf28e87b16960d98aad2c609d3868def74bd46412b982fa6a"
+    },
+    {
+      "command": "npm run lint",
+      "date": "2026-10-20",
+      "result": "pass",
+      "exit_status": 0,
+      "revision": "b485c18cd86b77bbf28e87b16960d98aad2c609d3868def74bd46412b982fa6a"
+    },
+    {
+      "command": "DOCKER_HOST=<documented Podman socket> TESTCONTAINERS_RYUK_DISABLED=true npm run check",
+      "date": "2026-10-20",
+      "result": "pass",
+      "exit_status": 0,
+      "backend_total": 509,
+      "backend_passed": 509,
+      "backend_failed": 0,
+      "backend_skipped": 0,
+      "backend_duration": "2m37.091s",
+      "frontend_passed": 60,
+      "tooling_passed": 4,
+      "revision": "b485c18cd86b77bbf28e87b16960d98aad2c609d3868def74bd46412b982fa6a",
+      "environment": "Zero pre-existing running containers; owner-authorized Aspire stop; original nine-module parallelism and budgets/assertions. All temporary probes removed and exact source hashes verified.",
+      "evidence": "implementation-evidence.md; /tmp/openapi-isolated-final-check.txt"
+    }
+  ],
+  "acceptance_evidence": [
+    {
+      "command": "npm --prefix src/Web run test:browser -- --reporter=json",
+      "result": "27 passed, zero retries/skips; includes OpenAPI9/9",
+      "revision": "276f33e9f0fd1db582594bb774e13b91260041ce1fea56567b5dda0fa9e5cc03",
+      "carry_forward": "All application/browser/readme bytes unchanged at current revision; only scheduler test changed."
+    },
+    {
+      "result": "Actual dashboard/runtime callbacks/origins, headers, keyboard and trace observations",
+      "evidence": "local-validation.md"
+    }
+  ],
+  "quality_review": {
+    "verdict": "pass",
+    "revision": "b485c18cd86b77bbf28e87b16960d98aad2c609d3868def74bd46412b982fa6a",
+    "report": "quality-final-resumed.md"
+  },
+  "security_review": {
+    "verdict": "pass",
+    "revision": "b485c18cd86b77bbf28e87b16960d98aad2c609d3868def74bd46412b982fa6a",
+    "report": "security-final-resumed.md"
+  },
+  "convergence": {
+    "verdict": "converged",
+    "revision": "b485c18cd86b77bbf28e87b16960d98aad2c609d3868def74bd46412b982fa6a",
+    "report": "convergence-final.md",
+    "requirements_and_acceptance_items_checked": 29,
+    "plan_decision_groups_checked": 13,
+    "constitution_principles_checked": 6,
+    "tasks_checked": 24,
+    "findings_by_gap": {},
+    "findings_by_severity": {},
+    "tasks_appended": []
+  },
+  "human_acceptance_required": true,
+  "human_acceptance": {
+    "owner": "human owner",
+    "date": "2026-10-20",
+    "instruction": "I accept the feature. Stage the files and give me a commit message.",
+    "revision": "b485c18cd86b77bbf28e87b16960d98aad2c609d3868def74bd46412b982fa6a"
+  },
+  "pending_decisions": [],
+  "preparation_snapshot": "7769236d69454c9a7538820f677257b0bf164f8556a8dff2e09b726b2fcd7883",
+  "preparation_security_review": {
+    "verdict": "pass",
+    "revision": "7769236d69454c9a7538820f677257b0bf164f8556a8dff2e09b726b2fcd7883",
+    "report": "security-preparation.md"
+  },
+  "preparation_quality_review": {
+    "verdict": "pass",
+    "revision": "7769236d69454c9a7538820f677257b0bf164f8556a8dff2e09b726b2fcd7883",
+    "report": "quality-preparation.md"
+  },
+  "implementation_revision": "b485c18cd86b77bbf28e87b16960d98aad2c609d3868def74bd46412b982fa6a",
+  "intervention": {
+    "reason": "Three implementation repair rounds used; final revalidation reports PostgreSQL fixture startup readtimeouts. No additional source repair or retry authorized.",
+    "required_action": "Review ownership-scoped container cleanup and authorize resuming validation beyond the bounded repair limit. Resource pressure is a hypothesis, not an established root cause.",
+    "container_evidence": "15 remaining Testcontainers-labelled containers; current final run disposed its own containers. Labels do not prove exclusive session ownership or unused state. No deletion performed.",
+    "resumed": true,
+    "resolution": "Owner authorized resume beyond limit; bounded diagnostics retained, exact source restored; isolated uninstrumented check passed. Exact contention mechanism unproven, no source repair or timeout/concurrency change made during resume."
+  },
+  "limit_extension": {
+    "owner": "human owner",
+    "date": "2026-10-20",
+    "instruction": "Resume even if you go beyond the limit.",
+    "scope": "Resume diagnosis, repair and validation beyond default round limit; retain historical round count and all quality/security/acceptance gates."
+  },
+  "environment_revalidation": {
+    "date": "2026-10-20",
+    "source_unchanged": true,
+    "intervention": "Reversibly stopped15 corroborated abandoned testcontainers; containers/volumes retained; today user Aspire untouched.",
+    "observed_memory_mb_before": 4998,
+    "observed_memory_mb_after": 1137,
+    "reservations_diagnostic": {
+      "passed": 172,
+      "failed": 0,
+      "skipped": 0,
+      "duration": "29.07s",
+      "parallelism": "unchanged native default"
+    },
+    "historical_cause": "Not proven; capacity contention remains hypothesis."
+  },
+  "aspire_isolation_authorization": {
+    "date": "2026-10-20",
+    "owner": "human owner",
+    "instruction": "Yes, stop and restart it",
+    "target": "src/AppHost/AppHost.csproj",
+    "scope": "Temporarily stop current local Aspire app for check isolation and restart afterwards; preserve ordinary volumes and secrets.",
+    "stop_exit_status": 0,
+    "restart_pending": false,
+    "restart_exit_status": 0,
+    "restored_healthy": [
+      "inventory",
+      "reservations",
+      "notifications",
+      "web"
+    ],
+    "documentation_endpoints_after_restart": "All3services document/UI/callback200; prior ordinary secrets/volumes retained.",
+    "left_running": true
+  },
+  "completion_metadata": {
+    "date": "2026-10-20",
+    "scope": "Metadata-only acceptance/status/T023 update; implementation bytes and historical review/check evidence unchanged."
+  }
+}

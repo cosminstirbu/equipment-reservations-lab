@@ -39,7 +39,7 @@ public sealed class IdentityProviderFixture : IAsyncLifetime
                     ["employee-b"] = Guid.NewGuid().ToString("N"),
                     ["approver"] = Guid.NewGuid().ToString("N"),
                     ["equipment-staff"] = Guid.NewGuid().ToString("N")
-                }, Guid.NewGuid().ToString("N"));
+                }, Guid.NewGuid().ToString("N"), ["http://localhost:19877/oauth/callback", "http://localhost:19878/oauth/callback", "http://localhost:19879/oauth/callback"]);
         }
         catch
         {
@@ -56,11 +56,12 @@ public sealed class IdentityProviderFixture : IAsyncLifetime
 
     public Task<ProviderTokens> LoginAsync(string username, string? password = null, CancellationToken cancellationToken = default)
     {
-        return LoginAsync(Settings, username, password, cancellationToken);
+        return LoginAsync(Settings, username, password, cancellationToken: cancellationToken);
     }
 
-    internal static async Task<ProviderTokens> LoginAsync(IdentityProvisioningSettings settings, string username, string? password = null, CancellationToken cancellationToken = default)
+    internal static async Task<ProviderTokens> LoginAsync(IdentityProvisioningSettings settings, string username, string? password = null, string clientId = "equipment-web", string? callbackUri = null, CancellationToken cancellationToken = default)
     {
+        string redirectUri = callbackUri ?? settings.WebRoot;
         using var handler = new HttpClientHandler { AllowAutoRedirect = false, UseCookies = false };
         using var browser = new HttpClient(handler) { Timeout = TimeSpan.FromSeconds(5) };
         string verifier = Base64UrlEncoder.Encode(RandomNumberGenerator.GetBytes(32));
@@ -68,8 +69,8 @@ public sealed class IdentityProviderFixture : IAsyncLifetime
         string nonce = Guid.NewGuid().ToString("N");
         string authorize = QueryHelpers.AddQueryString(settings.Authority + "/protocol/openid-connect/auth", new Dictionary<string, string?>
         {
-            ["client_id"] = "equipment-web",
-            ["redirect_uri"] = settings.WebRoot,
+            ["client_id"] = clientId,
+            ["redirect_uri"] = redirectUri,
             ["response_type"] = "code",
             ["response_mode"] = "fragment",
             ["scope"] = "openid",
@@ -116,15 +117,15 @@ public sealed class IdentityProviderFixture : IAsyncLifetime
 
         Assert.True(submitted.StatusCode == HttpStatusCode.Found, $"Provider code login returned {(int)submitted.StatusCode}: {failure}");
         Uri redirect = Assert.IsType<Uri>(submitted.Headers.Location);
-        Assert.StartsWith(settings.WebRoot + "#", redirect.AbsoluteUri, StringComparison.Ordinal);
+        Assert.StartsWith(redirectUri + "#", redirect.AbsoluteUri, StringComparison.Ordinal);
         Dictionary<string, Microsoft.Extensions.Primitives.StringValues> callback = QueryHelpers.ParseQuery(redirect.Fragment[1..]);
         Assert.Equal(state, callback["state"].ToString());
         Assert.False(callback.ContainsKey("error"), "Provider code flow must complete without an authorization error.");
         using var exchange = new FormUrlEncodedContent(new Dictionary<string, string>
         {
             ["grant_type"] = "authorization_code",
-            ["client_id"] = "equipment-web",
-            ["redirect_uri"] = settings.WebRoot,
+            ["client_id"] = clientId,
+            ["redirect_uri"] = redirectUri,
             ["code"] = callback["code"].ToString(),
             ["code_verifier"] = verifier
         });

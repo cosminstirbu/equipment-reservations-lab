@@ -1,0 +1,103 @@
+{
+  "findings": [
+    {
+      "id": "Q-PREP-001",
+      "category": "design",
+      "severity": "medium",
+      "blocking": true,
+      "evidence": "Selected Angular guide requires axe and manual keyboard review for changed screens; plan/tasks T016/T022 omit Scalar accessibility checks.",
+      "owner": "architect_planner",
+      "status": "closed",
+      "closure_revision": "7769236d69454c9a7538820f677257b0bf164f8556a8dff2e09b726b2fcd7883",
+      "closure_owner": "verifier_reviewer"
+    },
+    {
+      "id": "S-IMPL-001",
+      "category": "security",
+      "severity": "low",
+      "blocking": true,
+      "owner": "coder",
+      "status": "closed",
+      "evidence": "Early security advisory: callback Uri validation admits port zero, contrary to plan valid development port requirements; both registration and UI need rejection before provider mutation.",
+      "closure_revision": "59f6db4eb53cee624731d1d6a37f712770bba502bae818cefdec0dfbc946f220",
+      "closure_owner": "security_reviewer"
+    },
+    {
+      "id": "Q-IMPL-001",
+      "category": "code",
+      "severity": "medium",
+      "blocking": true,
+      "owner": "coder",
+      "status": "closed",
+      "evidence": "Early quality advisory: document assertions omit schema bindings/types/nullability, availability/request-body/path/query contracts, error variants and bearer alternative, plus distinct human roles.",
+      "closure_revision": "59f6db4eb53cee624731d1d6a37f712770bba502bae818cefdec0dfbc946f220",
+      "closure_owner": "verifier_reviewer"
+    },
+    {
+      "id": "Q-IMPL-002",
+      "category": "code",
+      "severity": "medium",
+      "blocking": true,
+      "owner": "coder",
+      "status": "closed",
+      "evidence": "Live local APIs healthy but docs/UI404; API resources have no DOTNET_ENVIRONMENT/ASPNETCORE_ENVIRONMENT and no launch profile, unlike AppHost Development. Targeted plan propagates actual local run AppHost environment to API resources.",
+      "closure_revision": "de8768a34a7f51e9a1128d8de203c0c942067d822b927c53abdd66bc706d4601",
+      "closure_owner": "verifier_reviewer",
+      "closure_evidence": "team/local-validation.md; actual3services docs/UI200 and childDevelopment, staticrunmodepropagationreview"
+    },
+    {
+      "id": "Q-IMPL-003",
+      "category": "code",
+      "severity": "high",
+      "blocking": false,
+      "owner": "coder",
+      "status": "accepted_exception",
+      "evidence": "Actual Scalar2.18 initial browser axe WCAG AA fails aria-required-attr on auth comboboxes, button-name on scope toggle, color-contrast, html-has-lang. Supported remediation under investigation; no exception approved.",
+      "acceptance": {
+        "owner": "human owner",
+        "date": "2026-10-19",
+        "instruction": "No need to customize accessibily on Scalar\u2019s bundled UI",
+        "scope": "Bundled Scalar vendor accessibility findings only; no local accessibility customization required. Observed axe failures retained; no waiver for app-owned screens or functional/auth/privacy requirements.",
+        "rationale": "Owner chooses to use vendor UI unchanged rather than customize its accessibility."
+      }
+    },
+    {
+      "id": "Q-IMPL-004",
+      "category": "code",
+      "severity": "high",
+      "blocking": true,
+      "owner": "coder",
+      "status": "closed",
+      "evidence": "Live Scalar OAuth callback used full /scalar/ page; router appended /description/introduction to code fragment before parent polling, causing actual Keycloak Code not valid. Six provider log client-binding failures had exact appended literal. Inert /oauth/callback repair designed. No raw authorization code/session value emitted.",
+      "closure_revision": "276f33e9f0fd1db582594bb774e13b91260041ce1fea56567b5dda0fa9e5cc03",
+      "closure_owner": "verifier_reviewer",
+      "closure_evidence": "quality-whole-source.md; actual9/9and27/27browsergreen, callbackopaqueequality"
+    },
+    {
+      "id": "Q-IMPL-005",
+      "category": "code",
+      "severity": "critical",
+      "blocking": true,
+      "owner": "coder",
+      "status": "closed",
+      "task": "T024",
+      "evidence": "Current required check failed506/507: MissingTriggerAndManualRepairAreRecoveredByFallback timed out after advancing manual timer. Source inspection identifies cancellation fidelity gap in test-only ManualSchedule. Targeted approved plan requires deterministic before/after-selection cancellation RED/GREEN and unchanged real integration/full checks; no production timing or concurrency changes.",
+      "current_evidence": "Verifier source repair PASS at b485c18c; deterministic2/2 and original fallback1/1 pass. Required full check fails34/509 in unrelated PostgreSQL fixture startup; overall mandatory-check closure remains pending per original reviewer.",
+      "closure_revision": "b485c18cd86b77bbf28e87b16960d98aad2c609d3868def74bd46412b982fa6a",
+      "closure_owner": "verifier_reviewer",
+      "closure_evidence": "quality-final-resumed.md; final uninstrumented509/509 after owner-authorized isolation; no proved contention cause."
+    },
+    {
+      "id": "Q-IMPL-006",
+      "category": "environment",
+      "severity": "high",
+      "blocking": true,
+      "owner": "coder",
+      "status": "closed",
+      "evidence": "After ownership-scoped abandoned-container stop, required check508/509. PublisherAttemptHasThreeSecondBudgetAndHostDisposalCancelsBackoff times out awaiting first ControlledSchedule delay. Original10s test observation starts before host startup; cause not proven. Ephemeral safe phase diagnostics approved; no permanent source repair or timeout change authorized.",
+      "closure_revision": "b485c18cd86b77bbf28e87b16960d98aad2c609d3868def74bd46412b982fa6a",
+      "closure_owner": "verifier_reviewer",
+      "closure_evidence": "quality-final-resumed.md; final uninstrumented509/509 after owner-authorized isolation; no proved contention cause."
+    }
+  ]
+}

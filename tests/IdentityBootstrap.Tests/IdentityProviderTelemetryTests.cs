@@ -39,6 +39,7 @@ public sealed class IdentityProviderTelemetryTests(IdentityProviderFixture provi
             await bootstrap.Services.GetRequiredService<IdentityProvisioning>().ReconcileAsync(provider.Settings, deadline.Token);
         }
 
+        ProviderTokens documentationTokens = await IdentityProviderFixture.LoginAsync(provider.Settings, "employee-a", clientId: "equipment-docs", callbackUri: "http://localhost:19877/oauth/callback", cancellationToken: deadline.Token);
         ProviderTokens tokens = await provider.LoginAsync("employee-a", cancellationToken: deadline.Token);
         await using WebApplication app = await ApiAsync(provider.Settings.ServiceSecret, spans, logs);
         ActivityTraceId metadataTrace;
@@ -103,7 +104,7 @@ public sealed class IdentityProviderTelemetryTests(IdentityProviderFixture provi
         });
 
         using JsonDocument claims = IdentityProviderFixture.Claims(tokens.AccessToken);
-        var privateValues = new List<string> { provider.Settings.AdminPassword, provider.Settings.ServiceSecret, tokens.AccessToken, tokens.IdToken, "employee-a" };
+        var privateValues = new List<string> { provider.Settings.AdminPassword, provider.Settings.ServiceSecret, tokens.AccessToken, tokens.IdToken, documentationTokens.AccessToken, documentationTokens.IdToken, "employee-a" };
         privateValues.AddRange(provider.Settings.UserPasswords.Values);
         foreach (string claim in new[] { "sub", "sid", "session_state", "preferred_username" })
         {

@@ -41,7 +41,7 @@ public static class IdentityPrincipal
     {
         return principal.Identity?.IsAuthenticated == true
             && HasValue(principal, "principal_kind", "human")
-            && HasValue(principal, "azp", "equipment-web");
+            && (HasValue(principal, "azp", "equipment-web") || HasValue(principal, "azp", "equipment-docs"));
     }
 
     internal static bool HasRealmRole(ClaimsPrincipal principal, string role)

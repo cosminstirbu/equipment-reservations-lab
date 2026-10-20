@@ -562,3 +562,57 @@ guard. Do not expose this demo to a shared network or use it with personal data.
 Walking-skeleton retirement context is recorded separately in
 [the history note](docs/history/hello-retirement.md). Historical feature evidence
 describes its original reviewed revisions.
+
+## Interactive API documentation
+
+In Development, open **API documentation** on each Inventory, Reservations and
+Notifications resource in the Aspire dashboard. Each service hosts `/scalar/` and
+its generated OpenAPI 3.1 contract at `/openapi/v1.json`. These routes and UI assets
+are unavailable by default in Production and Testing.
+
+Select DocumentationOAuth, then authenticate with an existing local human account.
+The dedicated public `equipment-docs` client uses authorization code with PKCE S256;
+no client secret belongs in the UI. Employee accounts can create/cancel their own
+reservations; Approver and EquipmentStaff accounts can read equipment and their
+notifications but receive 403 on Employee reservation operations. Unauthenticated
+protected requests receive 401. **Executing a request changes real development data.**
+Use future intervals and cancel test reservations after checking their responses.
+
+Aspire passes exact allocated `/oauth/callback` callbacks to identity provisioning and each
+API through `DocumentationCallbacks__0..2` and `Documentation__Callback`. The
+provisioner replaces stale registrations on each run, permitting only canonical
+loopback `/oauth/callback` callbacks and exact origins. Outside Aspire, supply those same trusted
+settings explicitly; do not register wildcards or derive callbacks from request headers.
+
+For the documentation browser checks, set `API_INVENTORY_URL`,
+`API_RESERVATIONS_URL`, and `API_NOTIFICATIONS_URL` to the printed loopback service
+origins (trailing slash), alongside the existing `API_WEB_URL`,
+`IDENTITY_BROWSER_ACCOUNTS_FILE` and optional `BROWSER_EXECUTABLE` inputs:
+
+```sh
+npm --prefix src/Web run test:browser -- openapi.spec.ts
+```
+
+The account file must stay private and outside source control. Keep browser traces,
+screenshots, videos and body/network logging disabled: authorization codes and tokens
+must never enter artifacts. Requests go directly to their hosting API; no external
+proxy or AI agent is enabled, and authorization is not persisted between sessions.
+
+During the manual local check, verify all three dashboard links, allocated callback
+and origin changes after restarting with different endpoint allocations, Employee
+read/create/cancel and Approver denial, anonymous rejection, cancellation/provider
+failure, keyboard activation, focus visibility/order and popup return focus. Inspect
+an Aspire trace for safe correlated documentation/provisioning activity without tokens,
+codes, credentials, request bodies or personal data. Record observations in feature
+evidence; automated HTTP tests do not establish dashboard or keyboard behavior.
+
+If this Podman host reports an Aspire container tunnel proxy creation failure, retry
+that local invocation with `ASPIRE_ENABLE_CONTAINER_TUNNEL=false`, as described in
+[the Aspire container networking guidance](https://aspire.dev/fundamentals/container-networking/#disable-the-container-tunnel).
+Keep the normal loopback endpoint, secret and volume configuration; this is an
+invocation setting for that specific runtime failure, not an application default.
+
+The dedicated `/oauth/callback` page is inert and Development-only. It preserves the
+opaque response fragment for Scalar's original popup polling/state/PKCE handling;
+it loads no router or scripts and returns no-store/no-referrer headers. Keep the UI
+at `/scalar/` and register only the exact `/oauth/callback` URI for each service.

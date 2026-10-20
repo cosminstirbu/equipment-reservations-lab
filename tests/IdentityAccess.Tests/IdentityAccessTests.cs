@@ -11,6 +11,26 @@ public sealed class IdentityAccessTests
 {
     private static readonly string[] AmbiguousSubjects = ["first", "second"];
 
+    [Theory]
+    [InlineData("equipment-web", "human", true)]
+    [InlineData("equipment-docs", "human", true)]
+    [InlineData("equipment-docs", "service", false)]
+    [InlineData("unknown-docs", "human", false)]
+    public async Task DocumentationClientRetainsHumanPermissionsAndOwnership(string clientId, string kind, bool allowed)
+    {
+        using var authority = new IdentityAuthorityFixture();
+        await using WebApplication app = await IdentityHttpHarness.StartAsync(authority);
+        using HttpClient client = app.GetTestClient();
+        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", authority.Token(client: clientId, kind: kind));
+        Assert.Equal(allowed ? HttpStatusCode.OK : HttpStatusCode.Forbidden, (await client.GetAsync("/human", TestContext.Current.CancellationToken)).StatusCode);
+        if (allowed)
+        {
+            string key = await client.GetStringAsync("/key", TestContext.Current.CancellationToken);
+            client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", authority.Token(client: "equipment-web"));
+            Assert.Equal(key, await client.GetStringAsync("/key", TestContext.Current.CancellationToken));
+        }
+    }
+
     [Fact]
     public async Task ConcurrentFirstUseOfAuthoritySignsTokensWithItsPublishedKey()
     {

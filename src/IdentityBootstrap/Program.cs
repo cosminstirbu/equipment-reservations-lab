@@ -25,7 +25,8 @@ try
     };
     var settings = new IdentityProvisioningSettings(builder.Configuration["Identity:Authority"] ?? "", builder.Configuration["WebRoot"] ?? "",
         builder.Configuration["AdminUsername"] ?? "", builder.Configuration["AdminPassword"] ?? "", passwords,
-        builder.Configuration["ReservationsClientSecret"] ?? "");
+        builder.Configuration["ReservationsClientSecret"] ?? "",
+        [.. builder.Configuration.GetSection("DocumentationCallbacks").GetChildren().Select(child => child.Value ?? "")]);
     using var activities = new ActivitySource("Equipment.IdentityBootstrap");
     using Activity? operation = activities.StartActivity("identity.bootstrap");
     try

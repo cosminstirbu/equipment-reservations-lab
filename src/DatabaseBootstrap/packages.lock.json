@@ -40,6 +40,14 @@
           "Microsoft.IdentityModel.Protocols.OpenIdConnect": "8.0.1"
         }
       },
+      "Microsoft.AspNetCore.OpenApi": {
+        "type": "Transitive",
+        "resolved": "10.0.13",
+        "contentHash": "XVuqUBGjVUVyb4DXR5BrSkrW0Br7sYKq39f723ILhQLlFHCyhAgWe1PkJBc42R/5mKBIgHiKVSY+PN5/4XtcQw==",
+        "dependencies": {
+          "Microsoft.OpenApi": "[2.12.2, 3.0.0)"
+        }
+      },
       "Microsoft.Extensions.Configuration": {
         "type": "Transitive",
         "resolved": "10.0.0",
@@ -377,6 +385,11 @@
           "Microsoft.IdentityModel.Logging": "8.0.1"
         }
       },
+      "Microsoft.OpenApi": {
+        "type": "Transitive",
+        "resolved": "2.12.2",
+        "contentHash": "ZkT7qiJe0Kj0+DTZOZo+xrDy1kNmdsWFQVPIQLNx9ZJ0T9cB2LG7r+Bi60so8/+yg1nkS7QCPadrzsTG4VPKrA=="
+      },
       "Npgsql": {
         "type": "Transitive",
         "resolved": "10.0.3",
@@ -470,6 +483,11 @@
           "System.Threading.RateLimiting": "8.0.0"
         }
       },
+      "Scalar.AspNetCore": {
+        "type": "Transitive",
+        "resolved": "2.18.0",
+        "contentHash": "wwI3khcYNM7oL6axr4a41G29fJYOS3ckusgYZ4NiIccL8Amh2LOeu4HSK1SrQWiMJNrgoFqyWfDkOkunQCiRDw=="
+      },
       "System.Diagnostics.EventLog": {
         "type": "Transitive",
         "resolved": "10.0.0",
@@ -489,6 +507,14 @@
         "resolved": "8.0.0",
         "contentHash": "7mu9v0QDv66ar3DpGSZHg9NuNcxDaaAcnMULuZlaTpP9+hwXhrxNGsF5GmLkSHxFdb5bBc1TzeujsRgTrPWi+Q=="
       },
+      "apidocumentation": {
+        "type": "Project",
+        "dependencies": {
+          "Microsoft.AspNetCore.OpenApi": "[10.0.13, )",
+          "Microsoft.OpenApi": "[2.12.2, )",
+          "Scalar.AspNetCore": "[2.18.0, )"
+        }
+      },
       "identityaccess": {
         "type": "Project",
         "dependencies": {
@@ -498,6 +524,7 @@
       "inventory": {
         "type": "Project",
         "dependencies": {
+          "ApiDocumentation": "[1.0.0, )",
           "IdentityAccess": "[1.0.0, )",
           "Persistence": "[1.0.0, )",
           "ReservationMessaging": "[1.0.0, )",
@@ -507,6 +534,7 @@
       "notifications": {
         "type": "Project",
         "dependencies": {
+          "ApiDocumentation": "[1.0.0, )",
           "IdentityAccess": "[1.0.0, )",
           "Persistence": "[1.0.0, )",
           "ReservationMessaging": "[1.0.0, )",
@@ -528,6 +556,7 @@
       "reservations": {
         "type": "Project",
         "dependencies": {
+          "ApiDocumentation": "[1.0.0, )",
           "IdentityAccess": "[1.0.0, )",
           "Persistence": "[1.0.0, )",
           "ReservationMessaging": "[1.0.0, )",

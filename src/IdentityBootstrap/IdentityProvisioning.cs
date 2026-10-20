@@ -6,7 +6,7 @@ using System.Text.Json.Serialization.Metadata;
 namespace IdentityBootstrap;
 
 public sealed record IdentityProvisioningSettings(string Authority, string WebRoot, string AdminUsername, string AdminPassword,
-    IReadOnlyDictionary<string, string> UserPasswords, string ServiceSecret)
+    IReadOnlyDictionary<string, string> UserPasswords, string ServiceSecret, IReadOnlyList<string>? DocumentationCallbacks = null)
 {
     public override string ToString()
     {
@@ -80,6 +80,26 @@ public sealed class IdentityProvisioning(HttpClient client)
             clients[id] = await ReconcileClientAsync(new ClientRepresentation { ClientId = id, BearerOnly = true }, token);
         }
 
+        if (settings.DocumentationCallbacks is { Count: > 0 } callbacks)
+        {
+            ClientRepresentation documentation = await ReconcileClientAsync(new ClientRepresentation
+            {
+                ClientId = "equipment-docs",
+                PublicClient = true,
+                StandardFlowEnabled = true,
+                RedirectUris = [.. callbacks.Distinct(StringComparer.Ordinal)],
+                WebOrigins = [.. callbacks.Select(callback => new Uri(callback).GetLeftPart(UriPartial.Authority)).Distinct(StringComparer.Ordinal)],
+                Attributes = new Dictionary<string, string> { ["pkce.code.challenge.method"] = "S256" }
+            }, token);
+            string docs = ClientPath(documentation);
+            await AddRolesAsync(docs + "/scope-mappings/realm", [.. roles.Values], token);
+            await ReconcileMapperAsync(docs, KindMapper("human"), token);
+            foreach (string audience in clients.Keys)
+            {
+                await ReconcileMapperAsync(docs, AudienceMapper(audience), token);
+            }
+        }
+
         string webOrigin = new Uri(settings.WebRoot).GetLeftPart(UriPartial.Authority);
         clients["equipment-web"] = await ReconcileClientAsync(new ClientRepresentation
         {
@@ -141,6 +161,17 @@ public sealed class IdentityProvisioning(HttpClient client)
 
     private static void ValidateSettings(IdentityProvisioningSettings settings)
     {
+        foreach (string callback in settings.DocumentationCallbacks ?? [])
+        {
+            if (!Uri.TryCreate(callback, UriKind.Absolute, out Uri? uri) || !uri.IsLoopback
+                || uri.Port < 1 || uri.Scheme is not ("http" or "https") || uri.AbsolutePath != "/oauth/callback"
+                || uri.Query.Length != 0 || uri.Fragment.Length != 0 || uri.UserInfo.Length != 0
+                || uri.AbsoluteUri != callback || uri.Host is not ("localhost" or "127.0.0.1" or "[::1]"))
+            {
+                throw new InvalidOperationException("Local documentation callback settings are invalid.");
+            }
+        }
+
         if (!Uri.TryCreate(settings.Authority, UriKind.Absolute, out Uri? authority) || !authority.IsLoopback
             || authority.AbsolutePath != "/realms/equipment" || authority.Query.Length != 0 || authority.Fragment.Length != 0 || authority.UserInfo.Length != 0
             || authority.Scheme is not ("http" or "https")

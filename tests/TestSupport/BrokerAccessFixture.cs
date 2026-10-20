@@ -94,12 +94,12 @@ public sealed class BrokerAccessFixture : IAsyncLifetime
             connections["reservations"] = Address("reservations-publisher", publisherPassword);
             connections["notifications"] = Address("notifications-consumer", consumerPassword);
             Management = new Uri($"http://{broker.Hostname}:{broker.GetMappedPublicPort(15672)}");
+            await AwaitManagementAsync(deadline.Token);
             await using IConnection connection = await RabbitConnection.Factory(Administration, TimeSpan.FromSeconds(3)).CreateConnectionAsync(deadline.Token);
             await using IChannel channel = await connection.CreateChannelAsync(cancellationToken: deadline.Token);
             await ReservationTopology.DeclareAsync(channel, deadline.Token);
             await channel.ExchangeDeclareAsync("unrelated", ExchangeType.Direct, true, cancellationToken: deadline.Token);
             _ = await channel.QueueDeclareAsync("unrelated", true, false, false, cancellationToken: deadline.Token);
-            await AwaitManagementAsync(deadline.Token);
         }
         catch
         {

@@ -1,0 +1,191 @@
+{
+  "baseline": "ffe638bd394262db2bb3a3bc7c1f3bb5596d8d3e",
+  "revision": "276f33e9f0fd1db582594bb774e13b91260041ce1fea56567b5dda0fa9e5cc03",
+  "definition": "Sorted modified/untracked Git non-spec file path + NUL + bytes; excludes ignored build output. Metadata-only spec/team edits do not change implementation revision.",
+  "files": [
+    {
+      "path": "EquipmentReservation.slnx",
+      "sha256": "0ef076fbab92a4724ce250ae82f6c13bcd6d261ad5f719bdf3a41478beade11b"
+    },
+    {
+      "path": "readme.md",
+      "sha256": "8499a8cfef4e031131768228f728a2036dda60679b5f56676632b1af27527b14"
+    },
+    {
+      "path": "src/ApiDocumentation/ApiDocumentation.csproj",
+      "sha256": "f12537ce0bb7c156b1e5d8f15c8f5ae68397e694ccfb387fa1694ab218ca6866"
+    },
+    {
+      "path": "src/ApiDocumentation/ApiDocumentationExtensions.cs",
+      "sha256": "7c424113c1b2d8d8e1b1d9fcc2be57761d55cc1bd72089196115f047a66e4417"
+    },
+    {
+      "path": "src/ApiDocumentation/packages.lock.json",
+      "sha256": "22bb8b23f7c8f11e7d8ca37748f92b76c789aa3f232e733611e33ba16375b628"
+    },
+    {
+      "path": "src/AppHost/Program.cs",
+      "sha256": "610a1c628123a78fe4fd1f112d2fad523c4c898b540f87ebf3c4679f81ad765e"
+    },
+    {
+      "path": "src/DatabaseBootstrap/packages.lock.json",
+      "sha256": "fe3bfae43d77f64c49ace660e85b42542cdc2c57299354bfeb8508d7c258d456"
+    },
+    {
+      "path": "src/IdentityAccess/IdentityPrincipal.cs",
+      "sha256": "9b36553e6ba06bba2c125f6a4252c714bf7a2eda3ca2c222e8e39cbcf932b247"
+    },
+    {
+      "path": "src/IdentityBootstrap/IdentityProvisioning.cs",
+      "sha256": "787caaa5dd73cc9bbe6f1a1f930e1a4d7b7e7bb9933e3ba76680e913fe326773"
+    },
+    {
+      "path": "src/IdentityBootstrap/Program.cs",
+      "sha256": "6e50de1d1116b08f1cc2c86d62cd74d6c73828686d345c47ff949c47180818b5"
+    },
+    {
+      "path": "src/Inventory/Inventory.csproj",
+      "sha256": "949a05097324091580fbfd030d967d48cccbc37e1ce2a8ccfebca70f92525927"
+    },
+    {
+      "path": "src/Inventory/Program.cs",
+      "sha256": "ec415bb3db58327d6630f4572a06185b52f461ae94f06185f821a5e7b501fac5"
+    },
+    {
+      "path": "src/Inventory/packages.lock.json",
+      "sha256": "bbad253b79120f44877b2754fe96cd12e09183ed0759f0aaa5d85a24c7befbf0"
+    },
+    {
+      "path": "src/Notifications/Notifications.csproj",
+      "sha256": "949a05097324091580fbfd030d967d48cccbc37e1ce2a8ccfebca70f92525927"
+    },
+    {
+      "path": "src/Notifications/Program.cs",
+      "sha256": "d08a273ced7b7e6c7a8c365970853c34f98a0d91553f58a6bfd675aa37311ca2"
+    },
+    {
+      "path": "src/Notifications/packages.lock.json",
+      "sha256": "bbad253b79120f44877b2754fe96cd12e09183ed0759f0aaa5d85a24c7befbf0"
+    },
+    {
+      "path": "src/Reservations/Program.cs",
+      "sha256": "e40396a2482ea65ea7a998add74b262bb010537abb852f23bd3ad7fad1aed5bd"
+    },
+    {
+      "path": "src/Reservations/ReservationDocumentation.cs",
+      "sha256": "d5aad2e9c926eedea5b99133444cabab4d8bb0599273e81389d3c20275ecd8c8"
+    },
+    {
+      "path": "src/Reservations/ReservationEndpoints.cs",
+      "sha256": "cdd9a03ed8033e528e643b426c7574cdec8ef4d784a1391732eb05334e30ed66"
+    },
+    {
+      "path": "src/Reservations/Reservations.csproj",
+      "sha256": "581e8bbca863d6359f1f20850b61be656c0ecc090927fd38709ad2980397cca2"
+    },
+    {
+      "path": "src/Reservations/packages.lock.json",
+      "sha256": "bbad253b79120f44877b2754fe96cd12e09183ed0759f0aaa5d85a24c7befbf0"
+    },
+    {
+      "path": "src/Web/browser-tests/identity-browser.ts",
+      "sha256": "588703450d760367446ec786f645ac2e124ba2496c65803ee1d9f63ea18a4ab4"
+    },
+    {
+      "path": "src/Web/browser-tests/openapi.spec.ts",
+      "sha256": "520cbdef2777f4c55a18e4603ade35c1e50cea023548b293844b36780cdae49d"
+    },
+    {
+      "path": "src/Web/playwright.config.ts",
+      "sha256": "302c3e6a80b6bceb4f00c6a143fe65406d3df5be1672057a7e06eb7c16dfcf05"
+    },
+    {
+      "path": "tests/BrokerBootstrap.Tests/packages.lock.json",
+      "sha256": "c0afa409485963becc9efce7446136d0f4ba433734a58979178ee7b9426f9c07"
+    },
+    {
+      "path": "tests/DatabaseBootstrap.Tests/packages.lock.json",
+      "sha256": "c0afa409485963becc9efce7446136d0f4ba433734a58979178ee7b9426f9c07"
+    },
+    {
+      "path": "tests/IdentityAccess.Tests/IdentityAccessTests.cs",
+      "sha256": "cb0216e42cc987b12bfbf4e454a36a01481df5dba2724ad70d76038d6fd88823"
+    },
+    {
+      "path": "tests/IdentityAccess.Tests/packages.lock.json",
+      "sha256": "c0afa409485963becc9efce7446136d0f4ba433734a58979178ee7b9426f9c07"
+    },
+    {
+      "path": "tests/IdentityBootstrap.Tests/IdentityProviderTelemetryTests.cs",
+      "sha256": "9b36c8bff74f391b251d4e5c2e9f1b55eb05531169d0b3daa6970040cc04b268"
+    },
+    {
+      "path": "tests/IdentityBootstrap.Tests/IdentityProviderTests.cs",
+      "sha256": "36654c9a58d87856e336eb6cac58042cd358ff47e086fee1d449f1d29a05313c"
+    },
+    {
+      "path": "tests/IdentityBootstrap.Tests/packages.lock.json",
+      "sha256": "c0afa409485963becc9efce7446136d0f4ba433734a58979178ee7b9426f9c07"
+    },
+    {
+      "path": "tests/Integration.Tests/packages.lock.json",
+      "sha256": "c0afa409485963becc9efce7446136d0f4ba433734a58979178ee7b9426f9c07"
+    },
+    {
+      "path": "tests/Inventory.Tests/OpenApiTests.cs",
+      "sha256": "bcbc6801bc7bb5c4a4d5bc13b08a4c92ecf9d2c81a22c29e1c5de736271d7e80"
+    },
+    {
+      "path": "tests/Inventory.Tests/packages.lock.json",
+      "sha256": "c0afa409485963becc9efce7446136d0f4ba433734a58979178ee7b9426f9c07"
+    },
+    {
+      "path": "tests/Notifications.Tests/OpenApiTests.cs",
+      "sha256": "869d7f0ba4f2783e87534cde0de94326b0a27507d5b2cd216145524ffbf15d2c"
+    },
+    {
+      "path": "tests/Notifications.Tests/packages.lock.json",
+      "sha256": "c0afa409485963becc9efce7446136d0f4ba433734a58979178ee7b9426f9c07"
+    },
+    {
+      "path": "tests/Persistence.Tests/packages.lock.json",
+      "sha256": "c0afa409485963becc9efce7446136d0f4ba433734a58979178ee7b9426f9c07"
+    },
+    {
+      "path": "tests/Reservations.Tests/OpenApiTests.cs",
+      "sha256": "b53e580d29961b0c4470cf9470b2e12fed27f7f030d94237c35fc0442df3be44"
+    },
+    {
+      "path": "tests/Reservations.Tests/TelemetryPrivacyTests.cs",
+      "sha256": "30c711691c4b8abd0cd16fe376c4c5ea0a04ec7cc2e539482701612188b6b1be"
+    },
+    {
+      "path": "tests/Reservations.Tests/packages.lock.json",
+      "sha256": "c0afa409485963becc9efce7446136d0f4ba433734a58979178ee7b9426f9c07"
+    },
+    {
+      "path": "tests/TestSupport/BookingRecoveryFixture.cs",
+      "sha256": "286b95709b61bd3420e5665bc2cca371b7255c316d007165575e0bd3aa3dfde5"
+    },
+    {
+      "path": "tests/TestSupport/BrokerAccessFixture.cs",
+      "sha256": "44feb9d8087d8fb22332ca8b467a01995a0efafcb955ba908b916d93cec64f5d"
+    },
+    {
+      "path": "tests/TestSupport/IdentityAuthorityFixture.cs",
+      "sha256": "b2a261fa7a8ad8f58e9c7d82a6343b2499c2c3252d2c556fe06639601300e9ee"
+    },
+    {
+      "path": "tests/TestSupport/IdentityProviderFixture.cs",
+      "sha256": "1e2f4c078f74c74525b5b0fced2b4d33c8345d20488453376db6a3054c617f7d"
+    },
+    {
+      "path": "tests/TestSupport/OpenApiAssertions.cs",
+      "sha256": "8bef25a8ba74a288de74da836b8a8ad4535a854c02d63a6086f65599c95913ba"
+    },
+    {
+      "path": "tests/TestSupport/packages.lock.json",
+      "sha256": "db5dafc2b9721b0ab294936258a8d5b4063eafb8064168b354c64eea14cf61cd"
+    }
+  ]
+}

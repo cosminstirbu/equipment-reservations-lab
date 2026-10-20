@@ -1,3 +1,4 @@
+using ApiDocumentation;
 using IdentityAccess;
 using Inventory;
 using Npgsql;
@@ -6,6 +7,7 @@ using ServiceDefaults;
 
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 builder.AddServiceDefaults();
+builder.AddApiDocumentation();
 _ = builder.Services.AddIdentityAuthentication(builder.Configuration, builder.Environment, "inventory-api");
 builder.AddDatabase("inventory", EquipmentStore.Commands);
 builder.Services.AddSingleton<EquipmentStore>();
@@ -17,6 +19,7 @@ _ = app.UseAuthentication();
 _ = app.UseAuthorization();
 _ = app.UseOwnershipInputGuard();
 app.MapOperationalEndpoints();
+app.MapApiDocumentation();
 
 app.MapGet("/api/equipment", async (EquipmentStore store, CancellationToken cancellationToken) =>
 {
@@ -28,7 +31,8 @@ app.MapGet("/api/equipment", async (EquipmentStore store, CancellationToken canc
     {
         return Results.Problem(statusCode: 503, title: "Equipment catalog unavailable", detail: "The Inventory database is unavailable. Try refreshing later.");
     }
-}).RequireAuthorization(IdentityAuthentication.EquipmentRead);
+}).RequireAuthorization(IdentityAuthentication.EquipmentRead)
+    .DescribeBusinessOperation<EquipmentItem[]>("ListEquipment", "List equipment", "Equipment", "Validated human identity, or reservations-service with equipment.read.", 200, 400, 503);
 app.MapGet("/api/equipment/{id}", async (string id, EquipmentStore store, CancellationToken cancellationToken) =>
 {
     if (!EquipmentIdValidation.IsEquipmentId(id))
@@ -47,7 +51,8 @@ app.MapGet("/api/equipment/{id}", async (string id, EquipmentStore store, Cancel
     {
         return Results.Problem(statusCode: 503, title: "Equipment unavailable", detail: "The Inventory database is unavailable. Try refreshing later.");
     }
-}).RequireAuthorization(IdentityAuthentication.EquipmentRead);
+}).RequireAuthorization(IdentityAuthentication.EquipmentRead)
+    .DescribeBusinessOperation<EquipmentItem>("GetEquipment", "Find equipment", "Equipment", "Validated human identity, or reservations-service with equipment.read. Equipment id must be a valid equipment identifier.", 200, 400, 404, 503);
 
 app.Run();
 

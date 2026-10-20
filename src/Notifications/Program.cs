@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using ApiDocumentation;
 using IdentityAccess;
 using Notifications;
 using Npgsql;
@@ -8,6 +9,7 @@ using ServiceDefaults;
 
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 builder.AddServiceDefaults();
+builder.AddApiDocumentation();
 _ = builder.Services.AddIdentityAuthentication(builder.Configuration, builder.Environment, "notifications-api");
 builder.AddDatabase("notifications", ReservationInbox.Commands);
 builder.Services.ConfigureHttpJsonOptions(options =>
@@ -27,6 +29,7 @@ _ = app.UseAuthentication();
 _ = app.UseAuthorization();
 _ = app.UseOwnershipInputGuard();
 app.MapOperationalEndpoints();
+app.MapApiDocumentation();
 
 app.MapGet("/api/notifications", async (HttpContext context, ReservationInbox inbox, ILogger<Notifications.Program> logger, CancellationToken stopped) =>
 {
@@ -62,7 +65,8 @@ app.MapGet("/api/notifications", async (HttpContext context, ReservationInbox in
         NotificationTelemetry.Record("list", outcome, started);
         NotificationsLog.Delivery(logger, "list", outcome);
     }
-}).RequireAuthorization(IdentityAuthentication.Human);
+}).RequireAuthorization(IdentityAuthentication.Human)
+    .DescribeBusinessOperation<InboxEntry[]>("ListNotifications", "List my notifications", "Notifications", "Validated human identity; no additional role required.", 200, 400, 503);
 
 app.Run();
 

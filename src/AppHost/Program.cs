@@ -233,11 +233,23 @@ IResourceBuilder<ProjectResource> identityBootstrap = builder.AddProject<Project
     .WithEnvironment("ApproverPassword", approverPassword)
     .WithEnvironment("EquipmentStaffPassword", equipmentStaffPassword)
     .WithEnvironment("ReservationsClientSecret", reservationsClientSecret)
+    .WithEnvironment("DocumentationCallbacks__0", ReferenceExpression.Create($"{inventory.GetEndpoint("http")}/oauth/callback"))
+    .WithEnvironment("DocumentationCallbacks__1", ReferenceExpression.Create($"{reservations.GetEndpoint("http")}/oauth/callback"))
+    .WithEnvironment("DocumentationCallbacks__2", ReferenceExpression.Create($"{notifications.GetEndpoint("http")}/oauth/callback"))
     .WaitFor(identity);
 
 foreach (IResourceBuilder<ProjectResource> api in new[] { inventory, reservations, notifications })
 {
-    _ = api.WithEnvironment("Identity__Authority", authority).WaitForCompletion(identityBootstrap);
+    if (builder.ExecutionContext.IsRunMode)
+    {
+        _ = api.WithEnvironment("ASPNETCORE_ENVIRONMENT", builder.Environment.EnvironmentName)
+            .WithEnvironment("DOTNET_ENVIRONMENT", builder.Environment.EnvironmentName);
+    }
+
+    _ = api.WithEnvironment("Identity__Authority", authority)
+        .WithEnvironment("Documentation__Callback", ReferenceExpression.Create($"{api.GetEndpoint("http")}/oauth/callback"))
+        .WithUrlForEndpoint("http", endpoint => new ResourceUrlAnnotation { Url = "/scalar/", DisplayText = "API documentation" })
+        .WaitForCompletion(identityBootstrap);
 }
 
 _ = web.WithEnvironment("Identity__Authority", authority)

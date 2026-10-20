@@ -1,5 +1,6 @@
 <Solution>
   <Folder Name="/src/">
+    <Project Path="src/ApiDocumentation/ApiDocumentation.csproj" />
     <Project Path="src/IdentityAccess/IdentityAccess.csproj" />
     <Project Path="src/IdentityBootstrap/IdentityBootstrap.csproj" />
     <Project Path="src/BrokerBootstrap/BrokerBootstrap.csproj" />

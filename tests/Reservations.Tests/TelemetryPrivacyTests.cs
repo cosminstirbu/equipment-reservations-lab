@@ -32,6 +32,28 @@ public sealed class TelemetryPrivacyTests(PostgresFixture postgres)
     private static readonly string[] Probes = [QueryProbe, HeaderProbe, BodyProbe, UserAgentProbe];
 
     [Fact]
+    public async Task DocumentationAndFragmentCallbackRetainSafeCorrelatedServerTelemetry()
+    {
+        await using BookingScenario scenario = await BookingScenario.CreateAsync(postgres);
+        using var spans = new ExportedActivities();
+        using var logs = new ExportedLogs();
+        using var console = new ConsoleCapture();
+        using WebApplicationFactory<Program> host = Capture(scenario, logs, console).WithWebHostBuilder(builder =>
+        {
+            _ = builder.UseEnvironment("Development").UseSetting("Documentation:Callback", "http://localhost:5100/oauth/callback");
+            _ = builder.ConfigureServices(services => services.AddOpenTelemetry().WithTracing(tracing => tracing.AddProcessor(new SimpleActivityExportProcessor(spans))));
+        });
+        using HttpClient client = host.CreateClient();
+        var trace = ActivityTraceId.CreateRandom();
+        client.DefaultRequestHeaders.Add("traceparent", $"00-{trace}-{ActivitySpanId.CreateRandom()}-01");
+        Assert.Equal(HttpStatusCode.OK, (await client.GetAsync("/openapi/v1.json?harmless_token=" + QueryProbe, TestContext.Current.CancellationToken)).StatusCode);
+        await spans.WaitForAsync(trace, ActivityKind.Server, "/openapi/{documentName}.json");
+        Assert.Equal(HttpStatusCode.OK, (await client.GetAsync("/oauth/callback#code=" + QueryProbe, TestContext.Current.CancellationToken)).StatusCode);
+        AssertPrivate(spans.Values.SelectMany(value => value.Values), host.Services.GetRequiredService<IHostEnvironment>().ContentRootPath);
+        AssertLogsPrivate(logs.Values, host.Services.GetRequiredService<IHostEnvironment>().ContentRootPath);
+    }
+
+    [Fact]
     public async Task ExportedAndConsoleLogsOmitUrlsScopesAndHostPathsWhileRetainingCorrelatedOutcomes()
     {
         using var flags = new DevelopmentRedactionFlags();
@@ -216,6 +238,8 @@ public sealed class TelemetryPrivacyTests(PostgresFixture postgres)
             string[] values = [.. record.Values, record.Message];
             Assert.False(values.Any(value => value.Contains("/Users/", StringComparison.Ordinal) || value.Contains(root, StringComparison.Ordinal)),
                 $"Private path diagnostic category={record.Category}; event={record.EventId}.");
+            Assert.False(values.Any(value => value.Contains("http://", StringComparison.Ordinal) || value.Contains("https://", StringComparison.Ordinal)),
+                $"Raw URL diagnostic category={record.Category}; event={record.EventId}.");
             AssertPrivate(values, root);
         }
     }

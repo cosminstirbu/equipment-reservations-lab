@@ -61,6 +61,7 @@ internal sealed class BookingRecoveryFixture(IdentityProviderFixture identity) :
         return new RecoveryApplicationFactory<TProgram>(new Dictionary<string, string?>
         {
             ["Identity:Authority"] = identity.Settings.Authority,
+            ["Documentation:Callback"] = "http://localhost:5100/oauth/callback",
             ["Identity:ClientId"] = "reservations-service",
             ["Identity:ClientSecret"] = identity.Settings.ServiceSecret,
             ["ConnectionStrings:" + service] = Connection(service),
