@@ -10,7 +10,7 @@ namespace TestSupport;
 public sealed class PostgresFixture : IAsyncLifetime
 {
     // Limit concurrent schema setup on the shared provider; hosts and requests remain parallel.
-    // Measured provisioning pressure and capacity evidence: specs/012-local-kubernetes/team/test-infrastructure-diagnosis.md.
+    // Measured provisioning pressure and capacity evidence: specs/013-local-kubernetes/team/test-infrastructure-diagnosis.md.
     private readonly SemaphoreSlim provisioning = new(4);
     private readonly SemaphoreSlim hostStartup = new(4);
     private readonly PostgreSqlContainer container = new PostgreSqlBuilder("postgres:18.6")
