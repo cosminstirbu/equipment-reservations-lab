@@ -203,10 +203,16 @@ test('invalid committed source is rejected before CI credential generation or ex
   }
 });
 
-function failedJobFixture(t, diagnosticResponse) {
+function failedJobFixture(
+  t,
+  diagnosticResponse,
+  logResponse = () => '',
+  jobName,
+  namespace = 'equipment',
+) {
   const calls = [];
   let directory;
-  const name = `database-bootstrap-${'a'.repeat(16)}`;
+  const name = jobName ?? `database-bootstrap-${'a'.repeat(16)}`;
   const run = (command, args, options = {}) => {
     calls.push({ command, args, options });
     if (command === 'kind' && args[0] === 'create') {
@@ -215,6 +221,8 @@ function failedJobFixture(t, diagnosticResponse) {
     }
     if (command === 'kubectl' && args.includes('wait'))
       throw new Error('provider-private-password sentinel');
+    if (command === 'kubectl' && args.includes('logs'))
+      return logResponse(args);
     if (command === 'kubectl' && args.includes('get'))
       return diagnosticResponse(args);
     return '';
@@ -238,9 +246,7 @@ function failedJobFixture(t, diagnosticResponse) {
             waves: [
               {
                 manifests: 'private-wave.json',
-                resources: [
-                  { kind: 'Job', metadata: { namespace: 'equipment', name } },
-                ],
+                resources: [{ kind: 'Job', metadata: { namespace, name } }],
               },
             ],
           };
@@ -331,11 +337,7 @@ test('failed CI Job wait identifies exact public stage and emits only bounded al
       args.includes(`batch.kubernetes.io/job-name=${fixture.name}`),
     ),
   );
-  assert.ok(
-    fixture.calls.every(
-      ({ args }) => !args.includes('logs') && !args.includes('events'),
-    ),
-  );
+  assert.ok(fixture.calls.every(({ args }) => !args.includes('events')));
 });
 
 test('diagnostic query failures, malformed or oversized responses preserve a sanitized named Job failure', (t) => {
@@ -398,4 +400,111 @@ test('Job diagnostic enums, count and numeric projection cannot echo arbitrary p
     assert.ok(Buffer.byteLength(error.message) < 16 * 1024);
     return true;
   });
+});
+
+test('known database Job privately projects only exact allowlisted bootstrap failure type', (t) => {
+  const fixture = failedJobFixture(
+    t,
+    () => JSON.stringify({ items: [] }),
+    () =>
+      'fail: DatabaseBootstrap[2]\n      Database provisioning failed (NpgsqlException)\nprivate-password sentinel',
+  );
+  assert.throws(fixture.invoke, (error) => {
+    assert.match(error.message, /"bootstrapFailureType":"NpgsqlException"/);
+    assert.match(error.message, /"pods":\[\]/);
+    assert.doesNotMatch(
+      error.message,
+      /private-password|sentinel|DatabaseBootstrap\[2\]/,
+    );
+    assert.equal(error.cause, undefined);
+    return true;
+  });
+  const logs = fixture.calls.filter(({ args }) => args.includes('logs'));
+  assert.equal(logs.length, 1);
+  assert.ok(logs[0].args.includes(`job/${fixture.name}`));
+  for (const arg of [
+    'kind-equipment-ci',
+    '--namespace',
+    'equipment',
+    '--request-timeout=5s',
+    '--container=database-bootstrap',
+    '--tail=100',
+    '--limit-bytes=16384',
+    '--pod-running-timeout=2s',
+  ])
+    assert.ok(logs[0].args.includes(arg));
+  assert.equal(logs[0].options.timeout, 6000);
+  assert.equal(logs[0].options.maxBuffer, 16384);
+});
+
+test('database failure-type extraction preserves status and failure on hostile or unavailable private logs', (t) => {
+  for (const logs of [
+    () => {
+      throw new Error('private-password sentinel');
+    },
+    () => 'x'.repeat(16385),
+    () => 'Database provisioning failed (private-password)',
+    () =>
+      'prefix Database provisioning failed (NpgsqlException) private-password',
+    () => 'Database provisioning failed (Npgsql\nException)',
+    () =>
+      'Database provisioning failed (NpgsqlException)\nDatabase provisioning failed (TimeoutException)',
+    () => '',
+  ]) {
+    const fixture = failedJobFixture(
+      t,
+      () => JSON.stringify({ items: [] }),
+      logs,
+    );
+    assert.throws(fixture.invoke, (error) => {
+      assert.match(error.message, /"bootstrapFailureTypeUnavailable":true/);
+      assert.match(error.message, /"pods":\[\]/);
+      assert.doesNotMatch(
+        error.message,
+        /private-password|sentinel|NpgsqlException/,
+      );
+      assert.equal(error.cause, undefined);
+      return true;
+    });
+  }
+});
+
+test('private bootstrap log query is restricted to the exact known database Job identity', (t) => {
+  for (const name of [
+    'identity-bootstrap-aaaaaaaaaaaaaaaa',
+    'database-bootstrap-unknown',
+    'other-job',
+  ]) {
+    const fixture = failedJobFixture(
+      t,
+      () => JSON.stringify({ items: [] }),
+      () => {
+        throw new Error('must not query logs');
+      },
+      name,
+    );
+    assert.throws(fixture.invoke, /CI wait failed/);
+    assert.equal(
+      fixture.calls.filter(({ args }) => args.includes('logs')).length,
+      0,
+    );
+  }
+});
+
+test('matching database Job name in another namespace cannot query private logs', (t) => {
+  const fixture = failedJobFixture(
+    t,
+    () => JSON.stringify({ items: [] }),
+    () => '',
+    undefined,
+    'other',
+  );
+  assert.throws(
+    fixture.invoke,
+    /CI wait failed for Job\/other\/database-bootstrap-/,
+  );
+  assert.equal(
+    fixture.calls.filter(({ args }) => args.includes('logs')).length,
+    0,
+  );
 });

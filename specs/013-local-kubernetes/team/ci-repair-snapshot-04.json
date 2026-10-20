@@ -1,0 +1,13 @@
+{
+  "id": "ci-repair-013-04",
+  "baseline": "ca766491c2937624d40a98350ac0ee201b22b6de",
+  "scope": "Owner-authorized fourth repair batch; initial Docker bind variant, actual bootstrap image verification and bounded database failure-type diagnostics. Hosted root cause remains pending.",
+  "files": {
+    ".github/workflows/validate.yaml": "be080a96f1262ac7aeece65b0b019dbcc7fe778d475b3396d2e006d3c174bd8d",
+    "scripts/deployment-ci.mjs": "afbfcd6ff574381c9b54b4ad8fa6a64a7064a4d49b7cce62188d1367fdaf0ccc",
+    "scripts/deployment-ci.test.mjs": "6bac0a49057f46423e184c7d4b2db4f2f9ce1ecb1bd8a955ace3024283623d16",
+    "scripts/deployment-database-bootstrap.test.mjs": "ba0b9bae109a8d4450c7b486bafa84b273469b9482fa856961f217c24318f0cd",
+    "tests/Persistence.Tests/ContainerStartupTests.cs": "cdfc394e00ba9cf23a597ab8afe0143ea4ac770212e4d83a423ea9f473289bb0",
+    "tests/TestSupport/ContainerStartup.cs": "3509d2382feb16dcfef9f00204ef28b0df3bdecf5015c781f7c2f7388caf2f3f"
+  }
+}
