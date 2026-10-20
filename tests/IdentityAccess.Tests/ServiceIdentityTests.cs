@@ -23,7 +23,7 @@ public sealed class ServiceIdentityTests(PostgresFixture postgres)
             InspectRequest = request => authorities.Enqueue(request.Headers.Authorization?.Parameter)
         });
         await using WebApplicationFactory<Reservations.Program> app = ServiceApp(scenario, tokens);
-        using HttpClient client = await postgres.CreateClientAsync(app);
+        using HttpClient client = await PostgresFixture.CreateClientAsync(app);
         using HttpResponseMessage first = await client.GetAsync(AvailabilityPath, TestContext.Current.CancellationToken);
         Assert.Equal(HttpStatusCode.OK, first.StatusCode);
         HttpResponseMessage[] replies = await Task.WhenAll(Enumerable.Range(0, 8).Select(_ => client.GetAsync(AvailabilityPath)));
@@ -57,7 +57,7 @@ public sealed class ServiceIdentityTests(PostgresFixture postgres)
         };
         await using BookingScenario scenario = await BookingScenario.CreateAsync(postgres);
         await using WebApplicationFactory<Reservations.Program> app = ServiceApp(scenario, tokens);
-        using HttpClient client = await postgres.CreateClientAsync(app);
+        using HttpClient client = await PostgresFixture.CreateClientAsync(app);
         Task<HttpResponseMessage[]> pending = Task.WhenAll(Enumerable.Range(0, 8).Select(_ => client.GetAsync(AvailabilityPath)));
         await entered.Task.WaitAsync(TimeSpan.FromSeconds(5), TestContext.Current.CancellationToken);
         release.SetResult();
@@ -89,7 +89,7 @@ public sealed class ServiceIdentityTests(PostgresFixture postgres)
         };
         await using BookingScenario scenario = await BookingScenario.CreateAsync(postgres);
         await using WebApplicationFactory<Reservations.Program> app = ServiceApp(scenario, tokens);
-        using HttpClient client = await postgres.CreateClientAsync(app);
+        using HttpClient client = await PostgresFixture.CreateClientAsync(app);
         using HttpResponseMessage history = await client.GetAsync("/api/reservations", TestContext.Current.CancellationToken);
         Assert.Equal(HttpStatusCode.OK, history.StatusCode);
 
@@ -123,7 +123,7 @@ public sealed class ServiceIdentityTests(PostgresFixture postgres)
         var tokens = new ServiceTokenBoundary();
         await using BookingScenario scenario = await BookingScenario.CreateAsync(postgres);
         await using WebApplicationFactory<Reservations.Program> app = ServiceApp(scenario, tokens);
-        using HttpClient client = await postgres.CreateClientAsync(app);
+        using HttpClient client = await PostgresFixture.CreateClientAsync(app);
         Assert.Equal(HttpStatusCode.OK, (await client.GetAsync(AvailabilityPath, TestContext.Current.CancellationToken)).StatusCode);
         scenario.Clock.Now = scenario.Clock.Now.AddSeconds(89);
         Assert.Equal(HttpStatusCode.OK, (await client.GetAsync(AvailabilityPath, TestContext.Current.CancellationToken)).StatusCode);
@@ -148,7 +148,7 @@ public sealed class ServiceIdentityTests(PostgresFixture postgres)
         var tokens = new ServiceTokenBoundary { Status = status };
         await using BookingScenario scenario = await BookingScenario.CreateAsync(postgres);
         await using WebApplicationFactory<Reservations.Program> app = ServiceApp(scenario, tokens);
-        using HttpClient client = await postgres.CreateClientAsync(app);
+        using HttpClient client = await PostgresFixture.CreateClientAsync(app);
         await AssertUnavailableAsync(scenario, client);
         Assert.Equal(1, tokens.Calls);
         Assert.Equal(0, scenario.Inventory.Calls);
@@ -164,7 +164,7 @@ public sealed class ServiceIdentityTests(PostgresFixture postgres)
         var tokens = new ServiceTokenBoundary { AccessToken = authority, TokenType = type, ExpiresIn = lifetime };
         await using BookingScenario scenario = await BookingScenario.CreateAsync(postgres);
         await using WebApplicationFactory<Reservations.Program> app = ServiceApp(scenario, tokens);
-        using HttpClient client = await postgres.CreateClientAsync(app);
+        using HttpClient client = await PostgresFixture.CreateClientAsync(app);
         await AssertUnavailableAsync(scenario, client);
         Assert.Equal(1, tokens.Calls);
         Assert.Equal(0, scenario.Inventory.Calls);
@@ -178,7 +178,7 @@ public sealed class ServiceIdentityTests(PostgresFixture postgres)
         var tokens = new ServiceTokenBoundary();
         await using BookingScenario scenario = await BookingScenario.CreateAsync(postgres, new InventoryBoundary { FailureStatus = status });
         await using WebApplicationFactory<Reservations.Program> app = ServiceApp(scenario, tokens);
-        using HttpClient client = await postgres.CreateClientAsync(app);
+        using HttpClient client = await PostgresFixture.CreateClientAsync(app);
         await AssertUnavailableAsync(scenario, client);
         Assert.Equal(1, tokens.Calls);
         Assert.Equal(1, scenario.Inventory.Calls);
@@ -191,7 +191,7 @@ public sealed class ServiceIdentityTests(PostgresFixture postgres)
         await using BookingScenario scenario = await BookingScenario.CreateAsync(postgres);
         await using WebApplicationFactory<Reservations.Program> app = ServiceApp(scenario, tokens).WithWebHostBuilder(builder => builder.ConfigureServices(services =>
             services.AddHttpClient("inventory", client => client.BaseAddress = new Uri("https://unrelated.invalid"))));
-        using HttpClient client = await postgres.CreateClientAsync(app);
+        using HttpClient client = await PostgresFixture.CreateClientAsync(app);
         await AssertUnavailableAsync(scenario, client);
         Assert.Equal(0, tokens.Calls);
         Assert.Equal(0, scenario.Inventory.Calls);
@@ -203,7 +203,7 @@ public sealed class ServiceIdentityTests(PostgresFixture postgres)
         var tokens = new ServiceTokenBoundary { Stall = true };
         await using BookingScenario scenario = await BookingScenario.CreateAsync(postgres);
         await using WebApplicationFactory<Reservations.Program> app = ServiceApp(scenario, tokens);
-        using HttpClient client = await postgres.CreateClientAsync(app);
+        using HttpClient client = await PostgresFixture.CreateClientAsync(app);
         await AssertUnavailableAsync(scenario, client).WaitAsync(TimeSpan.FromSeconds(5), TestContext.Current.CancellationToken);
         Assert.Equal(1, tokens.Calls);
         Assert.True(tokens.Cancelled);
@@ -219,7 +219,7 @@ public sealed class ServiceIdentityTests(PostgresFixture postgres)
     {
         await using NpgsqlDataSource database = await postgres.CreateMigratedDatabaseAsync("inventory");
         await using WebApplicationFactory<Inventory.Program> app = PostgresFixture.Factory<Inventory.Program>(database);
-        using HttpClient client = await postgres.CreateClientAsync(app);
+        using HttpClient client = await PostgresFixture.CreateClientAsync(app);
         string[] grants = role.Length == 0 ? [] : [role];
         client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", IdentityAuthorityFixture.Shared.Token(
             audience: "inventory-api", kind: "service", client: workload, roles: [], serviceRoles: grants));
@@ -245,7 +245,7 @@ public sealed class ServiceIdentityTests(PostgresFixture postgres)
         Assert.Equal(HttpStatusCode.Forbidden, (await reservations.PostAsync($"/api/reservations/{Guid.NewGuid()}/cancel", null, TestContext.Current.CancellationToken)).StatusCode);
         await using NpgsqlDataSource database = await postgres.CreateMigratedDatabaseAsync("notifications");
         await using WebApplicationFactory<Notifications.Program> notificationsApp = PostgresFixture.Factory<Notifications.Program>(database);
-        using HttpClient notifications = await postgres.CreateClientAsync(notificationsApp);
+        using HttpClient notifications = await PostgresFixture.CreateClientAsync(notificationsApp);
         notifications.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", IdentityAuthorityFixture.Shared.Token(
             audience: "notifications-api", kind: "service", client: "reservations-service", roles: roles, serviceRoles: ["equipment.read"]));
         Assert.Equal(HttpStatusCode.Forbidden, (await notifications.GetAsync("/api/notifications", TestContext.Current.CancellationToken)).StatusCode);

@@ -12,7 +12,6 @@ public sealed class PostgresFixture : IAsyncLifetime
     // Limit concurrent schema setup on the shared provider; hosts and requests remain parallel.
     // Measured provisioning pressure and capacity evidence: specs/013-local-kubernetes/team/test-infrastructure-diagnosis.md.
     private readonly SemaphoreSlim provisioning = new(4);
-    private readonly SemaphoreSlim hostStartup = new(4);
     private readonly PostgreSqlContainer container = new PostgreSqlBuilder("postgres:18.6")
         .WithUsername("fixture_admin")
         .WithPassword(Guid.NewGuid().ToString("N"))
@@ -35,7 +34,6 @@ public sealed class PostgresFixture : IAsyncLifetime
         finally
         {
             provisioning.Dispose();
-            hostStartup.Dispose();
         }
     }
 
@@ -112,21 +110,10 @@ public sealed class PostgresFixture : IAsyncLifetime
     }
 
     // Admit first factory startup only; requests and additional clients remain parallel.
-    public async Task<HttpClient> CreateClientAsync<TProgram>(WebApplicationFactory<TProgram> factory) where TProgram : class
+    public static async Task<HttpClient> CreateClientAsync<TProgram>(WebApplicationFactory<TProgram> factory) where TProgram : class
     {
-        if (!await hostStartup.WaitAsync(TimeSpan.FromSeconds(60), TestContext.Current.CancellationToken))
-        {
-            throw new TimeoutException("Application host startup did not acquire setup capacity.");
-        }
-
-        try
-        {
-            return factory.CreateClient();
-        }
-        finally
-        {
-            _ = hostStartup.Release();
-        }
+        CancellationToken cancellationToken = TestContext.Current.CancellationToken;
+        return await ApplicationStartup.RunAsync(() => Task.FromResult(factory.CreateClient()), cancellationToken);
     }
 
     public string ConnectionStringFor(NpgsqlDataSource source)
