@@ -21,6 +21,29 @@
         "No acceptance or external-action authorization"
       ],
       "status": "human_approved"
+    },
+    {
+      "id": "EX-013-002",
+      "policy": "Feature FR-011/FR-017 and T028/T038 hosted ephemeral deployment validation gate",
+      "scope": [
+        "Temporarily skip only the Validate deployment job by a constant false guard",
+        "Retain deployment job definition and all steps for later re-enablement",
+        "Keep quality job and release checks enabled"
+      ],
+      "deviation": "Hosted deployment validation is temporarily unavailable as a merge-validation gate while the owner prepares local exploratory testing. Existing failed deployment evidence remains open.",
+      "rationale": "Owner explicitly requested a quality-only workflow before their intended merge/publication and exploratory local testing.",
+      "impact": "A skipped deployment job provides no deployment acceptance evidence. Known Kubernetes bootstrap NpgsqlException remains unresolved. Existing quality503 failures are not waived.",
+      "owner": "Human repository owner",
+      "date": "2026-10-20",
+      "authorization": "Let's temporarily disable the deployment job and keep only the quality job. ... We can re-enable the deployment job afterwards.",
+      "exclusions": [
+        "No quality test or release-check waiver",
+        "No deletion of deployment tests or job steps",
+        "No claim of deployment readiness or full feature acceptance",
+        "No agent merge or image-publication action in this change"
+      ],
+      "restoration": "Remove deployment job constant-false if guard and exception comment after exploratory testing; rerun deployment validation before claiming its gate satisfied.",
+      "status": "human_approved_temporary"
     }
   ]
 }

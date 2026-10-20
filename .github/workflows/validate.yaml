@@ -30,6 +30,8 @@ jobs:
           TESTCONTAINERS_RYUK_DISABLED: 'false'
       - run: node --test scripts/deployment-validation.test.mjs scripts/promote-images.test.mjs scripts/deployment-ci.test.mjs
   deployment:
+    # Temporarily disabled for local exploratory testing; see EX-013-002.
+    if: ${{ false }}
     runs-on: ubuntu-24.04
     timeout-minutes: 60
     steps:
