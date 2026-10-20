@@ -19,6 +19,7 @@ public sealed class BrokerAccessFixture : IAsyncLifetime
     private readonly Dictionary<string, string> connections = new(StringComparer.Ordinal);
     private readonly HashSet<string> sensitive = new(StringComparer.Ordinal);
     private IContainer? broker;
+    private StableContainerPorts? ports;
 
     public Uri Management { get; private set; } = null!;
 
@@ -60,20 +61,26 @@ public sealed class BrokerAccessFixture : IAsyncLifetime
             }
         }
 
-        broker = new ContainerBuilder("rabbitmq:4.3.6-management")
-            .WithEnvironment("RABBITMQ_DEFAULT_USER", "fixture")
-            .WithEnvironment("RABBITMQ_DEFAULT_PASS", administratorPassword)
-            .WithResourceMapping(Encoding.UTF8.GetBytes(failure == "malformed" ? "{" : definitions), "/etc/rabbitmq/equipment-definitions.json",
-                failure == "unreadable" ? 0U : 999U, failure == "unreadable" ? 0U : 999U, UnixFileModes.UserRead | UnixFileModes.UserWrite)
-            .WithResourceMapping(Encoding.UTF8.GetBytes(BrokerProvisioning.Configuration), "/etc/rabbitmq/conf.d/20-equipment.conf", 999, 999, UnixFileModes.UserRead | UnixFileModes.UserWrite)
-            .WithPortBinding(5672, true)
-            .WithPortBinding(15672, true)
-            .WithWaitStrategy(failure is null
-                ? Wait.ForUnixContainer().UntilInternalTcpPortIsAvailable(5672)
-                : Wait.ForUnixContainer().UntilMessageIsLogged("BOOT FAILED"))
-            .Build();
         try
         {
+            ports = new StableContainerPorts(5672, 15672);
+            await ports.StartAsync(deadline.Token);
+            broker = new ContainerBuilder("rabbitmq:4.3.6-management")
+                .WithEnvironment("RABBITMQ_DEFAULT_USER", "fixture")
+                .WithEnvironment("RABBITMQ_DEFAULT_PASS", administratorPassword)
+                .WithResourceMapping(Encoding.UTF8.GetBytes(failure == "malformed" ? "{" : definitions), "/etc/rabbitmq/equipment-definitions.json",
+                    failure == "unreadable" ? 0U : 999U, failure == "unreadable" ? 0U : 999U, UnixFileModes.UserRead | UnixFileModes.UserWrite)
+                .WithResourceMapping(Encoding.UTF8.GetBytes(BrokerProvisioning.Configuration), "/etc/rabbitmq/conf.d/20-equipment.conf", 999, 999, UnixFileModes.UserRead | UnixFileModes.UserWrite)
+                .WithCreateParameterModifier(parameters =>
+                {
+                    parameters.HostConfig ??= new Docker.DotNet.Models.HostConfig();
+                    parameters.HostConfig.NetworkMode = ports.NetworkMode;
+                })
+                .WithWaitStrategy(failure is null
+                    ? Wait.ForUnixContainer().UntilInternalTcpPortIsAvailable(5672)
+                    : Wait.ForUnixContainer().UntilMessageIsLogged("BOOT FAILED"))
+                .Build();
+
             if (failure is not null)
             {
                 try
@@ -93,7 +100,7 @@ public sealed class BrokerAccessFixture : IAsyncLifetime
             Administration = Address("fixture", administratorPassword);
             connections["reservations"] = Address("reservations-publisher", publisherPassword);
             connections["notifications"] = Address("notifications-consumer", consumerPassword);
-            Management = new Uri($"http://{broker.Hostname}:{broker.GetMappedPublicPort(15672)}");
+            Management = new Uri($"http://{ports.Hostname}:{ports.Port(15672)}");
             await AwaitManagementAsync(deadline.Token);
             await using IConnection connection = await RabbitConnection.Factory(Administration, TimeSpan.FromSeconds(3)).CreateConnectionAsync(deadline.Token);
             await using IChannel channel = await connection.CreateChannelAsync(cancellationToken: deadline.Token);
@@ -110,7 +117,7 @@ public sealed class BrokerAccessFixture : IAsyncLifetime
 
     private string Address(string username, string password)
     {
-        return $"amqp://{Uri.EscapeDataString(username)}:{Uri.EscapeDataString(password)}@{broker!.Hostname}:{broker.GetMappedPublicPort(5672)}/equipment";
+        return $"amqp://{Uri.EscapeDataString(username)}:{Uri.EscapeDataString(password)}@{ports!.Hostname}:{ports.Port(5672)}/equipment";
     }
 
     private async Task AwaitManagementAsync(CancellationToken cancellationToken)
@@ -185,9 +192,19 @@ public sealed class BrokerAccessFixture : IAsyncLifetime
 
     public async ValueTask DisposeAsync()
     {
-        if (broker is not null)
+        try
         {
-            await broker.DisposeAsync();
+            if (broker is not null)
+            {
+                await broker.DisposeAsync();
+            }
+        }
+        finally
+        {
+            if (ports is not null)
+            {
+                await ports.DisposeAsync();
+            }
         }
     }
 }

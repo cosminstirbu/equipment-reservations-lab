@@ -178,6 +178,9 @@ public sealed class IdentityProviderTests(IdentityProviderFixture provider)
     public async Task RepeatedProvisioningPreservesSubjectsPasswordsAndAllocatedCallback()
     {
         using var deadline = new CancellationTokenSource(TimeSpan.FromSeconds(60));
+        string originalAuthority = provider.Settings.Authority;
+        using var originalClient = new HttpClient { BaseAddress = new Uri(originalAuthority + "/"), Timeout = TimeSpan.FromSeconds(5) };
+
         await provider.ProvisionAsync(cancellationToken: deadline.Token);
         var subjects = new Dictionary<string, string>();
         foreach (string username in provider.Settings.UserPasswords.Keys)
@@ -188,7 +191,23 @@ public sealed class IdentityProviderTests(IdentityProviderFixture provider)
             subjects[username] = claims.RootElement.GetProperty("sub").GetString()!;
         }
 
-        await provider.RestartAsync(deadline.Token);
+        await provider.StopAsync(deadline.Token);
+        try
+        {
+            _ = await Assert.ThrowsAsync<HttpRequestException>(() => originalClient.GetStringAsync(".well-known/openid-configuration", deadline.Token));
+        }
+        finally
+        {
+            using var cleanup = new CancellationTokenSource(TimeSpan.FromSeconds(60));
+            await provider.StartAsync(cleanup.Token);
+        }
+
+        Assert.Equal(originalAuthority, provider.Settings.Authority);
+        using (var retainedMetadata = JsonDocument.Parse(await originalClient.GetStringAsync(".well-known/openid-configuration", deadline.Token)))
+        {
+            Assert.Equal(originalAuthority, retainedMetadata.RootElement.GetProperty("issuer").GetString());
+        }
+
         await provider.ProvisionAsync(provider.Settings with
         {
             UserPasswords = provider.Settings.UserPasswords.ToDictionary(pair => pair.Key, _ => Guid.NewGuid().ToString("N"))

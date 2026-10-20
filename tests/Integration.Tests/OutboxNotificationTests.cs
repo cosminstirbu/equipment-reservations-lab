@@ -1,5 +1,6 @@
 using System.Collections.Concurrent;
 using System.Diagnostics;
+using System.Net;
 using System.Threading.Channels;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging.Abstractions;
@@ -61,21 +62,68 @@ public sealed class OutboxNotificationTests(PostgresFixture postgres, ITestOutpu
         using var publisher = new AttemptPublisher(gated: true);
         using OutboxWorker worker = Worker(scenario, publisher, schedule);
         await worker.StartAsync(TestContext.Current.CancellationToken);
-        Assert.Equal(TimeSpan.FromSeconds(30), await schedule.NextAsync());
-        long committed = Stopwatch.GetTimestamp();
-        _ = await scenario.BookAsync();
-        ReservationEvent first = await publisher.NextAsync();
-        TimeSpan latency = Stopwatch.GetElapsedTime(committed);
-        output.WriteLine($"Healthy commit-to-publisher observation including HTTP completion: {latency.TotalMilliseconds:F1}ms; fallback never advanced.");
-        Assert.True(latency < TimeSpan.FromSeconds(1), "Healthy idle publication must start within one second of commit (HTTP completion included).");
-        _ = await scenario.BookAsync(equipment: "laptop-001");
-        publisher.Release();
-        ReservationEvent second = await publisher.NextAsync();
-        Assert.NotEqual(first.EventId, second.EventId);
-        publisher.Release();
-        _ = await schedule.NextAsync();
-        await worker.StopAsync(TestContext.Current.CancellationToken);
-        Assert.Equal(1, publisher.MaximumConcurrency);
+        try
+        {
+            Assert.Equal(TimeSpan.FromSeconds(30), await schedule.NextAsync());
+            // A deferred provider trigger gates the real HTTP transaction at commit,
+            // after first-request work, without replacing application persistence.
+            await using NpgsqlCommand trigger = scenario.Database.CreateCommand("""
+                CREATE FUNCTION fixture_gate_outbox_commit() RETURNS trigger LANGUAGE plpgsql AS $$
+                BEGIN
+                    PERFORM pg_advisory_xact_lock(8675309);
+                    RETURN NEW;
+                END $$;
+                CREATE CONSTRAINT TRIGGER fixture_gate_outbox_commit
+                AFTER INSERT ON reservation_outbox DEFERRABLE INITIALLY DEFERRED
+                FOR EACH ROW EXECUTE FUNCTION fixture_gate_outbox_commit();
+                """);
+            _ = await trigger.ExecuteNonQueryAsync(TestContext.Current.CancellationToken);
+            await using NpgsqlConnection gate = await scenario.Database.OpenConnectionAsync(TestContext.Current.CancellationToken);
+            Task<HttpResponseMessage> booking;
+            long commitLowerBound;
+            await using (NpgsqlTransaction holder = await gate.BeginTransactionAsync(TestContext.Current.CancellationToken))
+            {
+                await using var acquire = new NpgsqlCommand("SELECT pg_advisory_xact_lock(8675309)", gate, holder);
+                _ = await acquire.ExecuteNonQueryAsync(TestContext.Current.CancellationToken);
+                try
+                {
+                    booking = scenario.BookAsync();
+                    await AwaitCommitGateAsync(scenario.Database, gate.ProcessID);
+                    Assert.False(booking.IsCompleted);
+                    Assert.Empty(publisher.Events);
+                    Assert.Equal(0, await scenario.CountAsync("reservation_outbox"));
+                    // Commit cannot precede releasing this provider lock. Measuring
+                    // from before release is a conservative commit-latency bound.
+                    commitLowerBound = Stopwatch.GetTimestamp();
+                }
+                finally
+                {
+                    using var cleanup = new CancellationTokenSource(TimeSpan.FromSeconds(5));
+                    await holder.RollbackAsync(cleanup.Token);
+                }
+            }
+
+            ReservationEvent first = await publisher.NextAsync();
+            TimeSpan latency = Stopwatch.GetElapsedTime(commitLowerBound, publisher.Started[first.EventId]);
+            output.WriteLine($"Healthy commit-release lower-bound to publisher entry: {latency.TotalMilliseconds:F1}ms; fallback never advanced.");
+            Assert.True(latency >= TimeSpan.Zero && latency < TimeSpan.FromSeconds(1), "Healthy idle publication must start within one second of commit (measured conservatively from before commit-gate release).");
+            using HttpResponseMessage firstResponse = await booking;
+            Assert.Equal(HttpStatusCode.Created, firstResponse.StatusCode);
+            using HttpResponseMessage secondResponse = await scenario.BookAsync(equipment: "laptop-001");
+            Assert.Equal(HttpStatusCode.Created, secondResponse.StatusCode);
+            publisher.Release();
+            ReservationEvent second = await publisher.NextAsync();
+            Assert.NotEqual(first.EventId, second.EventId);
+            publisher.Release();
+            await AwaitPublishedAsync(scenario.Database, 2);
+            _ = await schedule.NextAsync();
+            Assert.Equal(1, publisher.MaximumConcurrency);
+        }
+        finally
+        {
+            using var cleanup = new CancellationTokenSource(TimeSpan.FromSeconds(5));
+            await worker.StopAsync(cleanup.Token);
+        }
     }
 
     [Fact]
@@ -488,6 +536,25 @@ public sealed class OutboxNotificationTests(PostgresFixture postgres, ITestOutpu
         }
     }
 
+    private static async Task AwaitCommitGateAsync(NpgsqlDataSource database, int holderPid)
+    {
+        using var deadline = CancellationTokenSource.CreateLinkedTokenSource(TestContext.Current.CancellationToken);
+        deadline.CancelAfter(TimeSpan.FromSeconds(5));
+        await using NpgsqlCommand blocked = database.CreateCommand("""
+            SELECT EXISTS (
+                SELECT 1 FROM pg_locks
+                WHERE locktype='advisory' AND NOT granted
+                  AND database=(SELECT oid FROM pg_database WHERE datname=current_database())
+                  AND classid=0 AND objid=8675309 AND objsubid=1
+                  AND $1=ANY(pg_blocking_pids(pid)))
+            """);
+        _ = blocked.Parameters.AddWithValue(holderPid);
+        while (!(bool)(await blocked.ExecuteScalarAsync(deadline.Token))!)
+        {
+            await Task.Delay(10, deadline.Token);
+        }
+    }
+
     private static async Task AwaitPublishedAsync(NpgsqlDataSource database, int count)
     {
         using var deadline = new CancellationTokenSource(TimeSpan.FromSeconds(5));
@@ -598,6 +665,8 @@ public sealed class OutboxNotificationTests(PostgresFixture postgres, ITestOutpu
 
         public ConcurrentQueue<ReservationEvent> Events { get; } = new();
 
+        public ConcurrentDictionary<Guid, long> Started { get; } = new();
+
         public int MaximumConcurrency
         {
             get; private set;
@@ -605,6 +674,7 @@ public sealed class OutboxNotificationTests(PostgresFixture postgres, ITestOutpu
 
         public async Task PublishAsync(ReservationEvent message, string? traceparent, string? tracestate, CancellationToken cancellationToken)
         {
+            _ = Started.TryAdd(message.EventId, Stopwatch.GetTimestamp());
             Events.Enqueue(message);
             int active = Interlocked.Increment(ref concurrency);
             MaximumConcurrency = Math.Max(MaximumConcurrency, active);

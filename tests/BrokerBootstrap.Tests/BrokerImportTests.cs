@@ -1,3 +1,4 @@
+using System.Net;
 using RabbitMQ.Client;
 using RabbitMQ.Client.Exceptions;
 using ReservationMessaging;
@@ -13,6 +14,8 @@ public sealed class BrokerImportTests(ReservationDeliveryFixture infrastructure)
     {
         using var deadline = new CancellationTokenSource(TimeSpan.FromSeconds(60));
         await infrastructure.ResetQueueAsync(deadline.Token);
+        string publisherAuthority = infrastructure.Publisher;
+        string consumerAuthority = infrastructure.Consumer;
         await infrastructure.AssertProtectedFilesAsync(deadline.Token);
         byte[] body = "retained-broker-contract"u8.ToArray();
         await using (IConnection connection = await RabbitConnection.Factory(infrastructure.Publisher, TimeSpan.FromSeconds(3)).CreateConnectionAsync(deadline.Token))
@@ -22,10 +25,24 @@ public sealed class BrokerImportTests(ReservationDeliveryFixture infrastructure)
         }
 
         await infrastructure.StopBrokerAsync(deadline.Token);
-        await infrastructure.StartBrokerAsync(deadline.Token);
+        try
+        {
+            _ = await Assert.ThrowsAsync<BrokerUnreachableException>(async () =>
+            {
+                await using IConnection unavailable = await RabbitConnection.Factory(publisherAuthority, TimeSpan.FromSeconds(3)).CreateConnectionAsync(deadline.Token);
+            });
+        }
+        finally
+        {
+            using var cleanup = new CancellationTokenSource(TimeSpan.FromSeconds(60));
+            await infrastructure.StartBrokerAsync(cleanup.Token);
+        }
+
+        Assert.True(publisherAuthority == infrastructure.Publisher && consumerAuthority == infrastructure.Consumer,
+            "Published broker authority must remain stable across restart.");
         await infrastructure.AssertProtectedFilesAsync(deadline.Token);
 
-        await using IConnection consumer = await RabbitConnection.Factory(infrastructure.Consumer, TimeSpan.FromSeconds(3)).CreateConnectionAsync(deadline.Token);
+        await using IConnection consumer = await RabbitConnection.Factory(consumerAuthority, TimeSpan.FromSeconds(3)).CreateConnectionAsync(deadline.Token);
         await using IChannel incoming = await consumer.CreateChannelAsync(cancellationToken: deadline.Token);
         BasicGetResult? retained = await incoming.BasicGetAsync(ReservationTopology.Queue, false, deadline.Token);
         Assert.NotNull(retained);
@@ -34,7 +51,7 @@ public sealed class BrokerImportTests(ReservationDeliveryFixture infrastructure)
         await incoming.BasicAckAsync(retained.DeliveryTag, false, deadline.Token);
         Assert.Null(await incoming.BasicGetAsync(ReservationTopology.Queue, false, deadline.Token));
 
-        await using IConnection publisher = await RabbitConnection.Factory(infrastructure.Publisher, TimeSpan.FromSeconds(3)).CreateConnectionAsync(deadline.Token);
+        await using IConnection publisher = await RabbitConnection.Factory(publisherAuthority, TimeSpan.FromSeconds(3)).CreateConnectionAsync(deadline.Token);
         await using IChannel outgoing = await publisher.CreateChannelAsync(cancellationToken: deadline.Token);
         OperationInterruptedException deniedRead = await Assert.ThrowsAnyAsync<OperationInterruptedException>(async () =>
             _ = await outgoing.BasicGetAsync(ReservationTopology.Queue, false, deadline.Token));
@@ -82,13 +99,39 @@ public sealed class BrokerStartupTests
     }
 
     [Fact]
-    public async Task ImportedProviderFilesHaveRestrictedOwnershipAndModes()
+    public async Task ImportedProviderFilesAndPublishedAuthoritySurviveRestart()
     {
         var fixture = new BrokerAccessFixture();
         try
         {
             await fixture.InitializeAsync();
-            using var deadline = new CancellationTokenSource(TimeSpan.FromSeconds(15));
+            using var deadline = new CancellationTokenSource(TimeSpan.FromSeconds(60));
+            await fixture.AssertProtectedFilesAsync(deadline.Token);
+            string authority = fixture.Connection("reservations");
+            Uri management = fixture.Management;
+            using var originalClient = new HttpClient { BaseAddress = management, Timeout = TimeSpan.FromSeconds(5) };
+            Assert.Equal(HttpStatusCode.Unauthorized, (await originalClient.GetAsync("/api/overview", deadline.Token)).StatusCode);
+            await fixture.StopAsync(deadline.Token);
+            try
+            {
+                _ = await Assert.ThrowsAsync<HttpRequestException>(() => originalClient.GetAsync("/api/overview", deadline.Token));
+                _ = await Assert.ThrowsAsync<BrokerUnreachableException>(async () =>
+                {
+                    await using IConnection unavailable = await RabbitConnection.Factory(authority, TimeSpan.FromSeconds(3)).CreateConnectionAsync(deadline.Token);
+                });
+            }
+            finally
+            {
+                using var cleanup = new CancellationTokenSource(TimeSpan.FromSeconds(60));
+                await fixture.RestartAsync(cleanup.Token);
+            }
+
+            Assert.Equal(management, fixture.Management);
+            Assert.True(authority == fixture.Connection("reservations"), "Published broker authority must remain stable across restart.");
+            Assert.Equal(HttpStatusCode.Unauthorized, (await originalClient.GetAsync("/api/overview", deadline.Token)).StatusCode);
+            await using IConnection recovered = await RabbitConnection.Factory(authority, TimeSpan.FromSeconds(3)).CreateConnectionAsync(deadline.Token);
+            await fixture.AssertExactAuthorityAsync("reservations", deadline.Token);
+            await fixture.AssertExactAuthorityAsync("notifications", deadline.Token);
             await fixture.AssertProtectedFilesAsync(deadline.Token);
         }
         finally

@@ -1,0 +1,16 @@
+{
+  "revision": "ci-repair-013-01",
+  "baseline": "6d79ef755218bbd08317ae7177a273b65f8a0f45",
+  "files": {
+    "deploy/platform/coredns.yaml": "1d4f90e2b13ccb401f4e893c7692844af8c8b52ff1ee4bf303306ec7f31d25be",
+    "scripts/deployment-ingress.test.mjs": "37379978591f941f3b50f126a5a47b0bb0ae061ed0c43b3d48da9330ec01d353",
+    "tests/BrokerBootstrap.Tests/BrokerImportTests.cs": "c316c469d5b26ff6600b866133dc4cad19d3d14d31aead536cbc177fef867d93",
+    "tests/IdentityBootstrap.Tests/IdentityProviderTests.cs": "a4bacf5260a2f39c4ba29af850fe1f7d64bff27c6d142c8bf7d0047fb4f2a0eb",
+    "tests/IdentityBootstrap.Tests/ServiceIdentityContractTests.cs": "96bc111c1aaf5226e9a7f325267e36d54a13cdd475346622cd6349df4ae60c0f",
+    "tests/Integration.Tests/OutboxNotificationTests.cs": "1f930b15dfca7402985315560780ce05da26903f01f6185badc5527ff2aa428e",
+    "tests/TestSupport/BrokerAccessFixture.cs": "2a732a01aa5a836575dc833a00aa981f9b3c39bf8f4ac89f10553ec2406118bf",
+    "tests/TestSupport/IdentityProviderFixture.cs": "9831491f7bdd78a07648238bd343410b95dcebc377fe02fbe099508bdd13bf34",
+    "tests/TestSupport/ReservationDeliveryFixture.cs": "6b938017b2c49381d3be3d95dc3d101b09c1566fb8dfe768af338ac087675d3f",
+    "tests/TestSupport/StableContainerPorts.cs": "74062f2ae85a60dbf59cf25248a356e3bcbd688051a4356aa183307f2675a24c"
+  }
+}
