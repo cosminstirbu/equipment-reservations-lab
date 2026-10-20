@@ -18,14 +18,18 @@ public sealed class ServiceIdentityContractTests(IdentityProviderFixture provide
     {
         using var deadline = new CancellationTokenSource(TimeSpan.FromSeconds(60));
         await provider.ProvisionAsync(cancellationToken: deadline.Token);
-        await provider.RestartAsync(deadline.Token);
-        await provider.ProvisionAsync(cancellationToken: deadline.Token);
+        string originalAuthority = provider.Settings.Authority;
         await using WebApplication app = await ApiAsync(provider.Settings.ServiceSecret);
+
+        await provider.RestartAsync(deadline.Token);
+        Assert.Equal(originalAuthority, provider.Settings.Authority);
+
+        await provider.ProvisionAsync(cancellationToken: deadline.Token);
         ServiceTokenClient service = app.Services.GetRequiredService<ServiceTokenClient>();
         string access = await service.GetTokenAsync(new Uri("http://inventory/api/equipment/camera-001"), deadline.Token);
         using JsonDocument claims = IdentityProviderFixture.Claims(access);
         JsonElement token = claims.RootElement;
-        Assert.Equal(provider.Settings.Authority, token.GetProperty("iss").GetString());
+        Assert.Equal(originalAuthority, token.GetProperty("iss").GetString());
         Assert.Equal("reservations-service", token.GetProperty("azp").GetString());
         Assert.Equal("service", token.GetProperty("principal_kind").GetString());
         Assert.Equal("Bearer", token.GetProperty("typ").GetString());

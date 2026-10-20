@@ -15,23 +15,31 @@ public sealed class IdentityProviderFixture : IAsyncLifetime
 {
     private readonly string adminPassword = Guid.NewGuid().ToString("N");
     private IContainer? provider;
+    private StableContainerPorts? ports;
 
     public IdentityProvisioningSettings Settings { get; private set; } = null!;
 
     public async ValueTask InitializeAsync()
     {
         using var deadline = new CancellationTokenSource(TimeSpan.FromMinutes(3));
-        provider = new ContainerBuilder("quay.io/keycloak/keycloak:26.8.1")
-            .WithEnvironment("KC_BOOTSTRAP_ADMIN_USERNAME", "fixture-admin")
-            .WithEnvironment("KC_BOOTSTRAP_ADMIN_PASSWORD", adminPassword)
-            .WithCommand("start-dev", "--hostname-strict=false")
-            .WithPortBinding(8080, true)
-            .WithWaitStrategy(Wait.ForUnixContainer().UntilHttpRequestIsSucceeded(request => request.ForPort(8080).ForPath("/realms/master")))
-            .Build();
         try
         {
+            ports = new StableContainerPorts(8080);
+            await ports.StartAsync(deadline.Token);
+            provider = new ContainerBuilder("quay.io/keycloak/keycloak:26.8.1")
+                .WithEnvironment("KC_BOOTSTRAP_ADMIN_USERNAME", "fixture-admin")
+                .WithEnvironment("KC_BOOTSTRAP_ADMIN_PASSWORD", adminPassword)
+                .WithCommand("start-dev", "--hostname-strict=false")
+                .WithCreateParameterModifier(parameters =>
+                {
+                    parameters.HostConfig ??= new Docker.DotNet.Models.HostConfig();
+                    parameters.HostConfig.NetworkMode = ports.NetworkMode;
+                })
+                .WithWaitStrategy(Wait.ForUnixContainer().AddCustomWaitStrategy(ports.HttpReady(8080, "/realms/master")))
+                .Build();
+
             await provider.StartAsync(deadline.Token);
-            string root = $"http://{provider.Hostname}:{provider.GetMappedPublicPort(8080)}";
+            string root = $"http://{ports.Hostname}:{ports.Port(8080)}";
             Settings = new IdentityProvisioningSettings(root + "/realms/equipment", "http://localhost:19876/", "fixture-admin", adminPassword,
                 new Dictionary<string, string>
                 {
@@ -166,15 +174,35 @@ public sealed class IdentityProviderFixture : IAsyncLifetime
 
     public async Task RestartAsync(CancellationToken cancellationToken)
     {
-        await provider!.StopAsync(cancellationToken);
-        await provider.StartAsync(cancellationToken);
+        await StopAsync(cancellationToken);
+        await StartAsync(cancellationToken);
+    }
+
+    public Task StopAsync(CancellationToken cancellationToken)
+    {
+        return provider!.StopAsync(cancellationToken);
+    }
+
+    public Task StartAsync(CancellationToken cancellationToken)
+    {
+        return provider!.StartAsync(cancellationToken);
     }
 
     public async ValueTask DisposeAsync()
     {
-        if (provider is not null)
+        try
         {
-            await provider.DisposeAsync();
+            if (provider is not null)
+            {
+                await provider.DisposeAsync();
+            }
+        }
+        finally
+        {
+            if (ports is not null)
+            {
+                await ports.DisposeAsync();
+            }
         }
     }
 }

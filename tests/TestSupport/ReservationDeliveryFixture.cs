@@ -26,6 +26,7 @@ public sealed class ReservationDeliveryFixture : IAsyncLifetime
     private readonly string publisherSalt = Guid.NewGuid().ToString("N");
     private readonly string consumerSalt = Guid.NewGuid().ToString("N");
     private IContainer? broker;
+    private StableContainerPorts? ports;
 
     public PostgresFixture Postgres { get; } = new();
 
@@ -43,18 +44,24 @@ public sealed class ReservationDeliveryFixture : IAsyncLifetime
             await Postgres.InitializeAsync();
             string definitions = Definitions();
             Assert.True(string.Equals(definitions, Definitions(), StringComparison.Ordinal), "Unchanged secret and salt inputs must produce byte-stable definitions.");
+            ports = new StableContainerPorts(5672);
+            await ports.StartAsync(deadline.Token);
             broker = new ContainerBuilder("rabbitmq:4.3.6")
                 .WithEnvironment("RABBITMQ_DEFAULT_USER", "fixture")
                 .WithEnvironment("RABBITMQ_DEFAULT_PASS", password)
                 .WithResourceMapping(System.Text.Encoding.UTF8.GetBytes(definitions), "/etc/rabbitmq/equipment-definitions.json", 999, 999, UnixFileModes.UserRead | UnixFileModes.UserWrite)
                 .WithResourceMapping(System.Text.Encoding.UTF8.GetBytes(BrokerProvisioning.Configuration), "/etc/rabbitmq/conf.d/20-equipment.conf", 999, 999, UnixFileModes.UserRead | UnixFileModes.UserWrite)
-                .WithPortBinding(5672, true)
+                .WithCreateParameterModifier(parameters =>
+                {
+                    parameters.HostConfig ??= new Docker.DotNet.Models.HostConfig();
+                    parameters.HostConfig.NetworkMode = ports.NetworkMode;
+                })
                 .WithWaitStrategy(Wait.ForUnixContainer().UntilInternalTcpPortIsAvailable(5672))
                 .Build();
             await broker.StartAsync(deadline.Token);
-            Messaging = $"amqp://fixture:{password}@{broker.Hostname}:{broker.GetMappedPublicPort(5672)}/equipment";
-            Publisher = $"amqp://reservations-publisher:{publisherPassword}@{broker.Hostname}:{broker.GetMappedPublicPort(5672)}/equipment";
-            Consumer = $"amqp://notifications-consumer:{consumerPassword}@{broker.Hostname}:{broker.GetMappedPublicPort(5672)}/equipment";
+            Messaging = $"amqp://fixture:{password}@{ports.Hostname}:{ports.Port(5672)}/equipment";
+            Publisher = $"amqp://reservations-publisher:{publisherPassword}@{ports.Hostname}:{ports.Port(5672)}/equipment";
+            Consumer = $"amqp://notifications-consumer:{consumerPassword}@{ports.Hostname}:{ports.Port(5672)}/equipment";
             await ResetQueueAsync(deadline.Token);
         }
         catch
@@ -117,12 +124,27 @@ public sealed class ReservationDeliveryFixture : IAsyncLifetime
 
     public async ValueTask DisposeAsync()
     {
-        if (broker is not null)
+        try
         {
-            await broker.DisposeAsync();
+            if (broker is not null)
+            {
+                await broker.DisposeAsync();
+            }
         }
-
-        await Postgres.DisposeAsync();
+        finally
+        {
+            try
+            {
+                if (ports is not null)
+                {
+                    await ports.DisposeAsync();
+                }
+            }
+            finally
+            {
+                await Postgres.DisposeAsync();
+            }
+        }
     }
 
     internal static async Task<ObservedNotification[]> AwaitInboxAsync(HttpClient client, int count, CancellationToken cancellationToken)

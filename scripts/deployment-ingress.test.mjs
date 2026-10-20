@@ -220,6 +220,16 @@ test(
     const kube = (...args) => run('kubectl', [...kubectl, ...args]);
     kube('create', 'namespace', 'equipment');
     kube('create', 'namespace', 'equipment-platform');
+    kube('apply', '-k', 'deploy/platform');
+    kube('-n', 'kube-system', 'rollout', 'restart', 'deployment/coredns');
+    kube(
+      '-n',
+      'kube-system',
+      'rollout',
+      'status',
+      'deployment/coredns',
+      '--timeout=90s',
+    );
     kube(
       '-n',
       'equipment',
@@ -383,7 +393,6 @@ test(
         items: fixtures,
       }),
     });
-    kube('apply', '-f', 'deploy/platform/traefik.yaml');
     kube(
       '-n',
       'equipment',

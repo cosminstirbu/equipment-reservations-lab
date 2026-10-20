@@ -3,7 +3,7 @@
   "status": "awaiting_external_and_runtime_acceptance",
   "baseline_revision": "4dd685c4e34288f94e932dcd49beb22eea965075",
   "preparation_round": 2,
-  "implementation_round": 1,
+  "implementation_round": 2,
   "limits": {
     "preparation_repairs": 3,
     "implementation_repairs": 3,
@@ -86,7 +86,7 @@
   "human_acceptance": null,
   "pending_decisions": [],
   "baseline_working_tree": "Clean main baseline; only owner-provided untracked handoff/planning copied. Original modified docs/engineering/openapi.md excluded.",
-  "worktree": "/private/tmp/equipment-reservations-local-kubernetes",
+  "worktree": "/Users/cosmin.stirbu/Desktop/codex-speckit-team",
   "preparation_snapshot": "prep-012-01 (formal artifacts under construction; no application changes)",
   "setup_evidence": [
     {
@@ -234,7 +234,7 @@
   ],
   "frozen_snapshot": "implementation-012-02a",
   "frozen_digest": "e95304733cc8b247af38ec077a72f7a9b8d9bcf496b5e1f277af2dd12098f29a",
-  "implementation_repair_round": 1,
+  "implementation_repair_round": 2,
   "check_results_01": [
     {
       "command": "npm run format-check",
@@ -429,5 +429,40 @@
     "local_main_baseline": "d168646",
     "remote_main_baseline": "4dd685c",
     "historical_evidence": "Existing 012 snapshot identifiers, hashes and paths describe their original reviewed revision; checks must be rerun after rebase."
+  },
+  "ci_repair_013": {
+    "status": "locally_validated_ready_for_hosted_validation",
+    "trigger": "Owner requested fixes for all three hosted failures on 2026-10-20",
+    "baseline": "6d79ef755218bbd08317ae7177a273b65f8a0f45",
+    "failed_run": "https://github.com/cosminstirbu/equipment-reservations-lab/actions/runs/39412807716",
+    "scope": [
+      "CoreDNS actual configuration parse/startup regression",
+      "Stable provider endpoints across real stop/start without random-port reservation races",
+      "Correct conservative commit-to-publisher timing under unchanged one-second requirement"
+    ],
+    "gates": "Test-first evidence, real providers, native scheduling unchanged, exact-revision independent delta reviews and local/hosted validation required. Historical reviews remain valid only for their original snapshots.",
+    "source_snapshot": "ci-repair-snapshot-01.json",
+    "quality_review": {
+      "verdict": "pass",
+      "scope": "repair code",
+      "report": "ci-quality-review-01.md"
+    },
+    "security_review": {
+      "verdict": "pass",
+      "scope": "repair code",
+      "report": "ci-security-review-01.md"
+    },
+    "convergence": "No additional actionable build tasks in repair scope; existing ten external/runtime/completion tasks remain pending (ci-convergence-01.md).",
+    "local_checks": {
+      "format-check": "pass",
+      "lint": "pass (zero warnings/errors)",
+      "check": "pass (541 backend, 64 frontend, 24 tooling, zero failures/skips)",
+      "test:deployment": "pass (12 serialized files, 77 tests, pinned kubectl1.35.8, zero failures/cancellations/skips)"
+    },
+    "hosted_validation": {
+      "record": "https://github.com/cosminstirbu/equipment-reservations-lab/pull/1/checks",
+      "requirement": "Actual Docker run must pass; final outcomes are external per-commit records and summarized in PR description. No hosted pass inferred from local Podman."
+    },
+    "validation_report": "ci-validation-01.md"
   }
 }
