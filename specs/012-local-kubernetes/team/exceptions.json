@@ -1,0 +1,26 @@
+{
+  "exceptions": [
+    {
+      "id": "EX-012-001",
+      "finding": "Q-I006",
+      "policy": "Constitution II intended-behavior failing test before implementation",
+      "scope": [
+        "Initial change classification",
+        "Initial promotion file/branch/PR behavior",
+        "Initial image build/publication orchestration"
+      ],
+      "deviation": "Tests were written first but original failures were only ERR_MODULE_NOT_FOUND; no contemporaneous intended-behavior RED evidence exists. Later regression RED evidence does not establish original sequencing.",
+      "rationale": "The historical sequence cannot be recreated honestly. Retain transparent evidence and require current behavior verification, security repairs and independent review.",
+      "impact": "Accepts this original delivery process deviation only; does not establish original test-first compliance.",
+      "owner": "Human repository owner",
+      "date": "2026-10-20",
+      "authorization": "Explicit user reply: Approve this scoped exception",
+      "exclusions": [
+        "No general test-first policy relaxation",
+        "No correctness/security waiver",
+        "No acceptance or external-action authorization"
+      ],
+      "status": "human_approved"
+    }
+  ]
+}

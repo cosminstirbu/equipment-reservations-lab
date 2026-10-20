@@ -1,0 +1,25 @@
+---
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+  - broker-configuration.yaml
+  - dashboard-service.yaml
+  - dashboard.yaml
+  - inventory-service.yaml
+  - inventory.yaml
+  - keycloak-service.yaml
+  - keycloak.yaml
+  - notifications-service.yaml
+  - notifications.yaml
+  - postgres-data.yaml
+  - postgres-service.yaml
+  - postgres.yaml
+  - rabbitmq-data.yaml
+  - rabbitmq-service.yaml
+  - rabbitmq.yaml
+  - reservations-service.yaml
+  - reservations.yaml
+  - web-service.yaml
+  - web.yaml
+generators:
+  - configuration.yaml

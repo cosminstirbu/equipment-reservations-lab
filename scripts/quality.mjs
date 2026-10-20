@@ -1,6 +1,7 @@
 import { spawn, spawnSync } from 'node:child_process';
 import { mkdirSync, readdirSync, realpathSync, rmSync } from 'node:fs';
 import { dirname, extname, isAbsolute, relative, resolve } from 'node:path';
+import { setTimeout, clearTimeout } from 'node:timers';
 import { fileURLToPath } from 'node:url';
 
 export const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
@@ -36,6 +37,8 @@ const extensions = new Set([
   '.props',
   '.targets',
   '.slnx',
+  '.yaml',
+  '.yml',
 ]);
 
 export function sourcePath(path) {
@@ -47,6 +50,8 @@ export function sourcePath(path) {
     throw error;
   }
   const name = relative(root, absolute);
+  // Preserve the reviewed upstream checksum; authored Argo overlays remain format targets.
+  if (absolute === resolve(root, 'deploy/argocd/install.yaml')) return null;
   if (
     isAbsolute(name) ||
     name.startsWith('..') ||
@@ -200,6 +205,55 @@ async function checkOpenApi() {
     );
 }
 
+async function testDeployment(paths) {
+  const files = paths.length
+    ? paths.map(sourcePath)
+    : sources().filter((path) =>
+        /^scripts\/(deployment-.*|promote-images|local-kubernetes)\.test\.mjs$/.test(
+          path,
+        ),
+      );
+  if (!files.length || files.some((path) => !path?.endsWith('.test.mjs')))
+    throw new Error('Select existing repository deployment test modules');
+  const timeout = Number(process.env.DEPLOYMENT_TEST_TIMEOUT_MS ?? 900000);
+  if (!Number.isInteger(timeout) || timeout < 1 || timeout > 900000)
+    throw new Error('Deployment file timeout must be 1..900000 ms');
+  // Provider lanes share the existing VM budget; a parent deadline also bounds blocked child event loops.
+  for (const file of files) {
+    await new Promise((resolve, reject) => {
+      const child = spawn(process.execPath, [file], {
+        cwd: root,
+        stdio: 'inherit',
+      });
+      let expired = false;
+      let force;
+      const timer = setTimeout(() => {
+        expired = true;
+        child.kill('SIGTERM');
+        force = setTimeout(() => child.kill('SIGKILL'), 5000);
+      }, timeout);
+      child.once('error', (error) => {
+        clearTimeout(timer);
+        clearTimeout(force);
+        reject(error);
+      });
+      child.once('close', (code, signal) => {
+        clearTimeout(timer);
+        clearTimeout(force);
+        if (expired)
+          reject(
+            new Error(`Deployment test file ${file} exceeded ${timeout} ms`),
+          );
+        else if (code !== 0)
+          reject(
+            new Error(`Deployment test file ${file} exited ${code ?? signal}`),
+          );
+        else resolve();
+      });
+    });
+  }
+}
+
 if (
   process.argv[1] &&
   resolve(process.argv[1]) === fileURLToPath(import.meta.url)
@@ -212,6 +266,7 @@ if (
         command === 'format-check',
       );
     else if (command === 'lint') lint();
+    else if (command === 'test:deployment') await testDeployment(paths);
     else if (command === 'check:openapi') await checkOpenApi();
     else if (command === 'check') {
       await format(undefined, true);
@@ -234,7 +289,7 @@ if (
       ]);
     } else
       throw new Error(
-        'Usage: npm run format|format-check|lint|check|check:openapi [-- files...]',
+        'Usage: npm run format|format-check|lint|check|check:openapi|test:deployment [-- files...]',
       );
   } catch (error) {
     console.error(error.message);

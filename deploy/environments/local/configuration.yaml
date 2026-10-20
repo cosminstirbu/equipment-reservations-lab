@@ -1,0 +1,15 @@
+---
+apiVersion: builtin
+kind: ConfigMapGenerator
+metadata:
+  name: equipment-runtime
+literals:
+  - Identity__Authority=https://identity.equipment.test/realms/equipment
+  - Application__ExternalOrigin=https://app.equipment.test
+  - Documentation__Enabled=true
+  - IdentityPublicOrigin=https://identity.equipment.test
+options:
+  labels:
+    app.kubernetes.io/part-of: equipment
+    app.kubernetes.io/name: equipment-runtime
+behavior: merge

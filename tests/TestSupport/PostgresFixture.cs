@@ -9,6 +9,10 @@ namespace TestSupport;
 
 public sealed class PostgresFixture : IAsyncLifetime
 {
+    // Limit concurrent schema setup on the shared provider; hosts and requests remain parallel.
+    // Measured provisioning pressure and capacity evidence: specs/012-local-kubernetes/team/test-infrastructure-diagnosis.md.
+    private readonly SemaphoreSlim provisioning = new(4);
+    private readonly SemaphoreSlim hostStartup = new(4);
     private readonly PostgreSqlContainer container = new PostgreSqlBuilder("postgres:18.6")
         .WithUsername("fixture_admin")
         .WithPassword(Guid.NewGuid().ToString("N"))
@@ -24,7 +28,15 @@ public sealed class PostgresFixture : IAsyncLifetime
 
     public async ValueTask DisposeAsync()
     {
-        await container.DisposeAsync();
+        try
+        {
+            await container.DisposeAsync();
+        }
+        finally
+        {
+            provisioning.Dispose();
+            hostStartup.Dispose();
+        }
     }
 
     public async Task<NpgsqlDataSource> CreateDatabaseAsync()
@@ -46,6 +58,23 @@ public sealed class PostgresFixture : IAsyncLifetime
     }
 
     public async Task<NpgsqlDataSource> CreateMigratedDatabaseAsync(string service)
+    {
+        if (!await provisioning.WaitAsync(TimeSpan.FromSeconds(60), TestContext.Current.CancellationToken))
+        {
+            throw new TimeoutException("Database scenario provisioning did not acquire setup capacity.");
+        }
+
+        try
+        {
+            return await CreateMigratedDatabaseCoreAsync(service);
+        }
+        finally
+        {
+            _ = provisioning.Release();
+        }
+    }
+
+    private async Task<NpgsqlDataSource> CreateMigratedDatabaseCoreAsync(string service)
     {
         NpgsqlDataSource source = await CreateDatabaseAsync();
         try
@@ -79,6 +108,24 @@ public sealed class PostgresFixture : IAsyncLifetime
         {
             await source.DisposeAsync();
             throw;
+        }
+    }
+
+    // Admit first factory startup only; requests and additional clients remain parallel.
+    public async Task<HttpClient> CreateClientAsync<TProgram>(WebApplicationFactory<TProgram> factory) where TProgram : class
+    {
+        if (!await hostStartup.WaitAsync(TimeSpan.FromSeconds(60), TestContext.Current.CancellationToken))
+        {
+            throw new TimeoutException("Application host startup did not acquire setup capacity.");
+        }
+
+        try
+        {
+            return factory.CreateClient();
+        }
+        finally
+        {
+            _ = hostStartup.Release();
         }
     }
 

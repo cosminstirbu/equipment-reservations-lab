@@ -259,8 +259,12 @@ and new directories 0700. Readiness forces exact-account channel handshakes and
 administrator passive topology checks under a bounded startup budget.
 Invalid/unreadable definitions block workers with safe failure diagnostics.
 Do not broaden ACLs or enable management outside Development as recovery.
-Aspire is used only for local development. Manifest generation and cloud deployment
-are outside the supported testing policy.
+Aspire remains the everyday local-development workflow. The separate
+[local Kubernetes operational quickstart](specs/012-local-kubernetes/quickstart.md)
+covers the implemented kind/Podman commands, explicit owner DNS/trust steps, first
+reviewed GHCR release, private access and pending runtime acceptance. Deployment
+verification follows the [testing guide](docs/engineering/testing.md#automated-application-boundary);
+cloud deployment remains outside this feature.
 
 ### Verification
 

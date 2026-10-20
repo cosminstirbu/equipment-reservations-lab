@@ -14,6 +14,18 @@ public static class ApiDocumentationExtensions
     public static void AddApiDocumentation(this WebApplicationBuilder builder)
     {
         _ = builder.Logging.AddFilter("Microsoft.AspNetCore.Mvc.Infrastructure.DefaultActionDescriptorCollectionProvider", LogLevel.Warning);
+        string? externalOrigin = builder.Configuration["Application:ExternalOrigin"];
+        if (externalOrigin is not null)
+        {
+            ValidateExternalOrigin(externalOrigin);
+        }
+
+        string externalBasePath = builder.Configuration["Documentation:ExternalBasePath"] ?? "";
+        if (externalBasePath is not ("" or "/services/inventory" or "/services/reservations" or "/services/notifications"))
+        {
+            throw new InvalidOperationException("Documentation external base path is invalid.");
+        }
+
         string authority = builder.Configuration["Identity:Authority"] ?? throw new InvalidOperationException("Identity authority is required.");
         _ = builder.Services.AddOpenApi("v1", options =>
         {
@@ -66,7 +78,7 @@ public static class ApiDocumentationExtensions
                     },
                     ["ServiceBearer"] = new OpenApiSecurityScheme { Type = SecuritySchemeType.Http, Scheme = "bearer", BearerFormat = "JWT" }
                 };
-                document.Servers = [new OpenApiServer { Url = "/" }];
+                document.Servers = [new OpenApiServer { Url = externalBasePath.Length == 0 ? "/" : externalBasePath }];
                 foreach (IOpenApiPathItem path in document.Paths.Values)
                 {
                     foreach (OpenApiOperation operation in path.Operations!.Values)
@@ -86,13 +98,32 @@ public static class ApiDocumentationExtensions
 
     public static void MapApiDocumentation(this WebApplication app)
     {
-        if (!app.Environment.IsDevelopment())
+        if (!app.Environment.IsDevelopment() && !string.Equals(app.Configuration["Documentation:Enabled"], "true", StringComparison.OrdinalIgnoreCase))
         {
             return;
         }
 
         string callback = app.Configuration["Documentation:Callback"] ?? throw new InvalidOperationException("Documentation callback is required in Development.");
-        ValidateCallback(callback);
+        string externalBasePath = app.Configuration["Documentation:ExternalBasePath"] ?? "";
+        string? externalOrigin = app.Configuration["Application:ExternalOrigin"];
+        if (externalOrigin is null)
+        {
+            if (!app.Environment.IsDevelopment())
+            {
+                throw new InvalidOperationException("Enabled deployed documentation requires a canonical application HTTPS origin.");
+            }
+
+            ValidateCallback(callback);
+        }
+        else
+        {
+            ValidateExternalOrigin(externalOrigin);
+            if (externalBasePath.Length == 0 || callback != externalOrigin + externalBasePath + "/oauth/callback")
+            {
+                throw new InvalidOperationException("Documentation callback must match the configured application origin and service prefix.");
+            }
+        }
+
         _ = app.MapOpenApi();
         static async Task CallbackAsync(HttpContext context)
         {
@@ -116,7 +147,8 @@ public static class ApiDocumentationExtensions
         {
             options.PersistentAuthentication = false;
             _ = options
-            .WithTitle("Development API — requests change real development data")
+            .WithTitle("API documentation — requests change real data")
+            .WithOpenApiRoutePattern((app.Configuration["Application:ExternalOrigin"] ?? "") + externalBasePath + "/openapi/{documentName}.json")
             .DisableAgent()
             .DisableDefaultFonts()
             .AddPreferredSecuritySchemes("DocumentationOAuth")
@@ -129,6 +161,17 @@ public static class ApiDocumentationExtensions
                 flow.AdditionalQueryParameters = new Dictionary<string, string> { ["response_mode"] = "fragment" };
             });
         });
+    }
+
+    public static void ValidateExternalOrigin(string origin)
+    {
+        if (!Uri.TryCreate(origin, UriKind.Absolute, out Uri? uri) || uri.Scheme != "https" || uri.UserInfo.Length != 0
+            || uri.AbsolutePath != "/" || uri.Query.Length != 0 || uri.Fragment.Length != 0
+            || uri.GetLeftPart(UriPartial.Authority) != origin)
+        {
+            throw new InvalidOperationException("Application external origin must be canonical HTTPS without a path.");
+        }
+
     }
 
     public static void ValidateCallback(string callback)

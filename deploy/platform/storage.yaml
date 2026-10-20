@@ -1,0 +1,51 @@
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: equipment-postgres
+  annotations:
+    argocd.argoproj.io/sync-options: Prune=false,Delete=false
+spec:
+  capacity:
+    storage: 8Gi
+  accessModes: [ReadWriteOnce]
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: equipment-retain
+  volumeMode: Filesystem
+  local:
+    path: /var/local/equipment/postgres
+  claimRef:
+    namespace: equipment
+    name: postgres-data
+  nodeAffinity:
+    required:
+      nodeSelectorTerms:
+        - matchExpressions:
+            - key: kubernetes.io/hostname
+              operator: In
+              values: [equipment-local-control-plane]
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: equipment-rabbitmq
+  annotations:
+    argocd.argoproj.io/sync-options: Prune=false,Delete=false
+spec:
+  capacity:
+    storage: 2Gi
+  accessModes: [ReadWriteOnce]
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: equipment-retain
+  volumeMode: Filesystem
+  local:
+    path: /var/local/equipment/rabbitmq
+  claimRef:
+    namespace: equipment
+    name: rabbitmq-data
+  nodeAffinity:
+    required:
+      nodeSelectorTerms:
+        - matchExpressions:
+            - key: kubernetes.io/hostname
+              operator: In
+              values: [equipment-local-control-plane]

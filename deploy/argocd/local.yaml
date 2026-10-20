@@ -1,0 +1,59 @@
+apiVersion: argoproj.io/v1alpha1
+kind: AppProject
+metadata:
+  name: equipment-local
+  namespace: argocd
+spec:
+  description: Application workloads only; platform and private Secrets are provisioned separately.
+  sourceRepos:
+    - https://github.com/cosminstirbu/equipment-reservations-lab.git
+  destinations:
+    - namespace: equipment
+      server: https://kubernetes.default.svc
+  clusterResourceWhitelist: []
+  namespaceResourceWhitelist:
+    - group: ''
+      kind: Service
+    - group: ''
+      kind: ConfigMap
+    - group: ''
+      kind: PersistentVolumeClaim
+    - group: apps
+      kind: Deployment
+    - group: apps
+      kind: StatefulSet
+    - group: batch
+      kind: Job
+    - group: networking.k8s.io
+      kind: Ingress
+    - group: networking.k8s.io
+      kind: NetworkPolicy
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: equipment-local
+  namespace: argocd
+spec:
+  project: equipment-local
+  source:
+    repoURL: https://github.com/cosminstirbu/equipment-reservations-lab.git
+    targetRevision: main
+    path: deploy/environments/local
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: equipment
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+      allowEmpty: false
+    syncOptions:
+      - CreateNamespace=false
+      - FailOnSharedResource=true
+    retry:
+      limit: 2
+      backoff:
+        duration: 5s
+        factor: 2
+        maxDuration: 20s

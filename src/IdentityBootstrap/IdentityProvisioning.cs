@@ -6,7 +6,8 @@ using System.Text.Json.Serialization.Metadata;
 namespace IdentityBootstrap;
 
 public sealed record IdentityProvisioningSettings(string Authority, string WebRoot, string AdminUsername, string AdminPassword,
-    IReadOnlyDictionary<string, string> UserPasswords, string ServiceSecret, IReadOnlyList<string>? DocumentationCallbacks = null)
+    IReadOnlyDictionary<string, string> UserPasswords, string ServiceSecret, IReadOnlyList<string>? DocumentationCallbacks = null,
+    string? AdministrationEndpoint = null, bool AllowLoopbackHttp = true)
 {
     public override string ToString()
     {
@@ -16,6 +17,7 @@ public sealed record IdentityProvisioningSettings(string Authority, string WebRo
 
 public sealed class IdentityProvisioning(HttpClient client)
 {
+    private static readonly string[] Services = ["inventory", "reservations", "notifications"];
     private const string RealmPath = "admin/realms/equipment";
     private static readonly Dictionary<string, string> HumanRoles = new(StringComparer.Ordinal)
     {
@@ -32,7 +34,7 @@ public sealed class IdentityProvisioning(HttpClient client)
         using var deadline = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
         deadline.CancelAfter(TimeSpan.FromSeconds(60));
         CancellationToken token = deadline.Token;
-        client.BaseAddress = new Uri(new Uri(settings.Authority).GetLeftPart(UriPartial.Authority) + "/");
+        client.BaseAddress = new Uri(settings.AdministrationEndpoint ?? (new Uri(settings.Authority).GetLeftPart(UriPartial.Authority) + "/"));
         using var credentials = new FormUrlEncodedContent(new Dictionary<string, string>
         {
             ["grant_type"] = "password",
@@ -161,29 +163,44 @@ public sealed class IdentityProvisioning(HttpClient client)
 
     private static void ValidateSettings(IdentityProvisioningSettings settings)
     {
-        foreach (string callback in settings.DocumentationCallbacks ?? [])
-        {
-            if (!Uri.TryCreate(callback, UriKind.Absolute, out Uri? uri) || !uri.IsLoopback
-                || uri.Port < 1 || uri.Scheme is not ("http" or "https") || uri.AbsolutePath != "/oauth/callback"
-                || uri.Query.Length != 0 || uri.Fragment.Length != 0 || uri.UserInfo.Length != 0
-                || uri.AbsoluteUri != callback || uri.Host is not ("localhost" or "127.0.0.1" or "[::1]"))
-            {
-                throw new InvalidOperationException("Local documentation callback settings are invalid.");
-            }
-        }
-
-        if (!Uri.TryCreate(settings.Authority, UriKind.Absolute, out Uri? authority) || !authority.IsLoopback
-            || authority.AbsolutePath != "/realms/equipment" || authority.Query.Length != 0 || authority.Fragment.Length != 0 || authority.UserInfo.Length != 0
-            || authority.Scheme is not ("http" or "https")
-            || !Uri.TryCreate(settings.WebRoot, UriKind.Absolute, out Uri? web) || !web.IsLoopback
-            || web.AbsolutePath != "/" || web.Query.Length != 0 || web.Fragment.Length != 0 || web.UserInfo.Length != 0
-            || web.Scheme is not ("http" or "https")
+        if (!CanonicalUrl(settings.Authority, "/realms/equipment", settings.AllowLoopbackHttp)
+            || !CanonicalUrl(settings.WebRoot, "/", settings.AllowLoopbackHttp)
             || settings.UserPasswords.Count != HumanRoles.Count || HumanRoles.Keys.Any(name => !settings.UserPasswords.ContainsKey(name))
             || settings.UserPasswords.Values.Any(string.IsNullOrWhiteSpace) || string.IsNullOrWhiteSpace(settings.ServiceSecret)
             || string.IsNullOrWhiteSpace(settings.AdminUsername) || string.IsNullOrWhiteSpace(settings.AdminPassword))
         {
-            throw new InvalidOperationException("Local identity provisioning settings are invalid.");
+            throw new InvalidOperationException("Identity provisioning settings are invalid.");
         }
+
+        string webOrigin = new Uri(settings.WebRoot).GetLeftPart(UriPartial.Authority);
+        foreach (string callback in settings.DocumentationCallbacks ?? [])
+        {
+            bool local = settings.AllowLoopbackHttp && CanonicalUrl(callback, "/oauth/callback", allowLoopbackHttp: true) && new Uri(callback).IsLoopback;
+            bool deployed = Services.Any(service =>
+                callback == webOrigin + "/services/" + service + "/oauth/callback")
+                && CanonicalUrl(callback, new Uri(callback).AbsolutePath, allowLoopbackHttp: false);
+            if (!local && !deployed)
+            {
+                throw new InvalidOperationException("Documentation callback settings are invalid.");
+            }
+        }
+
+        if (settings.AdministrationEndpoint is { } endpoint &&
+            (!Uri.TryCreate(endpoint, UriKind.Absolute, out Uri? admin) || admin.Scheme is not ("http" or "https")
+             || admin.AbsolutePath != "/" || admin.Query.Length != 0 || admin.Fragment.Length != 0 || admin.UserInfo.Length != 0
+             || admin.AbsoluteUri != endpoint))
+        {
+            throw new InvalidOperationException("Identity administration endpoint is invalid.");
+        }
+    }
+
+    private static bool CanonicalUrl(string value, string path, bool allowLoopbackHttp)
+    {
+        return Uri.TryCreate(value, UriKind.Absolute, out Uri? uri)
+            && (uri.Scheme == "https" || (allowLoopbackHttp && uri.Scheme == "http" && uri.IsLoopback
+                && uri.Host is "localhost" or "127.0.0.1" or "[::1]"))
+            && uri.Port > 0 && uri.AbsolutePath == path && uri.AbsoluteUri == value
+            && uri.Query.Length == 0 && uri.Fragment.Length == 0 && uri.UserInfo.Length == 0;
     }
 
     private async Task<ClientRepresentation> ReconcileClientAsync(ClientRepresentation desired, CancellationToken token)

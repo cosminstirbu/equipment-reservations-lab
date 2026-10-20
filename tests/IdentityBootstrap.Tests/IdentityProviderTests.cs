@@ -15,6 +15,33 @@ public sealed class IdentityProviderTests(IdentityProviderFixture provider)
     private static readonly string[] HumanAudiences = ["inventory-api", "notifications-api", "reservations-api"];
 
     [Fact]
+    public async Task ExternalHttpsRegistrationUsesExplicitInternalAdministrationEndpoint()
+    {
+        using var deadline = new CancellationTokenSource(TimeSpan.FromSeconds(60));
+        IdentityProvisioningSettings deployed = provider.Settings with
+        {
+            Authority = "https://identity.equipment.test/realms/equipment",
+            WebRoot = "https://app.equipment.test/",
+            DocumentationCallbacks = ["https://app.equipment.test/services/inventory/oauth/callback"],
+            AdministrationEndpoint = new Uri(provider.Settings.Authority).GetLeftPart(UriPartial.Authority) + "/",
+            AllowLoopbackHttp = false
+        };
+        try
+        {
+            await provider.ProvisionAsync(deployed, deadline.Token);
+            _ = await IdentityProviderFixture.LoginAsync(provider.Settings with
+            {
+                WebRoot = deployed.WebRoot
+            }, "employee-a", cancellationToken: deadline.Token);
+            _ = await IdentityProviderFixture.LoginAsync(provider.Settings, "employee-a", clientId: "equipment-docs", callbackUri: deployed.DocumentationCallbacks[0], cancellationToken: deadline.Token);
+        }
+        finally
+        {
+            await provider.ProvisionAsync(cancellationToken: deadline.Token);
+        }
+    }
+
+    [Fact]
     public async Task DocumentationCodeFlowUsesExistingHumanRolesAudiencesAndSubject()
     {
         using var deadline = new CancellationTokenSource(TimeSpan.FromSeconds(60));

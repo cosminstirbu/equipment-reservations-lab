@@ -1,0 +1,124 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: dashboard
+  labels:
+    app.kubernetes.io/part-of: equipment
+    app.kubernetes.io/name: dashboard
+  annotations:
+    argocd.argoproj.io/sync-wave: '-40'
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: dashboard
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: dashboard
+        app.kubernetes.io/part-of: equipment
+    spec:
+      automountServiceAccountToken: false
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1654
+        runAsGroup: 1654
+        fsGroup: 1654
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: dashboard
+          image: mcr.microsoft.com/dotnet/aspire-dashboard@sha256:03099004e132a7ca2feb66c5fa24715ffeaaf2fffab6f8b2cda23de3abd3ea45
+          imagePullPolicy: IfNotPresent
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+              ephemeral-storage: 128Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi
+              ephemeral-storage: 192Mi
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+          ports:
+            - containerPort: 18888
+              name: http
+            - containerPort: 18889
+              name: otlp-grpc
+            - containerPort: 18890
+              name: otlp-http
+          env:
+            - name: ASPNETCORE_URLS
+              value: http://+:18888
+            - name: DOTNET_DASHBOARD_OTLP_ENDPOINT_URL
+              value: http://+:18889
+            - name: DOTNET_DASHBOARD_OTLP_HTTP_ENDPOINT_URL
+              value: http://+:18890
+            - name: Dashboard__Frontend__AuthMode
+              value: BrowserToken
+            - name: Dashboard__Frontend__BrowserToken
+              valueFrom:
+                secretKeyRef:
+                  name: equipment-credentials
+                  key: dashboardBrowser
+            - name: Dashboard__Otlp__AuthMode
+              value: ApiKey
+            - name: Dashboard__Otlp__PrimaryApiKey
+              valueFrom:
+                secretKeyRef:
+                  name: equipment-credentials
+                  key: dashboardOtlp
+            - name: Dashboard__Api__AuthMode
+              value: ApiKey
+            - name: Dashboard__Api__PrimaryApiKey
+              valueFrom:
+                secretKeyRef:
+                  name: equipment-credentials
+                  key: dashboardApi
+            - name: Dashboard__TelemetryLimits__MaxTraceCount
+              value: '10000'
+            - name: Dashboard__TelemetryLimits__MaxLogCount
+              value: '10000'
+            - name: Dashboard__TelemetryLimits__MaxMetricsCount
+              value: '1000'
+            - name: Dashboard__Frontend__MaxConsoleLogCount
+              value: '10000'
+            - name: Dashboard__Data__PersistenceMode
+              value: None
+            - name: Dashboard__Data__Directory
+              value: '/data'
+            - name: Logging__LogLevel__Default
+              value: Warning
+          volumeMounts:
+            - name: data
+              mountPath: '/data'
+              readOnly: false
+            - name: tmp
+              mountPath: '/tmp'
+              readOnly: false
+          readinessProbe:
+            tcpSocket:
+              port: 18888
+            periodSeconds: 5
+            timeoutSeconds: 2
+            failureThreshold: 3
+          livenessProbe:
+            tcpSocket:
+              port: 18888
+            periodSeconds: 5
+            timeoutSeconds: 2
+            failureThreshold: 3
+      volumes:
+        - name: data
+          emptyDir:
+            sizeLimit: 128Mi
+        - name: tmp
+          emptyDir:
+            sizeLimit: 16Mi

@@ -13,6 +13,7 @@ IResourceBuilder<ParameterResource> postgresPassword = Secret("postgres-password
 IResourceBuilder<ParameterResource> inventoryPassword = Secret("inventory-password");
 IResourceBuilder<ParameterResource> reservationsPassword = Secret("reservations-password");
 IResourceBuilder<ParameterResource> notificationsPassword = Secret("notifications-password");
+IResourceBuilder<ParameterResource> keycloakPassword = Secret("keycloak-database-password");
 IResourceBuilder<ParameterResource> brokerPassword = Secret("broker-password");
 IResourceBuilder<ParameterResource> publisherPassword = Secret("reservations-broker-password");
 IResourceBuilder<ParameterResource> consumerPassword = Secret("notifications-broker-password");
@@ -69,7 +70,6 @@ if (identityPort is < 1 or > 65535)
 
 IResourceBuilder<KeycloakResource> identity = builder.AddKeycloak("identity", port: identityPort, adminPassword: identityAdminPassword)
     .WithImageTag("26.8.1")
-    .WithDataVolume("equipment-reservations-identity")
     .WithDisabledFeatures("opentelemetry")
     .WithEnvironment("KC_TRACING_ENABLED", "false")
     .WithEndpoint("http", endpoint =>
@@ -186,7 +186,16 @@ IResourceBuilder<ProjectResource> bootstrap = builder.AddProject<Projects.Databa
     .WithEnvironment("InventoryPassword", inventoryPassword)
     .WithEnvironment("ReservationsPassword", reservationsPassword)
     .WithEnvironment("NotificationsPassword", notificationsPassword)
+    .WithEnvironment("KeycloakPassword", keycloakPassword)
     .WaitFor(postgres);
+
+_ = identity.WithEnvironment("KC_DB", "postgres")
+    .WithEnvironment("KC_DB_URL_HOST", postgres.GetEndpoint("tcp").Property(EndpointProperty.Host))
+    .WithEnvironment("KC_DB_URL_PORT", postgres.GetEndpoint("tcp").Property(EndpointProperty.Port))
+    .WithEnvironment("KC_DB_URL_DATABASE", "keycloak")
+    .WithEnvironment("KC_DB_USERNAME", "keycloak_app")
+    .WithEnvironment("KC_DB_PASSWORD", keycloakPassword)
+    .WaitForCompletion(bootstrap);
 
 IResourceBuilder<ProjectResource> inventory = OwnDatabase(builder.AddProject<Projects.Inventory>("inventory"), "inventory", inventoryPassword)
     .WithHttpEndpoint(name: "http")
@@ -224,6 +233,7 @@ IResourceBuilder<JavaScriptAppResource> web = builder.AddJavaScriptApp("web", ".
     .WaitFor(notifications);
 
 IResourceBuilder<ProjectResource> identityBootstrap = builder.AddProject<Projects.IdentityBootstrap>("identity-bootstrap")
+    .WithEnvironment("DOTNET_ENVIRONMENT", builder.Environment.EnvironmentName)
     .WithEnvironment("Identity__Authority", authority)
     .WithEnvironment("WebRoot", ReferenceExpression.Create($"{web.GetEndpoint("http")}/"))
     .WithEnvironment("AdminUsername", "admin")

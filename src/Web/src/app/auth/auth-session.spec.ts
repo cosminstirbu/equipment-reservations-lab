@@ -46,11 +46,11 @@ describe('generated public identity configuration', () => {
     ).toEqual(configuration);
   });
 
-  it('refuses missing or nonlocal provider settings', () => {
+  it('refuses missing or insecure nonloopback provider settings', () => {
     expect(() => publicConfiguration({})).toThrow();
     expect(() =>
       publicConfiguration({
-        Identity__Authority: 'https://unrelated.invalid/realms/equipment',
+        Identity__Authority: 'http://unrelated.invalid/realms/equipment',
         Identity__Realm: 'equipment',
         Identity__ClientId: 'equipment-web',
       }),
@@ -230,6 +230,36 @@ describe('identity session lifecycle', () => {
     expect(session.notice()).toContain('Sign-in did not complete');
     expect(provider.login).toHaveBeenCalledTimes(1);
   });
+
+  it.each([
+    ['https://identity.equipment.test/realms/equipment', true],
+    ['http://identity.equipment.test/realms/equipment', false],
+    ['http://127.1/realms/equipment', false],
+    ['https://identity.equipment.test/realms/equipment?token=private', false],
+  ])(
+    'validates configured issuer %s before activating the session',
+    async (issuer, accepted) => {
+      TestBed.resetTestingModule();
+      TestBed.configureTestingModule({
+        providers: [
+          { provide: SESSION_ADAPTER, useValue: provider },
+          {
+            provide: AUTH_CONFIG_LOADER,
+            useValue: () => Promise.resolve({ ...configuration, issuer }),
+          },
+        ],
+      });
+      const configured = TestBed.inject(AuthSession);
+      await configured.initialize();
+      expect(configured.active()).toBe(accepted);
+      if (accepted)
+        expect(provider.initialize).toHaveBeenCalledWith({
+          ...configuration,
+          issuer,
+        });
+      else expect(configured.notice()).toContain('Sign-in is unavailable');
+    },
+  );
 
   it('rejects unexpected public configuration fields before provider initialization', async () => {
     TestBed.resetTestingModule();

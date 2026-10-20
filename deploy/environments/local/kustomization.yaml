@@ -1,0 +1,27 @@
+---
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: equipment
+resources:
+  - '../../base'
+  - jobs/database
+  - jobs/identity
+  - ingress.yaml
+patches:
+  - target:
+      kind: PersistentVolumeClaim
+      name: postgres-data
+    patch:
+      '[{"op": "add", "path": "/spec/volumeName", "value": "equipment-postgres"},
+      {"op": "replace", "path": "/spec/storageClassName", "value": "equipment-retain"}]'
+  - target:
+      kind: PersistentVolumeClaim
+      name: rabbitmq-data
+    patch:
+      '[{"op": "add", "path": "/spec/volumeName", "value": "equipment-rabbitmq"},
+      {"op": "replace", "path": "/spec/storageClassName", "value": "equipment-retain"}]'
+images: []
+generators:
+  - configuration.yaml
+  - web-configuration.yaml
+  - proxy-configuration.yaml

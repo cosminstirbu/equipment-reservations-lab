@@ -109,7 +109,12 @@ a missing runtime/readiness prerequisite fails the check.
 No automated application test constructs, inspects, runs or publishes an Aspire
 AppHost. Aspire is local development orchestration and is verified manually using
 [the local procedure](../../README.md#manual-local-development-check).
-Manifest generation/cloud deployment is outside the supported testing policy.
+Manifest/schema validation and a separately invoked local Kubernetes deployment
+verification workflow are supported. Hosted CI may create an isolated ephemeral kind
+cluster and use locally built test images for deployment smoke checks. These checks
+remain separate from normal application tests and do not construct, inspect, run or
+publish AppHost. CI results do not establish macOS Podman networking, local trust or
+VM-restart durability. Cloud deployment verification remains outside this policy.
 Existing frontend and browser checks remain required at their documented boundaries.
 
 ## Coverage work

@@ -8,7 +8,8 @@
     "lint": "node scripts/quality.mjs lint",
     "check": "node scripts/quality.mjs check",
     "check:openapi": "node scripts/quality.mjs check:openapi",
-    "test:tooling": "node --test scripts/quality.test.mjs scripts/openapi-lint.test.mjs"
+    "test:tooling": "node --test scripts/quality.test.mjs scripts/openapi-lint.test.mjs src/Web/auth-config.test.cjs",
+    "test:deployment": "node scripts/quality.mjs test:deployment"
   },
   "devDependencies": {
     "@eslint/js": "10.0.1",

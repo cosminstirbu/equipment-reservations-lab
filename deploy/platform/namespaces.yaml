@@ -1,0 +1,20 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: equipment
+  labels:
+    app.kubernetes.io/managed-by: equipment-local-platform
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: equipment-platform
+  labels:
+    app.kubernetes.io/managed-by: equipment-local-platform
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: argocd
+  labels:
+    app.kubernetes.io/managed-by: equipment-local-platform

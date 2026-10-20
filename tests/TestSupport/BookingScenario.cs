@@ -10,19 +10,14 @@ namespace TestSupport;
 
 internal sealed class BookingScenario : IAsyncDisposable
 {
-    private BookingScenario(NpgsqlDataSource database, InventoryBoundary inventory)
+    private BookingScenario(NpgsqlDataSource database, InventoryBoundary inventory, TestTimeProvider clock,
+        WebApplicationFactory<Reservations.Program> app, HttpClient client)
     {
         Database = database;
         Inventory = inventory;
-        Clock = new TestTimeProvider(new DateTimeOffset(2030, 1, 1, 12, 0, 0, TimeSpan.Zero));
-        App = PostgresFixture.Factory<Reservations.Program>(database).WithWebHostBuilder(builder => builder.ConfigureServices(services =>
-        {
-            _ = services.RemoveAll<TimeProvider>();
-            _ = services.AddSingleton<TimeProvider>(Clock);
-            _ = services.AddHttpClient("inventory", client => client.BaseAddress = new Uri("http://inventory"))
-                .ConfigurePrimaryHttpMessageHandler(() => inventory);
-        }));
-        Client = App.CreateClient();
+        Clock = clock;
+        App = app;
+        Client = client;
     }
 
     public NpgsqlDataSource Database
@@ -58,7 +53,37 @@ internal sealed class BookingScenario : IAsyncDisposable
     public static async Task<BookingScenario> CreateAsync(PostgresFixture postgres, InventoryBoundary? inventory = null)
     {
         NpgsqlDataSource database = await postgres.CreateMigratedDatabaseAsync("reservations");
-        return new BookingScenario(database, inventory ?? new InventoryBoundary());
+        WebApplicationFactory<Reservations.Program>? app = null;
+        try
+        {
+            InventoryBoundary boundary = inventory ?? new InventoryBoundary();
+            var clock = new TestTimeProvider(new DateTimeOffset(2030, 1, 1, 12, 0, 0, TimeSpan.Zero));
+            app = PostgresFixture.Factory<Reservations.Program>(database).WithWebHostBuilder(builder => builder.ConfigureServices(services =>
+            {
+                _ = services.RemoveAll<TimeProvider>();
+                _ = services.AddSingleton<TimeProvider>(clock);
+                _ = services.AddHttpClient("inventory", client => client.BaseAddress = new Uri("http://inventory"))
+                    .ConfigurePrimaryHttpMessageHandler(() => boundary);
+            }));
+            HttpClient client = await postgres.CreateClientAsync(app);
+            return new BookingScenario(database, boundary, clock, app, client);
+        }
+        catch
+        {
+            try
+            {
+                if (app is not null)
+                {
+                    await app.DisposeAsync();
+                }
+            }
+            finally
+            {
+                await database.DisposeAsync();
+            }
+
+            throw;
+        }
     }
 
     public Task<HttpResponseMessage> BookAsync(string start = "2030-01-02T12:00:00Z", string end = "2030-01-02T13:00:00Z", string equipment = "camera-001")

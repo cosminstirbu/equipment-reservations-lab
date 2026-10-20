@@ -172,3 +172,83 @@ process.exit(process.argv[2] === 'test' && process.argv.some(arg => arg.includes
     rmSync(directory, { recursive: true });
   }
 });
+
+test('authored YAML is discoverable while the checksum-locked upstream Argo manifest is excluded', () => {
+  const directory = mkdtempSync(resolve(root, '.formatter-fixture-'));
+  try {
+    for (const extension of ['yaml', 'yml']) {
+      const path = resolve(directory, `authored.${extension}`);
+      writeFileSync(path, 'kind: Service\n');
+      assert.equal(sourcePath(path), path.slice(root.length + 1));
+    }
+    assert.equal(sourcePath('deploy/argocd/install.yaml'), null);
+    assert.equal(
+      sourcePath('deploy/argocd/kustomization.yaml'),
+      'deploy/argocd/kustomization.yaml',
+    );
+    assert.equal(
+      sourcePath('.github/workflows/validate.yaml'),
+      '.github/workflows/validate.yaml',
+    );
+  } finally {
+    rmSync(directory, { recursive: true });
+  }
+});
+
+test('deployment runner bounds a selected synchronous test file instead of hanging', () => {
+  const directory = mkdtempSync(resolve(root, '.deployment-runner-fixture-'));
+  const path = resolve(directory, 'bounded.test.mjs');
+  writeFileSync(path, 'const end=Date.now()+800;while(Date.now()<end){};');
+  try {
+    const result = spawnSync(
+      process.execPath,
+      [resolve(root, 'scripts/quality.mjs'), 'test:deployment', path],
+      {
+        encoding: 'utf8',
+        timeout: 5000,
+        env: { ...process.env, DEPLOYMENT_TEST_TIMEOUT_MS: '100' },
+      },
+    );
+    assert.notEqual(result.status, 0);
+    assert.match(result.stderr, /exceeded.*100.*ms/);
+  } finally {
+    rmSync(directory, { recursive: true, force: true });
+  }
+});
+
+test('deployment runner executes all selected files serially for the shared provider budget', () => {
+  const directory = mkdtempSync(resolve(root, '.deployment-runner-fixture-'));
+  const log = resolve(directory, 'order.log');
+  const files = ['first', 'second'].map((name) => {
+    const path = resolve(directory, `${name}.test.mjs`);
+    writeFileSync(
+      path,
+      `import {appendFileSync} from 'node:fs';appendFileSync(process.env.DEPLOYMENT_ORDER_LOG,'${name}-start\\n');setTimeout(()=>appendFileSync(process.env.DEPLOYMENT_ORDER_LOG,'${name}-end\\n'),50);`,
+    );
+    return path;
+  });
+  try {
+    const result = spawnSync(
+      process.execPath,
+      [resolve(root, 'scripts/quality.mjs'), 'test:deployment', ...files],
+      {
+        encoding: 'utf8',
+        timeout: 5000,
+        env: {
+          ...process.env,
+          DEPLOYMENT_ORDER_LOG: log,
+          DEPLOYMENT_TEST_TIMEOUT_MS: '2000',
+        },
+      },
+    );
+    assert.equal(result.status, 0, result.stderr);
+    assert.deepEqual(readFileSync(log, 'utf8').trim().split('\n'), [
+      'first-start',
+      'first-end',
+      'second-start',
+      'second-end',
+    ]);
+  } finally {
+    rmSync(directory, { recursive: true, force: true });
+  }
+});

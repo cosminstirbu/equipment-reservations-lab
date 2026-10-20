@@ -10,7 +10,7 @@ namespace DatabaseBootstrap.Tests;
 public sealed class DatabaseProvisioningTests
 {
     [Fact]
-    public async Task OwnDatabasePrivilegesAndRepeatedProvisioningRetainDataAndReconcilePasswords()
+    public async Task OwnDatabasePrivilegesAndRepeatedProvisioningRetainDataAndPasswords()
     {
         using var deadline = new CancellationTokenSource(TimeSpan.FromSeconds(120));
         await using IVolume volume = new VolumeBuilder().Build();
@@ -27,7 +27,8 @@ public sealed class DatabaseProvisioningTests
         {
             ["inventory"] = Guid.NewGuid().ToString("N"),
             ["reservations"] = Guid.NewGuid().ToString("N"),
-            ["notifications"] = Guid.NewGuid().ToString("N")
+            ["notifications"] = Guid.NewGuid().ToString("N"),
+            ["keycloak"] = Guid.NewGuid().ToString("N")
         };
         await DatabaseProvisioner.ReconcileAsync(admin, passwords, cancellationToken: TestContext.Current.CancellationToken);
 
@@ -76,8 +77,10 @@ public sealed class DatabaseProvisioningTests
             .Build();
         await recreatedPostgres.StartAsync(deadline.Token);
         admin = recreatedPostgres.GetConnectionString();
-        passwords["inventory"] = Guid.NewGuid().ToString("N");
         await DatabaseProvisioner.ReconcileAsync(admin, passwords, deadline.Token);
+        var changed = passwords.ToDictionary(pair => pair.Key, pair => pair.Value);
+        changed["inventory"] = Guid.NewGuid().ToString("N");
+        _ = await Assert.ThrowsAsync<InvalidOperationException>(() => DatabaseProvisioner.ReconcileAsync(admin, changed, deadline.Token));
         inventory = new NpgsqlConnectionStringBuilder(admin)
         {
             Database = "inventory",

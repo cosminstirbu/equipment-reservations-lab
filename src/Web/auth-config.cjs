@@ -7,20 +7,26 @@ module.exports.publicConfiguration = (environment) => {
     realm !== 'equipment' ||
     clientId !== 'equipment-web'
   ) {
-    throw new Error('Aspire must supply public identity configuration.');
+    throw new Error('Public identity configuration is required.');
   }
 
   const authority = new URL(issuer);
   if (
-    !['http:', 'https:'].includes(authority.protocol) ||
-    !['localhost', '127.0.0.1', '[::1]'].includes(authority.hostname) ||
+    (authority.protocol !== 'https:' &&
+      !(
+        authority.protocol === 'http:' &&
+        ['localhost', '127.0.0.1', '[::1]'].includes(authority.hostname)
+      )) ||
+    authority.href !== issuer ||
     authority.pathname !== '/realms/equipment' ||
     authority.search ||
     authority.hash ||
     authority.username ||
     authority.password
   ) {
-    throw new Error('Only the local identity authority is allowed.');
+    throw new Error(
+      'Identity authority must be canonical HTTPS or loopback HTTP.',
+    );
   }
 
   return { issuer, realm, clientId };
