@@ -21,6 +21,42 @@ do not capture request-scoped services after the request ends.
 
 Source: [ASP.NET Core best practices](https://learn.microsoft.com/en-us/aspnet/core/fundamentals/best-practices?view=aspnetcore-10.0).
 
+## Endpoint organization
+
+For Minimal APIs, business endpoint mappings and handlers must live outside `Program.cs`.
+Keep `Program.cs` focused on service registration, middleware configuration, and explicit
+endpoint registration calls such as `app.MapReservationEndpoints()`.
+Endpoint classes must group related operations by resource or feature and expose an
+explicit registration extension method. Business operations must use named handler
+methods rather than inline route-handler lambdas. This does not prohibit callbacks
+inside handlers or metadata configuration. Health and documentation endpoint setup
+can remain registration calls in startup.
+
+Prefer a focused mapping method for each operation, keeping its route registration
+and operation metadata together under the [OpenAPI metadata guidance](openapi.md#keep-metadata-with-contracts-and-endpoints).
+Prefer route groups for shared prefixes, authorization policies, or conventions where
+they improve clarity. Keep operations with different access requirements in appropriately
+scoped groups or apply their policies individually. Neither a class per operation nor
+an endpoint discovery framework is required.
+
+Refactoring endpoint organization must preserve routes and route templates, parameter
+binding, authorization, validation, responses, OpenAPI contracts, cancellation, request
+budgets, and telemetry. An empty child route in a group can introduce a trailing slash
+in the combined route template; choose group boundaries and child patterns that retain
+the existing template, including its exported `http.route` value.
+Verify through existing public HTTP, OpenAPI, and telemetry tests under the
+[testing guide](testing.md), rather than tests coupled to endpoint class arrangements.
+Inspect organization manually during review; formatting and analyzers do not establish
+compliance with these rules.
+
+These repository conventions use Microsoft's documented separate endpoint files, named
+handlers, and route groups; Microsoft does not prescribe this exact class layout.
+The owner approved their adoption on 2026-10-20 to keep API startup and endpoint code
+readable. They apply to new and changed business endpoints; the current Inventory,
+Reservations, and Notifications organization provides examples.
+
+Source: [Microsoft Minimal APIs quick reference: handlers, separate files, and route groups](https://learn.microsoft.com/en-us/aspnet/core/fundamentals/minimal-apis?view=aspnetcore-10.0#route-handlers).
+
 ## Source generation
 
 Application code must use supported .NET source generators when the required types,

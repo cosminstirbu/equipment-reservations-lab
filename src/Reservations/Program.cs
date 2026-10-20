@@ -38,7 +38,7 @@ app.MapOperationalEndpoints();
 app.MapApiDocumentation();
 app.UseBrowserWriteGuard();
 _ = app.UseOwnershipInputGuard();
-app.MapReservations();
+app.MapReservationEndpoints();
 
 app.Run();
 

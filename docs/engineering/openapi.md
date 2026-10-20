@@ -39,6 +39,12 @@ Prefer expressing as much OpenAPI information as supported directly on the C#
 request/response records and endpoint definitions. Keeping metadata beside its owner
 makes contract changes easier to discover and avoids parallel descriptions that drift.
 
+Follow the [endpoint organization rules](aspnet-core.md#endpoint-organization).
+For mapping methods, keep operation metadata beside that operation's route registration;
+extracting the handler must not move its documentation into a separate operation catalog.
+Parameter attributes can remain on the named handler's parameters, and contract metadata
+remains on the request/response types.
+
 - Put property descriptions on contract properties with `DescriptionAttribute`; use
   `[property: Description("...")]` for positional record parameters. Use supported
   serialization and validation metadata where it accurately describes the wire contract.

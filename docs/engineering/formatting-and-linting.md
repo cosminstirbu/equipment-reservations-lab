@@ -66,6 +66,9 @@ pending. Documentation-only changes still require link, consistency, and readabi
 review; the source formatter does not format Markdown.
 
 Inspect readability and semantic analyzer fixes in addition to the automated results.
+For Minimal API changes, manually inspect compliance with the
+[endpoint organization rules](aspnet-core.md#endpoint-organization); the formatter and
+analyzers do not enforce endpoint placement, handler structure, or group policy scope.
 For independent reviews, follow the [revision and revalidation procedure](../agent-team/protocol.md#implementation-loop)
 after any source, formatter, or analyzer repair.
 

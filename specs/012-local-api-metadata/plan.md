@@ -56,6 +56,10 @@ Verification: focused `npm run check:openapi`, then required `npm run format-che
 
 ## Project Structure
 
+The locations below describe the original accepted implementation. See the
+[2026-10-20 endpoint organization follow-up](team/endpoint-organization-follow-up.md)
+for the subsequent refactor, current endpoint locations, and separate verification scope.
+
 Feature artifacts: plan.md, research.md, data-model.md, contracts/coverage.md, quickstart.md; tasks.md generated only after preparation review.
 
 Owned application scope for later implementation: src/Inventory/EquipmentStore.cs and Program.cs; src/Reservations/ReservationContracts.cs, ReservationEndpoints.cs, ReservationDocumentation.cs; src/Notifications/NotificationContracts.cs and Program.cs; src/ApiDocumentation/ApiDocumentationExtensions.cs; tests/TestSupport/OpenApiAssertions.cs and existing service OpenApiTests.cs only as needed. No frontend, AppHost, identity, dependency, CI or Kubernetes changes.
