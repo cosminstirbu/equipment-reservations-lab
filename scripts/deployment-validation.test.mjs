@@ -9,6 +9,7 @@ import {
 } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { tmpdir } from 'node:os';
+import { spawnSync } from 'node:child_process';
 import { promotionFiles, refreshJobSuffixes } from './promote-images.mjs';
 import {
   classifyChanges,
@@ -155,6 +156,46 @@ test('workflow trust boundaries keep PR read-only and main publication isolated'
   assert.equal(release.jobs.promote.permissions['pull-requests'], 'write');
   assert.match(release.jobs.publish.if, /publish == 'true'/);
   assert.equal(release.concurrency['cancel-in-progress'], false);
+});
+
+test('manual release on main publishes without a push diff and retains validation', async () => {
+  const { default: parsers } = await import('@stoplight/spectral-parsers');
+  const release = parsers.Yaml.parse(
+    readFileSync('.github/workflows/release.yaml', 'utf8'),
+  ).data;
+  assert.ok(Object.hasOwn(release.on, 'workflow_dispatch'));
+  assert.equal(release.jobs.classify.if, "github.ref == 'refs/heads/main'");
+  const changes = release.jobs.classify.steps.find(
+    (step) => step.id === 'changes',
+  );
+  const root = mkdtempSync(join(tmpdir(), 'manual-release-'));
+  try {
+    const output = join(root, 'output');
+    const result = spawnSync(
+      'bash',
+      ['-e', '-o', 'pipefail', '-c', changes.run],
+      {
+        cwd: root,
+        env: {
+          ...process.env,
+          EVENT_NAME: 'workflow_dispatch',
+          BEFORE: '',
+          GITHUB_OUTPUT: output,
+          RUNNER_TEMP: root,
+        },
+        encoding: 'utf8',
+      },
+    );
+    assert.equal(result.status, 0, result.stderr);
+    assert.equal(readFileSync(output, 'utf8'), 'publish=true\n');
+    assert.ok(
+      release.jobs.publish.steps.some((step) =>
+        step.run?.includes('npm run check'),
+      ),
+    );
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
 });
 
 test('canonical release rejects ambiguous JSON and orders Unicode keys by codepoint', () => {

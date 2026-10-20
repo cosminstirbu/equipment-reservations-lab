@@ -1,5 +1,6 @@
 name: Release application images
 on:
+  workflow_dispatch:
   push:
     branches: [main]
 permissions:
@@ -9,6 +10,7 @@ concurrency:
   cancel-in-progress: false
 jobs:
   classify:
+    if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-24.04
     outputs:
       publish: ${{ steps.changes.outputs.publish }}
@@ -25,8 +27,13 @@ jobs:
       - id: changes
         env:
           BEFORE: ${{ github.event.before }}
+          EVENT_NAME: ${{ github.event_name }}
         shell: bash
         run: |
+          if [[ "$EVENT_NAME" == "workflow_dispatch" ]]; then
+            printf 'publish=true\n' >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
           if [[ "$BEFORE" =~ ^0+$ ]]; then
             git ls-files -z > "$RUNNER_TEMP/changed-paths"
           else
