@@ -1,6 +1,48 @@
 {
   "feature_directory": "specs/013-local-kubernetes",
-  "status": "needs_intervention",
+  "status": "repair_in_progress",
+  "ci_round_05": {
+    "baseline": "94081ed2da5bf8003aeb9314afdb124e2d972d44",
+    "authorization": "Owner instructed Fix both tests on 2026-10-20 after investigation of release 39429285803 attempt 1; coordinator resumes one bounded batch from persisted state, retaining rounds 1-4. Owner also supplied attempt 2 retention failure for investigation.",
+    "scope": "Investigate and repair recurring IdentityAccess startup starvation and forced-container-replacement durability fixture; historical HTTP503 boundary remains unproven.",
+    "status": "locally_validated_hosted_confirmation_pending",
+    "constraints": "Keep application budgets, assertions and native test scheduling; require causal regression evidence, independent reviews and current-revision checks. No Kubernetes changes or release publication.",
+    "branch": "fix/identity-ci-timeouts",
+    "owner_constraints": "Earlier no-commit/no-push instruction superseded by explicit owner request to commit fixes, push and create a PR.",
+    "reports": [
+      "ci-validation-05.md",
+      "ci-identity-pg-repair-05.md",
+      "ci-identity-http-repair-05.md",
+      "ci-database-retention-repair-05.md",
+      "ci-quality-review-05.md",
+      "ci-security-review-05.md",
+      "ci-convergence-05.md"
+    ],
+    "source_sha256": {
+      "tests/TestSupport/ApplicationStartup.cs": "c905da150fe57f26b34fab8197f9742907f03777b73a078704aaa4b1773b4373",
+      "tests/TestSupport/IdentityHttpHarness.cs": "6fd953e11e663f64d89662f9e9f8ed6dfd44e5e00093bef27221fa478cb8d328",
+      "tests/TestSupport/PostgresFixture.cs": "b5ec7b1062330b2323ce9d82dec680563254700a69fa67365901d376cc9bbf7b",
+      "tests/TestSupport/BookingScenario.cs": "11608f5cf56237da9520f8d03b409ae029af3ba7675aad380d0081462d915e47",
+      "tests/IdentityAccess.Tests/ServiceIdentityTests.cs": "2c3d79de1fdc7d6a7b8a53088675d6f7cc24e790b43769ee8e76715d4756cbca",
+      "tests/DatabaseBootstrap.Tests/DatabaseProvisioningTests.cs": "a651568fb307aaf77e9acd2cd88ac458d26423a4bbc6187d41f83c9bdf42a25e"
+    },
+    "checks": {
+      "format-check": "pass",
+      "lint": "pass; zero warnings/errors",
+      "check": "pass; 564 backend,64 frontend,24 tooling; zero failed/skipped; backend3m23.166s",
+      "linux_causal_regression": "pass; actualquota4 full9 564/564 zero skips3m01.998s; early migration opens191/202ms vs16.4/13.5s failures",
+      "git_diff_check": "pass"
+    },
+    "reviews": {
+      "quality": "pass; final localrepair validation, source and causal regression; ci-quality-review-05.md",
+      "security": "pass; final static API and source scope"
+    },
+    "remaining": [
+      "Historical HTTP503 boundary not independently reproduced; hostedamd64 recovery requires validation of eventual published changes.",
+      "Existing ten feature runtime/release/review/human acceptance tasks remain pending."
+    ],
+    "publication": "Owner authorized commit, push and pull request on 2026-10-20 after local validation; hosted results pending."
+  },
   "baseline_revision": "4dd685c4e34288f94e932dcd49beb22eea965075",
   "preparation_round": 2,
   "implementation_round": 4,

@@ -2,6 +2,7 @@ using IdentityAccess;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.TestHost;
+using Xunit;
 
 namespace TestSupport;
 
@@ -35,7 +36,19 @@ internal static class IdentityHttpHarness
             mutation?.Invoke();
             return Results.Ok("cancelled");
         }).RequireAuthorization(IdentityAuthentication.Employee);
-        await app.StartAsync();
-        return app;
+        CancellationToken cancellationToken = TestContext.Current.CancellationToken;
+        try
+        {
+            return await ApplicationStartup.RunAsync(async () =>
+            {
+                await app.StartAsync(cancellationToken);
+                return app;
+            }, cancellationToken);
+        }
+        catch
+        {
+            await app.DisposeAsync();
+            throw;
+        }
     }
 }

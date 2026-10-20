@@ -20,9 +20,12 @@ public sealed class DatabaseProvisioningTests
             .WithUsername("bootstrap_admin")
             .WithPassword(adminPassword)
             .WithVolumeMount(volume, "/var/lib/postgresql")
+            // This fixture force-replaces the container and verifies durable commits.
+            .WithCommand("-c", "fsync=on", "-c", "full_page_writes=on", "-c", "synchronous_commit=on")
             .Build();
         await postgres.StartAsync(deadline.Token);
         string admin = postgres.GetConnectionString();
+        await AssertDurabilityAsync(admin, deadline.Token);
         var passwords = new Dictionary<string, string>
         {
             ["inventory"] = Guid.NewGuid().ToString("N"),
@@ -74,9 +77,12 @@ public sealed class DatabaseProvisioningTests
             .WithUsername("bootstrap_admin")
             .WithPassword(adminPassword)
             .WithVolumeMount(volume, "/var/lib/postgresql")
+            // This fixture force-replaces the container and verifies durable commits.
+            .WithCommand("-c", "fsync=on", "-c", "full_page_writes=on", "-c", "synchronous_commit=on")
             .Build();
         await recreatedPostgres.StartAsync(deadline.Token);
         admin = recreatedPostgres.GetConnectionString();
+        await AssertDurabilityAsync(admin, deadline.Token);
         await DatabaseProvisioner.ReconcileAsync(admin, passwords, deadline.Token);
         var changed = passwords.ToDictionary(pair => pair.Key, pair => pair.Value);
         changed["inventory"] = Guid.NewGuid().ToString("N");
@@ -92,5 +98,12 @@ public sealed class DatabaseProvisioningTests
         Assert.Equal(1L, await retained.ExecuteScalarAsync(TestContext.Current.CancellationToken));
         await using NpgsqlCommand seeds = restarted.CreateCommand("SELECT count(*) FROM equipment");
         Assert.Equal(3L, await seeds.ExecuteScalarAsync(TestContext.Current.CancellationToken));
+    }
+
+    private static async Task AssertDurabilityAsync(string connectionString, CancellationToken cancellationToken)
+    {
+        await using var source = NpgsqlDataSource.Create(connectionString);
+        await using NpgsqlCommand settings = source.CreateCommand("SELECT current_setting('fsync') || ',' || current_setting('full_page_writes') || ',' || current_setting('synchronous_commit')");
+        Assert.Equal("on,on,on", await settings.ExecuteScalarAsync(cancellationToken));
     }
 }

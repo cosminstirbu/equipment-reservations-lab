@@ -65,7 +65,7 @@ internal sealed class BookingScenario : IAsyncDisposable
                 _ = services.AddHttpClient("inventory", client => client.BaseAddress = new Uri("http://inventory"))
                     .ConfigurePrimaryHttpMessageHandler(() => boundary);
             }));
-            HttpClient client = await postgres.CreateClientAsync(app);
+            HttpClient client = await PostgresFixture.CreateClientAsync(app);
             return new BookingScenario(database, boundary, clock, app, client);
         }
         catch
