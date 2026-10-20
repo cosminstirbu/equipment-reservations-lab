@@ -48,7 +48,7 @@ internal sealed class StableContainerPorts : IAsyncDisposable
 
     public Task StartAsync(CancellationToken cancellationToken)
     {
-        return owner.StartAsync(cancellationToken);
+        return ContainerStartup.StartAsync(owner.StartAsync, cancellationToken);
     }
 
     public IWaitUntil HttpReady(ushort port, string path)

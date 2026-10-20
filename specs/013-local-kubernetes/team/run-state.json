@@ -3,7 +3,7 @@
   "status": "awaiting_external_and_runtime_acceptance",
   "baseline_revision": "4dd685c4e34288f94e932dcd49beb22eea965075",
   "preparation_round": 2,
-  "implementation_round": 2,
+  "implementation_round": 3,
   "limits": {
     "preparation_repairs": 3,
     "implementation_repairs": 3,
@@ -234,7 +234,7 @@
   ],
   "frozen_snapshot": "implementation-012-02a",
   "frozen_digest": "e95304733cc8b247af38ec077a72f7a9b8d9bcf496b5e1f277af2dd12098f29a",
-  "implementation_repair_round": 2,
+  "implementation_repair_round": 3,
   "check_results_01": [
     {
       "command": "npm run format-check",
@@ -464,5 +464,32 @@
       "requirement": "Actual Docker run must pass; final outcomes are external per-commit records and summarized in PR description. No hosted pass inferred from local Podman."
     },
     "validation_report": "ci-validation-01.md"
+  },
+  "ci_followup_013": {
+    "status": "locally_validated_hosted_execution_required",
+    "baseline": "c1ac45c75a7c29dd92dc1e29b9a3c33fa09a2509",
+    "run": "https://github.com/cosminstirbu/equipment-reservations-lab/actions/runs/39417401158",
+    "observations": {
+      "quality": "492/541 passed. All 49 Notifications cases failed before execution because the PostgreSQL assembly fixture Docker startup could not listen on its random TCP publication. The other eight modules, including the repaired Broker, Identity and Integration outbox cases, passed.",
+      "deployment": "Actual CoreDNS/platform regressions passed. Application deployment advanced past CoreDNS, but an unknown bootstrap Job completion wait timed out after 300 seconds. The previous wrapper omitted Job identity/status; its underlying failure remains unproven."
+    },
+    "approved_scope": [
+      "Two total initial container starts only for the exact documented Docker 500 pre-process network/publication failure; original deadline/cancellation intact",
+      "Whitelisted, bounded failed-Job status diagnostics; no speculative application/bootstrap fix"
+    ],
+    "completion": "Original three repair-source changes remain independently reviewed; new startup and diagnostic scope needs own regression, review and validation. Unknown Job failure remains pending; no overall feature completion claimed.",
+    "snapshot": "ci-followup-snapshot-03.json",
+    "checks": {
+      "format-check": "pass",
+      "lint": "pass (zero warnings/errors, no style suppressions)",
+      "check": "pass (555 backend, 64 frontend, 24 tooling, zero failures/skips)",
+      "targeted_ci_deployment": "pass (10 cases, pinned kubectl1.35.8)"
+    },
+    "reviews": {
+      "quality": "pass for final six-file code snapshot; ci-quality-review-03.md",
+      "security": "pass for final six-file code snapshot; ci-security-review-03.md"
+    },
+    "remaining": "Unknown hosted bootstrap Job failure needs next bounded status capture. No speculative fix or full feature acceptance claimed.",
+    "report": "ci-validation-03.md"
   }
 }

@@ -1,3 +1,4 @@
+import { Buffer } from 'node:buffer';
 import {
   appendFileSync,
   mkdtempSync,
@@ -399,6 +400,126 @@ export function prepareCiFixture({
   return { waves, state, ca };
 }
 
+const jobConditionTypes = new Set([
+  'Complete',
+  'Failed',
+  'Suspended',
+  'FailureTarget',
+  'SuccessCriteriaMet',
+]);
+const jobConditionReasons = new Set([
+  'BackoffLimitExceeded',
+  'DeadlineExceeded',
+  'PodFailurePolicy',
+  'FailedIndexes',
+  'SuccessPolicy',
+  'CompletionsReached',
+]);
+const conditionStatuses = new Set(['True', 'False', 'Unknown']);
+const podPhases = new Set([
+  'Pending',
+  'Running',
+  'Succeeded',
+  'Failed',
+  'Unknown',
+]);
+const waitingReasons = new Set([
+  'ImagePullBackOff',
+  'ErrImagePull',
+  'ErrImageNeverPull',
+  'CreateContainerConfigError',
+  'CreateContainerError',
+  'CrashLoopBackOff',
+  'ContainerCreating',
+  'PodInitializing',
+  'RunContainerError',
+]);
+const publicIdentity = /^[a-z0-9](?:[-a-z0-9]*[a-z0-9])?$/;
+
+function diagnosticEnum(value, allowed) {
+  return allowed.has(value) ? value : 'Other';
+}
+
+function jobWaitFailure(resource, common, run) {
+  const namespace = resource.metadata.namespace ?? 'equipment';
+  const name = resource.metadata.name;
+  if (
+    typeof namespace !== 'string' ||
+    namespace.length > 63 ||
+    !publicIdentity.test(namespace) ||
+    typeof name !== 'string' ||
+    name.length > 63 ||
+    !publicIdentity.test(name)
+  )
+    return new Error(
+      'CI Job wait failed for invalid public resource identity. {"diagnosticsUnavailable":true}',
+    );
+  const stage = `Job/${namespace}/${name}`;
+  let status;
+  try {
+    const argumentsPrefix = [
+      ...common.filter(
+        (argument) => !argument.startsWith('--request-timeout='),
+      ),
+      '--request-timeout=5s',
+      '--namespace',
+      namespace,
+    ];
+    const query = (argumentsSuffix) => {
+      const raw = run(
+        'kubectl',
+        [...argumentsPrefix, 'get', ...argumentsSuffix, '-o', 'json'],
+        { timeout: 6000, maxBuffer: 128 * 1024 },
+      );
+      if (typeof raw !== 'string' || Buffer.byteLength(raw) > 128 * 1024)
+        throw new Error('Status response exceeds bound.');
+      return JSON.parse(raw);
+    };
+    const job = query([`job/${name}`]);
+    const pods = query([
+      'pods',
+      '--selector',
+      `batch.kubernetes.io/job-name=${name}`,
+    ]);
+    const conditions = job?.status?.conditions ?? [];
+    if (!Array.isArray(conditions) || !Array.isArray(pods?.items))
+      throw new Error('Status response has invalid shape.');
+    status = {
+      jobConditions: conditions.slice(0, 10).map((condition) => ({
+        type: diagnosticEnum(condition?.type, jobConditionTypes),
+        status: diagnosticEnum(condition?.status, conditionStatuses),
+        reason: diagnosticEnum(condition?.reason, jobConditionReasons),
+      })),
+      pods: pods.items.slice(0, 10).map((pod) => {
+        const init = pod?.status?.initContainerStatuses ?? [];
+        const containers = pod?.status?.containerStatuses ?? [];
+        if (!Array.isArray(init) || !Array.isArray(containers))
+          throw new Error('Container status response has invalid shape.');
+        return {
+          phase: diagnosticEnum(pod?.status?.phase, podPhases),
+          containers: [...init, ...containers].slice(0, 10).map((container) => {
+            const result = {};
+            if (container?.state?.waiting)
+              result.waitingReason = diagnosticEnum(
+                container.state.waiting.reason,
+                waitingReasons,
+              );
+            const exitCode = container?.state?.terminated?.exitCode;
+            if (Number.isInteger(exitCode) && exitCode >= 0 && exitCode <= 255)
+              result.exitCode = exitCode;
+            return result;
+          }),
+        };
+      }),
+    };
+    if (Buffer.byteLength(JSON.stringify(status)) > 16 * 1024)
+      throw new Error('Projected diagnostic response exceeds bound.');
+  } catch {
+    status = { diagnosticsUnavailable: true };
+  }
+  return new Error(`CI wait failed for ${stage}. ${JSON.stringify(status)}`);
+}
+
 export function createEphemeralCluster({
   fixture,
   release,
@@ -477,18 +598,23 @@ export function createEphemeralCluster({
           ],
           { timeout: 310000 },
         );
-      if (resource.kind === 'Job')
-        run(
-          'kubectl',
-          [
-            ...scoped,
-            'wait',
-            '--for=condition=Complete',
-            `job/${resource.metadata.name}`,
-            '--timeout=300s',
-          ],
-          { timeout: 310000 },
-        );
+      if (resource.kind === 'Job') {
+        try {
+          run(
+            'kubectl',
+            [
+              ...scoped,
+              'wait',
+              '--for=condition=Complete',
+              `job/${resource.metadata.name}`,
+              '--timeout=300s',
+            ],
+            { timeout: 310000 },
+          );
+        } catch {
+          throw jobWaitFailure(resource, common, run);
+        }
+      }
     }
   }
   return {
