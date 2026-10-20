@@ -1,0 +1,105 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: inventory
+  labels:
+    app.kubernetes.io/part-of: equipment
+    app.kubernetes.io/name: inventory
+  annotations:
+    argocd.argoproj.io/sync-wave: '10'
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: inventory
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: inventory
+        app.kubernetes.io/part-of: equipment
+    spec:
+      automountServiceAccountToken: false
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1654
+        runAsGroup: 1654
+        fsGroup: 1654
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: inventory
+          image: inventory
+          imagePullPolicy: IfNotPresent
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              cpu: 500m
+              memory: 384Mi
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+          ports:
+            - containerPort: 8080
+              name: http
+          env:
+            - name: DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: equipment-credentials
+                  key: inventoryDb
+            - name: ConnectionStrings__inventory
+              value:
+                Host=postgres;Port=5432;Database=inventory;Username=inventory_app;Password=$(DB_PASSWORD);Timeout=5;Command
+                Timeout=5
+            - name: OTLP_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: equipment-credentials
+                  key: dashboardOtlp
+            - name: OTEL_EXPORTER_OTLP_HEADERS
+              value: x-otlp-api-key=$(OTLP_KEY)
+            - name: OTEL_SERVICE_NAME
+              value: inventory
+            - name: Documentation__ExternalBasePath
+              value: '/services/inventory'
+            - name: Documentation__Callback
+              value: $(Application__ExternalOrigin)/services/inventory/oauth/callback
+          envFrom:
+            - configMapRef:
+                name: equipment-runtime
+          volumeMounts:
+            - name: trust
+              mountPath: '/trust'
+              readOnly: true
+          startupProbe:
+            httpGet:
+              path: '/health'
+              port: 8080
+            periodSeconds: 5
+            timeoutSeconds: 2
+            failureThreshold: 36
+          readinessProbe:
+            httpGet:
+              path: '/health'
+              port: 8080
+            periodSeconds: 5
+            timeoutSeconds: 5
+            failureThreshold: 3
+          livenessProbe:
+            httpGet:
+              path: '/alive'
+              port: 8080
+            periodSeconds: 10
+            timeoutSeconds: 2
+            failureThreshold: 3
+      volumes:
+        - name: trust
+          configMap:
+            name: equipment-ca

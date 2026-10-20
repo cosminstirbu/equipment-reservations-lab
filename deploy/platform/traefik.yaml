@@ -1,0 +1,156 @@
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: traefik
+  namespace: equipment-platform
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: equipment-traefik
+rules:
+  - apiGroups: ['']
+    resources: [nodes]
+    verbs: [get, list, watch]
+  - apiGroups: [networking.k8s.io]
+    resources: [ingressclasses]
+    verbs: [get, list, watch]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: equipment-traefik
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: equipment-traefik
+subjects:
+  - kind: ServiceAccount
+    name: traefik
+    namespace: equipment-platform
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: equipment-traefik
+  namespace: equipment
+rules:
+  - apiGroups: ['']
+    resources: [services, endpoints, secrets]
+    verbs: [get, list, watch]
+  - apiGroups: [discovery.k8s.io]
+    resources: [endpointslices]
+    verbs: [get, list, watch]
+  - apiGroups: [networking.k8s.io]
+    resources: [ingresses]
+    verbs: [get, list, watch]
+  - apiGroups: [networking.k8s.io]
+    resources: [ingresses/status]
+    verbs: [update]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: equipment-traefik
+  namespace: equipment
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: equipment-traefik
+subjects:
+  - kind: ServiceAccount
+    name: traefik
+    namespace: equipment-platform
+---
+apiVersion: networking.k8s.io/v1
+kind: IngressClass
+metadata:
+  name: traefik
+spec:
+  controller: traefik.io/ingress-controller
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: traefik
+  namespace: equipment-platform
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: traefik
+  template:
+    metadata:
+      labels:
+        app: traefik
+    spec:
+      serviceAccountName: traefik
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 65532
+        runAsGroup: 65532
+        fsGroup: 65532
+      containers:
+        - name: traefik
+          image: docker.io/library/traefik@sha256:0f6150202bc1fed72a7bd2107460eaa510e5b8a905f3fdb5b84f2c8619c33368
+          args:
+            - --entrypoints.web.address=:8000
+            - --entrypoints.websecure.address=:8443
+            - --entrypoints.websecure.asdefault=true
+            - --entrypoints.websecure.http.tls=true
+            - --entrypoints.ping.address=:9000
+            - --providers.kubernetesingress=true
+            - --providers.kubernetesingress.namespaces=equipment
+            - --providers.kubernetesingress.ingressclass=traefik
+            - --providers.kubernetesingress.allowexternalnameservices=false
+            - --api.dashboard=false
+            - --ping=true
+            - --ping.entrypoint=ping
+            - --log.level=ERROR
+            - --accesslog=false
+          ports:
+            - name: web
+              containerPort: 8000
+            - name: websecure
+              containerPort: 8443
+            - name: ping
+              containerPort: 9000
+          readinessProbe:
+            httpGet:
+              path: /ping
+              port: ping
+          livenessProbe:
+            httpGet:
+              path: /ping
+              port: ping
+          resources:
+            requests:
+              cpu: 100m
+              memory: 64Mi
+            limits:
+              cpu: 500m
+              memory: 256Mi
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: [ALL]
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: traefik
+  namespace: equipment-platform
+spec:
+  type: NodePort
+  selector:
+    app: traefik
+  ports:
+    - name: web
+      port: 80
+      targetPort: web
+      nodePort: 30080
+    - name: websecure
+      port: 443
+      targetPort: websecure
+      nodePort: 30443

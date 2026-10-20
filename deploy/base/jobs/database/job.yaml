@@ -1,0 +1,98 @@
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: database-bootstrap
+  labels:
+    app.kubernetes.io/part-of: equipment
+    app.kubernetes.io/name: database-bootstrap
+    equipment.test/bootstrap: database
+  annotations:
+    argocd.argoproj.io/hook: Sync
+    argocd.argoproj.io/hook-delete-policy: HookSucceeded,BeforeHookCreation
+    argocd.argoproj.io/sync-wave: '-20'
+spec:
+  suspend: false
+  activeDeadlineSeconds: 300
+  backoffLimit: 2
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/part-of: equipment
+        equipment.test/bootstrap: database
+    spec:
+      automountServiceAccountToken: false
+      restartPolicy: Never
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1654
+        runAsGroup: 1654
+        fsGroup: 1654
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: database-bootstrap
+          image: database-bootstrap
+          imagePullPolicy: IfNotPresent
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              cpu: 500m
+              memory: 384Mi
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+          env:
+            - name: OTLP_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: equipment-credentials
+                  key: dashboardOtlp
+            - name: OTEL_EXPORTER_OTLP_HEADERS
+              value: x-otlp-api-key=$(OTLP_KEY)
+            - name: OTEL_SERVICE_NAME
+              value: database-bootstrap
+            - name: DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: equipment-credentials
+                  key: postgresAdmin
+            - name: ConnectionStrings__postgres
+              value:
+                Host=postgres;Port=5432;Database=postgres;Username=postgres;Password=$(DB_PASSWORD);Timeout=5;Command
+                Timeout=5
+            - name: InventoryPassword
+              valueFrom:
+                secretKeyRef:
+                  name: equipment-credentials
+                  key: inventoryDb
+            - name: ReservationsPassword
+              valueFrom:
+                secretKeyRef:
+                  name: equipment-credentials
+                  key: reservationsDb
+            - name: NotificationsPassword
+              valueFrom:
+                secretKeyRef:
+                  name: equipment-credentials
+                  key: notificationsDb
+            - name: KeycloakPassword
+              valueFrom:
+                secretKeyRef:
+                  name: equipment-credentials
+                  key: keycloakDb
+          envFrom:
+            - configMapRef:
+                name: equipment-runtime
+          volumeMounts:
+            - name: trust
+              mountPath: '/trust'
+              readOnly: true
+      volumes:
+        - name: trust
+          configMap:
+            name: equipment-ca

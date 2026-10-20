@@ -1,0 +1,20 @@
+---
+apiVersion: builtin
+kind: ConfigMapGenerator
+metadata:
+  name: equipment-runtime
+literals:
+  - DOTNET_ENVIRONMENT=Production
+  - ASPNETCORE_ENVIRONMENT=Production
+  - ASPNETCORE_HTTP_PORTS=8080
+  - OTEL_EXPORTER_OTLP_ENDPOINT=http://dashboard:18889
+  - OTEL_EXPORTER_OTLP_PROTOCOL=grpc
+  - OTEL_BSP_MAX_QUEUE_SIZE=2048
+  - OTEL_BSP_MAX_EXPORT_BATCH_SIZE=512
+  - SSL_CERT_FILE=/trust/ca.crt
+options:
+  labels:
+    app.kubernetes.io/part-of: equipment
+    app.kubernetes.io/name: equipment-runtime
+  annotations:
+    argocd.argoproj.io/sync-wave: '-40'

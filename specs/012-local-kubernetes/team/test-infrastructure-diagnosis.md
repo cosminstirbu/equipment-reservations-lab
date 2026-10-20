@@ -1,0 +1,82 @@
+# PostgreSQL test infrastructure diagnosis
+
+Coordinator authorized bounded diagnosis after repeated required-check failures. No test assertions, application connection/command budgets, module scheduling or provider configuration were changed. A passing diagnostic run alone does not establish final-gate success.
+
+## Observed failures
+
+Two required full checks after repair reported 541 backend tests with zero skips: first 535 passed / 6 failed, second 539 passed / 2 failed. Failing Reservations rows varied. Both failed during Npgsql connection opening/type metadata loading from PostgresFixture.CreateMigratedDatabaseAsync, before extension setup or an application request. Other eight modules passed. The existing fixture is unchanged from baseline: independent scenario databases, max_connections = 512, application connection budget of 3 seconds and command budget of 5 seconds; extension setup has a separate 30 second command budget, which does not cover initial connection/type loading.
+
+Read-only inspection found no connection-exhaustion evidence. The runtime VM reports 6 CPUs and approximately11GB memory; PostgreSQL and Keycloak CPU work overlap during full checks. After-burst PostgreSQL wait observations cannot establish the cause of an earlier failure. Thread-pool starvation, server CPU/IO pressure and unnecessary administration-pool churn remained hypotheses, not conclusions.
+
+## Bounded standalone comparisons
+
+A private harness referenced the existing built TestSupport/application/provider assemblies and called the existing fixture with112 independent concurrent reservation databases, original timeouts and real migrations. It printed only durations, counts, exception types and aggregate wait classes. Every owned provider was explicitly disposed.
+
+1. Setup only:112/112passed in approximately 5.19 seconds including provider lifecycle. Create-database maximum2855ms; open/type-loading238ms; extension 1721ms; migration 679ms. Maximum 113 client backends. This overlapped the coordinator's formatting check and is not a clean control. It did not reproduce the timeout.
+2. Intended mixed setup/application run: invalid diagnostic comparison. A changed aggregate wait query omitted its new wait field from grouping and failed with PostgreSQL code 42803. Provider cleanup completed. No application-cause conclusion follows.
+3. Corrected sampler:112 setup operations passed, but all 112 host starts failed a standalone WebApplicationFactory prerequisite. Missing explicit test content-root configuration prevented real host execution. This is not a mixed-workload reproduction. Setup maximums: create 2784ms, open 167ms, extension 2126ms, migration 581ms; thread pool maximum 32 threads / 2 pending. Provider cleanup completed.
+4. One explicitly authorized additional comparison followed a providerless single-host prerequisite check. The supported test-content-root setting and existing application dependency manifest produced actual public /alive status 200 without a database connection. The clean mixed run then passed112/112 real setup, application startup and public health requests in 9114 ms (approximately 10.67 seconds including provider lifecycle). Create maximum2469ms; open 362ms; extension 2466ms; migration 2863ms. Thread pool maximum 62 threads / 28 pending; process CPU 11977.7 ms; maximum 113 client backends. Aggregate wait maxima included WAL insertion 104, invalidation writes 60, relation mapping 39 and waiting clients 97. Provider cleanup completed.
+
+The valid mixed comparison did not reproduce the full-scheduler timeout. No provisioning cap, pool change, timeout increase or serialization is justified by these results alone. No permanent fixture change was made from these comparisons.
+
+## Actual full-scheduler instrumentation
+
+Coordinator approved one temporary environment-gated PostgresFixture diagnostic run using the unchanged full scheduler. Original exact source bytes were saved privately; original SHA256 is c1448910246710259aff7a9086cc663619351b35253334eb4a4008dcdc5c7eba. Exact restoration remains pending until the active diagnostic run completes.
+
+Instrumentation adds a dedicated background observer, at most 120 one-second samples, of thread-pool thread/pending/completed counts and process CPU. Bounded phase records contain elapsed setup duration, exception type names and thread-pool snapshots. It prints no query text, database names, credentials, connection strings or exception messages. Existing assertions, budgets and scheduling remain intact. Exact-file formatting/readback and the full warnings-as-errors build passed before the run. The coordinator owns the private log and run outcome; source/build outputs remain frozen during execution.
+
+
+The first instrumented full scheduler run passed all 541 backend, 64 frontend and 24 tooling tests with zero skips. However, Microsoft Testing Platform did not retain the successful fixture's console diagnostic output; no measurement artifact was found. This run neither identifies a cause nor establishes that a defect was fixed. Its diagnostic output boundary was insufficient.
+
+The coordinator authorized one corrected diagnostic run. The same bounded arrays are now written directly into a coordinator-created private directory, using a unique filename with CreateNew and Unix0600, then flushed. No record values or private destination paths are printed. Missing or failed capture raises an explicit sanitized diagnostic prerequisite failure. An initial build caught exceptions inside finally and an unsupported Windows UnixCreateMode call; both were corrected without suppressions. Final temporary-instrumentation formatting/readback and full warnings-as-errors build passed with zero warnings/errors. The original source and temporary diffs remain privately preserved for exact restoration after this run.
+
+
+The corrected capture reproduced the original failure in the actual full scheduler: the primary Reservations fixture recorded 149 database creations, 149 initial extension/open attempts, 129 completed migrations and 20 NpgsqlException/TimeoutException failures. All failures occurred in the first extension/open phase after 3001–3215 ms, matching the existing 3 second connection budget. Database creation reached 11489 ms; the initial extension/open phase reached 8101 ms. At failure snapshots there were 50–58 worker threads and 0–16 pending items, while dedicated samples showed continuing work completions and CPU progress. This weakens sustained host thread-pool starvation as an explanation. The observed setup burst exceeded the standalone harness's 112 scenarios. No actual full-run server wait samples were captured, so the evidence does not distinguish storage contention from server CPU pressure.
+
+## Proposed fixture repair and test design
+
+The coordinator approved a proposed capacity control, pending independent quality design review: a per-fixture asynchronous semaphore with four leases around database creation, extension setup and migrations only. Four is a provisional setup capacity for the measured shared 6 CPU runtime, selected to reduce the observed provisioning burst. Each scenario keeps its own real database. The lease must be released before any application host, client or request begins. Test methods and theory rows remain parallel; application connection/command budgets remain 3/5 seconds. A bounded 60 second lease wait follows the existing fixture startup budget and observes the current test cancellation token; acquisition failure is an explicit setup prerequisite error. Successful acquisition requires exactly one finally release, with no nested acquisition, and fixture disposal releases the semaphore resource after all tests finish.
+
+The regression boundary remains the existing public HTTP/provider suite, with real PostgreSQL, production migrations, application hosts and assertions retained. Existing faithful external boundaries remain unchanged; no new double or solitary test is introduced. The observed 20 actual full-scheduler setup failures are the intended red evidence. The exact full scheduler must pass after the minimal fixture change; timing thresholds or mirrored semaphore assertions would not establish this behavior. No permanent repair has been written yet. Exact restoration of temporary instrumentation must precede the repair.
+
+
+The independent quality reviewer passed the narrow capacity design without a scheduling-policy exception. After the corrected full run completed (521/541 backend passed, 20 failed, zero skipped), the author restored and hash-verified the original fixture before deriving the minimal permanent repair. The reviewed semaphore wrapper now waits asynchronously for at most 60 seconds using the current test cancellation token, calls the unchanged database/migration core only after acquisition, releases in finally and disposes with fixture cleanup. Partial sources still follow the existing failure-disposal path. No host or request runs inside the lease.
+
+For the controlled regression run, temporary private diagnostics additionally record acquisition queue peak, successful and failed acquisition counts and lease-wait durations. The permanent capacity-only source was separately preserved so removal of instrumentation cannot erase the repair. Exact-file formatter/readback, full build with warnings as errors, scoped style verification and diff checks passed before the controlled run. The exact scheduler regression result and final diagnostic removal remain pending.
+
+
+The controlled capacity run's primary Reservations fixture passed all 149 provisioning operations: 149 acquisitions, zero acquisition failures, queue peak 135 and maximum lease wait 6950 ms. Maximum database creation fell from 11489 to 306 ms; initial extension/open from 8101 to 207 ms; migrations reached 182 ms. No provisioning errors occurred, and the sampled pending worker queue peaked at one. This supports the narrow setup-capacity repair for the observed Reservations burst.
+
+The same run exposed a distinct IdentityAccess fixture failure: four administrator connection attempts timed out before SQL or type loading, after approximately 15093–15148 ms. These belonged to ServiceIdentityTests, not the primary Reservations failures. The fixture's sampled worker queue stayed around 51–56 pending items while workers rose from 19 to 51 and completed work advanced only from 349 to 381 across approximately twelve seconds; the queue drained rapidly after worker count reached 59. Failure snapshots showed 47–99 pending items. This is evidence of process worker starvation during setup, rather than evidence that more database concurrency or a longer connection timeout is needed. No blocked managed stacks were captured, so the exact blocking caller remains unproven.
+
+Read-only inspection found asynchronous token-boundary coordination, not synchronous waits in those doubles. Their real WebApplicationFactory clients start hosts synchronously. Official ASP.NET Core 10 WebApplicationFactory source has no StartServerAsync method; its CreateHost calls host.Start. Shared RSA locks contain cryptographic calls without asynchronous waits. These facts identify investigation boundaries but do not justify an unreviewed factory or thread-pool change. The overall run cannot be reported green from the primary fixture's improvement alone.
+
+
+The capacity run completed with 537/541 backend tests passing, four IdentityAccess setup failures and zero skips. The prior 20 Reservations failures did not recur; this is not an overall green result.
+
+## Proposed host-start admission design
+
+Pending independent quality review, the next narrow empirical repair is a separate four-slot asynchronous host-start admission helper owned by each PostgresFixture. It awaits admission for at most 60 seconds using the current test cancellation token, executes the actual supported WebApplicationFactory.CreateClient call, and releases in finally before returning the client. No Task.Run, thread-pool configuration or module/test serialization is proposed. Database provisioning and host-start leases are separate and never nested. HTTP requests and assertions execute after both leases have been released.
+
+The fewest relevant call sites are BookingScenario.CreateAsync, which currently starts its initial application synchronously inside its constructor, and newly derived factory starts in IdentityAccess.ServiceIdentityTests. The scenario factory would await the helper before constructing a fully initialized scenario, retaining the same database, clock, inventory boundary, application configuration and client. Factory or startup failures must dispose any partial application and database. ServiceIdentityTests would await the helper for each new derived application and notification factory. Additional clients on the already-started scenario application need no startup lease. Exclusive telemetry classes are outside the observed burst and need no unrelated call-site changes. Both gates are disposed only after their callers finish.
+
+Test design: retain the existing real PostgreSQL, real application factory/pipeline, production identity configuration and public HTTP/authentication assertions. Existing external boundary doubles remain unchanged; none is added. Existing four administrator-connect setup failures in the exact full scheduler are intended red evidence. Successful queue acquisition must not replace any authentication, failure, recovery or privacy assertion. The exact full scheduler must pass with queue/failure/timing measurements before temporary instrumentation is removed. A bounded queue is an empirical repair for the observed completion stall; no exact blocking managed stack or specific CPU/IO cause has been proven.
+
+
+## Controlled green result and final source
+
+Independent quality review passed the host-start admission design before implementation. The controlled exact full scheduler then passed all 541 backend, 64 frontend and 24 tooling tests, with zero skips, in 2 minutes 43.553 seconds. The same real public behavior assertions, providers, migrations, failure scenarios, application budgets and module/method parallel configuration remained in place.
+
+IdentityAccess recorded 25 successful database setups and 40 successful host starts, with zero setup errors or acquisition failures. Host active peak was exactly four; host queue peak 14, maximum wait 1709 ms and maximum startup 2776 ms. Database queue peak was 17, maximum wait 9237 ms, creation 7015 ms, extension/open 167 ms and migration 201 ms. Pending worker work still peaked transiently at 132; this result does not claim that all queuing disappeared or that an exact blocking caller was proven.
+
+Reservations recorded 149 successful database setups and 139 host starts, with zero setup errors or acquisition failures. Host active peak was four; queue peak 74, maximum wait 8924 ms and startup 3379 ms. Database queue peak was 135, maximum wait 10995 ms, creation 479 ms, extension/open 372 ms and migration 377 ms. Both 60 second setup-admission deadlines retained substantial headroom. The earlier 20 first-open failures and four administrator-connect failures did not recur in this controlled comparison.
+
+After the run completed, all temporary observers, counters, environment flags, private-file writes and diagnostic serialization were removed. Final PostgresFixture was derived from the hash-verified original plus only the reviewed database and host-start gates, bounded waits, finally releases and gate disposal. BookingScenario now returns fully initialized instances after admitted startup and disposes partial application/database resources on failure. Eleven new factory starts in ServiceIdentityTests await the helper; an extra client on its already-running scenario remains unchanged. No diagnostic implementation remains in repository source.
+
+Final exact-file formatter/readback, full warnings-as-errors build (zero warnings/errors), scoped style verification and diff checks passed after diagnostic removal. The coordinator owns the subsequent final snapshot checks and independent implementation review; the instrumented controlled green is not substituted for them.
+
+Final source SHA256:
+
+- PostgresFixture.cs: 40846128aff2250c19e0aaa22679955be2403f26e9c88314b735dc6dd611b31f
+- BookingScenario.cs: 3472fab802cc6e8a8bd1c11532ff0e9fb12a9d42f3a3714e9f1df5e531daba05
+- ServiceIdentityTests.cs: 9b79187fe6a766100043058ba462833673fb737c72bfa650128b7570d8e19ccc

@@ -3,7 +3,9 @@ using System.Net.Http.Json;
 using System.Net.Sockets;
 using System.Text;
 using System.Text.Json;
+using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
+using Npgsql;
 using Xunit;
 
 namespace Reservations.Tests;
@@ -11,6 +13,29 @@ namespace Reservations.Tests;
 [Collection("Authentication and input security")]
 public sealed class SecurityBrowserWriteTests(PostgresFixture postgres)
 {
+    [Theory]
+    [InlineData("app.equipment.test", "https://app.equipment.test", 400)]
+    [InlineData("evil.test", "https://app.equipment.test", 403)]
+    [InlineData("app.equipment.test", "https://evil.test", 403)]
+    [InlineData("app.equipment.test", "http://app.equipment.test", 403)]
+    public async Task ConfiguredPublicOriginChecksActualHostAndOriginDespiteForgedForwarding(string host, string origin, int status)
+    {
+        await using NpgsqlDataSource database = await postgres.CreateMigratedDatabaseAsync("reservations");
+        using WebApplicationFactory<Program> app = PostgresFixture.Factory<Program>(database).WithWebHostBuilder(builder =>
+            builder.UseEnvironment("Production").UseSetting("Application:ExternalOrigin", "https://app.equipment.test"));
+        using HttpClient client = app.CreateClient(new WebApplicationFactoryClientOptions { BaseAddress = new Uri("https://app.equipment.test") });
+        using var request = new HttpRequestMessage(HttpMethod.Post, "/api/reservations")
+        {
+            Content = new StringContent("{}", Encoding.UTF8, "application/json")
+        };
+        _ = IdentityAuthorityFixture.Shared.Authenticate(client);
+        request.Headers.Host = host;
+        request.Headers.Add("Origin", origin);
+        request.Headers.Add("X-Forwarded-Host", "app.equipment.test");
+        request.Headers.Add("X-Forwarded-Proto", "https");
+        Assert.Equal((HttpStatusCode)status, (await client.SendAsync(request, TestContext.Current.CancellationToken)).StatusCode);
+    }
+
     private static readonly string[] DuplicateOrigins = ["http://localhost", "http://localhost"];
 
     [Theory]

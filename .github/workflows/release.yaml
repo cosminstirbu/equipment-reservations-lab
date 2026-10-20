@@ -1,0 +1,91 @@
+name: Release application images
+on:
+  push:
+    branches: [main]
+permissions:
+  contents: read
+concurrency:
+  group: local-application-release
+  cancel-in-progress: false
+jobs:
+  classify:
+    runs-on: ubuntu-24.04
+    outputs:
+      publish: ${{ steps.changes.outputs.publish }}
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444
+        with:
+          node-version: 24.15.0
+      - run: npm ci
+      - run: node scripts/deployment-validation.mjs committed
+      - id: changes
+        env:
+          BEFORE: ${{ github.event.before }}
+        shell: bash
+        run: |
+          if [[ "$BEFORE" =~ ^0+$ ]]; then
+            git ls-files -z > "$RUNNER_TEMP/changed-paths"
+          else
+            git diff --name-only -z "$BEFORE" "$GITHUB_SHA" > "$RUNNER_TEMP/changed-paths"
+          fi
+          node --input-type=module -e 'import {readFileSync,appendFileSync} from "node:fs"; import {classifyChanges} from "./scripts/deployment-validation.mjs"; appendFileSync(process.env.GITHUB_OUTPUT, `publish=${classifyChanges(readFileSync(`${process.env.RUNNER_TEMP}/changed-paths`,"utf8").split("\0").filter(Boolean))}\n`);'
+  publish:
+    needs: classify
+    if: needs.classify.outputs.publish == 'true'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    permissions:
+      contents: read
+      packages: write
+    outputs:
+      release: ${{ steps.release.outputs.release }}
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444
+        with:
+          node-version: 24.15.0
+      - uses: actions/setup-dotnet@26b0ec14cb23fa6904739307f278c14f94c95bf1
+        with:
+          global-json-file: global.json
+      - run: npm ci && npm --prefix src/Web ci
+      - run: npm run format-check && npm run lint && npm run check
+      - run: node --test scripts/deployment-validation.test.mjs scripts/promote-images.test.mjs scripts/deployment-ci.test.mjs
+      - uses: docker/setup-qemu-action@c7c53464625b32c7a7e944ae62b3e17d2b600130
+      - uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f
+      - uses: docker/login-action@c94ce9fb468520275223c153574b00df6fe4bcc9
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - id: release
+        name: Publish indexes and retain exact source provenance
+        run: node scripts/deployment-ci.mjs publish
+  promote:
+    needs: publish
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444
+        with:
+          node-version: 24.15.0
+      - uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f
+      - run: npm ci
+      - name: Propose narrow digest promotion
+        env:
+          RELEASE: ${{ needs.publish.outputs.release }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          node --input-type=module -e 'import {writeFileSync} from "node:fs"; import {validateRelease} from "./scripts/deployment-validation.mjs"; writeFileSync(`${process.env.RUNNER_TEMP}/release.json`,JSON.stringify(validateRelease(JSON.parse(process.env.RELEASE))));'
+          node scripts/promote-images.mjs "$RUNNER_TEMP/release.json"

@@ -28,6 +28,11 @@ try
             ["reservations"] = builder.Configuration["ReservationsPassword"] ?? "",
             ["notifications"] = builder.Configuration["NotificationsPassword"] ?? ""
         };
+        if (builder.Configuration["KeycloakPassword"] is { } keycloakPassword)
+        {
+            passwords["keycloak"] = keycloakPassword;
+        }
+
         bool captureSql = !bool.TryParse(builder.Configuration["DatabaseTracing:CaptureSqlText"], out bool capture) || capture;
         await DatabaseProvisioner.ReconcileAsync(admin, passwords, captureSql, deadline.Token);
         BootstrapLog.Completed(logger);

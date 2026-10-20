@@ -1,5 +1,6 @@
 using System.Globalization;
 using System.Text.RegularExpressions;
+using ApiDocumentation;
 using Microsoft.Net.Http.Headers;
 
 namespace Reservations;
@@ -8,6 +9,13 @@ internal static partial class BrowserWriteGuard
 {
     public static void UseBrowserWriteGuard(this WebApplication app)
     {
+        string? configuredOrigin = app.Configuration["Application:ExternalOrigin"];
+        if (configuredOrigin is not null)
+        {
+            ApiDocumentationExtensions.ValidateExternalOrigin(configuredOrigin);
+        }
+
+        Uri? externalOrigin = configuredOrigin is null ? null : new Uri(configuredOrigin);
         _ = app.Use(async (context, next) =>
         {
             HttpRequest request = context.Request;
@@ -17,7 +25,7 @@ internal static partial class BrowserWriteGuard
                 return;
             }
 
-            if (!Admitted(request))
+            if (!Admitted(request, externalOrigin))
             {
                 await Results.Problem(statusCode: 403, title: "Browser write not allowed",
                     detail: "Use the local application or a direct local API client.",
@@ -38,11 +46,12 @@ internal static partial class BrowserWriteGuard
         });
     }
 
-    private static bool Admitted(HttpRequest request)
+    private static bool Admitted(HttpRequest request, Uri? externalOrigin)
     {
         if ((!request.Scheme.Equals("http", StringComparison.OrdinalIgnoreCase)
                 && !request.Scheme.Equals("https", StringComparison.OrdinalIgnoreCase))
-            || request.Headers.Host.Count != 1 || !CanonicalAuthority(request.Host.Value))
+            || request.Headers.Host.Count != 1
+            || (externalOrigin is null ? !CanonicalAuthority(request.Host.Value) : request.Host.Value != externalOrigin.Authority))
         {
             return false;
         }
@@ -52,6 +61,11 @@ internal static partial class BrowserWriteGuard
             if (origins.Count != 1 || origins[0] is not { Length: > 0 and <= 128 } value || value.Any(character => !char.IsAscii(character)))
             {
                 return false;
+            }
+
+            if (externalOrigin is not null)
+            {
+                return value == externalOrigin.GetLeftPart(UriPartial.Authority);
             }
 
             Match origin = Origin().Match(value);

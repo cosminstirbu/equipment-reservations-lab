@@ -1,0 +1,111 @@
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: identity-bootstrap
+  labels:
+    app.kubernetes.io/part-of: equipment
+    app.kubernetes.io/name: identity-bootstrap
+    equipment.test/bootstrap: identity
+  annotations:
+    argocd.argoproj.io/hook: Sync
+    argocd.argoproj.io/hook-delete-policy: HookSucceeded,BeforeHookCreation
+    argocd.argoproj.io/sync-wave: '0'
+spec:
+  suspend: false
+  activeDeadlineSeconds: 300
+  backoffLimit: 2
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/part-of: equipment
+        equipment.test/bootstrap: identity
+    spec:
+      automountServiceAccountToken: false
+      restartPolicy: Never
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1654
+        runAsGroup: 1654
+        fsGroup: 1654
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: identity-bootstrap
+          image: identity-bootstrap
+          imagePullPolicy: IfNotPresent
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              cpu: 500m
+              memory: 384Mi
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+          env:
+            - name: OTLP_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: equipment-credentials
+                  key: dashboardOtlp
+            - name: OTEL_EXPORTER_OTLP_HEADERS
+              value: x-otlp-api-key=$(OTLP_KEY)
+            - name: OTEL_SERVICE_NAME
+              value: identity-bootstrap
+            - name: Identity__AdministrationEndpoint
+              value: http://keycloak:8080/
+            - name: WebRoot
+              value: $(Application__ExternalOrigin)/
+            - name: AdminUsername
+              value: admin
+            - name: AdminPassword
+              valueFrom:
+                secretKeyRef:
+                  name: equipment-credentials
+                  key: identityAdmin
+            - name: EmployeeAPassword
+              valueFrom:
+                secretKeyRef:
+                  name: equipment-credentials
+                  key: alice
+            - name: EmployeeBPassword
+              valueFrom:
+                secretKeyRef:
+                  name: equipment-credentials
+                  key: bob
+            - name: ApproverPassword
+              valueFrom:
+                secretKeyRef:
+                  name: equipment-credentials
+                  key: manager
+            - name: EquipmentStaffPassword
+              valueFrom:
+                secretKeyRef:
+                  name: equipment-credentials
+                  key: staff
+            - name: ReservationsClientSecret
+              valueFrom:
+                secretKeyRef:
+                  name: equipment-credentials
+                  key: reservationsClient
+            - name: DocumentationCallbacks__0
+              value: $(Application__ExternalOrigin)/services/inventory/oauth/callback
+            - name: DocumentationCallbacks__1
+              value: $(Application__ExternalOrigin)/services/reservations/oauth/callback
+            - name: DocumentationCallbacks__2
+              value: $(Application__ExternalOrigin)/services/notifications/oauth/callback
+          envFrom:
+            - configMapRef:
+                name: equipment-runtime
+          volumeMounts:
+            - name: trust
+              mountPath: '/trust'
+              readOnly: true
+      volumes:
+        - name: trust
+          configMap:
+            name: equipment-ca

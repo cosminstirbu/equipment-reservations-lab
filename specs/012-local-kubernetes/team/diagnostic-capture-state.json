@@ -1,0 +1,5 @@
+{
+  "private_directory": "/private/tmp/equipment-diagnostic-check2-012-phk_x6m3",
+  "measurement_directory": "/private/tmp/equipment-diagnostic-check2-012-phk_x6m3/measurements",
+  "scope": "temporary aggregate-only diagnostic capture; remove private artifacts after final sanitized evidence"
+}

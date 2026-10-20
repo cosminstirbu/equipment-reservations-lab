@@ -1,0 +1,14 @@
+---
+apiVersion: builtin
+kind: ConfigMapGenerator
+metadata:
+  name: equipment-web
+literals:
+  - 'auth-config.json={"issuer": "https://identity.equipment.test/realms/equipment",
+    "realm": "equipment", "clientId": "equipment-web"}'
+options:
+  labels:
+    app.kubernetes.io/part-of: equipment
+    app.kubernetes.io/name: equipment-web
+  annotations:
+    argocd.argoproj.io/sync-wave: '-40'

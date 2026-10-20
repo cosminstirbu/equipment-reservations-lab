@@ -275,8 +275,12 @@ export class AuthSession {
       throw new Error('Invalid identity configuration.');
     const issuer = new URL(configuration.issuer);
     if (
-      !['http:', 'https:'].includes(issuer.protocol) ||
-      !['localhost', '127.0.0.1', '[::1]'].includes(issuer.hostname) ||
+      (issuer.protocol !== 'https:' &&
+        !(
+          issuer.protocol === 'http:' &&
+          ['localhost', '127.0.0.1', '[::1]'].includes(issuer.hostname)
+        )) ||
+      issuer.href !== configuration.issuer ||
       issuer.pathname !== '/realms/equipment' ||
       issuer.search ||
       issuer.hash ||

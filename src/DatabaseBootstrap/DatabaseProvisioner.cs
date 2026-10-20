@@ -14,7 +14,8 @@ public static class DatabaseProvisioner
 
     public static async Task ReconcileAsync(string adminConnectionString, IReadOnlyDictionary<string, string> passwords, bool captureSqlText = true, CancellationToken cancellationToken = default)
     {
-        foreach (string database in Databases)
+        string[] databases = passwords.ContainsKey("keycloak") ? [.. Databases, "keycloak"] : Databases;
+        foreach (string database in databases)
         {
             if (!passwords.TryGetValue(database, out string? password) || string.IsNullOrWhiteSpace(password) || password.Contains('\0'))
             {
@@ -27,7 +28,7 @@ public static class DatabaseProvisioner
         await ExecuteAsync(connection, "SET standard_conforming_strings=on", cancellationToken);
         await ExecuteAsync(connection, "REVOKE ALL ON DATABASE postgres, template1 FROM PUBLIC", cancellationToken);
 
-        foreach (string database in Databases)
+        foreach (string database in databases)
         {
             string role = database + "_app";
             string quotedRole = Quote(role);
@@ -35,11 +36,11 @@ public static class DatabaseProvisioner
             _ = exists.Parameters.AddWithValue(role);
             if (!(bool)(await exists.ExecuteScalarAsync(cancellationToken))!)
             {
-                await ExecuteAsync(connection, $"CREATE ROLE {quotedRole}", cancellationToken);
+                string password = "'" + passwords[database].Replace("'", "''", StringComparison.Ordinal) + "'";
+                await ExecuteAsync(connection, $"CREATE ROLE {quotedRole} LOGIN PASSWORD {password}", cancellationToken);
             }
 
-            string password = "'" + passwords[database].Replace("'", "''", StringComparison.Ordinal) + "'";
-            await ExecuteAsync(connection, $"ALTER ROLE {quotedRole} LOGIN NOSUPERUSER NOCREATEDB NOCREATEROLE NOREPLICATION NOBYPASSRLS PASSWORD {password}", cancellationToken);
+            await ExecuteAsync(connection, $"ALTER ROLE {quotedRole} LOGIN NOSUPERUSER NOCREATEDB NOCREATEROLE NOREPLICATION NOBYPASSRLS", cancellationToken);
             await using var memberships = new NpgsqlCommand("SELECT r.rolname FROM pg_auth_members m JOIN pg_roles r ON r.oid=m.roleid JOIN pg_roles u ON u.oid=m.member WHERE u.rolname=$1", connection);
             _ = memberships.Parameters.AddWithValue(role);
             var inherited = new List<string>();
@@ -66,15 +67,15 @@ public static class DatabaseProvisioner
             await ExecuteAsync(connection, $"ALTER DATABASE {Quote(database)} OWNER TO {quotedRole}; REVOKE ALL ON DATABASE {Quote(database)} FROM PUBLIC", cancellationToken);
         }
 
-        foreach (string database in Databases.Append("postgres").Append("template1"))
+        foreach (string database in databases.Append("postgres").Append("template1"))
         {
-            foreach (string service in Databases)
+            foreach (string service in databases)
             {
                 await ExecuteAsync(connection, $"REVOKE ALL ON DATABASE {Quote(database)} FROM {Quote(service + "_app")}", cancellationToken);
             }
         }
 
-        foreach (string database in Databases)
+        foreach (string database in databases)
         {
             string role = database + "_app";
             await ExecuteAsync(connection, $"GRANT CONNECT ON DATABASE {Quote(database)} TO {Quote(role)}", cancellationToken);
@@ -94,6 +95,15 @@ public static class DatabaseProvisioner
                 Password = passwords[database]
             };
             await using NpgsqlDataSource own = DatabaseTracing.Create(settings.ConnectionString, database, captureSqlText, commandTimeout: 30);
+            try
+            {
+                await using NpgsqlConnection authenticated = await own.OpenConnectionAsync(cancellationToken);
+            }
+            catch (PostgresException exception) when (exception.SqlState == PostgresErrorCodes.InvalidPassword)
+            {
+                throw new InvalidOperationException("Existing database credentials do not match. Restore the original private credential bundle before retrying.");
+            }
+
             switch (database)
             {
                 case "inventory":
@@ -104,6 +114,9 @@ public static class DatabaseProvisioner
                     break;
                 case "notifications":
                     await Notifications.ServiceMigrations.ApplyAsync(own, cancellationToken);
+                    break;
+                case "keycloak":
+                    // Keycloak owns its schema lifecycle; bootstrap verifies only scoped access.
                     break;
                 default:
                     throw new InvalidOperationException("Unknown service database.");

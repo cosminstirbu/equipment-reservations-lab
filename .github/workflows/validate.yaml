@@ -1,0 +1,80 @@
+name: Validate
+on:
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  quality:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444
+        with:
+          node-version: 24.15.0
+          cache: npm
+      - uses: actions/setup-dotnet@26b0ec14cb23fa6904739307f278c14f94c95bf1
+        with:
+          global-json-file: global.json
+      - run: npm ci && npm --prefix src/Web ci
+      - name: Validate committed release and bootstrap identities
+        run: node scripts/deployment-validation.mjs committed
+      - run: npm run format-check
+      - run: npm run lint
+      - run: npm run check
+        env:
+          DOCKER_HOST: unix:///var/run/docker.sock
+          TESTCONTAINERS_RYUK_DISABLED: 'false'
+      - run: node --test scripts/deployment-validation.test.mjs scripts/promote-images.test.mjs scripts/deployment-ci.test.mjs
+  deployment:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444
+        with:
+          node-version: 24.15.0
+      - uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f
+      - run: npm ci
+      - name: Validate committed release and bootstrap identities
+        run: node scripts/deployment-validation.mjs committed
+      - name: Install checksum-verified deployment tools
+        shell: bash
+        run: |
+          mkdir -p "$RUNNER_TEMP/equipment-tools"
+          curl --fail --silent --show-error --location --connect-timeout 5 --max-time 15 https://github.com/kubernetes-sigs/kind/releases/download/v0.33.0/kind-linux-amd64 -o "$RUNNER_TEMP/equipment-tools/kind"
+          echo "aee6151561422756b764a4ae28e7f44cda5af5a9eead3cc9985112b1de8d8e0d  $RUNNER_TEMP/equipment-tools/kind" | sha256sum --check --strict
+          curl --fail --silent --show-error --location --connect-timeout 5 --max-time 15 https://dl.k8s.io/release/v1.35.8/bin/linux/amd64/kubectl -o "$RUNNER_TEMP/equipment-tools/kubectl"
+          echo "874d5e72dbb819f43cff16bcd1e4f8bac5b7f2361fe1e55049b0a6c676fb0cbf  $RUNNER_TEMP/equipment-tools/kubectl" | sha256sum --check --strict
+          chmod 0755 "$RUNNER_TEMP/equipment-tools/kind" "$RUNNER_TEMP/equipment-tools/kubectl"
+          echo "$RUNNER_TEMP/equipment-tools" >> "$GITHUB_PATH"
+      - name: Deployment tool and fixture contract
+        run: npm run test:deployment -- scripts/deployment-ci-contract.test.mjs
+      - name: Real provider regressions (serialized before application kind)
+        run: npm run test:deployment -- scripts/deployment-broker-retention.test.mjs scripts/deployment-config-rollout.test.mjs scripts/deployment-ingress.test.mjs scripts/deployment-routing.test.mjs
+        env:
+          CONTAINER_RUNTIME: docker
+      - name: Ephemeral isolated deployment (never publishes)
+        run: node scripts/deployment-ci.mjs
+      - name: Real deployed behavior
+        shell: bash
+        run: |
+          STATE_FILE="$EQUIPMENT_CI_STATE/smoke-state.json"
+          KUBECONFIG_FILE=$(node -p 'JSON.parse(require("node:fs").readFileSync(process.argv[1],"utf8")).kubeconfig' "$STATE_FILE")
+          kubectl --kubeconfig "$KUBECONFIG_FILE" --context kind-equipment-ci --namespace equipment port-forward --address 127.0.0.1 service/dashboard 18888:18888 18890:18890 > "$RUNNER_TEMP/equipment-forward.log" 2>&1 &
+          FORWARD_PID=$!
+          trap 'kill "$FORWARD_PID" 2>/dev/null || true' EXIT
+          for attempt in {1..30}; do
+            if curl --silent --max-time 1 --output /dev/null http://127.0.0.1:18888/; then break; fi
+            if ! kill -0 "$FORWARD_PID" 2>/dev/null; then exit 1; fi
+            sleep 1
+          done
+          node scripts/deployment-smoke.mjs --ci --state "$EQUIPMENT_CI_STATE"
+      - name: Remove disposable cluster
+        if: always()
+        run: kind delete cluster --name equipment-ci

@@ -1,0 +1,119 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: keycloak
+  labels:
+    app.kubernetes.io/part-of: equipment
+    app.kubernetes.io/name: keycloak
+  annotations:
+    argocd.argoproj.io/sync-wave: '-10'
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: keycloak
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: keycloak
+        app.kubernetes.io/part-of: equipment
+    spec:
+      automountServiceAccountToken: false
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        runAsGroup: 1000
+        fsGroup: 1000
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: keycloak
+          image: quay.io/keycloak/keycloak@sha256:79c623a22abacf3fe6c00a5fb30f5b7843d717b234033b80995891c06116d244
+          imagePullPolicy: IfNotPresent
+          resources:
+            requests:
+              cpu: 250m
+              memory: 512Mi
+            limits:
+              cpu: 1500m
+              memory: 1536Mi
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+          ports:
+            - containerPort: 8080
+              name: http
+            - containerPort: 9000
+              name: health
+          env:
+            - name: KC_DB
+              value: postgres
+            - name: KC_DB_URL
+              value: jdbc:postgresql://postgres:5432/keycloak
+            - name: KC_DB_USERNAME
+              value: keycloak_app
+            - name: KC_DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: equipment-credentials
+                  key: keycloakDb
+            - name: KC_BOOTSTRAP_ADMIN_USERNAME
+              value: admin
+            - name: KC_BOOTSTRAP_ADMIN_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: equipment-credentials
+                  key: identityAdmin
+            - name: KC_HTTP_ENABLED
+              value: 'true'
+            - name: KC_HOSTNAME
+              valueFrom:
+                configMapKeyRef:
+                  name: equipment-runtime
+                  key: IdentityPublicOrigin
+            - name: KC_HOSTNAME_STRICT
+              value: 'true'
+            - name: KC_PROXY_HEADERS
+              value: xforwarded
+            - name: KC_HEALTH_ENABLED
+              value: 'true'
+            - name: KC_HTTP_MANAGEMENT_SCHEME
+              value: http
+            - name: KC_TRUSTSTORE_PATHS
+              value: '/trust/ca.crt'
+          args:
+            - start
+          volumeMounts:
+            - name: trust
+              mountPath: '/trust'
+              readOnly: true
+          startupProbe:
+            httpGet:
+              path: '/health/ready'
+              port: 9000
+            periodSeconds: 5
+            timeoutSeconds: 2
+            failureThreshold: 36
+          readinessProbe:
+            httpGet:
+              path: '/health/ready'
+              port: 9000
+            periodSeconds: 5
+            timeoutSeconds: 5
+            failureThreshold: 3
+          livenessProbe:
+            httpGet:
+              path: '/health/live'
+              port: 9000
+            periodSeconds: 10
+            timeoutSeconds: 2
+            failureThreshold: 3
+      volumes:
+        - name: trust
+          configMap:
+            name: equipment-ca

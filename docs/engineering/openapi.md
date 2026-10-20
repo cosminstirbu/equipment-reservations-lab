@@ -86,8 +86,11 @@ allowed development redirect URIs and origins. Preserve existing human identity,
 role, and API audience rules; do not bypass authentication, weaken authorization,
 or relax browser-write protections for interactive documentation.
 
-Send interactive API requests directly to the service hosting the UI, using the
-developer's identity and permissions. Do not use an external request proxy. Configure
+Send interactive API requests to the service hosting the UI, using the developer's
+identity and permissions. An explicitly configured deployed environment may expose
+each service through the application's same-origin reverse proxy, provided its
+service-specific documents, callback, authenticated requests, origin checks and path
+handling remain intact. Do not use an external request proxy. Configure
 the identity provider's allowed origins for its browser token exchange deliberately.
 Do not persist authorization across browser sessions, and disable Scalar's AI agent.
 Keep credentials and tokens out of committed configuration; apply the existing
