@@ -35,10 +35,33 @@ public static class OpenApiAssertions
         {
             JsonElement operation = paths.GetProperty(path).GetProperty(method);
             Assert.Equal(id, operation.GetProperty("operationId").GetString());
+            AssertDescription(operation, id);
+            if (operation.TryGetProperty("parameters", out JsonElement parameters))
+            {
+                foreach (JsonElement parameter in parameters.EnumerateArray())
+                {
+                    AssertDescription(parameter, id + " parameter " + parameter.GetProperty("name").GetString());
+                }
+            }
+            if (operation.TryGetProperty("requestBody", out JsonElement requestBody))
+            {
+                AssertDescription(requestBody, id + " request body");
+            }
             Assert.False(string.IsNullOrWhiteSpace(operation.GetProperty("summary").GetString()));
             Assert.NotEmpty(operation.GetProperty("tags").EnumerateArray());
             Assert.Contains(operation.GetProperty("security").EnumerateArray(), requirement => requirement.TryGetProperty("DocumentationOAuth", out _));
             JsonElement responses = operation.GetProperty("responses");
+            foreach (JsonProperty response in responses.EnumerateObject())
+            {
+                AssertDescription(response.Value, id + " response " + response.Name);
+                if (response.Value.TryGetProperty("headers", out JsonElement headers))
+                {
+                    foreach (JsonProperty header in headers.EnumerateObject())
+                    {
+                        AssertDescription(header.Value, id + " response header " + header.Name);
+                    }
+                }
+            }
             Assert.Equal(statuses.Split(',').Order(), responses.EnumerateObject().Select(response => response.Name).Order());
             Assert.False(responses.GetProperty("401").TryGetProperty("content", out _));
             Assert.True(responses.GetProperty(method == "post" && id == "CreateReservation" ? "201" : "200").GetProperty("content").TryGetProperty("application/json", out _));
@@ -96,6 +119,9 @@ public static class OpenApiAssertions
             else
             {
                 Assert.True(responses.GetProperty("403").GetProperty("content").TryGetProperty("application/problem+json", out _));
+                string forbidden = responses.GetProperty("403").GetProperty("description").GetString()!;
+                Assert.Contains("no body", forbidden, StringComparison.OrdinalIgnoreCase);
+                Assert.Contains("browser", forbidden, StringComparison.OrdinalIgnoreCase);
             }
 
             foreach (JsonProperty response in responses.EnumerateObject().Where(response => response.Name is not ("200" or "201" or "401" or "403")))
@@ -110,6 +136,22 @@ public static class OpenApiAssertions
         }
 
         JsonElement schemas = root.GetProperty("components").GetProperty("schemas");
+        string[] describedModels = service switch
+        {
+            "Inventory" => ["EquipmentItem", "ProblemDetails"],
+            "Notifications" => ["InboxEntry", "ProblemDetails"],
+            _ => ["ReservationInput", "Reservation", "Availability", "ProblemDetails"]
+        };
+        foreach (string model in describedModels)
+        {
+            JsonElement schema = schemas.GetProperty(model);
+            AssertDescription(schema, model);
+            foreach (JsonProperty property in schema.GetProperty("properties").EnumerateObject())
+            {
+                AssertDescription(property.Value, model + "." + property.Name);
+            }
+        }
+
         JsonElement problem = schemas.GetProperty("ProblemDetails");
         Assert.True(problem.GetProperty("properties").TryGetProperty("code", out _));
         Assert.True(problem.GetProperty("properties").TryGetProperty("field", out _));
@@ -132,7 +174,19 @@ public static class OpenApiAssertions
         Assert.Equal(properties.Order(), schemas.GetProperty(shape).GetProperty("properties").EnumerateObject().Select(property => property.Name).Order());
         if (service == "Reservations")
         {
+            JsonElement reservationProperties = schemas.GetProperty("Reservation").GetProperty("properties");
+            foreach (string field in new[] { "cancelledAt", "cancellationEventId" })
+            {
+                Assert.Contains("null", reservationProperties.GetProperty(field).GetProperty("description").GetString(), StringComparison.OrdinalIgnoreCase);
+            }
+            Assert.Contains("advisory", schemas.GetProperty("Availability").GetProperty("properties").GetProperty("advisory").GetProperty("description").GetString(), StringComparison.OrdinalIgnoreCase);
             JsonElement input = schemas.GetProperty("ReservationInput");
+            foreach (string field in new[] { "startAt", "endAt" })
+            {
+                string description = input.GetProperty("properties").GetProperty(field).GetProperty("description").GetString()!;
+                Assert.Contains("offset", description, StringComparison.OrdinalIgnoreCase);
+                Assert.Contains("six", description, StringComparison.OrdinalIgnoreCase);
+            }
             Assert.Equal(InputFields, input.GetProperty("required").EnumerateArray().Select(value => value.GetString()).Order());
             Assert.False(input.GetProperty("additionalProperties").GetBoolean());
             JsonElement availability = paths.GetProperty("/api/availability").GetProperty("get");
@@ -174,5 +228,11 @@ public static class OpenApiAssertions
         Assert.Equal("oauth2", oauth.GetProperty("type").GetString());
         Assert.True(oauth.GetProperty("flows").GetProperty("authorizationCode").GetProperty("scopes").TryGetProperty("openid", out _));
         Assert.All(paths.EnumerateObject(), path => Assert.StartsWith("/api/", path.Name));
+    }
+
+    private static void AssertDescription(JsonElement element, string location)
+    {
+        Assert.True(element.TryGetProperty("description", out JsonElement description)
+            && !string.IsNullOrWhiteSpace(description.GetString()), $"Missing description for {location}.");
     }
 }

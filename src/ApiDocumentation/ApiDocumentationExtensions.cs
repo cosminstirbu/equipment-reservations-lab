@@ -23,7 +23,20 @@ public static class ApiDocumentationExtensions
             {
                 if (context.JsonTypeInfo.Type == typeof(ProblemDetails))
                 {
+                    schema.Description = "An HTTP error following Problem Details, with optional application-specific error information.";
                     schema.Properties ??= new Dictionary<string, IOpenApiSchema>();
+                    foreach ((string name, IOpenApiSchema property) in schema.Properties)
+                    {
+                        property.Description = name switch
+                        {
+                            "type" => "URI identifying the problem category; about:blank uses the HTTP status meaning.",
+                            "title" => "Short human-readable summary of the problem.",
+                            "status" => "HTTP status code associated with the problem.",
+                            "detail" => "Optional human-readable explanation specific to this occurrence.",
+                            "instance" => "Optional URI identifying this occurrence of the problem.",
+                            _ => property.Description
+                        };
+                    }
                     schema.Properties["code"] = new OpenApiSchema { Type = JsonSchemaType.String, Description = "Optional application error code; absent on some middleware responses." };
                     schema.Properties["field"] = new OpenApiSchema { Type = JsonSchemaType.String | JsonSchemaType.Null, Description = "Optional validation field; may be absent or null." };
                 }

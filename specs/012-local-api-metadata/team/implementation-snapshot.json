@@ -1,0 +1,16 @@
+{
+  "base": "4dd685c4e34288f94e932dcd49beb22eea965075",
+  "snapshot": "610090abe4fed9c1710b342499df20c4d3d3ad3da58d690fff52e75c712a65d3",
+  "files": {
+    "docs/engineering/openapi.md": "c2d71f16ce557af95516b1cdf01e9b92a543c7c0379446becc6a14ed35c460ad",
+    "src/ApiDocumentation/ApiDocumentationExtensions.cs": "25a8430ae41b455b4b677783866e459392257ec3d5de48b6cc246ffb443e9005",
+    "src/Inventory/EquipmentStore.cs": "5f72a7e2c032402e6aad93a3ab845c8964ed45d45cca7656790d6f71ce251173",
+    "src/Inventory/Program.cs": "a98e39b3a90b10de316c671675220aff27dd5fd2e8f685cfff7e3fb40e5e9f8b",
+    "src/Notifications/NotificationContracts.cs": "c45e4064df2a61ecf6fdb82ed69a536ed770c7c3898d750d570697da7cd02dbc",
+    "src/Notifications/Program.cs": "bc60ae65b313fb79b1c58f347dfac426b22772e43cc365dc8501d737f08da0d7",
+    "src/Reservations/ReservationContracts.cs": "9b61fc45f7b5e9f7b37d9418deb3cec75d295adb2a44c8054fdc318d499f64ca",
+    "src/Reservations/ReservationDocumentation.cs": "a4b6892fe631a130b5ae27d3334c5ddb53b24ef6c598ac5bef453b08ec23c05a",
+    "src/Reservations/ReservationEndpoints.cs": "15cc2238f2bd679f0dd7d20aac7e2353af1e369baac3eac27a60d7ba3e6b8bee",
+    "tests/TestSupport/OpenApiAssertions.cs": "d539027736a5e39c6ec08d334d6fd02e83e8c52cb1e27204f0100ae08e299d65"
+  }
+}

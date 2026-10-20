@@ -1,0 +1,74 @@
+{
+  "feature_directory": "specs/012-local-api-metadata",
+  "status": "complete",
+  "baseline_revision": "4dd685c4e34288f94e932dcd49beb22eea965075",
+  "preparation_round": 0,
+  "implementation_round": 0,
+  "limits": {
+    "preparation_repairs": 3,
+    "implementation_repairs": 3,
+    "no_progress_recurrences": 2
+  },
+  "required_checks": [
+    {
+      "command": "npm run check:openapi",
+      "status": "pass",
+      "revision": "610090abe4fed9c1710b342499df20c4d3d3ad3da58d690fff52e75c712a65d3"
+    },
+    {
+      "command": "npm run format-check",
+      "status": "pass",
+      "revision": "610090abe4fed9c1710b342499df20c4d3d3ad3da58d690fff52e75c712a65d3"
+    },
+    {
+      "command": "npm run lint",
+      "status": "pass",
+      "revision": "610090abe4fed9c1710b342499df20c4d3d3ad3da58d690fff52e75c712a65d3"
+    },
+    {
+      "command": "npm run check",
+      "status": "pass",
+      "revision": "610090abe4fed9c1710b342499df20c4d3d3ad3da58d690fff52e75c712a65d3"
+    }
+  ],
+  "acceptance_evidence": [
+    "implementation.md",
+    "final-checks.md",
+    "quality-review.md",
+    "security-review.md",
+    "convergence.md"
+  ],
+  "quality_review": {
+    "verdict": "pass",
+    "revision": "610090abe4fed9c1710b342499df20c4d3d3ad3da58d690fff52e75c712a65d3",
+    "report": "quality-review.md"
+  },
+  "security_review": {
+    "verdict": "pass",
+    "revision": "610090abe4fed9c1710b342499df20c4d3d3ad3da58d690fff52e75c712a65d3",
+    "report": "security-review.md"
+  },
+  "convergence": {
+    "verdict": "converged",
+    "revision": "610090abe4fed9c1710b342499df20c4d3d3ad3da58d690fff52e75c712a65d3",
+    "report": "convergence.md"
+  },
+  "human_acceptance_required": true,
+  "human_acceptance": {
+    "owner": "human owner",
+    "date": "2026-10-20",
+    "statement": "I approve the feature. Stage the corresponding files and give me a commit message.",
+    "scope": "012-local-api-metadata",
+    "reviewed_snapshot": "610090abe4fed9c1710b342499df20c4d3d3ad3da58d690fff52e75c712a65d3"
+  },
+  "pending_decisions": [],
+  "baseline_note": "Approved existing uncommitted docs/engineering/openapi.md guidance; unrelated docs/local-kubernetes* excluded.",
+  "preparation": {
+    "quality": "pass",
+    "security": "pass",
+    "analysis": "pass",
+    "revision": "base4dd685c + frozen012 preparation artifacts"
+  },
+  "tested_snapshot": "610090abe4fed9c1710b342499df20c4d3d3ad3da58d690fff52e75c712a65d3",
+  "completion_metadata": "Explicit human acceptance recorded 2026-10-20. Spec status and team state finalized through metadata-only edits; tasks complete and reviewed implementation hashes unchanged."
+}

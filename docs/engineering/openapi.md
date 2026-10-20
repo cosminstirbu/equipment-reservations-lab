@@ -33,6 +33,36 @@ Describe access requirements clearly; the API enforces them when a request execu
 Sources: [ASP.NET Core OpenAPI generation](https://learn.microsoft.com/en-us/aspnet/core/fundamentals/openapi/aspnetcore-openapi?view=aspnetcore-10.0)
 and [endpoint metadata](https://learn.microsoft.com/en-us/aspnet/core/fundamentals/openapi/include-metadata?view=aspnetcore-10.0).
 
+### Keep metadata with contracts and endpoints
+
+Prefer expressing as much OpenAPI information as supported directly on the C#
+request/response records and endpoint definitions. Keeping metadata beside its owner
+makes contract changes easier to discover and avoids parallel descriptions that drift.
+
+- Put property descriptions on contract properties with `DescriptionAttribute`; use
+  `[property: Description("...")]` for positional record parameters. Use supported
+  serialization and validation metadata where it accurately describes the wire contract.
+- Put operation IDs, summaries, descriptions, tags, parameter metadata, request media
+  types, and response metadata on the endpoint definition using supported attributes,
+  endpoint extension methods, and typed results where appropriate.
+- When endpoint metadata cannot express a detail, prefer attaching
+  `AddOpenApiOperationTransformer` directly to that endpoint. Examples include response
+  headers and middleware-produced response variants. Avoid document-wide dispatch by
+  operation ID when the customization belongs to a known endpoint.
+- Retain schema or document transformers for information that cannot be expressed
+  accurately at those locations, such as schema corrections for manually validated
+  inputs, dynamic extension fields, or shared document/security configuration. Keep
+  their scope narrow and record the inference gap in the feature plan or review record.
+  Avoid overriding descriptions already owned by the contracts or endpoints.
+
+Apply the existing wire-behavior requirements when moving metadata: changing nullable
+types, validation attributes, or parameter binding can change request handling. Prefer
+preserving those mechanisms and correcting schema inference where necessary. A metadata
+relocation should retain existing observable contract and behavior test expectations;
+follow the [testing guide](testing.md#test-design-and-review) for any coverage changes.
+
+Source: [ASP.NET Core transformers, including endpoint-specific operation transformers](https://learn.microsoft.com/en-us/aspnet/core/fundamentals/openapi/customize-openapi?view=aspnetcore-10.0).
+
 ## Interactive development access
 
 Required: each service must serve its document at runtime and provide Scalar as its

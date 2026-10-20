@@ -1,9 +1,14 @@
+using System.ComponentModel;
 using Npgsql;
 using Persistence;
 
 namespace Inventory;
 
-public sealed record EquipmentItem(string Id, string Name, bool Operational);
+[Description("An equipment catalog item and its current operational state.")]
+public sealed record EquipmentItem(
+    [property: Description("Identifier used to select this equipment in API requests.")] string Id,
+    [property: Description("Display name of the equipment.")] string Name,
+    [property: Description("Whether the equipment is operational and eligible for new reservations.")] bool Operational);
 
 public sealed class EquipmentStore(NpgsqlDataSource database)
 {

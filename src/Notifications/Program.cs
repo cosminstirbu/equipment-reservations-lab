@@ -66,7 +66,16 @@ app.MapGet("/api/notifications", async (HttpContext context, ReservationInbox in
         NotificationsLog.Delivery(logger, "list", outcome);
     }
 }).RequireAuthorization(IdentityAuthentication.Human)
-    .DescribeBusinessOperation<InboxEntry[]>("ListNotifications", "List my notifications", "Notifications", "Validated human identity; no additional role required.", 200, 400, 503);
+    .DescribeBusinessOperation<InboxEntry[]>("ListNotifications", "List my notifications", "Notifications", "Returns only the authenticated owner's reservation notifications, most recent source event first. Requires a validated human identity; no additional role required.", 200, 400, 503)
+    .AddOpenApiOperationTransformer((operation, _, _) =>
+    {
+        operation.Responses!["200"].Description = "The current owner's inbox entries; the array may be empty.";
+        operation.Responses["400"].Description = "Caller-supplied ownership fields are rejected with Problem Details.";
+        operation.Responses["401"].Description = "Authentication is missing or invalid; the response has no body.";
+        operation.Responses["403"].Description = "The identity is not permitted to read the inbox; the response has no body.";
+        operation.Responses["503"].Description = "Notification storage is unavailable; returns Problem Details.";
+        return Task.CompletedTask;
+    });
 
 app.Run();
 
