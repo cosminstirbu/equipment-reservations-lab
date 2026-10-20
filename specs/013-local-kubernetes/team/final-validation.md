@@ -1,6 +1,8 @@
 # Reviewable implementation and remaining acceptance
 
-Branch: `012-local-kubernetes`.
+Branch: `013-local-kubernetes`.
+
+Renumbered from 012 after rebasing onto local main `d168646` (which contains fetched origin/main `4dd685c`). Historical review snapshots below retain their original identifiers and refer to the pre-rebase revision. Post-rebase checks and hosted PR validation are recorded in `pr-validation.md`. Owner authorized commit, push and PR creation for validation testing; merge and publication remain separate.
 Worktree: `/private/tmp/equipment-reservations-local-kubernetes`.
 Main baseline: `4dd685c4e34288f94e932dcd49beb22eea965075`.
 Frozen snapshot: `implementation-012-02a`, 117 files, SHA256
