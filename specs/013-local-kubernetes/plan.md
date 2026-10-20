@@ -1,6 +1,6 @@
 # Implementation Plan: Local Kubernetes and GitOps
 
-**Branch**: `012-local-kubernetes` | **Date**: 2026-10-20 | **Spec**: [spec.md](spec.md)
+**Branch**: `013-local-kubernetes` | **Date**: 2026-10-20 | **Spec**: [spec.md](spec.md)
 
 ## Summary
 

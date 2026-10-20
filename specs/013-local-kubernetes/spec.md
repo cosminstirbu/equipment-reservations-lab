@@ -1,6 +1,6 @@
 # Feature Specification: Local Kubernetes and GitOps
 
-**Feature Branch**: `012-local-kubernetes`
+**Feature Branch**: `013-local-kubernetes`
 
 **Created**: 2026-10-20
 

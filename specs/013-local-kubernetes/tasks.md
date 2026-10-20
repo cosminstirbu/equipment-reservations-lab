@@ -8,9 +8,9 @@ merely because a file exists. Coordinator records independent gates and evidence
 
 ## Phase 1: Preparation
 
-- [x] T001 Record exact baseline/host compatibility evidence and immutable image/action lock in specs/012-local-kubernetes/research.md (FR-001, FR-011); prove kind, host ingress TLS and pod canonical-host TLS without VM/trust changes.
+- [x] T001 Record exact baseline/host compatibility evidence and immutable image/action lock in specs/013-local-kubernetes/research.md (FR-001, FR-011); prove kind, host ingress TLS and pod canonical-host TLS without VM/trust changes.
 - [x] T002 Materialize scoped owner-approved testing/OpenAPI guide amendments in docs/engineering/testing.md and docs/engineering/openapi.md; obtain independent exact-diff review before dependent code (FR-005, FR-017).
-- [x] T003 Resolve exact deployment configuration/Dashboard option names and record independent design/security/checklist/analyze gates in specs/012-local-kubernetes/team/ (FR-001–FR-018); no dependent implementation until preparation verdicts pass.
+- [x] T003 Resolve exact deployment configuration/Dashboard option names and record independent design/security/checklist/analyze gates in specs/013-local-kubernetes/team/ (FR-001–FR-018); no dependent implementation until preparation verdicts pass.
 
 ## Phase 2: Foundation
 
@@ -34,7 +34,7 @@ failure/recovery, exact issuer TLS and no unrelated workload loss (AC-1.1–AC-1
 - [x] T015 [US1] Create shared dependencies/services/bootstrap Jobs and resource/probe budgets in deploy/base/; reuse production provisioners/broker definition generation, four database scopes, wave ordering and bounded Job reruns/failure visibility (FR-001, FR-006, FR-014).
 - [ ] T016 [US1] Create deploy/environments/local/ configuration with local DNS/trust/storage bindings and actual verified GHCR indexes; clear actionable prerequisite if initial release unavailable, no fabricated digests or local overrides (FR-001, FR-003–FR-006).
 - [x] T017 [US1] Add failing separately invoked deployed HTTP smoke behaviors in scripts/deployment-smoke.test.mjs then implement scripts/deployment-smoke.mjs retaining real deployed identity/APIs/database/broker and bounded notification observations (FR-002, FR-006, FR-017).
-- [ ] T018 [US1] Verify all service documents/Scalar callbacks/PKCE permitted write and denied operation, login/logout, dependency readiness/liveness recovery and complete-system resource measurements; record exact revision in specs/012-local-kubernetes/team/ (AC-1.1–AC-1.4).
+- [ ] T018 [US1] Verify all service documents/Scalar callbacks/PKCE permitted write and denied operation, login/logout, dependency readiness/liveness recovery and complete-system resource measurements; record exact revision in specs/013-local-kubernetes/team/ (AC-1.1–AC-1.4).
 
 ## Phase 4: US2 — Persistence and safe recovery (P1)
 
@@ -46,8 +46,8 @@ stop safely; reset/teardown affect only explicitly requested environment (AC-2.1
 - [x] T021 [US2] Configure local static Retain PVs/node affinity and explicit PVC binding in deploy/platform/ and deploy/environments/local/; protect PV/PVC Prune=false,Delete=false and platform namespace ownership (FR-007, FR-009).
 - [x] T022 [US2] Add failing reconciliation/lifecycle destruction-scoping tests in scripts/local-kubernetes.test.mjs then implement distinct stop/reset/teardown guarded commands in scripts/local-kubernetes.mjs (FR-009, FR-010).
 - [x] T023 [US2] Add Argo Application/AppProject ownership, no cascading finalizer, constrained repository/destination and self-heal configuration in deploy/argocd/local.yaml; ensure stop/reset cannot race reconciliation (FR-009, FR-010, FR-013).
-- [ ] T024 [US2] Execute repeat setup, pod replacement, normal update, missing bundle and deletion/prune safety scenarios in scripts/deployment-smoke.mjs; record state/no duplicate/password-retention evidence in specs/012-local-kubernetes/team/ (AC-2.1–AC-2.3).
-- [ ] T025 [US2] Record owner-executed VM restart persistence and explicit disposable reset/teardown then fresh setup in specs/012-local-kubernetes/team/; never modify/restart existing VM automatically (AC-2.1, AC-2.4).
+- [ ] T024 [US2] Execute repeat setup, pod replacement, normal update, missing bundle and deletion/prune safety scenarios in scripts/deployment-smoke.mjs; record state/no duplicate/password-retention evidence in specs/013-local-kubernetes/team/ (AC-2.1–AC-2.3).
+- [ ] T025 [US2] Record owner-executed VM restart persistence and explicit disposable reset/teardown then fresh setup in specs/013-local-kubernetes/team/; never modify/restart existing VM automatically (AC-2.1, AC-2.4).
 
 ## Phase 5: US3 — Reviewed immutable release (P2)
 
@@ -58,8 +58,8 @@ reviewable narrow promotion, no lost concurrent edits or deployment-only loop (A
 - [x] T027 [US3] Implement manifest/schema/image-index validation and public promotion logic in scripts/deployment-validation.mjs and scripts/promote-images.mjs; update only local digests/provenance, reject changed promotion head and handle existing PR (FR-011–FR-013).
 - [x] T028 [US3] Add fork-safe least-privilege pinned-action PR workflow including existing required checks and ephemeral kind deployment smoke in .github/workflows/validate.yaml; no publish credentials or pull_request_target execution (FR-011, FR-017).
 - [x] T029 [US3] Add tested main application-change multiarch GHCR publication and separate minimal-permission promotion job in .github/workflows/release.yaml; serialize/CAS updates and exclude deploy/docs-only changes (FR-012, FR-013).
-- [x] T030 [US3] Document first-publication/package/PR permission and account settings requirements in specs/012-local-kubernetes/quickstart.md; no settings change/push/publication implied (FR-018).
-- [ ] T031 [US3] With separate explicit authorization, verify real published indexes, reviewed digest promotion, merged Argo adoption/drift correction and no deploy-only publication loop; retain exact source/digest/runner evidence in specs/012-local-kubernetes/team/ (AC-3.1–AC-3.3).
+- [x] T030 [US3] Document first-publication/package/PR permission and account settings requirements in specs/013-local-kubernetes/quickstart.md; no settings change/push/publication implied (FR-018).
+- [ ] T031 [US3] With separate explicit authorization, verify real published indexes, reviewed digest promotion, merged Argo adoption/drift correction and no deploy-only publication loop; retain exact source/digest/runner evidence in specs/013-local-kubernetes/team/ (AC-3.1–AC-3.3).
 
 ## Phase 6: US4 — Secure diagnosis and Aspire (P2)
 
@@ -68,16 +68,16 @@ existing Aspire login/docs/telemetry work with new identity database (AC-4.1–A
 
 - [x] T032 [US4] Add failing telemetry authentication/privacy/limits deployment checks in scripts/deployment-smoke.mjs and focused existing tests/Integration.Tests where production registration changes (FR-015).
 - [x] T033 [US4] Configure standalone Dashboard BrowserToken, distinct OTLP/API keys, exact bounded count/memory/ephemeral-disk limits and production OTLP exporters under deploy/base/ and deploy/environments/local/ (FR-015).
-- [x] T034 [US4] Implement loopback-only authenticated Argo/Dashboard access in scripts/local-kubernetes.mjs, suppress token-bearing startup URLs and document private credential entry in specs/012-local-kubernetes/quickstart.md (FR-014, FR-015, FR-018).
-- [ ] T035 [US4] Inspect actual successful/failed SQL, broker, identity/bootstrap traces/logs/metrics, rejection of unauthenticated OTLP/UI access and resource limits in specs/012-local-kubernetes/team/; no forbidden fields or high-cardinality metrics (AC-4.1, AC-4.2).
-- [x] T036 [US4] Manually validate isolated Aspire PostgreSQL-Keycloak startup/login/docs/telemetry and old-volume retention through project-local Aspire lifecycle skills; record evidence in specs/012-local-kubernetes/team/ (AC-4.3).
+- [x] T034 [US4] Implement loopback-only authenticated Argo/Dashboard access in scripts/local-kubernetes.mjs, suppress token-bearing startup URLs and document private credential entry in specs/013-local-kubernetes/quickstart.md (FR-014, FR-015, FR-018).
+- [ ] T035 [US4] Inspect actual successful/failed SQL, broker, identity/bootstrap traces/logs/metrics, rejection of unauthenticated OTLP/UI access and resource limits in specs/013-local-kubernetes/team/; no forbidden fields or high-cardinality metrics (AC-4.1, AC-4.2).
+- [x] T036 [US4] Manually validate isolated Aspire PostgreSQL-Keycloak startup/login/docs/telemetry and old-volume retention through project-local Aspire lifecycle skills; record evidence in specs/013-local-kubernetes/team/ (AC-4.3).
 
 ## Phase 7: Handoff and cross-cutting verification
 
-- [x] T037 Complete executable operational quickstart/failure diagnosis/state/rollback/reset/trust and deferred Azure documentation in specs/012-local-kubernetes/quickstart.md and README.md (FR-018).
-- [ ] T038 Run npm run format-check, npm run lint, npm run check with Podman and all new manifest/deployed checks; inspect all applicable standards and record revision/environment/exit/evidence in specs/012-local-kubernetes/team/ (SC-007).
-- [ ] T039 Obtain independent final quality/security verdicts and run convergence after implementation; repair through targeted tasks while preserving IDs/history in specs/012-local-kubernetes/tasks.md and team/ (SC-007).
-- [ ] T040 Record explicit human acceptance and reconcile spec/tasks/team completion metadata under protocol; pending external/local checks remain pending in specs/012-local-kubernetes/spec.md and team/ (SC-007).
+- [x] T037 Complete executable operational quickstart/failure diagnosis/state/rollback/reset/trust and deferred Azure documentation in specs/013-local-kubernetes/quickstart.md and README.md (FR-018).
+- [ ] T038 Run npm run format-check, npm run lint, npm run check with Podman and all new manifest/deployed checks; inspect all applicable standards and record revision/environment/exit/evidence in specs/013-local-kubernetes/team/ (SC-007).
+- [ ] T039 Obtain independent final quality/security verdicts and run convergence after implementation; repair through targeted tasks while preserving IDs/history in specs/013-local-kubernetes/tasks.md and team/ (SC-007).
+- [ ] T040 Record explicit human acceptance and reconcile spec/tasks/team completion metadata under protocol; pending external/local checks remain pending in specs/013-local-kubernetes/spec.md and team/ (SC-007).
 
 ## Dependencies and execution strategy
 
