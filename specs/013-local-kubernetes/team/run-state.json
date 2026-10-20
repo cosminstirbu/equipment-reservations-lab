@@ -3,7 +3,7 @@
   "status": "awaiting_external_and_runtime_acceptance",
   "baseline_revision": "4dd685c4e34288f94e932dcd49beb22eea965075",
   "preparation_round": 2,
-  "implementation_round": 3,
+  "implementation_round": 4,
   "limits": {
     "preparation_repairs": 3,
     "implementation_repairs": 3,
@@ -204,7 +204,7 @@
     "22": "lifecycle-evidence.md focused17tests, scoped ESLint/format, offline renders; actual runtime pending",
     "23": "lifecycle-evidence.md focused17tests, scoped ESLint/format, offline renders; actual runtime pending"
   },
-  "author_check_status": "Final retained source verified against117snapshot hashes; required available checks pass; independent implemented-code quality/security pass; full acceptance pending",
+  "author_check_status": "Round4 six-source hashes independently reviewed and verified unchanged; format/lint pass, full application564backend64frontend24tooling pass, all13deployment modules and final14targeted CI cases pass. Hosted bootstrap/PG/AMQP causes and full-feature gates remain pending.",
   "manual_aspire_evidence": {
     "browser": "27/27 pass",
     "recovery": "owned DB outage API/readiness503, alive200, restoredAPI200",
@@ -234,7 +234,7 @@
   ],
   "frozen_snapshot": "implementation-012-02a",
   "frozen_digest": "e95304733cc8b247af38ec077a72f7a9b8d9bcf496b5e1f277af2dd12098f29a",
-  "implementation_repair_round": 3,
+  "implementation_repair_round": 4,
   "check_results_01": [
     {
       "command": "npm run format-check",
@@ -491,5 +491,49 @@
     },
     "remaining": "Unknown hosted bootstrap Job failure needs next bounded status capture. No speculative fix or full feature acceptance claimed.",
     "report": "ci-validation-03.md"
+  },
+  "implementation_repair_limit_override": {
+    "limit": 4,
+    "approved_by": "human owner",
+    "date": "2026-10-20",
+    "scope": "One additional repair round covering the newly observed Docker bind-error variant and concrete bootstrap failure identified by the diagnostic run; regression tests, independent review and validation retained.",
+    "approval": "Approve one additional repair round",
+    "original_default_limit": 3
+  },
+  "ci_round_04": {
+    "status": "locally_validated_hosted_validation_required",
+    "baseline": "ca766491c2937624d40a98350ac0ee201b22b6de",
+    "failed_hosted_run": "https://github.com/cosminstirbu/equipment-reservations-lab/actions/runs/39420693665",
+    "observations": {
+      "quality": "525/555 passed. 27 IdentityBootstrap cases blocked by new initial holder TCP bind-error variant; two separate IdentityAccess migration connection timeouts and one Broker post-restart AMQP handshake/reset failure remain distinct.",
+      "deployment": "Database bootstrap Job c7b985ad83f6fb4e failed BackoffLimitExceeded with three exit-code-1 Pods. This now establishes the failing CLI, not its exception/root cause."
+    },
+    "work": "Narrow Docker bind classifier extension and actual production-image bootstrap contract implemented; exact database-only private failure-type diagnostics added. No speculative Npgsql/AMQP retries, timeout or scheduling changes.",
+    "snapshot": "ci-repair-snapshot-04.json",
+    "reviews": {
+      "quality": "pass; ci-quality-review-04.md",
+      "security": "pass; ci-security-review-04.md",
+      "scope": "Final six source hashes, including exact equipment namespace correction. Hosted recovery is not established."
+    },
+    "checks": {
+      "check": "pass:564 backend,64 frontend,24 tooling;zero failures/skips;3m14.690s backend",
+      "test:deployment": "pass:all13 serial modules; final CI diagnostic/render contracts separately14/14 after namespace repair",
+      "final_format_lint_ci": "pass:format-check,lint zero warnings/errors,targeted14/14 zero failures/skips",
+      "git_diff_check": "pass"
+    },
+    "reports": [
+      "ci-validation-04.md",
+      "ci-container-start-repair.md",
+      "ci-db-bootstrap-repair-04.md",
+      "ci-db-diagnostic-04.md",
+      "ci-convergence-04.md"
+    ],
+    "remaining": [
+      "Hosted Docker bind-variant recovery",
+      "Hosted database-bootstrap exception/root cause",
+      "Separate two PostgreSQL first-connection timeouts",
+      "Separate post-restart AMQP handshake reset",
+      "Existing ten full-feature runtime/release/acceptance tasks"
+    ]
   }
 }

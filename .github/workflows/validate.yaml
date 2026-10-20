@@ -56,7 +56,7 @@ jobs:
       - name: Deployment tool and fixture contract
         run: npm run test:deployment -- scripts/deployment-ci-contract.test.mjs
       - name: Real provider regressions (serialized before application kind)
-        run: npm run test:deployment -- scripts/deployment-broker-retention.test.mjs scripts/deployment-config-rollout.test.mjs scripts/deployment-ingress.test.mjs scripts/deployment-routing.test.mjs
+        run: npm run test:deployment -- scripts/deployment-broker-retention.test.mjs scripts/deployment-config-rollout.test.mjs scripts/deployment-database-bootstrap.test.mjs scripts/deployment-ingress.test.mjs scripts/deployment-routing.test.mjs
         env:
           CONTAINER_RUNTIME: docker
       - name: Ephemeral isolated deployment (never publishes)

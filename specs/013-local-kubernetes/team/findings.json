@@ -165,6 +165,65 @@
       "closure_snapshot": "implementation-012-02a",
       "closure_evidence": "implementation-quality-review-02a.md",
       "reviewer_report_alias": "ENV-CHECK001"
+    },
+    {
+      "id": "CI04-DB-001",
+      "category": "code",
+      "severity": "medium",
+      "blocking": true,
+      "owner": "deployment",
+      "status": "needs_information",
+      "description": "Hosted database-bootstrap Job exits 1; actual production-image local reproduction passes, underlying hosted exception remains unknown.",
+      "evidence": "Hosted run 39420693665, ca76649; round4 local application check564/564; database image fixture1/1 with two successful CLI invocations. Local pass does not close hosted failure.",
+      "remediation": "Obtain bounded actual hosted failure evidence before proposing a behavioral change; preserve existing budgets and acceptance assertions."
+    },
+    {
+      "id": "CI04-PG-001",
+      "category": "code",
+      "severity": "medium",
+      "blocking": true,
+      "owner": "implementation",
+      "status": "needs_information",
+      "description": "Two hosted IdentityAccess cases time out on first Npgsql connection during Inventory migrations; local final full suite passes, cause remains unproven.",
+      "evidence": "Hosted run 39420693665, ca76649; round4 local application check564/564; database image fixture1/1 with two successful CLI invocations. Local pass does not close hosted failure.",
+      "remediation": "Obtain bounded actual hosted failure evidence before proposing a behavioral change; preserve existing budgets and acceptance assertions."
+    },
+    {
+      "id": "CI04-AMQP-001",
+      "category": "code",
+      "severity": "medium",
+      "blocking": true,
+      "owner": "implementation",
+      "status": "needs_information",
+      "description": "Hosted broker durable-restart case passes TCP readiness then AMQP handshake resets; local final full suite passes, cause remains unproven.",
+      "evidence": "Hosted run 39420693665, ca76649; round4 local application check564/564; database image fixture1/1 with two successful CLI invocations. Local pass does not close hosted failure.",
+      "remediation": "Obtain bounded actual hosted failure evidence before proposing a behavioral change; preserve existing budgets and acceptance assertions."
+    },
+    {
+      "id": "Q-CI04-001",
+      "category": "code",
+      "severity": "low",
+      "blocking": true,
+      "owner": "deployment",
+      "status": "closed",
+      "description": "Database-only private-log diagnostic initially omitted the approved exact equipment namespace restriction.",
+      "evidence": "Independent round4 review of initial diagnostic source2634b87c; valid other namespace with exact hashed Job name triggered private log query.",
+      "remediation": "Require exact equipment namespace and exact hashed database Job name; regression rejects other valid namespace.",
+      "closure_evidence": "Independent final round4 quality/security reports; intended RED12/13 then GREEN13/13.",
+      "closure_snapshot": "ci-repair-013-04"
+    },
+    {
+      "id": "SEC-CI-004",
+      "category": "security",
+      "severity": "low",
+      "blocking": true,
+      "owner": "deployment",
+      "status": "closed",
+      "description": "Database-only private-log diagnostic initially omitted the approved exact equipment namespace restriction.",
+      "evidence": "Independent round4 review of initial diagnostic source2634b87c; valid other namespace with exact hashed Job name triggered private log query.",
+      "remediation": "Require exact equipment namespace and exact hashed database Job name; regression rejects other valid namespace.",
+      "closure_evidence": "Independent final round4 quality/security reports; intended RED12/13 then GREEN13/13.",
+      "closure_snapshot": "ci-repair-013-04"
     }
   ]
 }

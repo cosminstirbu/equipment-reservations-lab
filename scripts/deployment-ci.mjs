@@ -440,6 +440,60 @@ function diagnosticEnum(value, allowed) {
   return allowed.has(value) ? value : 'Other';
 }
 
+const bootstrapFailureTypes = new Set([
+  'NpgsqlException',
+  'PostgresException',
+  'InvalidOperationException',
+  'ArgumentException',
+  'OperationCanceledException',
+  'TimeoutException',
+  'IOException',
+  'UnauthorizedAccessException',
+  'FormatException',
+  'TypeInitializationException',
+]);
+
+function databaseFailureType(name, namespace, common, run) {
+  try {
+    const raw = run(
+      'kubectl',
+      [
+        ...common.filter(
+          (argument) => !argument.startsWith('--request-timeout='),
+        ),
+        '--request-timeout=5s',
+        '--namespace',
+        namespace,
+        'logs',
+        `job/${name}`,
+        '--container=database-bootstrap',
+        '--tail=100',
+        '--limit-bytes=16384',
+        '--pod-running-timeout=2s',
+      ],
+      { timeout: 6000, maxBuffer: 16384 },
+    );
+    if (typeof raw !== 'string' || Buffer.byteLength(raw) > 16384)
+      throw new Error('Private diagnostic response exceeds bound.');
+    const matched = raw
+      .split(/\r?\n/)
+      .map(
+        (line) =>
+          line
+            .trim()
+            .match(
+              /^Database provisioning failed \(([A-Za-z][A-Za-z0-9.]*)\)$/,
+            )?.[1],
+      )
+      .filter(Boolean);
+    if (matched.length === 1 && bootstrapFailureTypes.has(matched[0]))
+      return { bootstrapFailureType: matched[0] };
+  } catch {
+    // Private log/query errors must neither escape nor replace Job status evidence.
+  }
+  return { bootstrapFailureTypeUnavailable: true };
+}
+
 function jobWaitFailure(resource, common, run) {
   const namespace = resource.metadata.namespace ?? 'equipment';
   const name = resource.metadata.name;
@@ -517,6 +571,11 @@ function jobWaitFailure(resource, common, run) {
   } catch {
     status = { diagnosticsUnavailable: true };
   }
+  if (
+    namespace === 'equipment' &&
+    /^database-bootstrap-[a-f0-9]{16}$/.test(name)
+  )
+    Object.assign(status, databaseFailureType(name, namespace, common, run));
   return new Error(`CI wait failed for ${stage}. ${JSON.stringify(status)}`);
 }
 
