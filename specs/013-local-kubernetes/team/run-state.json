@@ -1,6 +1,6 @@
 {
   "feature_directory": "specs/013-local-kubernetes",
-  "status": "awaiting_external_and_runtime_acceptance",
+  "status": "needs_intervention",
   "baseline_revision": "4dd685c4e34288f94e932dcd49beb22eea965075",
   "preparation_round": 2,
   "implementation_round": 4,
@@ -256,7 +256,8 @@
     }
   ],
   "approved_exceptions": [
-    "EX-012-001"
+    "EX-012-001",
+    "EX-013-002"
   ],
   "historical_count_erratum": "requirements-quality-review.md reported16AC; actual numbered scenarios14. Historical report preserved; convergence uses14.",
   "original_checkout": "Owner edits remain isolated and untouched; additional endpoint/guide changes appeared in original checkout during implementation and were not imported.",
@@ -501,7 +502,7 @@
     "original_default_limit": 3
   },
   "ci_round_04": {
-    "status": "locally_validated_hosted_validation_required",
+    "status": "hosted_validation_failed_repair_budget_exhausted",
     "baseline": "ca766491c2937624d40a98350ac0ee201b22b6de",
     "failed_hosted_run": "https://github.com/cosminstirbu/equipment-reservations-lab/actions/runs/39420693665",
     "observations": {
@@ -529,11 +530,27 @@
       "ci-convergence-04.md"
     ],
     "remaining": [
-      "Hosted Docker bind-variant recovery",
-      "Hosted database-bootstrap exception/root cause",
-      "Separate two PostgreSQL first-connection timeouts",
-      "Separate post-restart AMQP handshake reset",
-      "Existing ten full-feature runtime/release/acceptance tasks"
-    ]
+      "Kubernetes bootstrap NpgsqlException inner cause/phase",
+      "IdentityAccess503 token/Inventory boundary failure or timeout",
+      "Full-feature existing ten runtime/release/acceptance tasks"
+    ],
+    "commit": "b22d1317167b7343f59f343c77975994a25a0ab8",
+    "hosted_run": "https://github.com/cosminstirbu/equipment-reservations-lab/actions/runs/39425930936",
+    "hosted_result": {
+      "quality": "562/564 passed,2failed,0skipped. Both new IdentityAccess HTTP availability assertions503 expected200 after setup. Previous Docker bind/listen, PG setup timeout and AMQP reset signatures absent in this run; not permanent closure.",
+      "deployment": "Real serialized provider regressions including actual bootstrap Docker image passed; both standalone CLI invocations exit0. In kind, database-bootstrap-dd12203655c8834a failed with three exit1 Pods/BackoffLimitExceeded. Private diagnostic projected allowlisted NpgsqlException; inner connection cause not established.",
+      "cleanup": "Hosted disposable cluster cleanup completed; no merge/publication/host changes."
+    },
+    "next_decision": "Owner approval required for an additional bounded repair round under docs/agent-team/protocol.md bounded execution; default3 overridden only to4. Proposed safe phase/inner-cause outcome diagnostics before behavior changes; keep budgets/scheduling/assertions."
+  },
+  "temporary_deployment_validation": {
+    "status": "owner_disabled_pending_reenable",
+    "exception": "EX-013-002",
+    "scope": "Validate deployment job only; quality and release checks remain enabled.",
+    "restoration": "Remove constant-false deployment job guard and comment after exploratory testing.",
+    "quality": "Latest actual hosted runb22d131:562/564 pass,two503failures; not waived.",
+    "authorization": "Explicit owner request2026-10-20; no automatic merge/publication performed.",
+    "checks": "format-check pass;lint pass0warnings0errors;36 workflow/promotion/orchestration contracts pass0skip;gitdiffcheck pass",
+    "reviews": "Independentquality/securitypass atworkflowhashc5824f13dbbe0d18c37c7bece74d3ea639a39e42527a3f395bde06d9861fea6c; temporary-deployment-review.md"
   }
 }

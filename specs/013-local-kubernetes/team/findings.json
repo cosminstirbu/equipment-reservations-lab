@@ -173,8 +173,8 @@
       "blocking": true,
       "owner": "deployment",
       "status": "needs_information",
-      "description": "Hosted database-bootstrap Job exits 1; actual production-image local reproduction passes, underlying hosted exception remains unknown.",
-      "evidence": "Hosted run 39420693665, ca76649; round4 local application check564/564; database image fixture1/1 with two successful CLI invocations. Local pass does not close hosted failure.",
+      "description": "Kubernetes database-bootstrap Job fails with NpgsqlException despite same-image standalone Docker success.",
+      "evidence": "Hosted run39425930936 atb22d131: actual standalone Dockerbootstrap2exit0;kindJobdd12203655c8834a threeexit1Pods; exact private projection NpgsqlException. Root/inner cause unproven.",
       "remediation": "Obtain bounded actual hosted failure evidence before proposing a behavioral change; preserve existing budgets and acceptance assertions."
     },
     {
@@ -186,7 +186,8 @@
       "status": "needs_information",
       "description": "Two hosted IdentityAccess cases time out on first Npgsql connection during Inventory migrations; local final full suite passes, cause remains unproven.",
       "evidence": "Hosted run 39420693665, ca76649; round4 local application check564/564; database image fixture1/1 with two successful CLI invocations. Local pass does not close hosted failure.",
-      "remediation": "Obtain bounded actual hosted failure evidence before proposing a behavioral change; preserve existing budgets and acceptance assertions."
+      "remediation": "Obtain bounded actual hosted failure evidence before proposing a behavioral change; preserve existing budgets and acceptance assertions.",
+      "latest_observation": "Previous signature absent in run39425930936; does not prove permanent closure."
     },
     {
       "id": "CI04-AMQP-001",
@@ -197,7 +198,8 @@
       "status": "needs_information",
       "description": "Hosted broker durable-restart case passes TCP readiness then AMQP handshake resets; local final full suite passes, cause remains unproven.",
       "evidence": "Hosted run 39420693665, ca76649; round4 local application check564/564; database image fixture1/1 with two successful CLI invocations. Local pass does not close hosted failure.",
-      "remediation": "Obtain bounded actual hosted failure evidence before proposing a behavioral change; preserve existing budgets and acceptance assertions."
+      "remediation": "Obtain bounded actual hosted failure evidence before proposing a behavioral change; preserve existing budgets and acceptance assertions.",
+      "latest_observation": "Previous signature absent in run39425930936; does not prove permanent closure."
     },
     {
       "id": "Q-CI04-001",
@@ -224,6 +226,17 @@
       "remediation": "Require exact equipment namespace and exact hashed database Job name; regression rejects other valid namespace.",
       "closure_evidence": "Independent final round4 quality/security reports; intended RED12/13 then GREEN13/13.",
       "closure_snapshot": "ci-repair-013-04"
+    },
+    {
+      "id": "CI04-HTTP-001",
+      "category": "code",
+      "severity": "medium",
+      "blocking": true,
+      "owner": "implementation",
+      "status": "needs_information",
+      "description": "Two hosted IdentityAccess availability HTTP cases return503 expected200 after setup. In-process token and Inventory boundaries use existing2s/3s budgets; logs do not identify failing phase/outcome.",
+      "evidence": "Run39425930936 atb22d131; ConcurrentReadsAcquireOneServiceTokenAndNeverForwardBrowserAuthority line34 and ConcurrentInitialReadsUseSingleFlightAcquisition line69;562/564pass0skip.",
+      "remediation": "Bounded secret-free per-request boundary phase/outcome timings and existing production telemetry; no speculative retry/timeout/parallelism changes."
     }
   ]
 }
