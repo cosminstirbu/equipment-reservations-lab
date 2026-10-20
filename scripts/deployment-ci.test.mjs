@@ -1,3 +1,4 @@
+import { Buffer } from 'node:buffer';
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import {
@@ -200,4 +201,201 @@ test('invalid committed source is rejected before CI credential generation or ex
   } finally {
     rmSync(directory, { recursive: true, force: true });
   }
+});
+
+function failedJobFixture(t, diagnosticResponse) {
+  const calls = [];
+  let directory;
+  const name = `database-bootstrap-${'a'.repeat(16)}`;
+  const run = (command, args, options = {}) => {
+    calls.push({ command, args, options });
+    if (command === 'kind' && args[0] === 'create') {
+      const path = args[args.indexOf('--kubeconfig') + 1];
+      writeFileSync(path, 'test-kubeconfig', { mode: 0o600 });
+    }
+    if (command === 'kubectl' && args.includes('wait'))
+      throw new Error('provider-private-password sentinel');
+    if (command === 'kubectl' && args.includes('get'))
+      return diagnosticResponse(args);
+    return '';
+  };
+  t.after(() => {
+    if (directory) rmSync(directory, { recursive: true, force: true });
+  });
+  return {
+    calls,
+    name,
+    invoke: () =>
+      createEphemeralCluster({
+        root: process.cwd(),
+        run,
+        release: { tags: [] },
+        fixture: (settings) => {
+          directory = settings.directory;
+          return {
+            state: directory,
+            ca: 'public-ca',
+            waves: [
+              {
+                manifests: 'private-wave.json',
+                resources: [
+                  { kind: 'Job', metadata: { namespace: 'equipment', name } },
+                ],
+              },
+            ],
+          };
+        },
+      }),
+  };
+}
+
+test('failed CI Job wait identifies exact public stage and emits only bounded allowlisted status fields', (t) => {
+  const fixture = failedJobFixture(t, (args) =>
+    JSON.stringify(
+      args.includes(`job/${fixture.name}`)
+        ? {
+            status: {
+              conditions: [
+                {
+                  type: 'Failed',
+                  status: 'True',
+                  reason: 'BackoffLimitExceeded',
+                  message: 'private-password',
+                },
+              ],
+            },
+            spec: { secret: 'private-password' },
+          }
+        : {
+            items: [
+              {
+                metadata: { name: 'private-password' },
+                status: {
+                  phase: 'Failed',
+                  message: 'private-password',
+                  initContainerStatuses: [
+                    {
+                      name: 'private-password',
+                      state: {
+                        waiting: {
+                          reason: 'private-password',
+                          message: 'private-password',
+                        },
+                      },
+                    },
+                  ],
+                  containerStatuses: [
+                    {
+                      name: 'private-password',
+                      state: {
+                        terminated: {
+                          exitCode: 1,
+                          message: 'private-password',
+                          reason: 'private-password',
+                        },
+                      },
+                    },
+                  ],
+                },
+              },
+            ],
+          },
+    ),
+  );
+  assert.throws(fixture.invoke, (error) => {
+    assert.match(error.message, new RegExp(`Job/equipment/${fixture.name}`));
+    assert.match(error.message, /BackoffLimitExceeded/);
+    assert.match(error.message, /exitCode.*1/);
+    assert.match(error.message, /Other/);
+    assert.equal(error.cause, undefined);
+    assert.doesNotMatch(
+      error.message,
+      /private-password|provider-private|sentinel/,
+    );
+    assert.ok(Buffer.byteLength(error.message) < 16 * 1024);
+    return true;
+  });
+  const queries = fixture.calls.filter((call) => call.args.includes('get'));
+  assert.equal(queries.length, 2);
+  assert.ok(
+    queries.every(
+      ({ args, options }) =>
+        args.includes('kind-equipment-ci') &&
+        args.includes('--request-timeout=5s') &&
+        options.timeout === 6000 &&
+        options.maxBuffer === 128 * 1024,
+    ),
+  );
+  assert.ok(
+    queries.some(({ args }) =>
+      args.includes(`batch.kubernetes.io/job-name=${fixture.name}`),
+    ),
+  );
+  assert.ok(
+    fixture.calls.every(
+      ({ args }) => !args.includes('logs') && !args.includes('events'),
+    ),
+  );
+});
+
+test('diagnostic query failures, malformed or oversized responses preserve a sanitized named Job failure', (t) => {
+  for (const response of [
+    () => {
+      throw new Error('private-password');
+    },
+    () => '{bad',
+    () => 'x'.repeat(128 * 1024 + 1),
+  ]) {
+    const fixture = failedJobFixture(t, response);
+    assert.throws(fixture.invoke, (error) => {
+      assert.match(error.message, new RegExp(`Job/equipment/${fixture.name}`));
+      assert.match(error.message, /diagnosticsUnavailable/);
+      assert.doesNotMatch(
+        error.message,
+        /private-password|provider-private|sentinel/,
+      );
+      assert.equal(error.cause, undefined);
+      return true;
+    });
+  }
+});
+
+test('Job diagnostic enums, count and numeric projection cannot echo arbitrary provider values', (t) => {
+  const fixture = failedJobFixture(t, (args) =>
+    JSON.stringify(
+      args.includes(`job/${fixture.name}`)
+        ? {
+            status: {
+              conditions: Array.from({ length: 20 }, () => ({
+                type: 'private-password',
+                status: 'private-password',
+                reason: 'private-password',
+              })),
+            },
+          }
+        : {
+            items: Array.from({ length: 20 }, () => ({
+              status: {
+                phase: 'private-password',
+                containerStatuses: Array.from({ length: 20 }, () => ({
+                  state: { terminated: { exitCode: 'private-password' } },
+                })),
+              },
+            })),
+          },
+    ),
+  );
+  assert.throws(fixture.invoke, (error) => {
+    assert.doesNotMatch(error.message, /private-password|exitCode/);
+    const status = JSON.parse(error.message.slice(error.message.indexOf('{')));
+    assert.equal(status.jobConditions.length, 10);
+    assert.equal(status.pods.length, 10);
+    assert.ok(
+      status.pods.every(
+        (pod) => pod.phase === 'Other' && pod.containers.length === 10,
+      ),
+    );
+    assert.ok(Buffer.byteLength(error.message) < 16 * 1024);
+    return true;
+  });
 });

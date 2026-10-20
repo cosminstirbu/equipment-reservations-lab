@@ -23,7 +23,7 @@ public sealed class PostgresFixture : IAsyncLifetime
     public async ValueTask InitializeAsync()
     {
         using var deadline = new CancellationTokenSource(TimeSpan.FromSeconds(60));
-        await container.StartAsync(deadline.Token);
+        await ContainerStartup.StartAsync(container.StartAsync, deadline.Token);
     }
 
     public async ValueTask DisposeAsync()

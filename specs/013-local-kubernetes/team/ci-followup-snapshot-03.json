@@ -1,0 +1,13 @@
+{
+  "revision": "ci-followup-013-03",
+  "baseline": "c1ac45c75a7c29dd92dc1e29b9a3c33fa09a2509",
+  "files": {
+    "scripts/deployment-ci.mjs": "b17ed7dc7020120095e3d7bfcda8e655c7b0090e4b392ec945745ae8ac5255e3",
+    "scripts/deployment-ci.test.mjs": "19c53259f543c8f66cdc43c36d48b9ecca467764500e8a5f7a7536a247cadfa9",
+    "tests/Persistence.Tests/ContainerStartupTests.cs": "18c0566f3b9cdf5415afb7925d11b31f925cc6b7caf2e7e761332a77f0c4a60b",
+    "tests/TestSupport/ContainerStartup.cs": "460ceaf81f9374df3d0e8757d3a8f2d20fe5162f093dcf97d6ae3d3241274447",
+    "tests/TestSupport/PostgresFixture.cs": "6875bc2768cbc73dd5c4355deb509a2c9109ca531f8b04e3b3fc3dfb9871989c",
+    "tests/TestSupport/StableContainerPorts.cs": "fbe3bd093218a0077952a8c2c7e43878313edb4e2da9038a961ed92e259fb1f7"
+  },
+  "finalization": "Explicit JSON language annotations were required after raw literal conversion alone did not resolve JSON002. Payload bytes and behavior are unchanged; final checks run after this correction."
+}
