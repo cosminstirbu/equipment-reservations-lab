@@ -21,7 +21,8 @@ public sealed class PostgresFixture : IAsyncLifetime
 
     public async ValueTask InitializeAsync()
     {
-        using var deadline = new CancellationTokenSource(TimeSpan.FromSeconds(60));
+        // First use also starts Testcontainers' resource reaper before PostgreSQL readiness.
+        using var deadline = new CancellationTokenSource(TimeSpan.FromMinutes(2));
         await ContainerStartup.StartAsync(container.StartAsync, deadline.Token);
     }
 
@@ -77,24 +78,30 @@ public sealed class PostgresFixture : IAsyncLifetime
         NpgsqlDataSource source = await CreateDatabaseAsync();
         try
         {
+            var settings = new NpgsqlConnectionStringBuilder(ConnectionStringFor(source))
+            {
+                Timeout = 30,
+                CommandTimeout = 30
+            };
+            await using var setup = NpgsqlDataSource.Create(settings.ConnectionString);
+            using var deadline = CancellationTokenSource.CreateLinkedTokenSource(TestContext.Current.CancellationToken);
+            deadline.CancelAfter(TimeSpan.FromSeconds(60));
+
             switch (service)
             {
                 case "inventory":
-                    await Inventory.ServiceMigrations.ApplyAsync(source);
+                    await Inventory.ServiceMigrations.ApplyAsync(setup, deadline.Token);
                     break;
                 case "reservations":
-                    await using (NpgsqlCommand extension = source.CreateCommand("CREATE EXTENSION btree_gist"))
+                    await using (NpgsqlCommand extension = setup.CreateCommand("CREATE EXTENSION btree_gist"))
                     {
-                        // Extension installation is setup work and can exceed the application
-                        // command budget when independent databases initialize concurrently.
-                        extension.CommandTimeout = 30;
-                        _ = await extension.ExecuteNonQueryAsync();
+                        _ = await extension.ExecuteNonQueryAsync(deadline.Token);
                     }
 
-                    await Reservations.ServiceMigrations.ApplyAsync(source);
+                    await Reservations.ServiceMigrations.ApplyAsync(setup, deadline.Token);
                     break;
                 case "notifications":
-                    await Notifications.ServiceMigrations.ApplyAsync(source);
+                    await Notifications.ServiceMigrations.ApplyAsync(setup, deadline.Token);
                     break;
                 default:
                     throw new ArgumentException("Unknown database owner.", nameof(service));
