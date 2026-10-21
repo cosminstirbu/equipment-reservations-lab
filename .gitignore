@@ -14,3 +14,5 @@ test-results/
 src/Web/auth-config.json
 
 .local/kubernetes/
+# Playwright CLI output (may contain credentials)
+.playwright-cli/

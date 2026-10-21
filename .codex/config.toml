@@ -2,3 +2,8 @@
 [agents]
 enabled = true
 max_concurrent_threads_per_session = 5
+
+[mcp_servers.azure]
+command = "npx"
+args = ["-y", "@azure/mcp@4.0.0-beta.2", "server", "start"]
+startup_timeout_sec = 120
