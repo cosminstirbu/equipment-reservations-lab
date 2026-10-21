@@ -153,6 +153,46 @@ test('CI builds only local test images without publication; release indexes reta
   );
 });
 
+test('diagnostic builds both architectures without loading or publishing and exposes build progress', () => {
+  const calls = [];
+  buildImages({
+    sourceRevision: 'b'.repeat(40),
+    diagnostic: true,
+    run: (command, args, options) => calls.push({ command, args, options }),
+    metadata: () => ({}),
+  });
+  assert.equal(calls.length, imageNames.length);
+  for (const { command, args, options } of calls) {
+    assert.equal(command, 'docker');
+    assert.ok(args.includes('linux/amd64,linux/arm64'));
+    assert.ok(args.includes('type=cacheonly'));
+    assert.ok(args.includes('--progress=plain'));
+    assert.ok(!args.includes('--push'));
+    assert.ok(!args.includes('--load'));
+    assert.equal(options.stdio, 'inherit');
+  }
+  assert.throws(
+    () =>
+      buildImages({
+        sourceRevision: 'b'.repeat(40),
+        diagnostic: true,
+        publish: true,
+      }),
+    /Diagnostic builds cannot publish/,
+  );
+  assert.throws(
+    () =>
+      buildImages({
+        sourceRevision: 'b'.repeat(40),
+        diagnostic: true,
+        run: () => {
+          throw new Error('build failed');
+        },
+      }),
+    /build failed/,
+  );
+});
+
 test('ephemeral cluster is named and isolated, and cannot apply without real fixture', () => {
   const calls = [];
   assert.throws(

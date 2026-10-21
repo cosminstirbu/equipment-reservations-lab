@@ -54,9 +54,12 @@ export function buildImages({
   sourceRevision,
   repository,
   publish = false,
+  diagnostic = false,
   run = execute,
   metadata = (path) => JSON.parse(readFileSync(path, 'utf8')),
 }) {
+  if (diagnostic && publish)
+    throw new Error('Diagnostic builds cannot publish');
   if (!/^[a-f0-9]{40}$/.test(sourceRevision))
     throw new Error('Exact source revision required');
   if (publish && !/^[\w.-]+\/[\w.-]+$/.test(repository ?? ''))
@@ -86,8 +89,10 @@ export function buildImages({
         '--metadata-file',
         path,
         '--platform',
-        publish ? 'linux/amd64,linux/arm64' : 'linux/amd64',
-        publish ? '--push' : '--load',
+        publish || diagnostic ? 'linux/amd64,linux/arm64' : 'linux/amd64',
+        ...(diagnostic
+          ? ['--output', 'type=cacheonly', '--progress=plain']
+          : [publish ? '--push' : '--load']),
         '--label',
         `org.opencontainers.image.revision=${sourceRevision}`,
       ];
@@ -98,10 +103,13 @@ export function buildImages({
         );
       if (projects[name]) args.push('--build-arg', `PROJECT=${projects[name]}`);
       args.push('.');
-      run('docker', args);
+      if (diagnostic) run('docker', args, { stdio: 'inherit' });
+      else run('docker', args);
       images[name] = {
         image,
-        digest: metadata(path)['containerimage.digest'],
+        digest: diagnostic
+          ? undefined
+          : metadata(path)['containerimage.digest'],
         tag,
       };
     }
@@ -689,6 +697,10 @@ if (
   process.argv[1] &&
   import.meta.url === pathToFileURL(process.argv[1]).href
 ) {
+  if (process.argv[2] === 'diagnose-build') {
+    buildImages({ sourceRevision: process.env.GITHUB_SHA, diagnostic: true });
+    process.exit(0);
+  }
   const publish = process.argv[2] === 'publish';
   if (publish) {
     if (
