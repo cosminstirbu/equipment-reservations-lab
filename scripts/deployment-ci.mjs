@@ -692,7 +692,7 @@ if (
   const publish = process.argv[2] === 'publish';
   if (publish) {
     if (
-      process.env.GITHUB_EVENT_NAME !== 'push' ||
+      !['push', 'workflow_dispatch'].includes(process.env.GITHUB_EVENT_NAME) ||
       process.env.GITHUB_REF !== 'refs/heads/main'
     )
       throw new Error(

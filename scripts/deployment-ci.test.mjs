@@ -11,6 +11,8 @@ import {
 } from 'node:fs';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
+import { spawnSync } from 'node:child_process';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 import { imageNames } from './deployment-validation.mjs';
 import {
   buildImages,
@@ -18,6 +20,105 @@ import {
   ciResources,
   prepareCiFixture,
 } from './deployment-ci.mjs';
+
+test('publication CLI permits push and manual releases only on main', () => {
+  const directory = mkdtempSync(join(tmpdir(), 'release-trigger-'));
+  const preload = join(directory, 'docker.mjs');
+  const calls = join(directory, 'calls.jsonl');
+  const output = join(directory, 'output');
+  writeFileSync(
+    preload,
+    `import childProcess from 'node:child_process';
+import { appendFileSync, writeFileSync } from 'node:fs';
+import { syncBuiltinESMExports } from 'node:module';
+childProcess.execFileSync = (command, args) => {
+  if (command !== 'docker') throw new Error('Unexpected external command: ' + command);
+  appendFileSync(process.env.RELEASE_TEST_CALLS, JSON.stringify(args) + '\\n');
+  const digest = 'sha256:' + 'a'.repeat(64);
+  if (args[0] === 'buildx' && args[1] === 'build') {
+    writeFileSync(args[args.indexOf('--metadata-file') + 1], JSON.stringify({'containerimage.digest': digest}));
+    return '';
+  }
+  if (args[0] === 'buildx' && args[1] === 'imagetools') {
+    return JSON.stringify({mediaType: 'application/vnd.oci.image.index.v1+json', manifests: ['amd64', 'arm64'].map(architecture => ({digest, platform: {os: 'linux', architecture}}))});
+  }
+  throw new Error('Unexpected Docker operation');
+};
+syncBuiltinESMExports();
+`,
+  );
+  try {
+    for (const [event, ref, allowed] of [
+      ['push', 'refs/heads/main', true],
+      ['workflow_dispatch', 'refs/heads/main', true],
+      ['pull_request', 'refs/heads/main', false],
+      ['workflow_call', 'refs/heads/main', false],
+      ['workflow_dispatch', 'refs/heads/feature', false],
+      ['push', 'refs/heads/feature', false],
+    ]) {
+      writeFileSync(calls, '');
+      writeFileSync(output, '');
+      const result = spawnSync(
+        process.execPath,
+        [
+          '--import',
+          pathToFileURL(preload).href,
+          fileURLToPath(new URL('./deployment-ci.mjs', import.meta.url)),
+          'publish',
+        ],
+        {
+          cwd: fileURLToPath(new URL('../', import.meta.url)),
+          encoding: 'utf8',
+          timeout: 10000,
+          env: {
+            ...process.env,
+            GITHUB_ACTIONS: 'true',
+            GITHUB_EVENT_NAME: event,
+            GITHUB_REF: ref,
+            GITHUB_SHA: 'b'.repeat(40),
+            GITHUB_REPOSITORY: 'example/equipment',
+            GITHUB_OUTPUT: output,
+            RELEASE_TEST_CALLS: calls,
+          },
+        },
+      );
+      const context = `${event} on ${ref}: ${result.stderr}`;
+      if (allowed) {
+        assert.equal(result.status, 0, context);
+        const release = JSON.parse(
+          readFileSync(output, 'utf8').trim().slice('release='.length),
+        );
+        assert.equal(release.sourceRevision, 'b'.repeat(40));
+        assert.deepEqual(
+          Object.keys(release.images).sort(),
+          [...imageNames].sort(),
+        );
+        const commands = readFileSync(calls, 'utf8')
+          .trim()
+          .split('\n')
+          .map((line) => JSON.parse(line));
+        assert.equal(
+          commands.filter((args) => args.includes('--push')).length,
+          imageNames.length,
+        );
+        assert.equal(
+          commands.filter((args) => args.includes('imagetools')).length,
+          imageNames.length,
+        );
+      } else {
+        assert.notEqual(result.status, 0, context);
+        assert.match(
+          result.stderr,
+          /Publication requires the separately authorized main release job/,
+        );
+        assert.equal(readFileSync(calls, 'utf8'), '');
+        assert.equal(readFileSync(output, 'utf8'), '');
+      }
+    }
+  } finally {
+    rmSync(directory, { recursive: true, force: true });
+  }
+});
 
 test('CI builds only local test images without publication; release indexes retain source', () => {
   const calls = [];
