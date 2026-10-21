@@ -12,6 +12,34 @@ This is a prompt-driven starter, not an executable autonomous workflow engine. J
 - uv and the Specify CLI, plus the repository's own build/test dependencies.
 - A repository where you can edit project configuration. These files should be installed in your actual code repository, not a read-only synced reference directory.
 
+## Azure MCP for Codex
+
+The repository's [.codex/config.toml](.codex/config.toml) configures Azure MCP
+for Codex using `npx`, pinned to `@azure/mcp@4.0.0-beta.2` (the npm `latest`
+release when configured; this is a prerelease). Keep this file in version control
+so the configuration travels with repository checkouts.
+
+On each machine:
+
+1. Install Node.js 22 or later (the application uses Node 24) and Azure CLI.
+   Restart VS Code/Codex after installation so both commands are on PATH.
+2. Run `az login` and, if needed, `az account set --subscription <subscription-id>`.
+   Authentication and project trust are local to each machine; keep credentials
+   out of the repository.
+3. Open the checkout in Codex, review and trust the project configuration, then
+   restart the Codex session. First startup needs internet access to download the
+   pinned package into npm's local cache; no global MCP installation is required.
+4. From the repository root, run `codex mcp get azure` to inspect the loaded
+   configuration. Use `/mcp` in Codex to confirm the server connects, then ask
+   it to list your Azure subscriptions to verify authentication.
+
+The current session does not gain tools until Codex reloads its MCP configuration.
+On Windows, if PowerShell blocks npm scripts, use `npm.cmd`/`npx.cmd` for manual
+terminal commands. The shared Codex configuration uses the portable `npx` command.
+
+Setup follows [Codex project MCP configuration](https://developers.openai.com/codex/mcp)
+and [Microsoft's Azure MCP installation and authentication guidance](https://learn.microsoft.com/en-us/azure/developer/azure-mcp-server/get-started/tools/cline).
+
 ## Bootstrap a new project
 
 ```bash
