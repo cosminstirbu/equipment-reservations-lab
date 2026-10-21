@@ -3,6 +3,7 @@ import { mkdirSync, readdirSync, realpathSync, rmSync } from 'node:fs';
 import { dirname, extname, isAbsolute, relative, resolve } from 'node:path';
 import { setTimeout, clearTimeout } from 'node:timers';
 import { fileURLToPath } from 'node:url';
+import { runNpm } from './npm.mjs';
 
 export const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const excluded = new Set([
@@ -64,7 +65,7 @@ export function sourcePath(path) {
     name.endsWith('packages.lock.json')
   )
     return null;
-  return name;
+  return name.replaceAll('\\', '/');
 }
 
 function sources(directory = root) {
@@ -271,9 +272,9 @@ if (
     else if (command === 'check') {
       await format(undefined, true);
       lint();
-      run('npm', ['run', 'test:tooling']);
-      run('npm', ['--prefix', 'src/Web', 'run', 'build']);
-      run('npm', ['--prefix', 'src/Web', 'test']);
+      runNpm(['run', 'test:tooling'], root);
+      runNpm(['--prefix', 'src/Web', 'run', 'build'], root);
+      runNpm(['--prefix', 'src/Web', 'test'], root);
 
       const testModuleCount = sources().filter((path) =>
         path.endsWith('.Tests.csproj'),

@@ -371,8 +371,9 @@ public sealed class ReservationConsumerTests(ReservationDeliveryFixture infrastr
 
         public UtcTimezoneScope(bool enabled)
         {
-            this.enabled = enabled;
-            if (enabled)
+            // Windows ignores TZ; retain poison rejection coverage in its native timezone.
+            this.enabled = enabled && !OperatingSystem.IsWindows();
+            if (this.enabled)
             {
                 previous = Environment.GetEnvironmentVariable("TZ");
                 Environment.SetEnvironmentVariable("TZ", "UTC");

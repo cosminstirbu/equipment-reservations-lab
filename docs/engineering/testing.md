@@ -220,6 +220,20 @@ all other tests in that assembly's process. Other projects continue running in
 their separate processes. Plain collection names organize tests without serializing
 them under `ParallelMode.All`.
 
+## Platform-specific broker contracts
+
+The owner approved the Windows applicability boundary on 2026-10-21:
+`BrokerExecutableTests` cases that require successful private-file creation or Unix
+file ownership, modes, links, and FIFOs explicitly skip on Windows. The production
+private-file implementation supports Linux and macOS; it must not relax file security
+to make Windows tests pass. Invalid configuration and failure telemetry remain tested
+on Windows, as do the separate real-broker contracts and application tests.
+
+Report the skipped cases in Windows check results. The Linux quality job in
+`.github/workflows/validate.yaml` must execute the Unix contracts; a passing Windows
+run does not establish their success. Do not skip provider-readiness failures,
+missing runtimes, or otherwise portable behavior based on the operating system.
+
 ## Backend test projects and scheduling
 
 The solution contains nine independently executable test projects and one helper

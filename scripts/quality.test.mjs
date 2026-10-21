@@ -2,7 +2,6 @@ import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
 import {
   mkdtempSync,
-  chmodSync,
   readFileSync,
   rmSync,
   symlinkSync,
@@ -11,7 +10,33 @@ import {
 import { tmpdir } from 'node:os';
 import { resolve } from 'node:path';
 import { test } from 'node:test';
+import { pathToFileURL } from 'node:url';
 import { root, sourcePath } from './quality.mjs';
+import { runNpm } from './npm.mjs';
+
+test('npm scripts preserve arguments in paths with spaces and propagate failure', () => {
+  const directory = mkdtempSync(resolve(tmpdir(), 'quality npm fixture '));
+  const output = resolve(directory, 'arguments.json');
+  const args = ['two words', 'a&b', '$literal', 'semi;colon'];
+  try {
+    writeFileSync(
+      resolve(directory, 'package.json'),
+      JSON.stringify({
+        scripts: { probe: 'node probe.cjs', fail: 'node fail.cjs' },
+      }),
+    );
+    writeFileSync(
+      resolve(directory, 'probe.cjs'),
+      "require('node:fs').writeFileSync('arguments.json', JSON.stringify(process.argv.slice(2)));",
+    );
+    writeFileSync(resolve(directory, 'fail.cjs'), 'process.exit(7);');
+    runNpm(['run', 'probe', '--', ...args], directory);
+    assert.deepEqual(JSON.parse(readFileSync(output, 'utf8')), args);
+    assert.throws(() => runNpm(['run', 'fail'], directory), /npm exited 7/);
+  } finally {
+    rmSync(directory, { recursive: true, force: true });
+  }
+});
 
 test('post-edit hook formats only its named file and is idempotent', () => {
   const directory = mkdtempSync(resolve(root, '.formatter-fixture-'));
@@ -55,11 +80,15 @@ test('hook excludes generated files and paths outside the repository, including 
   const directory = mkdtempSync(resolve(root, '.formatter-fixture-'));
   try {
     const target = resolve(outside, 'external.ts');
-    const link = resolve(directory, 'linked.ts');
+    const link = resolve(directory, 'linked');
     writeFileSync(target, 'export const x=1;');
-    symlinkSync(target, link);
+    symlinkSync(
+      outside,
+      link,
+      process.platform === 'win32' ? 'junction' : 'dir',
+    );
     assert.equal(sourcePath(target), null);
-    assert.equal(sourcePath(link), null);
+    assert.equal(sourcePath(resolve(link, 'external.ts')), null);
     assert.equal(
       sourcePath('src/Web/node_modules/typescript/package.json'),
       null,
@@ -124,24 +153,41 @@ test('C# edits use Allman braces and four-space indentation', () => {
 test('focused OpenAPI command builds all three contract classes and propagates a failed module', () => {
   const directory = mkdtempSync(resolve(tmpdir(), 'openapi-command-'));
   const log = resolve(directory, 'calls.jsonl');
-  const executable = resolve(directory, 'dotnet');
+  const executable = resolve(directory, 'dotnet.cjs');
+  const preload = resolve(directory, 'launch-dotnet.mjs');
   writeFileSync(
     executable,
-    `#!/usr/bin/env node
-require('node:fs').appendFileSync(process.env.OPENAPI_COMMAND_LOG, JSON.stringify(process.argv.slice(2)) + '\\n');
+    `require('node:fs').appendFileSync(process.env.OPENAPI_COMMAND_LOG, JSON.stringify(process.argv.slice(2)) + '\\n');
 process.exit(process.argv[2] === 'test' && process.argv.some(arg => arg.includes('Reservations.Tests')) ? 7 : 0);
 `,
   );
-  chmodSync(executable, 0o755);
+  writeFileSync(
+    preload,
+    `import childProcess from 'node:child_process';
+import { syncBuiltinESMExports } from 'node:module';
+for (const method of ['spawn', 'spawnSync']) {
+  const original = childProcess[method];
+  childProcess[method] = (command, args, options) => {
+    if (command !== 'dotnet') throw new Error('Unexpected command: ' + command);
+    return original(process.execPath, [${JSON.stringify(executable)}, ...args], options);
+  };
+}
+syncBuiltinESMExports();
+`,
+  );
   try {
     const result = spawnSync(
       process.execPath,
-      [resolve(root, 'scripts/quality.mjs'), 'check:openapi'],
+      [
+        '--import',
+        pathToFileURL(preload).href,
+        resolve(root, 'scripts/quality.mjs'),
+        'check:openapi',
+      ],
       {
         encoding: 'utf8',
         env: {
           ...process.env,
-          PATH: `${directory}:${process.env.PATH}`,
           OPENAPI_COMMAND_LOG: log,
         },
       },
@@ -179,7 +225,10 @@ test('authored YAML is discoverable while the checksum-locked upstream Argo mani
     for (const extension of ['yaml', 'yml']) {
       const path = resolve(directory, `authored.${extension}`);
       writeFileSync(path, 'kind: Service\n');
-      assert.equal(sourcePath(path), path.slice(root.length + 1));
+      assert.equal(
+        sourcePath(path),
+        path.slice(root.length + 1).replaceAll('\\', '/'),
+      );
     }
     assert.equal(sourcePath('deploy/argocd/install.yaml'), null);
     assert.equal(

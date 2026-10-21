@@ -38,10 +38,11 @@ public sealed class ReservationDeliveryFixture : IAsyncLifetime
 
     public async ValueTask InitializeAsync()
     {
-        using var deadline = new CancellationTokenSource(TimeSpan.FromSeconds(60));
+        using var deadline = CancellationTokenSource.CreateLinkedTokenSource(TestContext.Current.CancellationToken);
         try
         {
             await Postgres.InitializeAsync();
+            deadline.CancelAfter(TimeSpan.FromMinutes(2));
             string definitions = Definitions();
             Assert.True(string.Equals(definitions, Definitions(), StringComparison.Ordinal), "Unchanged secret and salt inputs must produce byte-stable definitions.");
             ports = new StableContainerPorts(5672);

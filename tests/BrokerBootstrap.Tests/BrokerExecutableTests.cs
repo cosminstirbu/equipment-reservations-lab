@@ -20,9 +20,13 @@ namespace BrokerBootstrap.Tests;
 public sealed class BrokerExecutableTests
 {
     private const string ExportKey = "private-collector-otlp-key-012";
+    private const string UnixOnlyReason = "Broker private-file ownership and Unix modes require Linux or macOS; Linux CI retains this contract.";
+
     [Fact]
     public async Task RepeatedExecutionReusesIdenticalPrivateDefinitionsWithoutMutationOrDisclosure()
     {
+        Assert.SkipWhen(OperatingSystem.IsWindows(), UnixOnlyReason);
+
         string directory = Path.Combine(Path.GetTempPath(), "broker-cli-" + Guid.NewGuid().ToString("N"));
         _ = Directory.CreateDirectory(directory);
         string output = Path.Combine(directory, "definitions.json");
@@ -68,7 +72,8 @@ public sealed class BrokerExecutableTests
     {
         if (OperatingSystem.IsWindows())
         {
-            throw new PlatformNotSupportedException("This deployment requires Unix file protection.");
+            Assert.Skip(UnixOnlyReason);
+            return;
         }
 
         string directory = Path.Combine(Path.GetTempPath(), "broker-unsafe-" + Guid.NewGuid().ToString("N"));
@@ -163,6 +168,8 @@ public sealed class BrokerExecutableTests
     [Fact]
     public async Task CliProducedPrivateDefinitionsImportUnderActualNonrootRabbitMqUser()
     {
+        Assert.SkipWhen(OperatingSystem.IsWindows(), UnixOnlyReason);
+
         string directory = Path.Combine(Path.GetTempPath(), "broker-import-" + Guid.NewGuid().ToString("N"));
         _ = Directory.CreateDirectory(directory);
         string output = Path.Combine(directory, "definitions.json");
@@ -219,6 +226,8 @@ public sealed class BrokerExecutableTests
     [InlineData(true)]
     public async Task CliExportsCorrelatedPrivateWorkflowBeforeExitForSuccessAndFilesystemFailure(bool fail)
     {
+        Assert.SkipWhen(OperatingSystem.IsWindows() && !fail, UnixOnlyReason);
+
         string directory = Path.Combine(Path.GetTempPath(), "broker-telemetry-" + Guid.NewGuid().ToString("N"));
         _ = Directory.CreateDirectory(directory);
         string output = Path.Combine(directory, fail ? "missing/definitions.json" : "definitions.json");
@@ -290,6 +299,8 @@ public sealed class BrokerExecutableTests
     [InlineData("private-wrong-collector-key")]
     public async Task CollectorRejectsMissingOrWrongOtlpAuthorityWithoutReceivingTelemetry(string? key)
     {
+        Assert.SkipWhen(OperatingSystem.IsWindows(), UnixOnlyReason);
+
         string directory = Path.Combine(Path.GetTempPath(), "broker-unauthorized-" + Guid.NewGuid().ToString("N"));
         _ = Directory.CreateDirectory(directory);
         string output = Path.Combine(directory, "definitions.json");
