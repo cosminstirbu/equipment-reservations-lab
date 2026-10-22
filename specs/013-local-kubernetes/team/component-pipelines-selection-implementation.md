@@ -144,3 +144,24 @@ Fresh Windows verification on repaired source:
 
 Files are frozen again for coordinator snapshot/checks and original reviewers'
 closure assessment. These changes do not self-close the findings.
+
+## Post-review test environment repair — 2026-10-22
+
+Hosted run 39749323930 attempt 3 failed the manual-selection CLI test because its
+child inherited GITHUB_RUN_ATTEMPT from CI while overriding the event to manual
+dispatch. This incorrectly entered authenticated retained-intent lookup. The
+existing public-process regression reproduced the exact missing-token failure
+locally with parent attempt 3 before the fixture changed.
+
+The child now uses the existing runEnvironment fixture to define its complete
+simulated run identity, including attempt 1, and explicitly clears GH_TOKEN.
+Real CLI execution, Git fixture and selection behavior remain intact; no production
+code, quality-job permissions or credentials were added. The same focused command
+passes with parent attempt 3 and no token. This is test-fixture isolation, not a
+change to production rerun semantics; earlier independent verdicts remain historical.
+
+Full tooling suite with parent GITHUB_RUN_ATTEMPT=3 and no GH_TOKEN: exit 0,
+79 passed and one documented POSIX-only skip. Format-check passed. Initial lint
+overlapped the tooling formatter fixture and observed its temporary unformatted
+C# source; after fixture cleanup, sequential lint passed with zero build warnings
+or errors. Final diff-check passed. No commit, push or hosted rerun performed.
