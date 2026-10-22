@@ -8,4 +8,4 @@ spec:
     spec:
       containers:
         - name: web
-          image: web
+          image: ghcr.io/cosminstirbu/equipment-reservations-lab-web@sha256:c262edb6ba3ebab458de45f00bab8309e66859ce7790fa872309dd40ff8a361c
