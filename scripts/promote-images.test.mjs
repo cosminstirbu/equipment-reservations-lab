@@ -13,13 +13,15 @@ import {
 } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, dirname } from 'node:path';
+import { fileURLToPath } from 'node:url';
+import { check } from 'prettier';
 import {
   promotionFiles,
   promote,
   githubGateway,
   refreshJobSuffixes,
 } from './promote-images.mjs';
-import { imageNames } from './deployment-validation.mjs';
+import { imageNames, readJobInputs } from './deployment-validation.mjs';
 
 test('authenticated GitHub failures retain safe phase or status without raw response data', async () => {
   for (const failure of ['transport', 'body', 'status']) {
@@ -697,6 +699,40 @@ const component = {
   image: 'ghcr.io/example/equipment-inventory',
   digest: `sha256:${'e'.repeat(64)}`,
 };
+
+test('generated promotion files satisfy repository formatting for initial and successive component updates', async () => {
+  const root = fileURLToPath(new URL('..', import.meta.url));
+  const overlayPath = 'deploy/environments/local/kustomization.yaml';
+  const initial = readFileSync(join(root, overlayPath), 'utf8');
+  const options = JSON.parse(
+    readFileSync(join(root, '.prettierrc.json'), 'utf8'),
+  );
+  const inputs = readJobInputs(root);
+  let overlay = initial;
+  for (const name of imageNames) {
+    const record = {
+      ...component,
+      component: name,
+      image: `ghcr.io/example/equipment-${name}`,
+    };
+    const files = promotionFiles(record, overlay, inputs);
+    for (const [path, content] of Object.entries(files))
+      assert.equal(
+        await check(content, { ...options, filepath: join(root, path) }),
+        true,
+        path,
+      );
+    overlay = files[overlayPath];
+  }
+  for (const [path, content] of Object.entries(
+    promotionFiles(release, initial, inputs),
+  ))
+    assert.equal(
+      await check(content, { ...options, filepath: join(root, path) }),
+      true,
+      path,
+    );
+});
 
 test('independent component promotion preserves siblings and touches only its own bootstrap identity', () => {
   const overlay =

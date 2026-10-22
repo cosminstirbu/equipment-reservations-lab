@@ -227,3 +227,28 @@ to retry promotion, plus malformed/absent intent and retained-empty selection ca
 ## Phase 13: Convergence
 
 - [ ] T070 [US3] Complete current component-pipeline qualification on the reviewed source: use an adequate queue-aware workflow semantic validator without removing queue:max, restore access to the existing container API and run the full required application check, and run applicable pinned Kubernetes/provider checks through retained T052; record exact revision/environment/results and obtain independent evidence review in team/component-pipelines-verification.md. Keep unavailable checks pending and preserve separate authorization for hosted publication/promotion/workflow execution and T053 human/runtime acceptance, per SC-007/SC-010–SC-012, plan component verification and T068 (partial).
+
+## Phase 14: US3 — Generated formatting and scoped manifest quality
+
+Current FR-011, AC-3.8/AC-3.9 and SC-013 permit scoped static quality on proven
+allowlisted PR/main metadata changes; manual and unproven/mixed changes remain full.
+Main publication selection/failed-component retry obligations remain unchanged.
+
+- [x] T071 [US3] Record coordinator-owned generated-formatting regression and repair evidence for scripts/promote-images.mjs and scripts/promote-images.test.mjs in specs/013-local-kubernetes/team/manifest-quality-verification.md: actual Prettier red before block-YAML/newline splice fix, all seven successive component outputs and retained legacy formatting green; preserve synchronous API, field allowlists/provenance/CAS and inspect independent review (existing formatting requirement, SC-013).
+- [x] T072 [US3] Obtain independent preparation quality/security verdicts for current spec/plan/tasks and specs/013-local-kubernetes/team/manifest-quality-design.md, freezing exact path allowlist, main full-quality ancestor proof, partial-state static boundary and unchanged required quality/summary graph before new classifier/workflow code (FR-011, SC-013).
+- [x] T073 [US3] Add failing real-Git/public-CLI and narrow Actions HTTP regressions in scripts/manifest-quality.test.mjs before implementing scripts/manifest-quality.mjs selection/baseline seams: allowlisted PR/main, mixed/unknown/rename/delete/history uncertainty, exact trusted successful full-quality ancestor, prior failed source plus later metadata merge, static-success not advancing full baseline, API budget/provenance failures and manual always full (AC-3.8, AC-3.9).
+- [x] T074 [US3] Add failing static partial/complete/unreleased and real pinned-Kustomize generator regressions in scripts/manifest-quality.test.mjs and affected scripts/deployment-validation.test.mjs before implementing explicit static policy/context in scripts/manifest-quality.mjs and scripts/deployment-validation.mjs: only validated missing known aliases allowed, present records exact, immutable third-party images, existing Secret/storage/resource policies unchanged, runtime incompleteness still fails; no invented digest or provider/readiness claim (AC-3.8, SC-013).
+- [x] T075 [US3] Add failing workflow/real-shell regressions in scripts/component-workflows.test.mjs before adapting .github/workflows/validate.yaml quality steps: exact required job/needs, safe classification outputs, scoped root-only format/committed/render/policy lane, checksum-pinned kubectl, no application build/tests/runtime/image calls in static lane, full lane and trusted full-quality completion marker, manual full, required summary mode and failure propagation (FR-011, AC-3.9).
+- [x] T076 [US3] Run focused generator/real-Git/Actions/static/Kustomize/workflow regressions, formatting/lint and applicable full implementation checks; inspect scope/provenance/partial-state boundaries, report command/environment/revision/exits and unavailable prerequisites in specs/013-local-kubernetes/team/manifest-quality-verification.md; no hosted workflow or external publication is authorized (SC-013).
+- [x] T077 [US3] Obtain independent quality/security verdicts and coordinator convergence on generated-format repair plus scoped quality gate in specs/013-local-kubernetes/team/; preserve T070 and all earlier pending full-feature/local/provider/human acceptance obligations and historical exceptions (SC-007, SC-013).
+
+T071 existing-defect repair is independent of new gate preparation and retains its
+own test-first evidence. T072 blocks T073–T075 new behavior. Assign explicit helper,
+validator and workflow file ownership before edits; T073/T074 share helper/tests and
+serialize, while independent workflow red tests may proceed against frozen interfaces.
+Every behavior's intended red precedes its repair; T076 follows integrated changes,
+T077 follows fresh checked snapshot. No old task status or repair counter is reset.
+
+## Phase 15: Convergence
+
+- [ ] T078 [US3] Qualify the current manifest-quality workflow snapshot with an adequate queue-aware workflow semantic validator, without stripping or weakening retained concurrency settings; record source-matched results and independent evidence review in team/manifest-quality-verification.md. Coordinate with retained T070, preserve T052/T053 and all full-feature runtime/human acceptance gates; limited stripped-copy actionlint is not full validation (SC-007, SC-013, plan: applicable quality branches; partial).

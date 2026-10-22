@@ -1,0 +1,14 @@
+{
+    "baseline":  "9f5e592ab89faa299740ae693a6de3af8fcac942",
+    "files":  {
+                  ".github/workflows/validate.yaml":  "73f862ce572e4f879c7aa1456c64cfccee993831223cc09e1ce06aeda8ef34f9",
+                  "package.json":  "596c34826e70d02649174425e5c34b71a9e309bdc852492be314fc8bfa18baad",
+                  "scripts/component-workflows.test.mjs":  "4feb6141b4d7a0552360aa107122972501a952fb3cc7db53577ea65aef39d8dc",
+                  "scripts/deployment-validation.mjs":  "1dbe0db53c63ea6e5490257c70a00e9d4ea5ba1f429d17fd642175321a6991e7",
+                  "scripts/deployment-validation.test.mjs":  "26b100ca7506761d68298787a2db7f2657e658b34cbe917ab5b8aa594c61234b",
+                  "scripts/promote-images.mjs":  "7943c15d00b0fd82dcfbdb490d7cee03d4271c90a01bff90f4215e12d13d3129",
+                  "scripts/promote-images.test.mjs":  "fdb07f6c45ca6ea2346b623bcb13bcc6c05720413ead676bca1449aa06ae63df",
+                  "scripts/manifest-quality.mjs":  "7d0950ce028900beabd2f5dfd2481f98132879728435d4de4b57dc7c92e5b01d",
+                  "scripts/manifest-quality.test.mjs":  "98f3598edefaf20582f28fc01576e93a88a3f5913748dfb498e34cb614961dca"
+              }
+}

@@ -27,6 +27,153 @@ const workflow = (name) =>
   parsers.Yaml.parse(readFileSync(`.github/workflows/${name}.yaml`, 'utf8'))
     .data;
 
+test('required quality classifies before expensive setup and preserves an authenticated full-only marker', () => {
+  const quality = workflow('validate').jobs.quality;
+  const steps = quality.steps;
+  const classify = steps.findIndex((step) => step.id === 'quality_scope');
+  assert.ok(classify > 0, 'quality classifier must exist after checkout');
+  assert.equal(quality.name, 'quality');
+  assert.deepEqual(quality.permissions, { contents: 'read', actions: 'read' });
+  assert.equal(steps[0].with.ref, '${{ github.sha }}');
+  assert.equal(steps[0].with['fetch-depth'], 0);
+  assert.match(steps[classify].run, /manifest-quality\.mjs select --output/);
+  assert.match(steps[classify].env.GH_TOKEN, /push/);
+  assert.match(steps[classify].env.GH_TOKEN, /refs\/heads\/main/);
+  for (const step of steps.filter(
+    (step) =>
+      step.uses?.includes('setup-dotnet') ||
+      /src\/Web|npm run (format-check|lint|check)|node --test/.test(
+        step.run ?? '',
+      ),
+  )) {
+    assert.ok(steps.indexOf(step) > classify);
+    assert.equal(step.if, "steps.quality_scope.outputs.mode == 'full'");
+  }
+  const marker = steps.findIndex(
+    (step) => step.name === 'Full application quality completed',
+  );
+  assert.ok(
+    marker > steps.findIndex((step) => /node --test/.test(step.run ?? '')),
+  );
+  assert.equal(steps[marker].if, "steps.quality_scope.outputs.mode == 'full'");
+  assert.equal(quality.outputs.mode, '${{ steps.quality_scope.outputs.mode }}');
+  assert.equal(
+    quality.outputs.reason,
+    '${{ steps.quality_scope.outputs.reason }}',
+  );
+  const summary = workflow('validate').jobs.summary.steps;
+  assert.ok(
+    summary.some((step) =>
+      /needs.quality.outputs.mode/.test(step.env?.QUALITY_MODE ?? ''),
+    ),
+  );
+});
+
+test(
+  'manifest quality shell lane invokes only pinned static validation while full lane keeps application checks',
+  { skip: process.platform === 'win32' },
+  (t) => {
+    const steps = workflow('validate').jobs.quality.steps;
+    const staticStep = steps.find((step) =>
+      /manifest-quality\.mjs validate/.test(step.run ?? ''),
+    );
+    assert.ok(staticStep, 'manifest validation shell must exist');
+    assert.equal(
+      staticStep.if,
+      "steps.quality_scope.outputs.mode == 'manifest'",
+    );
+    const directory = mkdtempSync(join(tmpdir(), 'quality-shell-'));
+    t.after(() => rmSync(directory, { recursive: true, force: true }));
+    const log = join(directory, 'calls');
+    for (const tool of ['node', 'npm']) {
+      writeFileSync(
+        join(directory, tool),
+        '#!/bin/sh\nprintf "%s\\n" "' + tool + ' $*" >> "$QUALITY_CALLS"\n',
+        { mode: 0o755 },
+      );
+    }
+    const result = spawnSync(
+      'bash',
+      ['-e', '-o', 'pipefail', '-c', staticStep.run],
+      {
+        encoding: 'utf8',
+        env: {
+          ...process.env,
+          PATH: directory + ':' + process.env.PATH,
+          RUNNER_TEMP: directory,
+          QUALITY_CALLS: log,
+        },
+      },
+    );
+    assert.equal(result.status, 0, result.stderr);
+    const calls = readFileSync(log, 'utf8');
+    assert.match(
+      calls,
+      /node scripts\/manifest-quality.mjs validate --selection .* --kubectl .*\/manifest-tools\/kubectl/,
+    );
+    assert.doesNotMatch(
+      calls,
+      /src\/Web|dotnet|docker|kind|npm run check|--test/,
+    );
+    const fullScript = steps
+      .filter(
+        (step) =>
+          step.if === "steps.quality_scope.outputs.mode == 'full'" && step.run,
+      )
+      .map((step) => step.run)
+      .join('\n');
+    writeFileSync(log, '');
+    const full = spawnSync('bash', ['-e', '-o', 'pipefail', '-c', fullScript], {
+      encoding: 'utf8',
+      env: {
+        ...process.env,
+        PATH: directory + ':' + process.env.PATH,
+        QUALITY_CALLS: log,
+      },
+    });
+    assert.equal(full.status, 0, full.stderr);
+    const fullCalls = readFileSync(log, 'utf8');
+    assert.match(fullCalls, /npm --prefix src\/Web ci/);
+    assert.match(fullCalls, /npm run format-check/);
+    assert.match(fullCalls, /npm run lint/);
+    assert.match(fullCalls, /npm run check/);
+    assert.match(fullCalls, /node --test/);
+    assert.match(full.stdout, /Full application quality completed/);
+    writeFileSync(join(directory, 'node'), '#!/bin/sh\nexit 19\n', {
+      mode: 0o755,
+    });
+    const failed = spawnSync(
+      'bash',
+      ['-e', '-o', 'pipefail', '-c', staticStep.run],
+      {
+        encoding: 'utf8',
+        env: {
+          ...process.env,
+          PATH: directory + ':' + process.env.PATH,
+          RUNNER_TEMP: directory,
+        },
+      },
+    );
+    assert.equal(
+      failed.status,
+      19,
+      'static validation failure must fail the required gate',
+    );
+    const install = steps.find(
+      (step) => step.name === 'Install pinned static manifest tool',
+    );
+    assert.ok(install);
+    assert.equal(install.if, "steps.quality_scope.outputs.mode == 'manifest'");
+    assert.match(install.run, /v1\.35\.8/);
+    assert.match(
+      install.run,
+      /874d5e72dbb819f43cff16bcd1e4f8bac5b7f2361fe1e55049b0a6c676fb0cbf/,
+    );
+    assert.match(install.run, /--connect-timeout 5 --max-time 15/);
+    assert.doesNotMatch(install.run, /kind|kubeconfig|docker/);
+  },
+);
+
 test('quality gates fourteen independent static component workflow calls with readonly PR lanes', () => {
   const parent = workflow('validate');
   const calls = Object.entries(parent.jobs).filter(([, job]) => job.uses);

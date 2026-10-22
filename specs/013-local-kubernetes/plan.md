@@ -34,6 +34,30 @@ must not promote as lowercase `main`. Existing T055/T056 cover this guard clarif
 
 ## Technical Context
 
+## Current manifest-only quality amendment — 2026-10-22
+
+FR-011/AC-3.8/AC-3.9/SC-013 add narrower quality for proven local-promotion metadata
+changes on PRs and main pushes. [The manifest quality design](team/manifest-quality-design.md)
+defines the exact closed allowlist, real Git comparisons, main's trusted successful
+full-quality ancestor proof, scoped formatting, committed state/provenance consistency
+and real pinned Kustomize plus structural/security policy. Mixed/unknown/uncertain
+changes remain full quality; manual dispatch remains full. Main never relies only on
+the previous push SHA, so prior failed source validation cannot be bypassed by a later
+manifest merge. Component publication baselines remain independent and unchanged.
+
+Retain required quality job/dependency/summary shape. This does not waive source-change
+checks, claim complete Kubernetes OpenAPI/provider/runtime validation, or enable external
+execution. T071 onward records generator formatting repair and this gate's test-first
+implementation/reviews; preserve T070 and all earlier task statuses and evidence.
+No engineering exception/new infrastructure is required.
+
+Manifest-quality preparation passed independent [quality](team/manifest-quality-preparation-quality.md)
+and [security](team/manifest-quality-preparation-security.md) review at T072. Test-first
+implementation is active; final verdicts remain separate. The approved additive
+readComponentState.jobSuffixes context lets validateStaticManifests(text,state)
+verify exact database/identity Job names from actual validated public inputs; existing
+records/missing/status and all static/runtime restrictions remain unchanged.
+
 ## Current component pipeline amendment — 2026-10-22
 
 The owner-confirmed [component requirements](team/component-pipelines-requirements.md)

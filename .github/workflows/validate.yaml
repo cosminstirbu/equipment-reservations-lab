@@ -8,29 +8,67 @@ permissions:
   contents: read
 jobs:
   quality:
+    name: quality
     runs-on: ubuntu-24.04
     timeout-minutes: 30
+    permissions:
+      contents: read
+      actions: read
+    outputs:
+      mode: ${{ steps.quality_scope.outputs.mode }}
+      reason: ${{ steps.quality_scope.outputs.reason }}
     steps:
       - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
         with:
+          ref: ${{ github.sha }}
+          fetch-depth: 0
           persist-credentials: false
       - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444
         with:
           node-version: 24.15.0
           cache: npm
+      - id: quality_scope
+        name: Classify required quality
+        env:
+          BASE_REVISION: ${{ github.event.pull_request.base.sha }}
+          GH_TOKEN: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' && github.token || '' }}
+        run: node scripts/manifest-quality.mjs select --output "$RUNNER_TEMP/quality-scope.json"
+      - run: npm ci
       - uses: actions/setup-dotnet@26b0ec14cb23fa6904739307f278c14f94c95bf1
+        if: steps.quality_scope.outputs.mode == 'full'
         with:
           global-json-file: global.json
-      - run: npm ci && npm --prefix src/Web ci
+      - run: npm --prefix src/Web ci
+        if: steps.quality_scope.outputs.mode == 'full'
       - name: Validate committed release and bootstrap identities
+        if: steps.quality_scope.outputs.mode == 'full'
         run: node scripts/deployment-validation.mjs committed
       - run: npm run format-check
+        if: steps.quality_scope.outputs.mode == 'full'
       - run: npm run lint
+        if: steps.quality_scope.outputs.mode == 'full'
       - run: npm run check
+        if: steps.quality_scope.outputs.mode == 'full'
         env:
           DOCKER_HOST: unix:///var/run/docker.sock
           TESTCONTAINERS_RYUK_DISABLED: 'false'
       - run: node --test scripts/deployment-validation.test.mjs scripts/promote-images.test.mjs scripts/deployment-ci.test.mjs
+        if: steps.quality_scope.outputs.mode == 'full'
+      - name: Full application quality completed
+        if: steps.quality_scope.outputs.mode == 'full'
+        run: echo 'Full application quality completed'
+      - name: Install pinned static manifest tool
+        if: steps.quality_scope.outputs.mode == 'manifest'
+        shell: bash
+        run: |
+          mkdir -p "$RUNNER_TEMP/manifest-tools"
+          curl --fail --silent --show-error --location --connect-timeout 5 --max-time 15 https://dl.k8s.io/release/v1.35.8/bin/linux/amd64/kubectl -o "$RUNNER_TEMP/manifest-tools/kubectl"
+          echo "874d5e72dbb819f43cff16bcd1e4f8bac5b7f2361fe1e55049b0a6c676fb0cbf  $RUNNER_TEMP/manifest-tools/kubectl" | sha256sum --check --strict
+          chmod 0755 "$RUNNER_TEMP/manifest-tools/kubectl"
+      - name: Validate scoped static manifests
+        if: steps.quality_scope.outputs.mode == 'manifest'
+        shell: bash
+        run: node scripts/manifest-quality.mjs validate --selection "$RUNNER_TEMP/quality-scope.json" --kubectl "$RUNNER_TEMP/manifest-tools/kubectl"
   select:
     name: Select components
     needs: [quality]
@@ -246,6 +284,14 @@ jobs:
           SELECTED_COMPONENTS: ${{ needs.select.outputs.selected }}
           PIPELINE_NEEDS: ${{ toJSON(needs) }}
         run: node scripts/deployment-ci.mjs summary
+      - name: Required quality mode
+        if: always()
+        env:
+          QUALITY_MODE: ${{ needs.quality.outputs.mode }}
+          QUALITY_REASON: ${{ needs.quality.outputs.reason }}
+        shell: bash
+        run: |
+          printf 'Required quality mode: %s (%s)\n' "${QUALITY_MODE:-unavailable}" "${QUALITY_REASON:-unavailable}" | tee -a "$GITHUB_STEP_SUMMARY"
   deployment:
     # Temporarily disabled for local exploratory testing; see EX-013-002.
     if: ${{ false }}

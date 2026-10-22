@@ -104,6 +104,24 @@ may independently open its own `automation/local-image-promotion-NAME` PR, inclu
 from a manual feature branch, with exact source SHA/ref and immutable digest. Nothing
 is adopted until the component PR is reviewed and merged into main.
 
+Proven promotion-metadata-only PRs and main pushes use static quality instead of
+application builds/tests: scoped formatting, committed component/bootstrap consistency
+and actual pinned Kustomize rendering plus existing structural/security policies.
+Eligibility is restricted to the local overlay, its two bootstrap wrappers and the
+seven known component record paths; other manifests and any source/script/workflow/
+build-input or uncertain comparison use full quality. Main additionally requires a
+trusted successful full-quality ancestor, so a later manifest merge cannot bypass an
+earlier failed source check. No proof means full quality; manual runs always use full
+quality. The required summary identifies the mode. Static success establishes neither
+application behavior nor complete Kubernetes admission/runtime readiness. See
+[the current gate design](team/manifest-quality-design.md), pending implementation/review.
+
+The lightweight gate performs no application/image build. A manifest-only PR also
+selects no downstream component builds. On main, previously full-quality-validated
+but unpublished component inputs may still build/publish downstream; a manifest merge
+does not erase that backlog. Source that has not passed full quality forces the full
+gate first.
+
 Records live at `deploy/environments/local/releases/NAME.json`. A first PR may contain
 only one real record: missing components remain explicitly unreleased, and setup fails
 before mutation until all seven are available. Never fill gaps with invented references.

@@ -154,6 +154,29 @@ export function validateIndex(index) {
 }
 
 export function validateManifests(text, { ciImages = [], ciRevision } = {}) {
+  return validateManifestPolicy(parseManifestDocuments(text), {
+    ciImages,
+    ciRevision,
+  });
+}
+
+function parseManifestDocuments(text) {
+  return text
+    .split(/^---\s*$/m)
+    .filter((document) => document.trim())
+    .map((document) => {
+      const parsed = parsers.Yaml.parse(document);
+      if (parsed.diagnostics.some((item) => item.severity === 0))
+        throw new OperationalFailure('Invalid manifest YAML');
+      return parsed.data;
+    });
+}
+
+function validateManifestPolicy(
+  documents,
+  { ciImages = [], ciRevision } = {},
+  acceptImage = () => false,
+) {
   if (
     ciImages.length &&
     (!/^[a-f0-9]{40}$/.test(ciRevision ?? '') ||
@@ -167,15 +190,6 @@ export function validateManifests(text, { ciImages = [], ciRevision } = {}) {
     throw new OperationalFailure(
       'CI image policy requires exact known names and committed revision',
     );
-  const documents = text
-    .split(/^---\s*$/m)
-    .filter((document) => document.trim())
-    .map((document) => {
-      const parsed = parsers.Yaml.parse(document);
-      if (parsed.diagnostics.some((item) => item.severity === 0))
-        throw new OperationalFailure('Invalid manifest YAML');
-      return parsed.data;
-    });
   for (const resource of documents) {
     if (!resource?.apiVersion || !resource.kind || !resource.metadata?.name)
       throw new OperationalFailure('Manifest requires apiVersion/kind/name');
@@ -199,25 +213,154 @@ export function validateManifests(text, { ciImages = [], ciRevision } = {}) {
       throw new OperationalFailure('Application must not cascade deletion');
     const pod =
       resource.kind === 'Pod' ? resource.spec : resource.spec?.template?.spec;
-    for (const container of [
-      ...(pod?.initContainers ?? []),
-      ...(pod?.containers ?? []),
-    ]) {
-      if (
-        !/@sha256:[a-f0-9]{64}$/.test(container.image) &&
-        !ciImages.includes(container.image)
-      )
-        throw new OperationalFailure('Container requires immutable digest');
-      if (
-        !container.resources?.requests?.cpu ||
-        !container.resources?.requests?.memory ||
-        !container.resources?.limits?.cpu ||
-        !container.resources?.limits?.memory
-      )
-        throw new OperationalFailure('Container requires CPU/memory bounds');
-    }
+    for (const [kind, containers] of [
+      ['initContainers', pod?.initContainers ?? []],
+      ['containers', pod?.containers ?? []],
+    ])
+      for (const container of containers) {
+        const accepted = acceptImage(resource, container, kind);
+        if (
+          !accepted &&
+          !/@sha256:[a-f0-9]{64}$/.test(container.image) &&
+          !ciImages.includes(container.image)
+        )
+          throw new OperationalFailure('Container requires immutable digest');
+        if (
+          !container.resources?.requests?.cpu ||
+          !container.resources?.requests?.memory ||
+          !container.resources?.limits?.cpu ||
+          !container.resources?.limits?.memory
+        )
+          throw new OperationalFailure('Container requires CPU/memory bounds');
+      }
   }
   return documents;
+}
+
+export function validateStaticManifests(text, state) {
+  validateStaticState(state);
+  const documents = parseManifestDocuments(text);
+  if (
+    documents.some(
+      (resource) =>
+        ['CronJob', 'PodTemplate'].includes(resource?.kind) ||
+        (typeof resource?.kind === 'string' && resource.kind.endsWith('List')),
+    )
+  )
+    throw new OperationalFailure(
+      'Unsupported static manifest kind: nested workloads and resource lists',
+    );
+  const slots = [
+    ...['inventory', 'reservations', 'notifications', 'web'].map(
+      (component) => ({
+        component,
+        apiVersion: 'apps/v1',
+        kind: 'Deployment',
+        name: component,
+        containerKind: 'containers',
+        containerName: component,
+      }),
+    ),
+    ...jobNames.map((name) => ({
+      component: `${name}-bootstrap`,
+      apiVersion: 'batch/v1',
+      kind: 'Job',
+      name: `${name}-bootstrap${state.jobSuffixes[name]}`,
+      containerKind: 'containers',
+      containerName: `${name}-bootstrap`,
+    })),
+    {
+      component: 'broker-bootstrap',
+      apiVersion: 'apps/v1',
+      kind: 'Deployment',
+      name: 'rabbitmq',
+      containerKind: 'initContainers',
+      containerName: 'definitions',
+    },
+  ];
+  const matches = (resource, slot) =>
+    resource?.apiVersion === slot.apiVersion &&
+    resource.kind === slot.kind &&
+    resource.metadata?.name === slot.name &&
+    resource.metadata.namespace === 'equipment';
+  for (const slot of slots) {
+    const resources = documents.filter((resource) => matches(resource, slot));
+    if (
+      resources.length !== 1 ||
+      (resources[0].spec?.template?.spec?.[slot.containerKind] ?? []).filter(
+        (container) => container.name === slot.containerName,
+      ).length !== 1
+    )
+      throw new OperationalFailure(
+        `Missing, duplicate or moved component slot: ${slot.component}`,
+      );
+    const record = state.records[slot.component];
+    const expected = record
+      ? `${record.image}@${record.digest}`
+      : slot.component;
+    const container = resources[0].spec.template.spec[slot.containerKind].find(
+      (container) => container.name === slot.containerName,
+    );
+    if (container.image !== expected)
+      throw new OperationalFailure(
+        `Rendered component image does not match committed state: ${slot.component}`,
+      );
+  }
+  return validateManifestPolicy(documents, {}, (resource, container, kind) => {
+    const slot = slots.find(
+      (slot) =>
+        matches(resource, slot) &&
+        kind === slot.containerKind &&
+        container.name === slot.containerName,
+    );
+    return (
+      slot &&
+      !state.records[slot.component] &&
+      container.image === slot.component
+    );
+  });
+}
+
+function validateStaticState(state) {
+  try {
+    if (
+      !state ||
+      !state.records ||
+      typeof state.records !== 'object' ||
+      Array.isArray(state.records) ||
+      !Array.isArray(state.missing)
+    )
+      throw new Error();
+    for (const [name, record] of Object.entries(state.records)) {
+      validateComponentRelease(record);
+      if (record.component !== name) throw new Error();
+    }
+    const missing = imageNames.filter(
+      (name) => !Object.hasOwn(state.records, name),
+    );
+    if (canonicalRelease(missing) !== canonicalRelease(state.missing))
+      throw new Error();
+    let status = 'partial';
+    if (!missing.length) status = 'released';
+    if (missing.length === imageNames.length) status = 'unreleased';
+    if (
+      state.status !== status ||
+      !state.jobSuffixes ||
+      Object.keys(state.jobSuffixes).length !== jobNames.length
+    )
+      throw new Error();
+    for (const name of jobNames) {
+      const suffix = state.jobSuffixes[name];
+      if (
+        state.records[`${name}-bootstrap`]
+          ? !/^-[a-f0-9]{16}$/.test(suffix ?? '')
+          : suffix !== '-unreleased'
+      )
+        throw new Error();
+    }
+  } catch {
+    throw new OperationalFailure('Invalid static component state');
+  }
 }
 
 export function verifyReleaseIndexes(
@@ -631,15 +774,22 @@ export function readComponentState(root, { requireComplete = false } = {}) {
     throw new OperationalFailure(
       `Missing published components: ${missing.join(', ')}`,
     );
+  const jobInputs = readJobInputs(root);
   const status = validateCommittedState({
     kustomization: readPublicFile(
       root,
       'deploy/environments/local/kustomization.yaml',
     ),
-    jobInputs: readJobInputs(root),
+    jobInputs,
     records,
   });
-  return { records, missing, status };
+  const jobSuffixes = Object.fromEntries(
+    jobNames.map((name) => [
+      name,
+      validateWrapper(name, jobInputs.jobs[name].wrapper).data.nameSuffix,
+    ]),
+  );
+  return { records, missing, status, jobSuffixes };
 }
 
 if (
