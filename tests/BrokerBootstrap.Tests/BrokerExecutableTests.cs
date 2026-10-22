@@ -197,7 +197,7 @@ public sealed class BrokerExecutableTests
                 UserName = "reservations-publisher",
                 Password = "private-broker-publisher-password"
             };
-            await using IConnection sender = await publisher.CreateConnectionAsync(deadline.Token);
+            await using IConnection sender = await BrokerReadiness.ConnectAsync(publisher.CreateConnectionAsync, deadline.Token);
             await using IChannel outgoing = await sender.CreateChannelAsync(new CreateChannelOptions(true, true), deadline.Token);
             byte[] body = "cli-import-contract"u8.ToArray();
             await outgoing.BasicPublishAsync(ReservationTopology.Exchange, ReservationTopology.Confirmed, true, new BasicProperties { Persistent = true }, body, deadline.Token);
