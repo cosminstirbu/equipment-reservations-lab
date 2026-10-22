@@ -95,3 +95,44 @@ and full backend validation remain pending while the existing runtime is unavail
 Both configured Podman endpoints fail read-only info probes; no runtime changes,
 external dispatches, commit or push were performed. No passing CI rerun alone is
 treated as proof that the flake is eliminated, and feature acceptance stays pending.
+
+## Restart follow-up: run 39778181737
+
+Source d26d131: 582 backend cases, 572 passed and ten Integration failures. The
+Reservations module and all database admission policy tests passed. The first
+reported Integration failure is the existing real-broker outage/restart scenario:
+`RealBrokerOutageRetriesDurablyAndHostShutdownAllowsRecoveryByRestart` fails its
+published-state assertion after `StartBrokerAsync`. Nine subsequent cases fail
+opening an administrative AMQP connection in `ResetQueueAsync` with the same
+connection.start/EOF signature as the earlier startup failures. The delivery
+collection is already exclusive, so adding serialization would not repair this gap.
+
+Ranked explanations: (1) restart returns at TCP availability before AMQP readiness;
+(2) the restarted broker stays unhealthy, which should produce a bounded readiness
+failure rather than a misleading published-state assertion; (3) overlapping queue
+mutations, weakened by the existing exclusive collection ownership. The server-side
+trigger is not proven from these logs. Inspection confirms initial setup now waits
+for AMQP, but StartBrokerAsync still returns directly from container startup.
+
+Use the existing failing hosted recovery scenario as the test-first regression;
+its production worker/publisher, real broker, durable state and publish/consume
+assertions remain unchanged. The change belongs to the public fixture restart
+boundary: after starting the broker, establish and dispose an authenticated AMQP
+connection with the already-tested bounded readiness policy. This does not purge
+queues, retry publishing, alter application recovery behavior or delay the actual
+outage period. A broker that remains unhealthy fails readiness explicitly.
+
+No new source-shape test, internal fixture mock or broader test retry is warranted:
+the existing end-to-end failing scenario covers the desired recovery behavior and
+the 13 policy/client-boundary tests cover the reused readiness algorithm. Exact live
+restart regression and full-suite verification remain dependent on the local
+runtime or a later separately authorized hosted run. Record checks below.
+
+Restart follow-up checks: exact-file format/readback completed;
+`dotnet test --project tests/BrokerBootstrap.Tests/BrokerBootstrap.Tests.csproj -- --filter-class '*BrokerReadinessTests'`
+passed 13/13, zero skipped, exit 0 (14.381 seconds). `npm.cmd run format-check`
+and `npm.cmd run lint` both exit 0; build zero warnings/errors. `git diff --check`
+passes. Fresh Podman info still fails the existing endpoint; no service or VM
+configuration changed, and the exact live restart regression remains pending.
+Author inspection confirms the readiness connection is disposed, queue contents
+are untouched and the caller's cancellation token bounds both restart and readiness.

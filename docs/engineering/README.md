@@ -35,6 +35,8 @@ existing task response or review record; a new feature-team loop is not implied.
 | Telemetry | OpenTelemetry | [Observability](observability.md) |
 
 See [Resilience](resilience.md) for dependency timeouts, retries, and repeat safety.
+For flaky backend tests and fixture reviews, use the testing guide's
+[lifecycle diagnosis and verification guidance](testing.md#diagnose-backend-flakes-at-the-lifecycle-boundary).
 
 Use .NET 10 LTS and C# 14 as the recommended backend baseline. As of 2026-10-13,
 .NET 10 is the latest stable .NET release; .NET 11 is a prerelease. Keep supported

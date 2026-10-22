@@ -252,3 +252,8 @@ T077 follows fresh checked snapshot. No old task status or repair counter is res
 ## Phase 15: Convergence
 
 - [ ] T078 [US3] Qualify the current manifest-quality workflow snapshot with an adequate queue-aware workflow semantic validator, without stripping or weakening retained concurrency settings; record source-matched results and independent evidence review in team/manifest-quality-verification.md. Coordinate with retained T070, preserve T052/T053 and all full-feature runtime/human acceptance gates; limited stripped-copy actionlint is not full validation (SC-007, SC-013, plan: applicable quality branches; partial).
+
+## Phase 16: Backend stability follow-up
+
+- [x] T079 Record the whole-tree backend stability audit and clarify lifecycle/readiness, admission, cleanup and verification guidance in docs/engineering/testing.md; retain evidence and unresolved findings in team/backend-test-stability-audit.md. No scheduling or acceptance waiver.
+- [ ] T080 Qualify the delivery-fixture restart AMQP readiness repair on PR #15 CI at the pushed revision. Retain the existing failing real-provider regression and normal full concurrency; investigate subsequent actual failures rather than treating reruns as repair evidence. Track BTS-001 through BTS-005 separately and preserve T070/T078 and feature acceptance gates.
