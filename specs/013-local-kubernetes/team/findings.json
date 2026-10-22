@@ -67,7 +67,7 @@
       "blocking": true,
       "owner": "architect_planner",
       "status": "closed",
-      "evidence": "prep-design-012-01 research.md:104\u2013109",
+      "evidence": "prep-design-012-01 research.md:104ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã¢â‚¬Å“109",
       "description": "Host ingress and pod issuer TLS proof pending before dependent ingress/deployment implementation",
       "remediation": "Temporary CA host/pod canonical-hostname proof with wrong-CA/name rejection, no TLS bypass or system trust mutation",
       "closure_evidence": "Independent reviewers prep-design-012-02: exact locks/configuration and temporary host/pod TLS substrate proof"
@@ -208,7 +208,7 @@
       "status": "closed",
       "description": "Required full parallel application check reproduces variable reservation-test PostgreSQL connection/type-bootstrap read timeouts before request assertions; cause not established.",
       "evidence": "run-state check_results_02_attempt_1:535/541;attempt_2:539/541; isolated112setup+host comparison passed; exact scheduler temporarily instrumented for diagnosis.",
-      "remediation": "Independently reviewed per-fixture four-slot async provisioning admission; preserve all application budgets/assertions/native test scheduling, prove full-scheduler RED\u2192GREEN, remove diagnostic instrumentation and repeat final gates.",
+      "remediation": "Independently reviewed per-fixture four-slot async provisioning admission; preserve all application budgets/assertions/native test scheduling, prove full-scheduler REDÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€šÃ‚Â ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â‚¬Å¾Ã‚Â¢GREEN, remove diagnostic instrumentation and repeat final gates.",
       "design_review": "quality provisional design pass; no new policy exception",
       "closure_snapshot": "implementation-012-02a",
       "closure_evidence": "implementation-quality-review-02a.md",
@@ -285,6 +285,66 @@
       "description": "Two hosted IdentityAccess availability HTTP cases return503 expected200 after setup. In-process token and Inventory boundaries use existing2s/3s budgets; logs do not identify failing phase/outcome.",
       "evidence": "Run39425930936 atb22d131; ConcurrentReadsAcquireOneServiceTokenAndNeverForwardBrowserAuthority line34 and ConcurrentInitialReadsUseSingleFlightAcquisition line69;562/564pass0skip.",
       "remediation": "Bounded secret-free per-request boundary phase/outcome timings and existing production telemetry; no speculative retry/timeout/parallelism changes."
+    },
+    {
+      "id": "CP-Q001",
+      "category": "requirements",
+      "severity": "medium",
+      "blocking": true,
+      "owner": "requirements_analyst",
+      "status": "closed",
+      "description": "Deployment-only zero-publication wording conflicts with per-component outstanding-failure baseline selection.",
+      "evidence": "verifier preparation reconnaissance 2026-10-22: AC-3.3/FR-013 versus FR-022",
+      "remediation": "Clarify that deployment-only changes alone have no impact; earlier unpublished build-input changes remain eligible.",
+      "closure_evidence": "Original verifier 2026-10-22 inspected AC-3.3, FR-013, SC-004 and component-pipelines-requirements.md; all consistently distinguish deployment-reference-only impact from earlier unpublished build inputs. Both verification cases required."
+    },
+    {
+      "id": "CP-S001",
+      "category": "design",
+      "severity": "medium",
+      "blocking": true,
+      "owner": "architect_planner",
+      "status": "closed",
+      "description": "Default global concurrency keeps only one pending promotion; later independent component jobs can cancel earlier pending jobs.",
+      "evidence": "Security preparation review 2026-10-22; GitHub control-workflow-concurrency documentation",
+      "remediation": "Use explicit supported queue:max with cancel-in-progress:false and test queue/cancellation semantics.",
+      "closure_evidence": "Original security reviewer pass/closure CP-SEC-001 alias in component-pipelines-preparation-addenda.md, exact queue:max+cancelfalse and overflow summarytasks; quality reconfirmed all14."
+    },
+    {
+      "id": "CP-Q002",
+      "blocking": true,
+      "evidence": "component-pipelines-quality-01.md",
+      "category": "code",
+      "description": "Later-attempt result loading omits original intent for failed-producer rebuild and successful retained result reuse.",
+      "owner": "component_selection_coder",
+      "remediation": "Validate original intent and selected component at every later-attempt load-result entry; regression missing/invalid original intent for both paths.",
+      "severity": "medium",
+      "status": "closed",
+      "closure_evidence": "Original quality reviewer closed on component-source-02; component-pipelines-quality-02.md; distinct qualifying regressions before repairs, final Linux aggregate147/147."
+    },
+    {
+      "id": "CP-Q003",
+      "blocking": true,
+      "evidence": "component-pipelines-quality-01.md",
+      "category": "code",
+      "description": "Out-of-project Compile/EmbeddedResource inputs can cause affected consumers to be silently skipped.",
+      "owner": "component_selection_coder",
+      "remediation": "Resolve linked inputs or conservatively select all for uncertain/out-of-project inputs; retain normal in-project resources.",
+      "severity": "medium",
+      "status": "closed",
+      "closure_evidence": "Original quality reviewer closed on component-source-02; component-pipelines-quality-02.md; distinct qualifying regressions before repairs, final Linux aggregate147/147."
+    },
+    {
+      "id": "CP-S002",
+      "blocking": true,
+      "evidence": "component-pipelines-security-01.md",
+      "category": "security",
+      "description": "Ref-name equality gate bypasses ancestry freshness for cross-ref older ancestor candidates.",
+      "owner": "component_state_coder",
+      "remediation": "Reject obsolete ancestor candidates regardless of sourceRef, retain divergent manual positive and no-op.",
+      "severity": "medium",
+      "status": "closed",
+      "closure_evidence": "Original security reviewer closed on component-source-02; component-pipelines-security-02.md; cross-ref target/proposal reds before ancestry repair, final Linux aggregate147/147."
     }
   ]
 }

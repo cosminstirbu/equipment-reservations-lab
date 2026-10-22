@@ -59,19 +59,40 @@ startup/Job budgets. The application topology remains owned by the existing prod
 Build method.
 
 
-Deterministic Job identity and promotion scope follow the exact derivation and allowed
-fields in [the plan](../plan.md#targeted-design-clarification--deterministic-bootstrap-job-identity).
+## Component records and bootstrap identity
+
+Public records live at `deploy/environments/local/releases/NAME.json`, one per known
+component. Each schemaVersion=1 record contains component, repository `{id,name}`,
+sourceRevision, sourceRef, runId, runAttempt, workflow, image and digest. Source SHA
+is exact 40-character lowercase hexadecimal; sourceRef is a nonempty repository branch;
+workflow is `.github/workflows/validate.yaml`. The image belongs to the exact repository
+and component; digest identifies a verified Linux amd64/arm64 OCI index. Empty/partial
+records are explicitly unreleased for missing components. Overlay references must match
+exactly the genuine records; setup rejects incompleteness before cluster mutation.
+
+Deterministic Job identity and promotion scope follow the current
+[component design](../team/component-pipelines-design.md).
 Database/identity wrappers are the only suffixed resources; broker initialization is
 an initContainer. The public suffix is SHA256 truncated to 16 lowercase hex over four
 ordered, unsigned-64-bit-big-endian-length-prefixed UTF-8 inputs: recursively
-Unicode-codepoint-key-sorted canonical local release JSON, raw base configuration,
+Unicode-codepoint-key-sorted canonical corresponding bootstrap component JSON, raw base configuration,
 raw local configuration and the corresponding raw base Job template. Arrays retain
 order. No secrets enter the hash. Wrapper nameSuffix is exactly a hyphen plus that hash.
 
-Promotion may additionally change only nameSuffix in the two exact local Job wrapper
-Kustomization files; all other files/fields remain outside its mutation allowlist.
+Each component promotion changes only its release record and overlay image entry;
+database-bootstrap and identity-bootstrap may additionally update their own exact
+Job wrapper nameSuffix. Other component records/image entries and unrelated wrapper
+fields remain outside its mutation allowlist. A nonbootstrap component never changes
+either bootstrap suffix. Missing bootstrap records keep their wrappers unreleased.
 Reject symlinks, unexpected fields/files, stale suffixes, human edits or changed remote
-heads. Validate the full proposal before one atomic commit/non-force compare-and-swap.
+heads. Validate the full proposal before one atomic commit/non-force branch compare-and-swap.
+Candidate source is independent of current target main: manual branch publication can
+propose an update, but Argo adopts only after reviewed merge. Reread main/proposal refs
+immediately before mutation and preserve unrelated current-main blobs. Updating an old
+managed proposal may use a merge commit preserving its ancestry for non-force CAS.
+There is no provider-atomic compare-and-swap across both main and proposal refs: main
+can move after the final read. A proposal never writes main directly; subsequent merge
+review/revalidation must handle that residual race instead of claiming atomic freshness.
 The explicit config-only refresh command changes those suffix fields without image
 publication or promotion creation. Independent validation recomputes freshness.
 Successful old Job cleanup is bounded and ownership-scoped; current-suffix failures and

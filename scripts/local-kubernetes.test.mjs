@@ -12,6 +12,7 @@ import {
   unlinkSync,
   writeFileSync,
   copyFileSync,
+  symlinkSync,
 } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
@@ -121,13 +122,23 @@ test(
         ? 'Requires real POSIX private-file modes'
         : false,
   },
-  (t) => {
+  async (t) => {
     const directory = mkdtempSync(join(tmpdir(), 'parent-smoke-'));
     t.after(() => rmSync(directory, { recursive: true, force: true }));
     const scripts = join(directory, 'scripts');
     mkdirSync(scripts);
-    for (const name of ['local-kubernetes.mjs', 'process.mjs'])
+    for (const name of [
+      'local-kubernetes.mjs',
+      'process.mjs',
+      'deployment-validation.mjs',
+    ])
       copyFileSync(new URL(name, import.meta.url), join(scripts, name));
+    symlinkSync(
+      join(import.meta.dirname, '..', 'node_modules'),
+      join(directory, 'node_modules'),
+      'dir',
+    );
+    await releaseFixture(directory);
     const bundle = createLifecycle({ root: directory }).credentials(false);
     const state = join(directory, '.local/kubernetes');
     for (const name of ['kubeconfig', 'ca.crt'])
@@ -406,18 +417,23 @@ function fixture(t, options = {}) {
 async function releaseFixture(root) {
   const { imageNames, jobNames, jobSuffix, wrapperPath } =
     await import('./deployment-validation.mjs');
-  const release = {
-    sourceRevision: 'a'.repeat(40),
-    images: Object.fromEntries(
-      imageNames.map((name) => [
-        name,
-        {
-          image: 'ghcr.io/example/' + name,
-          digest: 'sha256:' + 'a'.repeat(64),
-        },
-      ]),
-    ),
-  };
+  const records = Object.fromEntries(
+    imageNames.map((component) => [
+      component,
+      {
+        schemaVersion: 1,
+        component,
+        repository: { id: 123, name: 'example/equipment' },
+        sourceRevision: 'a'.repeat(40),
+        sourceRef: 'refs/heads/main',
+        runId: 456,
+        runAttempt: 1,
+        workflow: '.github/workflows/validate.yaml',
+        image: `ghcr.io/example/equipment-${component}`,
+        digest: `sha256:${'a'.repeat(64)}`,
+      },
+    ]),
+  );
   const copy = (path) => {
     const text = readFileSync(join(import.meta.dirname, '..', path), 'utf8');
     mkdirSync(join(root, path, '..'), { recursive: true });
@@ -426,20 +442,32 @@ async function releaseFixture(root) {
   };
   const base = copy('deploy/base/configuration.yaml');
   const local = copy('deploy/environments/local/configuration.yaml');
+  const overlay = copy('deploy/environments/local/kustomization.yaml');
+  writeFileSync(
+    join(root, 'deploy/environments/local/kustomization.yaml'),
+    overlay.replace(
+      'images: []',
+      `images: ${JSON.stringify(Object.values(records).map((record) => ({ name: record.component, newName: record.image, digest: record.digest })))}`,
+    ),
+  );
   for (const name of jobNames) {
     const template = copy(`deploy/base/jobs/${name}/job.yaml`);
     const path = wrapperPath(name);
     mkdirSync(join(root, path, '..'), { recursive: true });
     writeFileSync(
       join(root, path),
-      `apiVersion: kustomize.config.k8s.io/v1beta1\nkind: Kustomization\nresources: [../../../../base/jobs/${name}]\nnameSuffix: ${jobSuffix(release, base, local, template)}\n`,
+      `apiVersion: kustomize.config.k8s.io/v1beta1\nkind: Kustomization\nresources: [../../../../base/jobs/${name}]\nnameSuffix: ${jobSuffix(records[`${name}-bootstrap`], base, local, template)}\n`,
     );
   }
-  writeFileSync(
-    join(root, 'deploy/environments/local/release.json'),
-    JSON.stringify(release),
-  );
-  return release;
+  mkdirSync(join(root, 'deploy/environments/local/releases'), {
+    recursive: true,
+  });
+  for (const record of Object.values(records))
+    writeFileSync(
+      join(root, `deploy/environments/local/releases/${record.component}.json`),
+      JSON.stringify(record),
+    );
+  return records;
 }
 
 test('missing tool fails with actionable sanitized diagnostic and no mutations', async (t) => {
@@ -453,7 +481,10 @@ test('missing tool fails with actionable sanitized diagnostic and no mutations',
 
 test('all subprocess invocations have finite timeout and setup requires release before cluster creation', async (t) => {
   const f = fixture(t);
-  await assert.rejects(f.app.execute(['setup']), /published.*release/i);
+  await assert.rejects(
+    f.app.execute(['setup']),
+    /Missing published components/i,
+  );
   assert.equal(
     f.calls.some((c) => c.command === 'kind' && c.args[0] === 'create'),
     false,
@@ -739,6 +770,7 @@ test('teardown safely handles owned partial setup before the Argo controller exi
 
 test('smoke uses private state and CA before child startup with owned loopback diagnostic forwards', async (t) => {
   const f = fixture(t);
+  await releaseFixture(f.root);
   const bundle = f.app.credentials(false);
   f.setCluster(true);
   f.setMarker(bundle.owner);
@@ -776,6 +808,7 @@ test('smoke uses private state and CA before child startup with owned loopback d
 
 test('smoke always cleans forwards after child failure and suppresses provider tokens', async (t) => {
   const f = fixture(t, { fail: process.execPath });
+  await releaseFixture(f.root);
   const bundle = f.app.credentials(false);
   f.setCluster(true);
   f.setMarker(bundle.owner);
@@ -789,6 +822,7 @@ test('smoke always cleans forwards after child failure and suppresses provider t
 
 test('failed diagnostic forwarding stops smoke before HTTP execution and cleans the child', async (t) => {
   const f = fixture(t, { forwardFailure: true });
+  await releaseFixture(f.root);
   const bundle = f.app.credentials(false);
   f.setCluster(true);
   f.setMarker(bundle.owner);
@@ -806,6 +840,7 @@ test('failed diagnostic forwarding stops smoke before HTTP execution and cleans 
 test('persistence smoke flags pass through narrowly, and verification needs no diagnostic forwards', async (t) => {
   for (const flag of ['--capture-persistence', '--verify-persistence']) {
     const f = fixture(t);
+    await releaseFixture(f.root);
     const bundle = f.app.credentials(false);
     f.setCluster(true);
     f.setMarker(bundle.owner);
@@ -816,6 +851,7 @@ test('persistence smoke flags pass through narrowly, and verification needs no d
     assert.equal(f.forwards.length, flag === '--verify-persistence' ? 0 : 1);
   }
   const f = fixture(t);
+  await releaseFixture(f.root);
   await assert.rejects(
     f.app.execute(['smoke', '--state', '/tmp/foreign']),
     /Usage/,
@@ -829,7 +865,10 @@ test('setup rejects duplicate release fields and stale Job suffixes before mutat
     const f = fixture(t);
     await releaseFixture(f.root);
     if (duplicate) {
-      const path = join(f.root, 'deploy/environments/local/release.json');
+      const path = join(
+        f.root,
+        'deploy/environments/local/releases/inventory.json',
+      );
       const text = readFileSync(path, 'utf8');
       writeFileSync(
         path,
@@ -843,7 +882,7 @@ test('setup rejects duplicate release fields and stale Job suffixes before mutat
         ),
         'apiVersion: kustomize.config.k8s.io/v1beta1\nkind: Kustomization\nresources: [../../../../base/jobs/database]\nnameSuffix: -unreleased\n',
       );
-    await assert.rejects(f.app.execute(['setup']), /Ambiguous|stale|malformed/);
+    await assert.rejects(f.app.execute(['setup']), /JSON|stale|malformed/);
     assert.equal(
       f.calls.some(
         (c) => c.args.includes('create') || c.args.includes('apply'),
@@ -853,8 +892,9 @@ test('setup rejects duplicate release fields and stale Job suffixes before mutat
   }
 });
 
-test('the real process adapter supplies the CA environment to Node before its first statement', (t) => {
+test('the real process adapter supplies the CA environment to Node before its first statement', async (t) => {
   const f = fixture(t);
+  await releaseFixture(f.root);
   f.app.credentials(false);
   const directory = join(f.root, '.local/kubernetes');
   writeFileSync(join(directory, 'kubeconfig'), 'private', { mode: 0o600 });
@@ -982,4 +1022,33 @@ test('setup sends the matching Argo server TLS Secret privately before Argo inst
     false,
   );
   assert.ok(f.calls[index].args.includes('--server-side'));
+});
+
+test('partial component publication names missing images before any setup mutation', async (t) => {
+  const f = fixture(t);
+  await releaseFixture(f.root);
+  for (const name of ['inventory', 'reservations'])
+    rmSync(join(f.root, `deploy/environments/local/releases/${name}.json`));
+  await assert.rejects(
+    f.app.execute(['setup']),
+    /Missing published components: inventory, reservations/,
+  );
+  assert.equal(
+    f.calls.some((c) => c.args.includes('create') || c.args.includes('apply')),
+    false,
+  );
+});
+
+test('smoke refuses partial component state before starting diagnostic forwarding', async (t) => {
+  const f = fixture(t);
+  const bundle = f.app.credentials(false);
+  f.setCluster(true);
+  f.setMarker(bundle.owner);
+  await releaseFixture(f.root);
+  rmSync(join(f.root, 'deploy/environments/local/releases/web.json'));
+  await assert.rejects(
+    f.app.execute(['smoke']),
+    /Missing published components: web/,
+  );
+  assert.equal(f.forwards.length, 0);
 });

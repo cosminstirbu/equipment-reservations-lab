@@ -95,61 +95,99 @@ macOS trust. Do not use TLS-verification bypasses.
 
 ## First release and GitHub permissions
 
+The component-pipeline implementation is undergoing final integration and review;
+see [the design](team/component-pipelines-design.md). Quality runs once before
+parallel component work. PRs build affected components for both architectures without
+publication; main publishes affected components relative to their own successful main
+baselines; manual repository-branch runs select all seven. Each successful component
+may independently open its own `automation/local-image-promotion-NAME` PR, including
+from a manual feature branch, with exact source SHA/ref and immutable digest. Nothing
+is adopted until the component PR is reviewed and merged into main.
+
+Records live at `deploy/environments/local/releases/NAME.json`. A first PR may contain
+only one real record: missing components remain explicitly unreleased, and setup fails
+before mutation until all seven are available. Never fill gaps with invented references.
+No new preproduction or compatibility gate is introduced. Live runs, commits/pushes
+and full-feature human acceptance remain separately authorized.
+
 Before setup, the repository owner separately authorizes first publication and promotion.
-The release workflow supports automatic publication for application changes pushed
-to main and manual dispatch against any repository branch. Select **Release application images**
-in Actions and choose the reviewed branch for an explicitly authorized manual run.
-Manual dispatch publishes even without application changes; tags and PR/fork events
-are excluded. Both architectures use the run's exact source SHA and immutable indexes.
-All release runs share one serialized concurrency group. Workflow creation does not
-authorize pushing, merging, publishing, creating PRs or changing repository settings
-in this session.
+For a manual run, select **Component pipelines** in Actions and choose the reviewed repository
+branch. Manual dispatch publishes even without application changes; tags and PR/fork
+events cannot publish. Component builds run concurrently; only promotion mutations share
+a queue, with `queue: max` and `cancel-in-progress: false`. Up to 100 promotions may wait;
+overflow/cancellation must appear as a failed component in the required summary.
+The temporary image-build diagnostic job is retired.
 
-Only main runs may create or update the deployment promotion PR. A manual feature
-branch run publishes images for diagnosis/review without changing deployment references
-or opening a promotion PR; it does not release that branch into the local environment.
-Required validation and publication permissions apply equally to manual branch runs.
-The branch-release implementation is present; final independent review and full-feature
-human acceptance remain pending. The temporary Validate image-build diagnostic job is
-being retired; use the ordinary authorized release path for future publication checks.
+Publication requires job-scoped `packages:write`. Confirm repository linkage and package
+visibility allow unauthenticated pulls of each public GHCR package; a new package must
+not be assumed public. Build jobs have no repository write authority. Promotion uses
+`contents:write`, `pull-requests:write` and read-only Actions evidence access. The owner
+must enable **Allow GitHub Actions to create and approve pull requests** where repository
+or organization policy permits. No elevated personal token is a fallback for rejected policy.
 
-The publication job requires job-scoped `packages:write`. Confirm repository linkage
-and package visibility allow unauthenticated pulls of each public GHCR package; a new
-package must not be assumed public. The promotion job has only `contents:write` and
-`pull-requests:write`. The owner must enable **Allow GitHub Actions to create and approve
-pull requests** where repository/organization policy permits. No elevated personal token
-is a fallback for a rejected policy. If publication succeeded but promotion was denied,
-correct the authorized setting and rerun the failed promotion job in that same authorized
-Actions run; do not invent digests or rerun publication locally to simulate release.
+Review each `automation/local-image-promotion-NAME` PR independently. Its record contains
+schemaVersion=1, component, repository `{id,name}`, sourceRevision, sourceRef, runId,
+runAttempt, workflow, image and digest. The workflow identity is
+`.github/workflows/validate.yaml`; the image must match that repository/component.
+The seven names are inventory, reservations, notifications, web, database-bootstrap,
+identity-bootstrap and broker-bootstrap. Every digest identifies an OCI index for Linux
+amd64 and arm64. A proposal changes only its component record/image entry and, for
+database-bootstrap or identity-bootstrap, its own derived Job suffix. Concurrent
+same-component or human-edited proposals fail closed; other components are preserved.
+An identical deployed digest is a no-op and retains existing deployed provenance.
+A deployment-reference-only merge does not rebuild otherwise-current images; previously
+unpublished build changes remain selected until that component publishes successfully.
 
-Review the single `automation/local-image-promotion` PR. It contains the actual source
-revision and immutable OCI indexes for inventory, reservations, notifications, web,
-database-bootstrap, identity-bootstrap and broker-bootstrap, each supporting Linux amd64
-and arm64. Only local release metadata, image references and the two derived bootstrap
-Job suffix fields may change. Concurrent or human-edited promotion branches fail closed.
-A deployment-only merge does not republish or create another promotion.
+If one component fails, successful siblings may still publish and propose their PRs.
+Use Actions' failed-job rerun on that original run after correcting an authorized
+prerequisite; retained evidence must match its original SHA/run and target intent.
+If that component previously built successfully, missing or expired retained result
+requires a fresh authorized run. A component whose earlier producers all failed,
+were canceled or never reached the build has no successful result to retain and
+builds on rerun. Original run intent is always required on a later attempt; missing
+intent requires a fresh authorized run even when no component succeeded previously.
+That intent also preserves the original selected component set. Full reruns keep
+successfully published components selected when their promotion failed; updated
+publication baselines must not silently remove their pending promotion retries.
+The original empty selection likewise remains empty for that run.
+Do not substitute another run's artifact or manufacture a record. Changed same-component
+target/proposal state requires review and fresh intent; unrelated main commits can be
+incorporated while preserving other component records. Missing old publication baselines
+conservatively rebuild; that does not authorize replacing required rerun evidence.
 
-After separately authorized review/merge, update this checkout to that reviewed revision
-using your normal Git workflow. Argo watches the public repository's main branch, so
-unmerged deployment files in this worktree are not a release that Argo can fetch.
-Validate the real release and derived names:
+The trusted wrapper invokes `node scripts/deployment-ci.mjs component NAME --publish
+--output PATH` and then passes its `component-result.json` plus `run-intent.json` to
+`scripts/promote-images.mjs`. PR validation uses `component NAME` without publication.
+These are workflow implementation interfaces, not instructions to publish locally:
+use the authorized parent Actions run so source/run/intent evidence remains verifiable.
+
+After separately authorized review/merge, update this checkout to the reviewed revision
+using your normal Git workflow. Argo watches main; unmerged local files are not available
+to it. Validate committed component state and derived names:
 
 ```sh
 node scripts/deployment-validation.mjs committed
-node scripts/deployment-validation.mjs release deploy/environments/local/release.json
 node scripts/deployment-validation.mjs jobs "$PWD"
 kubectl kustomize deploy/environments/local > /private/tmp/equipment-local-manifests.yaml
 node scripts/deployment-validation.mjs manifests /private/tmp/equipment-local-manifests.yaml
 ```
 
-The committed check separately accepts only the strict initial-unreleased form or a
-complete real release with independently current Job hashes; it runs before CI image/
-hash transformations. It does not make absent release images deployable.
-The rendered application manifests contain Secret references, not private Secret values.
-Keep private-resource rendering/output out of shared files. These checks currently fail
-until a genuine first release is present; that failure is intentional.
+Committed-state validation accepts valid unreleased, partial and complete states with
+matching overlay references and current available bootstrap hashes. It runs before CI
+image/hash transformations. To inspect one actual merged record's schema and public
+multiarchitecture index, use, for example:
 
-For a public configuration/Job-template-only change after a real release exists:
+```sh
+node scripts/deployment-validation.mjs release deploy/environments/local/releases/inventory.json
+```
+
+Run that command only once the named genuine record exists. A partial state is not
+deployable: manifest/runtime checks and setup remain blocked on missing components.
+The rendered application manifests contain Secret references, not private Secret values.
+Keep private-resource rendering/output out of shared files. A passing committed-state
+check with missing images is not deployment success.
+
+For a public configuration/Job-template-only change:
 
 ```sh
 node scripts/promote-images.mjs refresh "$PWD"
@@ -157,9 +195,10 @@ node scripts/deployment-validation.mjs jobs "$PWD"
 git diff -- deploy/environments/local/jobs
 ```
 
-Refresh changes only the two local wrapper `nameSuffix` fields. It neither publishes
-images nor creates a PR. Review the whole configuration diff through the normal process.
-The exact public-input hash derivation is in [the plan](plan.md#targeted-design-clarification--deterministic-bootstrap-job-identity).
+Refresh changes only existing bootstrap components' local wrapper `nameSuffix` fields.
+Missing bootstrap records remain unreleased. It neither publishes images nor creates
+a PR. Review the whole configuration diff through the normal process. Current component
+hash inputs are in [the runtime contract](contracts/runtime.md#component-records-and-bootstrap-identity).
 
 ## Setup, status and private access
 

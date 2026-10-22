@@ -227,7 +227,7 @@
     "requirements_review":  {
                                 "quality":  "pass",
                                 "security":  "pass",
-                                "snapshot":  "spec.md prepared 2026-10-20; FR-001–018; requirements translation only",
+                                "snapshot":  "spec.md prepared 2026-10-20; FR-001ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â€šÂ¬Ã…â€œ018; requirements translation only",
                                 "reports":  [
                                                 "requirements-quality-review.md",
                                                 "requirements-security-review.md"
@@ -247,7 +247,7 @@
                                             ]
                             },
     "policy_amendments":  {
-                              "status":  "pass — exact authoritative diffs reviewed by independent quality/security",
+                              "status":  "pass ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â exact authoritative diffs reviewed by independent quality/security",
                               "authorization":  "owner-approved narrow scope in handoff",
                               "files":  [
                                             "docs/engineering/testing.md",
@@ -259,7 +259,7 @@
                                           ]
                           },
     "implementation_batch":  {
-                                 "tasks":  "T004–T010",
+                                 "tasks":  "T004ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â€šÂ¬Ã…â€œT010",
                                  "owner":  "coder",
                                  "status":  "implemented",
                                  "scope":  "foundation source/test portability"
@@ -267,31 +267,31 @@
     "metadata_changes_after_review":  "Coordinator team evidence/state only after final implementation-012-02a; source/spec/tasks unchanged",
     "implementation_batches":  [
                                    {
-                                       "tasks":  "T004–T010",
+                                       "tasks":  "T004ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â€šÂ¬Ã…â€œT010",
                                        "owner":  "/root/implementation",
                                        "scope":  "src/tests foundation",
                                        "status":  "implementation present; story-specific runtime/external acceptance remains explicit in tasks"
                                    },
                                    {
-                                       "tasks":  "T011–T012",
+                                       "tasks":  "T011ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â€šÂ¬Ã…â€œT012",
                                        "owner":  "/root/images",
                                        "scope":  "deploy/images + deployment-routing test",
                                        "status":  "implementation present; story-specific runtime/external acceptance remains explicit in tasks"
                                    },
                                    {
-                                       "tasks":  "T013–T014,T019–T023,T034",
+                                       "tasks":  "T013ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â€šÂ¬Ã…â€œT014,T019ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â€šÂ¬Ã…â€œT023,T034",
                                        "owner":  "/root/lifecycle",
                                        "scope":  "lifecycle CLI/tests; deploy/platform + argocd; .gitignore; local PVC binding integration deferred",
                                        "status":  "implementation present; story-specific runtime/external acceptance remains explicit in tasks"
                                    },
                                    {
-                                       "tasks":  "T026–T030",
+                                       "tasks":  "T026ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â€šÂ¬Ã…â€œT030",
                                        "owner":  "/root/delivery",
                                        "scope":  "validation/promotion scripts + workflows; quickstart integration deferred",
                                        "status":  "implementation present; story-specific runtime/external acceptance remains explicit in tasks"
                                    },
                                    {
-                                       "tasks":  "T015–T017,T032–T034 implementation only",
+                                       "tasks":  "T015ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â€šÂ¬Ã…â€œT017,T032ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â€šÂ¬Ã…â€œT034 implementation only",
                                        "owner":  "/root/deployment",
                                        "scope":  "deploy/base + local overlay; deployment smoke scripts",
                                        "status":  "implementation present; story-specific runtime/external acceptance remains explicit in tasks"
@@ -446,7 +446,7 @@
                                   "backend":  "521/541;20 Reservations failures;8othermodules pass",
                                   "skipped":  0,
                                   "duration":  "2m53s",
-                                  "observations":  "Primary fixture149create/extension attempts129migrations;20first-open timeouts3001–3215ms; createDBmax11489ms; low continuing ThreadPoolpending0–16. No precise CPU/IO/root-cause attribution."
+                                  "observations":  "Primary fixture149create/extension attempts129migrations;20first-open timeouts3001ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â€šÂ¬Ã…â€œ3215ms; createDBmax11489ms; low continuing ThreadPoolpending0ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â€šÂ¬Ã…â€œ16. No precise CPU/IO/root-cause attribution."
                               }
                           ],
     "test_infrastructure_design":  {
@@ -454,7 +454,7 @@
                                        "scope":  "four-slot asynchronous per-fixture admission around database creation/extensions/migrations only; release before host/request",
                                        "queue_budget":  "60s with current test cancellation; expiry fails prerequisite",
                                        "unchanged":  "native parallel methods/modules/requests and application3s/5s budgets/assertions",
-                                       "validation":  "same full scheduler intended20RED→GREEN with queue outcomes then remove temporary diagnostics and revalidate final source"
+                                       "validation":  "same full scheduler intended20REDÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢GREEN with queue outcomes then remove temporary diagnostics and revalidate final source"
                                    },
     "capacity_comparison_1":  {
                                   "session":  66873,
@@ -481,7 +481,7 @@
                                                   "tests/TestSupport/BookingScenario.cs",
                                                   "tests/IdentityAccess.Tests/ServiceIdentityTests.cs"
                                               ],
-                                "validation":  "same full scheduler4RED→GREEN, queue/maxactive/wait outcomes; remove temporary diagnostics then final checks",
+                                "validation":  "same full scheduler4REDÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢GREEN, queue/maxactive/wait outcomes; remove temporary diagnostics then final checks",
                                 "limits":  "No Task.Run, ThreadPoolminimum overrides, request/testmethod serial execution, assertion or application timeout changes"
                             },
     "capacity_comparison_2":  {
@@ -539,7 +539,7 @@
                                            "evidence":  "identity24/24; DB isolation1/1; broker executable2/2",
                                            "scope":  "unblocks manifest/smoke authoring, not actual runtime acceptance"
                                        },
-    "preparation_metadata_changes_after_review":  "T001–T003 checkbox completion only; no task descriptions or requirements changed",
+    "preparation_metadata_changes_after_review":  "T001ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â€šÂ¬Ã…â€œT003 checkbox completion only; no task descriptions or requirements changed",
     "publication_authorization":  {
                                       "commit_push_pr":  "Explicitly authorized by owner on 2026-10-20 for validation workflow testing",
                                       "merge_release_and_host_changes":  "Not authorized"
@@ -672,5 +672,23 @@
                                             "authorization":  "Explicit owner request2026-10-20; no automatic merge/publication performed.",
                                             "checks":  "format-check pass;lint pass0warnings0errors;36 workflow/promotion/orchestration contracts pass0skip;gitdiffcheck pass",
                                             "reviews":  "Independentquality/securitypass atworkflowhashc5824f13dbbe0d18c37c7bece74d3ea639a39e42527a3f395bde06d9861fea6c; temporary-deployment-review.md"
-                                        }
+                                        },
+    "component_pipelines_batch":  {
+                                      "authorization_date":  "2026-10-22",
+                                      "baseline_revision":  "424a6701ac97206ecc0067e7ea41763fb3abc950",
+                                      "status":  "scoped_implementation_and_reviews_pass_qualification_pending",
+                                      "authorization":  "Owner confirmed grilling decisions and requested feature-team implementation of independent component workflows after quality, PR dualarch build only, selective main publication and all-component manual any-branch publication/local promotion PRs. No new commit, push, remote run, publication, merge or feature acceptance requested.",
+                                      "preparation_round":  1,
+                                      "implementation_round":  1,
+                                      "repair_limit":  3,
+                                      "human_acceptance":  null,
+                                      "preparation_quality":  "pass; component-pipelines-preparation-quality.md and addenda",
+                                      "preparation_security":  "pass; component-pipelines-preparation-security-01.md and addenda closes CP-S001",
+                                      "tasks":  "T060-T067/T069 complete; T068/T070 qualification pending; retained T052/T053/full-feature gates pending",
+                                      "snapshot":  "component-pipelines-snapshot-02.json",
+                                      "verification":  "component-pipelines-verification.md; Linux147/147 no skips; tooling79pass1POSIXskip; format/lint pass; backend API/pinned deployment tools/full queue validator unavailable",
+                                      "quality_review":  "pass scoped source02; component-pipelines-quality-02.md closes CP-Q002/CP-Q003",
+                                      "security_review":  "pass scoped source02; component-pipelines-security-02.md closes CP-S002",
+                                      "convergence":  "tasks_appended T070; component-pipelines-convergence.md; full feature not converged or accepted"
+                                  }
 }

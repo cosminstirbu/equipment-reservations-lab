@@ -771,25 +771,20 @@ export function createLifecycle({
     if (command === 'setup') {
       const exists = hasCluster();
       if (exists) owned();
-      const release = join(root, 'deploy/environments/local/release.json');
-      if (!existsSync(release))
-        throw new OperationalFailure(
-          'A genuine published GHCR release is required: authorize first publication and reviewed digest promotion; no local image overrides.',
-        );
-      const {
-        parseRelease,
-        readPublicFile,
-        readJobInputs,
-        validateJobSuffixes,
-        verifyReleaseIndexes,
-      } = await import('./deployment-validation.mjs');
-      const selected = parseRelease(
-        readPublicFile(root, 'deploy/environments/local/release.json'),
-      );
-      validateJobSuffixes(selected, readJobInputs(root));
-      verifyReleaseIndexes(selected, (image) =>
-        JSON.parse(call('podman', ['manifest', 'inspect', image])),
-      );
+      const { readComponentState, verifyComponentIndex } =
+        await import('./deployment-validation.mjs');
+      const selected = readComponentState(root, { requireComplete: true });
+      for (const record of Object.values(selected.records))
+        verifyComponentIndex(record, (image) => {
+          const raw = call('podman', ['manifest', 'inspect', image]);
+          try {
+            return JSON.parse(raw);
+          } catch {
+            throw new OperationalFailure(
+              'Published component index response is invalid JSON; private response suppressed.',
+            );
+          }
+        });
       await prerequisites();
       const remote = call(
         'git',
@@ -919,6 +914,9 @@ export function createLifecycle({
       return;
     }
     if (command === 'smoke') {
+      const { readComponentState } =
+        await import('./deployment-validation.mjs');
+      readComponentState(root, { requireComplete: true });
       const statePath = join(state, 'smoke-state.json');
       if (existsSync(statePath)) privateFile(statePath, 0o600);
       privateFile(join(state, 'ca.crt'), 0o600);

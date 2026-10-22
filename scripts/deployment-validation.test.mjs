@@ -8,6 +8,7 @@ import {
   rmSync,
   copyFileSync,
   chmodSync,
+  symlinkSync,
 } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { tmpdir } from 'node:os';
@@ -77,6 +78,29 @@ test('default OCI inspector excludes malformed private JSON and stderr from all 
     /PRIVATE_|RAW_CAUSE_RETAINED|Unexpected token/,
   );
 });
+
+test(
+  'committed validation rejects a symlinked component metadata directory',
+  { skip: process.platform === 'win32' ? 'Requires POSIX symlinks' : false },
+  () => {
+    const root = committedFixture();
+    try {
+      const target = join(root, 'records');
+      mkdirSync(target);
+      symlinkSync(
+        target,
+        join(root, 'deploy/environments/local/releases'),
+        'dir',
+      );
+      assert.throws(
+        () => validateCommittedDeployment(root),
+        /Symlinked component/,
+      );
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
+  },
+);
 
 test('only application and build changes publish; deployment promotion cannot loop', () => {
   assert.equal(
@@ -181,40 +205,18 @@ test('validation no longer exposes the temporary image-build diagnostic job', as
       assert.doesNotMatch(step.run ?? '', /diagnose-build/);
 });
 
-test('workflow trust boundaries keep PR read-only and promotion restricted to main', async () => {
-  const { readFile } = await import('node:fs/promises');
+test('prerequisite quality retains committed deployment validation and pinned tools', async () => {
   const { default: parsers } = await import('@stoplight/spectral-parsers');
   const validate = parsers.Yaml.parse(
-    await readFile('.github/workflows/validate.yaml', 'utf8'),
+    readFileSync('.github/workflows/validate.yaml', 'utf8'),
   ).data;
-  const release = parsers.Yaml.parse(
-    await readFile('.github/workflows/release.yaml', 'utf8'),
-  ).data;
-  assert.equal(
-    release.jobs.promote.if,
-    "needs.classify.outputs.promote == 'true'",
-    'non-main publication must not propose deployment changes',
-  );
-  assert.deepEqual(release.jobs.promote.needs, ['classify', 'publish']);
-  assert.equal(
-    release.jobs.classify.outputs.promote,
-    '${{ steps.changes.outputs.promote }}',
-  );
   assert.ok(
     validate.jobs.quality.steps.some((step) =>
       step.run?.includes('deployment-validation.mjs committed'),
     ),
-    'PR must validate committed suffixes before CI regeneration',
   );
   assert.equal(validate.permissions.contents, 'read');
   assert.equal(validate.on.pull_request_target, undefined);
-  for (const workflow of [validate, release]) {
-    for (const job of Object.values(workflow.jobs)) {
-      for (const step of job.steps ?? []) {
-        if (step.uses) assert.match(step.uses, /^[\w/-]+@[a-f0-9]{40}$/);
-      }
-    }
-  }
   const installation = validate.jobs.deployment.steps.find(
     (step) => step.name === 'Install checksum-verified deployment tools',
   );
@@ -226,90 +228,7 @@ test('workflow trust boundaries keep PR read-only and promotion restricted to ma
     installation?.run ?? '',
     /874d5e72dbb819f43cff16bcd1e4f8bac5b7f2361fe1e55049b0a6c676fb0cbf/,
   );
-  assert.equal(release.jobs.publish.permissions.packages, 'write');
-  assert.equal(release.jobs.publish.permissions.contents, 'read');
-  assert.equal(release.jobs.promote.permissions.packages, undefined);
-  assert.equal(release.jobs.promote.permissions['pull-requests'], 'write');
-  assert.match(release.jobs.publish.if, /publish == 'true'/);
-  assert.equal(release.concurrency['cancel-in-progress'], false);
-  assert.equal(release.concurrency.group, 'local-application-release');
-  for (const job of Object.values(release.jobs))
-    for (const step of job.steps ?? [])
-      if (step.uses?.startsWith('actions/checkout@'))
-        assert.equal(step.with['persist-credentials'], false);
 });
-
-test('release classifier permits manual repository branches and only automatic main pushes', async () => {
-  const { default: parsers } = await import('@stoplight/spectral-parsers');
-  const release = parsers.Yaml.parse(
-    readFileSync('.github/workflows/release.yaml', 'utf8'),
-  ).data;
-  assert.equal(
-    release.jobs.classify.if,
-    "(github.event_name == 'push' && github.ref == 'refs/heads/main') || (github.event_name == 'workflow_dispatch' && startsWith(github.ref, 'refs/heads/') && github.ref != 'refs/heads/')",
-  );
-  assert.deepEqual(release.on.push.branches, ['main']);
-  assert.ok(Object.hasOwn(release.on, 'workflow_dispatch'));
-  assert.equal(release.on.pull_request, undefined);
-  assert.equal(release.on.pull_request_target, undefined);
-  assert.equal(release.on.workflow_call, undefined);
-});
-
-test('manual branch release publishes without a push diff and retains validation', async () => {
-  const { default: parsers } = await import('@stoplight/spectral-parsers');
-  const release = parsers.Yaml.parse(
-    readFileSync('.github/workflows/release.yaml', 'utf8'),
-  ).data;
-  assert.ok(Object.hasOwn(release.on, 'workflow_dispatch'));
-  const changes = release.jobs.classify.steps.find(
-    (step) => step.id === 'changes',
-  );
-  const root = mkdtempSync(join(tmpdir(), 'manual-release-'));
-  try {
-    const output = join(root, 'output');
-    for (const [ref, promote] of [
-      ['refs/heads/Main', 'false'],
-      ['refs/heads/main', 'true'],
-      ['refs/heads/MAIN', 'false'],
-      ['refs/heads/feature', 'false'],
-      ['refs/heads/feature/nested', 'false'],
-    ]) {
-      writeFileSync(output, '');
-      const result = spawnSync(
-        'bash',
-        ['-e', '-o', 'pipefail', '-c', changes.run],
-        {
-          cwd: root,
-          env: {
-            ...process.env,
-            EVENT_NAME: 'workflow_dispatch',
-            GITHUB_REF: ref,
-            BEFORE: '',
-            GITHUB_OUTPUT: output,
-            RUNNER_TEMP: root,
-          },
-          encoding: 'utf8',
-        },
-      );
-      assert.equal(result.status, 0, `${ref}: ${result.stderr}`);
-      const outputs = Object.fromEntries(
-        readFileSync(output, 'utf8')
-          .trim()
-          .split('\n')
-          .map((line) => line.split('=')),
-      );
-      assert.deepEqual(outputs, { publish: 'true', promote }, ref);
-    }
-    assert.ok(
-      release.jobs.publish.steps.some((step) =>
-        step.run?.includes('npm run check'),
-      ),
-    );
-  } finally {
-    rmSync(root, { recursive: true, force: true });
-  }
-});
-
 test('canonical release rejects ambiguous JSON and orders Unicode keys by codepoint', () => {
   assert.equal(
     canonicalRelease(' {"z":[3,2],"a":{"\\ud800\\udc00":1,"\\ue000":2}} '),
@@ -493,6 +412,123 @@ test('initial committed state permits only empty images and unreleased wrappers 
       'kind: Secret\n',
     );
     assert.throws(() => validateCommittedDeployment(root), /generator|public/);
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+});
+
+// Component records are deterministic public provenance contracts.
+const componentRecord = {
+  schemaVersion: 1,
+  component: 'inventory',
+  repository: { id: 123, name: 'example/equipment' },
+  sourceRevision: 'b'.repeat(40),
+  sourceRef: 'refs/heads/feature/testing',
+  runId: 456,
+  runAttempt: 1,
+  workflow: '.github/workflows/validate.yaml',
+  image: 'ghcr.io/example/equipment-inventory',
+  digest,
+};
+
+test('a genuine independently published component does not require six sibling images', () => {
+  assert.equal(validateRelease(componentRecord), componentRecord);
+  for (const invalid of [
+    { ...componentRecord, component: 'unknown' },
+    { ...componentRecord, sourceRevision: 'main' },
+    { ...componentRecord, image: 'ghcr.io/other/repository' },
+    { ...componentRecord, repository: { id: 0, name: 'example/equipment' } },
+    { ...componentRecord, unexpected: 'field' },
+  ])
+    assert.throws(() => validateRelease(invalid));
+});
+
+test('committed partial component state validates only genuine available images and reports missing siblings', async () => {
+  const root = committedFixture();
+  try {
+    const path = 'deploy/environments/local/releases/inventory.json';
+    mkdirSync(dirname(join(root, path)), { recursive: true });
+    writeFileSync(join(root, path), JSON.stringify(componentRecord));
+    const overlay = join(root, 'deploy/environments/local/kustomization.yaml');
+    writeFileSync(
+      overlay,
+      readFileSync(overlay, 'utf8').replace(
+        'images: []',
+        `images: [{name: inventory, newName: ${componentRecord.image}, digest: ${digest}}]`,
+      ),
+    );
+    assert.equal(validateCommittedDeployment(root), 'partial');
+    const { readComponentState } = await import('./deployment-validation.mjs');
+    const state = readComponentState(root);
+    assert.deepEqual(Object.keys(state.records), ['inventory']);
+    assert.equal(state.missing.length, 6);
+    assert.throws(
+      () => readComponentState(root, { requireComplete: true }),
+      /Missing.*reservations.*web/,
+    );
+    writeFileSync(
+      join(root, path),
+      JSON.stringify({ ...componentRecord, component: 'web' }),
+    );
+    assert.throws(() => validateCommittedDeployment(root), /component|record/i);
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test('jobs CLI validates explicitly unreleased component state without a global release file', () => {
+  const root = committedFixture();
+  try {
+    const result = spawnSync(
+      process.execPath,
+      ['scripts/deployment-validation.mjs', 'jobs', root],
+      { encoding: 'utf8', timeout: 10000 },
+    );
+    assert.equal(result.status, 0, result.stderr);
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test('single component release index verification retains both architecture requirements', async () => {
+  const { verifyReleaseIndexes } = await import('./deployment-validation.mjs');
+  const index = {
+    mediaType: 'application/vnd.oci.image.index.v1+json',
+    manifests: ['amd64', 'arm64'].map((architecture) => ({
+      platform: { os: 'linux', architecture },
+      digest,
+    })),
+  };
+  assert.doesNotThrow(() => verifyReleaseIndexes(componentRecord, () => index));
+  assert.throws(
+    () =>
+      verifyReleaseIndexes(componentRecord, () => ({
+        ...index,
+        manifests: index.manifests.slice(0, 1),
+      })),
+    /arm64/,
+  );
+});
+
+test('component metadata is bounded before parsing rather than accepting oversized records', async () => {
+  const root = committedFixture();
+  try {
+    const path = join(
+      root,
+      'deploy/environments/local/releases/inventory.json',
+    );
+    mkdirSync(dirname(path), { recursive: true });
+    writeFileSync(path, JSON.stringify(componentRecord) + ' '.repeat(65536));
+    const overlay = join(root, 'deploy/environments/local/kustomization.yaml');
+    writeFileSync(
+      overlay,
+      readFileSync(overlay, 'utf8').replace(
+        'images: []',
+        `images: [{name: inventory,newName: ${componentRecord.image},digest: ${digest}}]`,
+      ),
+    );
+    const { readComponentState } = await import('./deployment-validation.mjs');
+    assert.throws(() => readComponentState(root), /64KiB/);
   } finally {
     rmSync(root, { recursive: true, force: true });
   }

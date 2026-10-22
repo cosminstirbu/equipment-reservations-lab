@@ -40,7 +40,14 @@ test('publication CLI streams both provider streams and preserves safe process f
   );
   const result = spawnSync(
     process.execPath,
-    ['scripts/deployment-ci.mjs', 'publish'],
+    [
+      'scripts/deployment-ci.mjs',
+      'component',
+      'inventory',
+      '--publish',
+      '--output',
+      join(directory, 'result.json'),
+    ],
     {
       encoding: 'utf8',
       timeout: 10000,
@@ -55,6 +62,9 @@ test('publication CLI streams both provider streams and preserves safe process f
         GITHUB_EVENT_NAME: 'workflow_dispatch',
         GITHUB_REF: 'refs/heads/main',
         GITHUB_REPOSITORY: 'example/equipment',
+        GITHUB_REPOSITORY_ID: '7',
+        GITHUB_RUN_ID: '101',
+        GITHUB_RUN_ATTEMPT: '1',
       },
     },
   );
@@ -285,7 +295,11 @@ syncBuiltinESMExports();
           '--import',
           pathToFileURL(preload).href,
           fileURLToPath(new URL('./deployment-ci.mjs', import.meta.url)),
-          'publish',
+          'component',
+          'inventory',
+          '--publish',
+          '--output',
+          output,
         ],
         {
           cwd: fileURLToPath(new URL('../', import.meta.url)),
@@ -298,6 +312,9 @@ syncBuiltinESMExports();
             GITHUB_REF: ref,
             GITHUB_SHA: 'b'.repeat(40),
             GITHUB_REPOSITORY: 'example/equipment',
+            GITHUB_REPOSITORY_ID: '7',
+            GITHUB_RUN_ID: '101',
+            GITHUB_RUN_ATTEMPT: '1',
             GITHUB_OUTPUT: output,
             RELEASE_TEST_CALLS: calls,
           },
@@ -306,25 +323,29 @@ syncBuiltinESMExports();
       const context = `${event} on ${ref}: ${result.stderr}`;
       if (allowed) {
         assert.equal(result.status, 0, context);
-        const release = JSON.parse(
-          readFileSync(output, 'utf8').trim().slice('release='.length),
-        );
-        assert.equal(release.sourceRevision, 'b'.repeat(40));
-        assert.deepEqual(
-          Object.keys(release.images).sort(),
-          [...imageNames].sort(),
-        );
+        const { record, index } = JSON.parse(readFileSync(output, 'utf8'));
+        assert.equal(record.sourceRevision, 'b'.repeat(40));
+        assert.equal(record.sourceRef, ref);
+        assert.deepEqual(record.repository, {
+          id: 7,
+          name: 'example/equipment',
+        });
+        assert.equal(record.component, 'inventory');
+        assert.equal(record.workflow, '.github/workflows/validate.yaml');
+        assert.equal(record.runId, 101);
+        assert.equal(record.runAttempt, 1);
+        assert.equal(index.manifests.length, 2);
         const commands = readFileSync(calls, 'utf8')
           .trim()
           .split('\n')
           .map((line) => JSON.parse(line));
         assert.equal(
           commands.filter((args) => args.includes('--push')).length,
-          imageNames.length,
+          1,
         );
         assert.equal(
           commands.filter((args) => args.includes('imagetools')).length,
-          imageNames.length,
+          1,
         );
         for (const args of commands.filter((args) => args.includes('--push'))) {
           assert.equal(
@@ -344,8 +365,7 @@ syncBuiltinESMExports();
             context,
           );
         }
-        for (const image of Object.values(release.images))
-          assert.equal(image.digest, `sha256:${'a'.repeat(64)}`, context);
+        assert.equal(record.digest, `sha256:${'a'.repeat(64)}`, context);
       } else {
         assert.notEqual(result.status, 0, context);
         assert.match(result.stderr, /Publication requires/);
@@ -389,6 +409,150 @@ test('CI builds only local test images without publication; release indexes reta
           args.includes('--push') && args.includes('linux/amd64,linux/arm64'),
       ),
   );
+});
+
+test('explicit component selection builds only that component and cache-only validation targets both architectures', () => {
+  const calls = [];
+  const result = buildImages({
+    sourceRevision: 'b'.repeat(40),
+    components: ['web'],
+    load: false,
+    run: (command, args) => calls.push({ command, args }),
+    metadata: () => ({}),
+  });
+  assert.deepEqual(Object.keys(result.images), ['web']);
+  assert.equal(calls.length, 1);
+  assert.equal(
+    calls[0].args[calls[0].args.indexOf('--platform') + 1],
+    'linux/amd64,linux/arm64',
+  );
+  assert.ok(calls[0].args.includes('type=cacheonly'));
+  assert.ok(!calls[0].args.includes('--push'));
+  assert.ok(!calls[0].args.includes('--load'));
+});
+
+test('pull-request component CLI validates each fixed component without login push or publication record', (t) => {
+  const directory = mkdtempSync(join(tmpdir(), 'pr-components-'));
+  t.after(() => rmSync(directory, { recursive: true, force: true }));
+  const preload = join(directory, 'docker.mjs');
+  const calls = join(directory, 'calls');
+  writeFileSync(
+    preload,
+    `import childProcess from'node:child_process';import{appendFileSync,writeFileSync}from'node:fs';import{syncBuiltinESMExports}from'node:module';childProcess.execFileSync=(command,args)=>{if(command!=='docker')throw new Error('Unexpected external command');appendFileSync(process.env.COMPONENT_CALLS,JSON.stringify(args)+'\\n');writeFileSync(args[args.indexOf('--metadata-file')+1],'{}');return '';};syncBuiltinESMExports();`,
+  );
+  for (const component of imageNames) {
+    writeFileSync(calls, '');
+    const output = join(directory, `${component}.json`);
+    const result = spawnSync(
+      process.execPath,
+      [
+        '--import',
+        pathToFileURL(preload).href,
+        'scripts/deployment-ci.mjs',
+        'component',
+        component,
+        '--output',
+        output,
+      ],
+      {
+        encoding: 'utf8',
+        timeout: 10000,
+        env: {
+          ...process.env,
+          GITHUB_EVENT_NAME: 'pull_request',
+          GITHUB_REF: 'refs/pull/1/merge',
+          GITHUB_SHA: 'b'.repeat(40),
+          COMPONENT_CALLS: calls,
+        },
+      },
+    );
+    assert.equal(result.status, 0, `${component}: ${result.stderr}`);
+    assert.equal(
+      existsSync(output),
+      false,
+      'PR validation must not create publication evidence',
+    );
+    const commands = readFileSync(calls, 'utf8')
+      .trim()
+      .split('\n')
+      .map((line) => JSON.parse(line));
+    assert.equal(commands.length, 1);
+    const [args] = commands;
+    assert.equal(
+      args[args.indexOf('--platform') + 1],
+      'linux/amd64,linux/arm64',
+    );
+    assert.ok(args.includes('type=cacheonly'));
+    assert.ok(
+      !args.includes('--push') &&
+        !args.includes('--load') &&
+        !args.includes('login'),
+    );
+    assert.match(args[args.indexOf('--tag') + 1], new RegExp(`/${component}:`));
+  }
+});
+
+function componentResultFixture(t, oversizedRecord = false) {
+  const directory = mkdtempSync(join(tmpdir(), 'component-result-'));
+  t.after(() => rmSync(directory, { recursive: true, force: true }));
+  const preload = join(directory, 'docker.mjs');
+  const output = join(directory, 'component-result.json');
+  writeFileSync(
+    preload,
+    `import cp from'node:child_process';import{writeFileSync}from'node:fs';import{syncBuiltinESMExports}from'node:module';${oversizedRecord ? "process.env.GITHUB_REF='refs/heads/'+ 'x'.repeat(25000);process.env.GITHUB_REPOSITORY='owner/'+ 'r'.repeat(25000);" : ''}cp.execFileSync=(command,args)=>{if(command!=='docker')throw new Error('Unexpected external command');const digest='sha256:'+'a'.repeat(64);if(args.includes('--metadata-file')){writeFileSync(args[args.indexOf('--metadata-file')+1],JSON.stringify({'containerimage.digest':digest}));return '';}return JSON.stringify({mediaType:'application/vnd.oci.image.index.v1+json',manifests:['amd64','arm64'].map(architecture=>({digest,platform:{os:'linux',architecture},annotations:{private:'PRIVATE_DESCRIPTOR_MARKER'}})),annotations:{private:'PRIVATE_INDEX_MARKER',padding:'x'.repeat(90000)}});};syncBuiltinESMExports();`,
+  );
+  const result = spawnSync(
+    process.execPath,
+    [
+      '--import',
+      pathToFileURL(preload).href,
+      'scripts/deployment-ci.mjs',
+      'component',
+      'inventory',
+      '--publish',
+      '--output',
+      output,
+    ],
+    {
+      encoding: 'utf8',
+      timeout: 10000,
+      env: {
+        ...process.env,
+        GITHUB_EVENT_NAME: 'workflow_dispatch',
+        GITHUB_REF: 'refs/heads/feature',
+        GITHUB_SHA: 'b'.repeat(40),
+        GITHUB_REPOSITORY: 'example/equipment',
+        GITHUB_REPOSITORY_ID: '7',
+        GITHUB_RUN_ID: '101',
+        GITHUB_RUN_ATTEMPT: '1',
+      },
+    },
+  );
+  return { result, output };
+}
+
+test('component artifact projects only validated platform evidence and excludes arbitrary provider metadata', (t) => {
+  const { result, output } = componentResultFixture(t);
+  assert.equal(result.status, 0, result.stderr);
+  const text = readFileSync(output, 'utf8');
+  assert.equal(
+    /PRIVATE_/.test(text),
+    false,
+    'arbitrary index metadata must not enter the public artifact',
+  );
+  assert.ok(Buffer.byteLength(text) <= 64 * 1024);
+  const { index } = JSON.parse(text);
+  assert.deepEqual(Object.keys(index).sort(), ['manifests', 'mediaType']);
+  for (const descriptor of index.manifests)
+    assert.deepEqual(Object.keys(descriptor).sort(), ['digest', 'platform']);
+});
+
+test('oversized public component result fails with a safe bound diagnostic and no output artifact', (t) => {
+  const { result, output } = componentResultFixture(t, true);
+  assert.equal(result.status, 1, result.stderr);
+  assert.match(result.stderr, /component result.*64KiB/i);
+  assert.equal(existsSync(output), false);
+  assert.doesNotMatch(result.stdout + result.stderr, /PRIVATE_/);
 });
 
 test('ephemeral cluster is named and isolated, and cannot apply without real fixture', () => {
