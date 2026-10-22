@@ -26,6 +26,8 @@ import {
   validateCommittedDeployment,
   readJobInputs,
   imageNames,
+  validateStaticManifests,
+  readComponentState,
 } from './deployment-validation.mjs';
 
 const digest = `sha256:${'a'.repeat(64)}`;
@@ -531,5 +533,473 @@ test('component metadata is bounded before parsing rather than accepting oversiz
     assert.throws(() => readComponentState(root), /64KiB/);
   } finally {
     rmSync(root, { recursive: true, force: true });
+  }
+});
+
+async function staticPolicyFixture() {
+  const { default: parsers } = await import('@stoplight/spectral-parsers');
+  const root = committedFixture();
+  const documents = [
+    ...['inventory', 'reservations', 'notifications', 'web', 'rabbitmq'].map(
+      (name) => `deploy/base/${name}.yaml`,
+    ),
+    'deploy/base/jobs/database/job.yaml',
+    'deploy/base/jobs/identity/job.yaml',
+  ].map((path) => {
+    const document = JSON.parse(
+      JSON.stringify(parsers.Yaml.parse(readFileSync(path, 'utf8')).data),
+    );
+    document.metadata.namespace = 'equipment';
+    if (document.kind === 'Job') document.metadata.name += '-unreleased';
+    return document;
+  });
+  return { root, documents, state: readComponentState(root) };
+}
+
+const staticText = (documents) =>
+  documents.map((document) => JSON.stringify(document)).join('\n---\n');
+
+const cloneJson = (value) => JSON.parse(JSON.stringify(value));
+
+test('static policy accepts initial seven unresolved image slots while runtime policy remains strict', async () => {
+  const f = await staticPolicyFixture();
+  try {
+    assert.equal(
+      validateStaticManifests(staticText(f.documents), f.state).length,
+      7,
+    );
+    assert.throws(
+      () => validateManifests(staticText(f.documents)),
+      /immutable digest/,
+    );
+  } finally {
+    rmSync(f.root, { recursive: true, force: true });
+  }
+});
+
+test('component state exposes validated current bootstrap identities for static slot validation', () => {
+  const root = committedFixture();
+  try {
+    assert.deepEqual(readComponentState(root).jobSuffixes, {
+      database: '-unreleased',
+      identity: '-unreleased',
+    });
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test('static policy rejects inconsistent component context instead of granting alias permission', async (t) => {
+  const f = await staticPolicyFixture();
+  try {
+    for (const [name, state] of [
+      ['missing-list', { ...f.state, missing: [] }],
+      ['status', { ...f.state, status: 'released' }],
+      ['unknown-record', { ...f.state, records: { unknown: componentRecord } }],
+      ['mismatched-record', { ...f.state, records: { web: componentRecord } }],
+      [
+        'invalid-record',
+        {
+          ...f.state,
+          records: {
+            inventory: { ...componentRecord, sourceRevision: 'main' },
+          },
+        },
+      ],
+      [
+        'invented-bootstrap',
+        {
+          ...f.state,
+          jobSuffixes: {
+            database: '-aaaaaaaaaaaaaaaa',
+            identity: '-unreleased',
+          },
+        },
+      ],
+    ])
+      await t.test(name, () =>
+        assert.throws(
+          () => validateStaticManifests(staticText(f.documents), state),
+          /static component state/,
+        ),
+      );
+  } finally {
+    rmSync(f.root, { recursive: true, force: true });
+  }
+});
+
+test('static policy requires seven unique correctly located workload and container slots', async (t) => {
+  const f = await staticPolicyFixture();
+  try {
+    const mutations = {
+      missing: (docs) => docs.splice(0, 1),
+      duplicate: (docs) => docs.push(cloneJson(docs[0])),
+      'wrong-namespace': (docs) => {
+        docs[0].metadata.namespace = 'other';
+        docs[0].spec.template.spec.containers[0].image = `example/image@${digest}`;
+      },
+      'wrong-workload': (docs) => {
+        docs[0].metadata.name = 'other';
+        docs[0].spec.template.spec.containers[0].image = `example/image@${digest}`;
+      },
+      'wrong-container': (docs) => {
+        docs[0].spec.template.spec.containers[0].name = 'other';
+        docs[0].spec.template.spec.containers[0].image = `example/image@${digest}`;
+      },
+      'wrong-api': (docs) => {
+        docs[0].apiVersion = 'other/v1';
+      },
+      'job-stale-suffix': (docs) => {
+        docs[5].metadata.name = 'database-bootstrap-aaaaaaaaaaaaaaaa';
+        docs[5].spec.template.spec.containers[0].image = `example/image@${digest}`;
+      },
+      'broker-moved-regular': (docs) => {
+        docs[4].spec.template.spec.containers.push({
+          ...docs[4].spec.template.spec.initContainers[0],
+          image: `example/image@${digest}`,
+        });
+        docs[4].spec.template.spec.initContainers = [];
+      },
+    };
+    for (const [name, mutate] of Object.entries(mutations))
+      await t.test(name, () => {
+        const documents = cloneJson(f.documents);
+        mutate(documents);
+        assert.throws(
+          () => validateStaticManifests(staticText(documents), f.state),
+          /component slot/,
+        );
+      });
+  } finally {
+    rmSync(f.root, { recursive: true, force: true });
+  }
+});
+
+function publishStaticFixture(f, name) {
+  const record = {
+    ...componentRecord,
+    component: name,
+    image: `ghcr.io/example/equipment-${name}`,
+  };
+  const files = promotionFiles(
+    record,
+    readFileSync(
+      join(f.root, 'deploy/environments/local/kustomization.yaml'),
+      'utf8',
+    ),
+    readJobInputs(f.root),
+  );
+  for (const [path, text] of Object.entries(files)) {
+    mkdirSync(dirname(join(f.root, path)), { recursive: true });
+    writeFileSync(join(f.root, path), text);
+  }
+  f.state = readComponentState(f.root);
+  const document = f.documents.find(
+    (doc) =>
+      doc.metadata.name === name ||
+      doc.metadata.name === `${name}-unreleased` ||
+      (name === 'broker-bootstrap' && doc.metadata.name === 'rabbitmq'),
+  );
+  const pod = document.spec.template.spec;
+  const container =
+    name === 'broker-bootstrap'
+      ? pod.initContainers.find((item) => item.name === 'definitions')
+      : pod.containers.find((item) => item.name === name);
+  container.image = `${record.image}@${record.digest}`;
+  if (document.kind === 'Job')
+    document.metadata.name = `${name}${f.state.jobSuffixes[name.split('-')[0]]}`;
+  return container;
+}
+
+test('static policy checks rendered component references against genuine partial records', async (t) => {
+  const f = await staticPolicyFixture();
+  try {
+    const container = publishStaticFixture(f, 'inventory');
+    assert.doesNotThrow(() =>
+      validateStaticManifests(staticText(f.documents), f.state),
+    );
+    const original = container.image;
+    for (const [name, image] of [
+      ['wrong-repository', `ghcr.io/other/image@${digest}`],
+      ['wrong-digest', `${componentRecord.image}@sha256:${'b'.repeat(64)}`],
+      ['bare-published', 'inventory'],
+      ['tagged-published', `${componentRecord.image}:latest`],
+    ])
+      await t.test(name, () => {
+        container.image = image;
+        assert.throws(
+          () => validateStaticManifests(staticText(f.documents), f.state),
+          /component image/,
+        );
+      });
+    container.image = original;
+    const web = f.documents.find((doc) => doc.metadata.name === 'web').spec
+      .template.spec.containers[0];
+    web.image = `ghcr.io/other/web@${digest}`;
+    await t.test('unrecorded-pinned-substitute', () =>
+      assert.throws(
+        () => validateStaticManifests(staticText(f.documents), f.state),
+        /component image/,
+      ),
+    );
+  } finally {
+    rmSync(f.root, { recursive: true, force: true });
+  }
+});
+
+test('static policy validates each partial bootstrap hash and complete records without weakening runtime completeness', async () => {
+  const f = await staticPolicyFixture();
+  try {
+    for (const name of imageNames) {
+      publishStaticFixture(f, name);
+      assert.equal(
+        validateStaticManifests(staticText(f.documents), f.state).length,
+        7,
+        name,
+      );
+      if (name !== imageNames.at(-1)) {
+        assert.throws(
+          () => readComponentState(f.root, { requireComplete: true }),
+          /Missing published components/,
+        );
+        assert.throws(
+          () => validateManifests(staticText(f.documents)),
+          /immutable digest/,
+        );
+      }
+    }
+    assert.equal(
+      readComponentState(f.root, { requireComplete: true }).status,
+      'released',
+    );
+    assert.equal(validateManifests(staticText(f.documents)).length, 7);
+  } finally {
+    rmSync(f.root, { recursive: true, force: true });
+  }
+});
+
+test('static partial image allowance preserves shared security and resource policies', async (t) => {
+  const f = await staticPolicyFixture();
+  try {
+    const cases = {
+      secret: [
+        (docs) =>
+          docs.push({
+            apiVersion: 'v1',
+            kind: 'Secret',
+            metadata: { name: 'private' },
+          }),
+        /privately/,
+      ],
+      'floating-third-party': [
+        (docs) => {
+          docs[4].spec.template.spec.containers[0].image = 'rabbitmq:latest';
+        },
+        /immutable digest/,
+      ],
+      'unrelated-bare-alias': [
+        (docs) => {
+          docs[0].spec.template.spec.containers.push({
+            ...docs[0].spec.template.spec.containers[0],
+            name: 'extra',
+            image: 'inventory',
+          });
+        },
+        /immutable digest/,
+      ],
+      'missing-resources': [
+        (docs) => {
+          delete docs[0].spec.template.spec.containers[0].resources;
+        },
+        /CPU\/memory/,
+      ],
+      'destructive-pv': [
+        (docs) =>
+          docs.push({
+            apiVersion: 'v1',
+            kind: 'PersistentVolume',
+            metadata: { name: 'data' },
+            spec: { persistentVolumeReclaimPolicy: 'Delete' },
+          }),
+        /Retain/,
+      ],
+      'unprotected-pvc': [
+        (docs) =>
+          docs.push({
+            apiVersion: 'v1',
+            kind: 'PersistentVolumeClaim',
+            metadata: { name: 'data' },
+          }),
+        /prune\/delete/,
+      ],
+      'cascading-application': [
+        (docs) =>
+          docs.push({
+            apiVersion: 'argoproj.io/v1alpha1',
+            kind: 'Application',
+            metadata: { name: 'app', finalizers: ['cascade'] },
+          }),
+        /cascade/,
+      ],
+      'malformed-resource': [
+        (docs) => docs.push({ kind: 'Service', metadata: { name: 'bad' } }),
+        /apiVersion/,
+      ],
+      'duplicate-container': [
+        (docs) =>
+          docs[0].spec.template.spec.containers.push({
+            ...docs[0].spec.template.spec.containers[0],
+            image: `example/image@${digest}`,
+          }),
+        /component slot/,
+      ],
+    };
+    for (const [name, [mutate, expected]] of Object.entries(cases))
+      await t.test(name, () => {
+        const docs = cloneJson(f.documents);
+        mutate(docs);
+        assert.throws(
+          () => validateStaticManifests(staticText(docs), f.state),
+          expected,
+        );
+      });
+  } finally {
+    rmSync(f.root, { recursive: true, force: true });
+  }
+});
+
+test('static policy rejects a primitive component record map', async () => {
+  const f = await staticPolicyFixture();
+  try {
+    assert.throws(
+      () =>
+        validateStaticManifests(staticText(f.documents), {
+          ...f.state,
+          records: 42,
+        }),
+      /static component state/,
+    );
+  } finally {
+    rmSync(f.root, { recursive: true, force: true });
+  }
+});
+
+test('MQ-S001 static policy rejects unsupported nested workloads and resource lists', async (t) => {
+  const f = await staticPolicyFixture();
+  try {
+    const resources = {
+      'cronjob-bare-alias': {
+        apiVersion: 'batch/v1',
+        kind: 'CronJob',
+        metadata: { name: 'outside', namespace: 'equipment' },
+        spec: {
+          jobTemplate: {
+            spec: {
+              template: {
+                spec: { containers: [{ name: 'outside', image: 'inventory' }] },
+              },
+            },
+          },
+        },
+      },
+      'cronjob-floating-image': {
+        apiVersion: 'batch/v1',
+        kind: 'CronJob',
+        metadata: { name: 'outside' },
+        spec: {
+          jobTemplate: {
+            spec: {
+              template: {
+                spec: {
+                  containers: [
+                    {
+                      name: 'outside',
+                      image: 'example/image:latest',
+                      resources: {
+                        requests: { cpu: '10m', memory: '16Mi' },
+                        limits: { cpu: '20m', memory: '32Mi' },
+                      },
+                    },
+                  ],
+                },
+              },
+            },
+          },
+        },
+      },
+      'cronjob-missing-resources': {
+        apiVersion: 'batch/v1',
+        kind: 'CronJob',
+        metadata: { name: 'outside' },
+        spec: {
+          jobTemplate: {
+            spec: {
+              template: {
+                spec: {
+                  containers: [
+                    { name: 'outside', image: `example/image@${digest}` },
+                  ],
+                },
+              },
+            },
+          },
+        },
+      },
+      'list-hidden-secret': {
+        apiVersion: 'v1',
+        kind: 'List',
+        metadata: { name: 'outside' },
+        items: [
+          { apiVersion: 'v1', kind: 'Secret', metadata: { name: 'hidden' } },
+        ],
+      },
+      'list-hidden-pod': {
+        apiVersion: 'v1',
+        kind: 'List',
+        metadata: { name: 'outside' },
+        items: [
+          {
+            apiVersion: 'v1',
+            kind: 'Pod',
+            metadata: { name: 'hidden' },
+            spec: { containers: [{ name: 'outside', image: 'inventory' }] },
+          },
+        ],
+      },
+      'pod-template': {
+        apiVersion: 'v1',
+        kind: 'PodTemplate',
+        metadata: { name: 'outside' },
+        template: {
+          spec: { containers: [{ name: 'outside', image: 'inventory' }] },
+        },
+      },
+      'typed-pod-list': {
+        apiVersion: 'v1',
+        kind: 'PodList',
+        metadata: { name: 'outside' },
+        items: [
+          {
+            apiVersion: 'v1',
+            kind: 'Pod',
+            metadata: { name: 'hidden' },
+            spec: { containers: [{ name: 'outside', image: 'inventory' }] },
+          },
+        ],
+      },
+    };
+    for (const [name, resource] of Object.entries(resources))
+      await t.test(name, () => {
+        assert.throws(
+          () =>
+            validateStaticManifests(
+              staticText([...f.documents, resource]),
+              f.state,
+            ),
+          /Unsupported static manifest kind/,
+        );
+      });
+  } finally {
+    rmSync(f.root, { recursive: true, force: true });
   }
 });

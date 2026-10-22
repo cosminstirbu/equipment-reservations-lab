@@ -345,6 +345,18 @@
       "severity": "medium",
       "status": "closed",
       "closure_evidence": "Original security reviewer closed on component-source-02; component-pipelines-security-02.md; cross-ref target/proposal reds before ancestry repair, final Linux aggregate147/147."
+    },
+    {
+      "id": "MQ-S001",
+      "category": "security",
+      "severity": "medium",
+      "blocking": true,
+      "owner": "component_state_coder",
+      "status": "closed",
+      "description": "Nested CronJob workloads bypass static image and resource policy outside the seven validated component slots.",
+      "evidence": "manifest-quality-security-01.md; frozen manifest-quality-snapshot-01.json; real public validator accepted unrelated bare inventory container without resource bounds.",
+      "remediation": "Test-first static-only rejection of unsupported nested workload forms; preserve runtime behavior and actual initial/partial/complete provider checks.",
+      "closure_evidence": "Original security reviewer re-executed the public reproduction and closed MQ-S001 on snapshot02; manifest-quality-security-02.md, quality-02.md; seven intended reds then Linux63/63 zero skips."
     }
   ]
 }

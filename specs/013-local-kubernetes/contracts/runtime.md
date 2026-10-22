@@ -61,6 +61,14 @@ Build method.
 
 ## Component records and bootstrap identity
 
+Known local promotion outputs may use the narrowly scoped static quality gate in
+[the manifest quality design](../team/manifest-quality-design.md). It renders with real
+Kustomize and validates component/Job consistency plus existing structural/security
+policy. Only validated absent known component slots may remain unresolved in this
+static context; runtime/setup completeness remains mandatory. Main quality uses a
+verified full-quality ancestor, not merely the previous push, and mixed/unknown changes
+or missing evidence remain full quality. This gate is not runtime or provider acceptance.
+
 Public records live at `deploy/environments/local/releases/NAME.json`, one per known
 component. Each schemaVersion=1 record contains component, repository `{id,name}`,
 sourceRevision, sourceRef, runId, runAttempt, workflow, image and digest. Source SHA

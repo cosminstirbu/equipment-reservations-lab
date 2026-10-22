@@ -50,10 +50,20 @@ export function promotionFiles(release, kustomization, jobInputs) {
   const imagesNode = parsed.ast.mappings.find(
     (mapping) => mapping.key.value === 'images',
   );
-  const replacement = `images: ${JSON.stringify(images, null, 2)}\n`;
+  const imageLines = images.flatMap(({ name, newName, digest }) => [
+    `  - name: ${name}`,
+    `    newName: ${newName}`,
+    `    digest: ${digest}`,
+  ]);
+  const replacement = images.length
+    ? ['images:', ...imageLines].join('\n')
+    : 'images: []';
+  const remainder = imagesNode
+    ? kustomization.slice(imagesNode.value.endPosition).replace(/^\r?\n/, '')
+    : '';
   const updated = imagesNode
-    ? `${kustomization.slice(0, imagesNode.key.startPosition)}${replacement}${kustomization.slice(imagesNode.value.endPosition)}`
-    : `${kustomization.trimEnd()}\n${replacement}`;
+    ? `${kustomization.slice(0, imagesNode.key.startPosition)}${replacement}\n${remainder}`
+    : `${kustomization.trimEnd()}\n${replacement}\n`;
 
   if (release.schemaVersion === 1) {
     const files = {
