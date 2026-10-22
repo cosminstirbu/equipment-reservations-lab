@@ -257,3 +257,14 @@ T077 follows fresh checked snapshot. No old task status or repair counter is res
 
 - [x] T079 Record the whole-tree backend stability audit and clarify lifecycle/readiness, admission, cleanup and verification guidance in docs/engineering/testing.md; retain evidence and unresolved findings in team/backend-test-stability-audit.md. No scheduling or acceptance waiver.
 - [ ] T080 Qualify the delivery-fixture restart AMQP readiness repair on PR #15 CI at the pushed revision. Retain the existing failing real-provider regression and normal full concurrency; investigate subsequent actual failures rather than treating reruns as repair evidence. Track BTS-001 through BTS-005 separately and preserve T070/T078 and feature acceptance gates.
+
+
+## Phase 17: Direct component promotion amendment
+
+The owner-approved direct promotion design supersedes historical generated-PR and
+merge-only adoption instructions; preserve historical task IDs and evidence.
+
+- [x] T081 Record owner-approved direct-to-main/component-owned image design and reconcile current spec, plan and quickstart in team/direct-component-promotion-design.md.
+- [x] T082 Regress disjoint component ownership and direct-main expected-parent mutation before implementation; migrate seven image patches, committed/static validation, intent capture, trusted permissions and candidate validation while retaining no-op/stale/index/privacy guards.
+- [ ] T083 Complete affected tooling, real pinned Kustomize, formatting/lint and author inspection; push implementation PR, wait for green checks and rebase merge under owner authorization. Stop on authorization rejection; no branch-rule bypass.
+- [ ] T084 Verify post-merge main workflow including independent component publications/direct promotions is green; rerun identified flaky jobs and repair current-work failures through another tested PR. Preserve broader feature/runtime/reviewer/human acceptance gates.

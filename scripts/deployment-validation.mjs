@@ -5,6 +5,7 @@ import { resolve, join } from 'node:path';
 import { executeProcess, OperationalFailure, safeFailure } from './process.mjs';
 import { pathToFileURL } from 'node:url';
 import parsers from '@stoplight/spectral-parsers';
+import { imagePatchPath, readImageReference } from './component-images.mjs';
 
 export const imageNames = [
   'inventory',
@@ -573,11 +574,24 @@ function sourceDocument(text, label) {
   return parsed.data;
 }
 
+export function readImagePatches(root, kustomization) {
+  const overlay = sourceDocument(kustomization, 'Kustomization');
+  if (!overlay.patches?.some((patch) => patch.path?.startsWith('images/')))
+    return undefined;
+  return Object.fromEntries(
+    imageNames.map((name) => [
+      name,
+      readPublicFile(root, imagePatchPath(name)),
+    ]),
+  );
+}
+
 export function validateCommittedState({
   kustomization,
   jobInputs,
   releaseText,
   records,
+  imagePatches,
 }) {
   const overlay = sourceDocument(kustomization, 'Kustomization');
   if (
@@ -592,6 +606,34 @@ export function validateCommittedState({
     overlay.secretGenerator
   )
     throw new OperationalFailure('Invalid committed local Kustomization');
+  const patchPaths = (overlay.patches ?? [])
+    .filter((patch) => patch.path?.startsWith('images/'))
+    .map((patch) => patch.path);
+  if (patchPaths.length || imagePatches !== undefined) {
+    const expected = imageNames.map((name) => `images/${name}.yaml`);
+    if (
+      !imagePatches ||
+      Object.keys(imagePatches).length !== imageNames.length ||
+      overlay.images.length ||
+      patchPaths.length !== expected.length ||
+      expected.some(
+        (path) =>
+          patchPaths.filter((candidate) => candidate === path).length !== 1,
+      ) ||
+      (overlay.patches ?? []).some(
+        (patch) =>
+          patch.path?.startsWith('images/') &&
+          Object.keys(patch).some((key) => key !== 'path'),
+      )
+    )
+      throw new OperationalFailure('Invalid component image patch references');
+    overlay.images = imageNames.flatMap((name) => {
+      const reference = readImageReference(name, imagePatches[name]);
+      if (reference === name) return [];
+      const [newName, digest] = reference.split('@');
+      return [{ name, newName, digest }];
+    });
+  }
   for (const [local, text] of [
     [false, jobInputs.baseConfiguration],
     [true, jobInputs.localConfiguration],
@@ -730,6 +772,10 @@ export function validateCommittedDeployment(root) {
       root,
       'deploy/environments/local/kustomization.yaml',
     ),
+    imagePatches: readImagePatches(
+      root,
+      readPublicFile(root, 'deploy/environments/local/kustomization.yaml'),
+    ),
     jobInputs: readJobInputs(root),
     releaseText,
   });
@@ -779,6 +825,10 @@ export function readComponentState(root, { requireComplete = false } = {}) {
     kustomization: readPublicFile(
       root,
       'deploy/environments/local/kustomization.yaml',
+    ),
+    imagePatches: readImagePatches(
+      root,
+      readPublicFile(root, 'deploy/environments/local/kustomization.yaml'),
     ),
     jobInputs,
     records,

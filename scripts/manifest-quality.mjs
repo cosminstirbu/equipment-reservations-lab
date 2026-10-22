@@ -23,9 +23,10 @@ const allowedPaths = new Set([
   'deploy/environments/local/kustomization.yaml',
   'deploy/environments/local/jobs/database/kustomization.yaml',
   'deploy/environments/local/jobs/identity/kustomization.yaml',
-  ...componentNames.map(
-    (name) => `deploy/environments/local/releases/${name}.json`,
-  ),
+  ...componentNames.flatMap((name) => [
+    `deploy/environments/local/releases/${name}.json`,
+    `deploy/environments/local/images/${name}.yaml`,
+  ]),
 ]);
 const sha = /^[a-f0-9]{40}$/;
 const full = (reason) => ({ mode: 'full', paths: [], reason });

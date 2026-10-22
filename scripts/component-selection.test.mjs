@@ -602,7 +602,7 @@ test('intent capture records explicit current component targets and proposals be
     const intent = JSON.parse(readFileSync(file, 'utf8'));
     assert.deepEqual(intent.components.inventory, {
       target: record,
-      proposal: { head: 'e'.repeat(40), record },
+      proposal: null,
     });
     assert.deepEqual(intent.components.web, { target: null, proposal: null });
     assert.equal(intent.sourceRef, 'refs/heads/feature/nested');

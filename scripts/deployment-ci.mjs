@@ -11,6 +11,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import parsers from '@stoplight/spectral-parsers';
+import { readImageReference } from './component-images.mjs';
 import { createLifecycle, buildPrivateResources } from './local-kubernetes.mjs';
 import {
   executeProcess,
@@ -24,6 +25,7 @@ import {
   validateRelease,
   readPublicFile,
   readJobInputs,
+  readImagePatches,
   jobSuffix,
   validateManifests,
   validateCommittedDeployment,
@@ -412,6 +414,15 @@ export function prepareCiFixture({
       .filter((entry) => imageNames.includes(entry.name))
       .map((entry) => [entry.name, `${entry.newName}@${entry.digest}`]),
   );
+  const patches = readImagePatches(
+    root,
+    readPublicFile(root, 'deploy/environments/local/kustomization.yaml'),
+  );
+  if (patches)
+    for (const name of imageNames) {
+      const reference = readImageReference(name, patches[name]);
+      if (reference !== name) applicationReferences[name] = reference;
+    }
   const resources = ciResources(
     run('kubectl', ['kustomize', join(root, 'deploy/environments/local')]),
     release,

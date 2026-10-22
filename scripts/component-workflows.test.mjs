@@ -118,7 +118,9 @@ test(
     const fullScript = steps
       .filter(
         (step) =>
-          step.if === "steps.quality_scope.outputs.mode == 'full'" && step.run,
+          step.if === "steps.quality_scope.outputs.mode == 'full'" &&
+          step.run &&
+          step.name !== 'Install pinned promotion validation tool',
       )
       .map((step) => step.run)
       .join('\n');
@@ -209,10 +211,26 @@ test('quality gates fourteen independent static component workflow calls with re
     assert.deepEqual(trusted.permissions, {
       contents: 'write',
       packages: 'write',
-      'pull-requests': 'write',
       actions: 'read',
     });
   }
+});
+
+test('full quality installs the pinned renderer before actual promotion regressions', () => {
+  const steps = workflow('validate').jobs.quality.steps;
+  const install = steps.findIndex(
+    (step) => step.name === 'Install pinned promotion validation tool',
+  );
+  const checks = steps.findIndex((step) => step.run === 'npm run check');
+  assert.ok(install > 0 && install < checks);
+  assert.match(
+    steps[install].run,
+    /874d5e72dbb819f43cff16bcd1e4f8bac5b7f2361fe1e55049b0a6c676fb0cbf/,
+  );
+  assert.equal(
+    steps[checks].env.MANIFEST_KUBECTL,
+    '${{ runner.temp }}/manifest-tools/kubectl',
+  );
 });
 
 test('component parent replaces the duplicate all-image release entrypoint', () => {
@@ -271,7 +289,6 @@ test('all seven trusted wrappers own independent build promotion and queued muta
     assert.deepEqual(wrapper.jobs.promote.needs, ['build']);
     assert.deepEqual(wrapper.jobs.promote.permissions, {
       contents: 'write',
-      'pull-requests': 'write',
       actions: 'read',
     });
     assert.deepEqual(wrapper.jobs.promote.concurrency, {

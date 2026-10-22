@@ -1,3 +1,4 @@
+import { imagePatch, imagePatchPath } from './component-images.mjs';
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import { createHash } from 'node:crypto';
@@ -481,9 +482,18 @@ function snapshotTransport(componentName) {
       `deploy/environments/local/jobs/${name}/kustomization.yaml`,
     ]),
   ];
+  paths.push(...imageNames.map(imagePatchPath));
   const blobs = new Map();
   const tree = paths.map((path) => {
-    const bytes = readFileSync(path);
+    const name = imageNames.find((name) => imagePatchPath(name) === path);
+    const bytes = name
+      ? Buffer.from(imagePatch(name))
+      : Buffer.from(
+          readFileSync(path, 'utf8').replace(
+            /nameSuffix:[^\r\n]*/,
+            'nameSuffix: -unreleased',
+          ),
+        );
     const sha = createHash('sha1')
       .update(Buffer.concat([Buffer.from(`blob ${bytes.length}\0`), bytes]))
       .digest('hex');
@@ -570,11 +580,7 @@ test('first promotion branches remain managed on rerun with quoted unreleased Jo
     ["'-unreleased'", "'-arbitrary'", false],
     ["'-unreleased'", '-1ba05fd4ba467463\n+resources: []', false],
   ];
-  for (const component of [
-    undefined,
-    'database-bootstrap',
-    'identity-bootstrap',
-  ]) {
+  for (const component of [undefined]) {
     for (const [previous, next, managed] of changes) {
       let existing = false;
       const base = 'a'.repeat(40);
@@ -739,13 +745,10 @@ test('independent component promotion preserves siblings and touches only its ow
     'apiVersion: kustomize.config.k8s.io/v1beta1\nkind: Kustomization\nimages: [{name: web, newName: ghcr.io/example/equipment-web, digest: sha256:old}]\n';
   const files = promotionFiles(component, overlay, jobInputs);
   assert.deepEqual(Object.keys(files).sort(), [
-    'deploy/environments/local/kustomization.yaml',
+    'deploy/environments/local/images/inventory.yaml',
     'deploy/environments/local/releases/inventory.json',
   ]);
-  assert.match(
-    files['deploy/environments/local/kustomization.yaml'],
-    /sha256:old/,
-  );
+  assert.match(overlay, /sha256:old/);
   const database = {
     ...component,
     component: 'database-bootstrap',
@@ -753,8 +756,8 @@ test('independent component promotion preserves siblings and touches only its ow
   };
   const bootstrap = promotionFiles(database, overlay, jobInputs);
   assert.deepEqual(Object.keys(bootstrap).sort(), [
+    'deploy/environments/local/images/database-bootstrap.yaml',
     'deploy/environments/local/jobs/database/kustomization.yaml',
-    'deploy/environments/local/kustomization.yaml',
     'deploy/environments/local/releases/database-bootstrap.json',
   ]);
   assert.match(
@@ -830,7 +833,10 @@ function independentGateway() {
       return 'a'.repeat(40);
     },
     compareAndSwap: async (expected, sha) => writes.push({ expected, sha }),
-    ensurePullRequest: async () => ({ number: 9 }),
+    validateCandidate: async () => {},
+    ensurePullRequest: async () => {
+      assert.fail('component promotion cannot create a PR');
+    },
   };
 }
 
@@ -841,10 +847,10 @@ test('manual divergent component source proposes from fresh main independently o
     intent: intentFor(component),
     gateway,
   });
-  assert.equal(result.number, 9);
+  assert.equal(result.status, 'promoted');
   assert.equal(gateway.writes[0].parent, 'f'.repeat(40));
   assert.deepEqual(Object.keys(gateway.writes[0].files).sort(), [
-    'deploy/environments/local/kustomization.yaml',
+    'deploy/environments/local/images/inventory.yaml',
     'deploy/environments/local/releases/inventory.json',
   ]);
   assert.match(gateway.writes[0].message, /feature\/testing/);
@@ -869,8 +875,9 @@ test('unchanged deployed digest is a no-op and stale same-component intent canno
     gateway.snapshot.kustomization,
     gateway.snapshot.jobInputs,
   );
-  gateway.snapshot.kustomization =
-    files['deploy/environments/local/kustomization.yaml'];
+  gateway.snapshot.imagePatches = {
+    inventory: files[imagePatchPath('inventory')],
+  };
   const result = await promote({
     release: component,
     intent: intentFor(component, component),
@@ -878,6 +885,10 @@ test('unchanged deployed digest is a no-op and stale same-component intent canno
   });
   assert.equal(result.status, 'noop');
   assert.deepEqual(gateway.writes, []);
+  gateway.snapshot.records.inventory = {
+    ...component,
+    runId: component.runId + 1,
+  };
   await assert.rejects(
     promote({ release: component, intent: intentFor(component), gateway }),
     /target changed/,
@@ -885,47 +896,7 @@ test('unchanged deployed digest is a no-op and stale same-component intent canno
   assert.deepEqual(gateway.writes, []);
 });
 
-test('captured proposal record and source freshness reject obsolete candidates before writes', async () => {
-  for (const problem of ['changed-record', 'newer-source']) {
-    const gateway = independentGateway();
-    const previous = {
-      ...component,
-      sourceRevision: 'c'.repeat(40),
-      digest: `sha256:${'c'.repeat(64)}`,
-    };
-    const proposal = { head: 'b'.repeat(40), record: previous };
-    gateway.readState = async () => ({
-      base: gateway.snapshot.revision,
-      head: proposal.head,
-      managed: true,
-    });
-    gateway.readSnapshot = async (revision) =>
-      revision === proposal.head
-        ? {
-            ...gateway.snapshot,
-            revision,
-            records: {
-              inventory:
-                problem === 'changed-record'
-                  ? { ...previous, runId: 999 }
-                  : previous,
-            },
-          }
-        : gateway.snapshot;
-    gateway.isAncestor = async () => problem === 'newer-source';
-    await assert.rejects(
-      promote({
-        release: component,
-        intent: intentFor(component, null, proposal),
-        gateway,
-      }),
-      /proposal record|obsolete/,
-    );
-    assert.deepEqual(gateway.writes, []);
-  }
-});
-
-test('component GitHub transport isolates its managed branch and merge commit uses fresh main tree', async () => {
+test('direct main transport commits from exactly one fresh main parent', async () => {
   const calls = [];
   const gateway = githubGateway({
     repository: 'example/equipment',
@@ -933,36 +904,24 @@ test('component GitHub transport isolates its managed branch and merge commit us
     token: 'private',
     request: async (url, options) => {
       calls.push({ url, options });
-      let data = {};
-      if (url.endsWith('/git/ref/heads/main'))
-        data = { object: { sha: 'f'.repeat(40) } };
-      else if (url.includes('/git/ref/heads/'))
-        return { ok: false, status: 404 };
-      else if (url.includes('/git/commits/'))
-        data = { tree: { sha: 'c'.repeat(40) } };
-      else if (url.endsWith('/git/trees')) data = { sha: 'b'.repeat(40) };
-      else if (url.endsWith('/git/commits')) data = { sha: 'a'.repeat(40) };
+      const data = url.endsWith('/heads/main')
+        ? { object: { sha: 'f'.repeat(40) } }
+        : url.includes('/git/commits/')
+          ? { tree: { sha: 'c'.repeat(40) } }
+          : { sha: 'a'.repeat(40) };
       return { ok: true, status: 200, json: async () => data };
     },
   });
-  await gateway.readState();
-  assert.match(
-    calls[1].url,
-    /heads\/automation\/local-image-promotion-inventory$/,
+  assert.equal((await gateway.readState()).base, 'f'.repeat(40));
+  await gateway.commit(
+    promotionFiles(component, 'images: []\n', jobInputs),
+    'f'.repeat(40),
+    'message',
   );
-  const files = promotionFiles(component, 'images: []\n', jobInputs);
-  await gateway.commit(files, 'b'.repeat(40), 'message', {
-    treeParent: 'f'.repeat(40),
-    mergeParent: 'f'.repeat(40),
-  });
-  const tree = JSON.parse(
-    calls.find((call) => call.url.endsWith('/git/trees')).options.body,
-  );
-  assert.equal(tree.base_tree, 'c'.repeat(40));
   const commit = JSON.parse(
     calls.find((call) => call.url.endsWith('/git/commits')).options.body,
   );
-  assert.deepEqual(commit.parents, ['b'.repeat(40), 'f'.repeat(40)]);
+  assert.deepEqual(commit.parents, ['f'.repeat(40)]);
 });
 
 test('configuration refresh updates only available bootstrap records without inventing sibling releases', () => {
@@ -1079,86 +1038,20 @@ test('promotion CLI rejects untrusted events before image or authenticated GitHu
   }
 });
 
-test('a managed component proposal cannot conceal edits to another component', async () => {
+test('legacy proposal intent fails closed without accessing or mutating its branch', async () => {
   const gateway = independentGateway();
-  const old = { ...component, sourceRevision: 'c'.repeat(40) };
-  const web = {
-    ...component,
-    component: 'web',
-    image: 'ghcr.io/example/equipment-web',
-  };
-  const head = 'b'.repeat(40);
-  gateway.readState = async () => ({
-    base: gateway.snapshot.revision,
-    head,
-    managed: true,
-  });
-  const proposalFiles = promotionFiles(
-    web,
-    gateway.snapshot.kustomization,
-    gateway.snapshot.jobInputs,
-  );
-  gateway.readSnapshot = async (revision) =>
-    revision === head
-      ? {
-          ...gateway.snapshot,
-          revision,
-          records: { inventory: old, web },
-          kustomization:
-            proposalFiles['deploy/environments/local/kustomization.yaml'],
-        }
-      : gateway.snapshot;
   await assert.rejects(
     promote({
       release: component,
-      intent: intentFor(component, null, { head, record: old }),
+      intent: intentFor(component, null, {
+        head: 'b'.repeat(40),
+        record: component,
+      }),
       gateway,
     }),
-    /unrelated component/,
+    /Legacy promotion proposal/,
   );
   assert.deepEqual(gateway.writes, []);
-});
-
-test('managed component branch remains refreshable after unrelated main advancement', async () => {
-  const base = 'f'.repeat(40),
-    head = 'b'.repeat(40),
-    merge = 'a'.repeat(40);
-  const gateway = githubGateway({
-    repository: 'example/equipment',
-    component: 'inventory',
-    token: 'private',
-    request: async (url) => {
-      let data;
-      if (url.endsWith('/heads/main')) data = { object: { sha: base } };
-      else if (url.includes('/git/ref/')) data = { object: { sha: head } };
-      else
-        data = {
-          behind_by: 1,
-          merge_base_commit: { sha: merge },
-          ahead_by: 1,
-          commits: [
-            {
-              sha: head,
-              author: { login: 'github-actions[bot]' },
-              commit: {
-                message:
-                  'chore: promote local application images\n\nComponent: inventory',
-              },
-            },
-          ],
-          files: [
-            {
-              filename: 'deploy/environments/local/releases/inventory.json',
-              status: 'added',
-            },
-          ],
-        };
-      return { ok: true, status: 200, json: async () => data };
-    },
-  });
-  const state = await gateway.readState();
-  assert.equal(state.managed, true);
-  assert.equal(state.proposalBase, merge);
 });
 
 test('target or proposal movement during commit creation stops before updating a remote ref', async () => {
@@ -1209,53 +1102,25 @@ test('GitHub lineage inspection fails closed on malformed ancestry and recognize
   }
 });
 
-test('CP-S002 rejects ancestor rollback from another branch against deployed and proposed components', async (t) => {
-  for (const location of ['target', 'proposal']) {
-    await t.test(location, async () => {
-      const gateway = independentGateway();
-      const newer = {
-        ...component,
-        sourceRef: 'refs/heads/renamed-branch',
-        sourceRevision: 'c'.repeat(40),
-        digest: `sha256:${'c'.repeat(64)}`,
-      };
-      const head = 'b'.repeat(40);
-      const updated = promotionFiles(
-        newer,
-        gateway.snapshot.kustomization,
-        gateway.snapshot.jobInputs,
-      )['deploy/environments/local/kustomization.yaml'];
-      let intent;
-      if (location === 'target') {
-        gateway.snapshot.records.inventory = newer;
-        gateway.snapshot.kustomization = updated;
-        intent = intentFor(component, newer);
-      } else {
-        gateway.readState = async () => ({
-          base: gateway.snapshot.revision,
-          head,
-          managed: true,
-        });
-        gateway.readSnapshot = async (revision) =>
-          revision === head
-            ? {
-                ...gateway.snapshot,
-                revision,
-                records: { inventory: newer },
-                kustomization: updated,
-              }
-            : gateway.snapshot;
-        intent = intentFor(component, null, { head, record: newer });
-      }
-      gateway.isAncestor = async () => true;
-      await assert.rejects(
-        promote({ release: component, intent, gateway }),
-        /obsolete/,
-        location,
-      );
-      assert.deepEqual(gateway.writes, [], location);
-    });
-  }
+test('CP-S002 rejects ancestor rollback even when the deployed branch name differs', async () => {
+  const gateway = independentGateway();
+  const newer = {
+    ...component,
+    sourceRef: 'refs/heads/renamed-branch',
+    sourceRevision: 'c'.repeat(40),
+    digest: `sha256:${'c'.repeat(64)}`,
+  };
+  gateway.snapshot.records.inventory = newer;
+  gateway.isAncestor = async () => true;
+  await assert.rejects(
+    promote({
+      release: component,
+      intent: intentFor(component, newer),
+      gateway,
+    }),
+    /obsolete/,
+  );
+  assert.deepEqual(gateway.writes, []);
 });
 
 test('a genuinely divergent manual branch can propose over a captured component target', async () => {
@@ -1267,18 +1132,13 @@ test('a genuinely divergent manual branch can propose over a captured component 
     digest: `sha256:${'c'.repeat(64)}`,
   };
   gateway.snapshot.records.inventory = deployed;
-  gateway.snapshot.kustomization = promotionFiles(
-    deployed,
-    gateway.snapshot.kustomization,
-    gateway.snapshot.jobInputs,
-  )['deploy/environments/local/kustomization.yaml'];
   gateway.isAncestor = async () => false;
   const result = await promote({
     release: component,
     intent: intentFor(component, deployed),
     gateway,
   });
-  assert.equal(result.number, 9);
+  assert.equal(result.status, 'promoted');
   assert.equal(
     JSON.parse(
       gateway.writes[0].files[

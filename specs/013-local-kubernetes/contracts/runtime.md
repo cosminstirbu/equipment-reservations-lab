@@ -87,25 +87,30 @@ Unicode-codepoint-key-sorted canonical corresponding bootstrap component JSON, r
 raw local configuration and the corresponding raw base Job template. Arrays retain
 order. No secrets enter the hash. Wrapper nameSuffix is exactly a hyphen plus that hash.
 
-Each component promotion changes only its release record and overlay image entry;
-database-bootstrap and identity-bootstrap may additionally update their own exact
-Job wrapper nameSuffix. Other component records/image entries and unrelated wrapper
-fields remain outside its mutation allowlist. A nonbootstrap component never changes
-either bootstrap suffix. Missing bootstrap records keep their wrappers unreleased.
-Reject symlinks, unexpected fields/files, stale suffixes, human edits or changed remote
-heads. Validate the full proposal before one atomic commit/non-force branch compare-and-swap.
-Candidate source is independent of current target main: manual branch publication can
-propose an update, but Argo adopts only after reviewed merge. Reread main/proposal refs
-immediately before mutation and preserve unrelated current-main blobs. Updating an old
-managed proposal may use a merge commit preserving its ancestry for non-force CAS.
-There is no provider-atomic compare-and-swap across both main and proposal refs: main
-can move after the final read. A proposal never writes main directly; subsequent merge
-review/revalidation must handle that residual race instead of claiming atomic freshness.
-The explicit config-only refresh command changes those suffix fields without image
-publication or promotion creation. Independent validation recomputes freshness.
-Successful old Job cleanup is bounded and ownership-scoped; current-suffix failures and
-failure evidence are retained until explicit controlled retry/reset. Service DNS and
-runtime dependency endpoints never incorporate Job suffixes.
+Each component promotion changes only its release record and dedicated image patch
+`deploy/environments/local/images/NAME.yaml`; database-bootstrap and identity-bootstrap
+also update their own exact Job wrapper nameSuffix. Root Kustomization references
+are stable. Other component files and unrelated wrapper fields remain outside the
+mutation allowlist. Unpublished component patches retain exactly their known component alias;
+missing bootstrap records keep their wrappers unreleased.
+
+Manual repository-branch publication can commit directly to main after the quality
+prerequisite, successful publication and exact-candidate formatting, committed-state
+and pinned Kustomize/static policy validation. Preserve immutable provenance, reject
+stale same-component targets and preserve other main blobs. An identical digest is a
+no-op retaining deployed provenance; an exact already-applied result is idempotent.
+No promotion PR or automation branch is created. Use one fresh main parent and an
+atomic non-force expected-head main update, rereading main before mutation. A moved
+main fails safely for rerun; a changed component target requires fresh intent. Never
+bypass repository branch rules or substitute elevated credentials on rejection.
+GITHUB_TOKEN updates do not create recursive push workflow runs; the promoting job
+therefore owns validation before main mutation. Argo reconciles main normally.
+Current design: [direct component promotion](../team/direct-component-promotion-design.md).
+The explicit config-only refresh command changes suffix fields without image
+publication. Independent validation recomputes freshness. Successful old Job cleanup
+is bounded and ownership-scoped; current-suffix failures and failure evidence are
+retained until explicit controlled retry/reset. Service DNS and runtime dependency
+endpoints never incorporate Job suffixes.
 
 
 Broker preparation exports correlated production telemetry before process exit: workflow
@@ -147,8 +152,8 @@ unchanged. Existing broker output reconciles successfully only when complete ide
 regular owned0600 data is safely verified; unsafe/mismatched output fails without write.
 Broker init receives authenticated production OTLP configuration. Promotion operates
 on exact remote-parent content/all public inputs or refuses stale local state before
-mutation; atomic CAS alone is insufficient to protect stale transformations. PR checks
-independently validate committed release/derived Job suffixes with a narrow explicit
+mutation; atomic CAS alone is insufficient to protect stale transformations. Promotion candidate checks and applicable PR/main checks
+validate committed release/derived Job suffixes with a narrow explicit
 initial-unreleased state. Historical exception scope remains solely in
 [EX-012-001](../team/exceptions.json).
 
