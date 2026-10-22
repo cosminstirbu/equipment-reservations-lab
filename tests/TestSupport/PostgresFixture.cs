@@ -11,7 +11,7 @@ public sealed class PostgresFixture : IAsyncLifetime
 {
     // Limit concurrent schema setup on the shared provider; hosts and requests remain parallel.
     // Measured provisioning pressure and capacity evidence: specs/013-local-kubernetes/team/test-infrastructure-diagnosis.md.
-    private readonly SemaphoreSlim provisioning = new(4);
+    private readonly DatabaseProvisioning provisioning = new();
     private readonly PostgreSqlContainer container = new PostgreSqlBuilder("postgres:18.6")
         .WithUsername("fixture_admin")
         .WithPassword(Guid.NewGuid().ToString("N"))
@@ -40,10 +40,15 @@ public sealed class PostgresFixture : IAsyncLifetime
 
     public async Task<NpgsqlDataSource> CreateDatabaseAsync()
     {
+        return await CreateDatabaseAsync(TestContext.Current.CancellationToken);
+    }
+
+    private async Task<NpgsqlDataSource> CreateDatabaseAsync(CancellationToken cancellationToken)
+    {
         string name = "test_" + Guid.NewGuid().ToString("N");
         await using var admin = NpgsqlDataSource.Create(container.GetConnectionString());
         await using NpgsqlCommand create = admin.CreateCommand($"CREATE DATABASE {name}");
-        _ = await create.ExecuteNonQueryAsync();
+        _ = await create.ExecuteNonQueryAsync(cancellationToken);
         var settings = new NpgsqlConnectionStringBuilder(container.GetConnectionString())
         {
             Database = name,
@@ -56,26 +61,14 @@ public sealed class PostgresFixture : IAsyncLifetime
         return NpgsqlDataSource.Create(settings.ConnectionString);
     }
 
-    public async Task<NpgsqlDataSource> CreateMigratedDatabaseAsync(string service)
+    public Task<NpgsqlDataSource> CreateMigratedDatabaseAsync(string service)
     {
-        if (!await provisioning.WaitAsync(TimeSpan.FromSeconds(60), TestContext.Current.CancellationToken))
-        {
-            throw new TimeoutException("Database scenario provisioning did not acquire setup capacity.");
-        }
-
-        try
-        {
-            return await CreateMigratedDatabaseCoreAsync(service);
-        }
-        finally
-        {
-            _ = provisioning.Release();
-        }
+        return provisioning.RunAsync(token => CreateMigratedDatabaseCoreAsync(service, token), TestContext.Current.CancellationToken);
     }
 
-    private async Task<NpgsqlDataSource> CreateMigratedDatabaseCoreAsync(string service)
+    private async Task<NpgsqlDataSource> CreateMigratedDatabaseCoreAsync(string service, CancellationToken cancellationToken)
     {
-        NpgsqlDataSource source = await CreateDatabaseAsync();
+        NpgsqlDataSource source = await CreateDatabaseAsync(cancellationToken);
         try
         {
             var settings = new NpgsqlConnectionStringBuilder(ConnectionStringFor(source))
@@ -84,24 +77,21 @@ public sealed class PostgresFixture : IAsyncLifetime
                 CommandTimeout = 30
             };
             await using var setup = NpgsqlDataSource.Create(settings.ConnectionString);
-            using var deadline = CancellationTokenSource.CreateLinkedTokenSource(TestContext.Current.CancellationToken);
-            deadline.CancelAfter(TimeSpan.FromSeconds(60));
-
             switch (service)
             {
                 case "inventory":
-                    await Inventory.ServiceMigrations.ApplyAsync(setup, deadline.Token);
+                    await Inventory.ServiceMigrations.ApplyAsync(setup, cancellationToken);
                     break;
                 case "reservations":
                     await using (NpgsqlCommand extension = setup.CreateCommand("CREATE EXTENSION btree_gist"))
                     {
-                        _ = await extension.ExecuteNonQueryAsync(deadline.Token);
+                        _ = await extension.ExecuteNonQueryAsync(cancellationToken);
                     }
 
-                    await Reservations.ServiceMigrations.ApplyAsync(setup, deadline.Token);
+                    await Reservations.ServiceMigrations.ApplyAsync(setup, cancellationToken);
                     break;
                 case "notifications":
-                    await Notifications.ServiceMigrations.ApplyAsync(setup, deadline.Token);
+                    await Notifications.ServiceMigrations.ApplyAsync(setup, cancellationToken);
                     break;
                 default:
                     throw new ArgumentException("Unknown database owner.", nameof(service));
