@@ -1,0 +1,15 @@
+{
+  "component": "notifications",
+  "digest": "sha256:417037ac87ed80f9470c10af74e9e7ddf9ab5bd4a6977b9ced44b6ba61b835c5",
+  "image": "ghcr.io/cosminstirbu/equipment-reservations-lab-notifications",
+  "repository": {
+    "id": 1426639177,
+    "name": "cosminstirbu/equipment-reservations-lab"
+  },
+  "runAttempt": 1,
+  "runId": 39785375367,
+  "schemaVersion": 1,
+  "sourceRef": "refs/heads/main",
+  "sourceRevision": "088d6cc121d50cfce06b4dd822f5faf416ff75ed",
+  "workflow": ".github/workflows/validate.yaml"
+}
