@@ -93,6 +93,9 @@ condition-based observations with bounded deadlines when waiting for external pr
 
 ## Automated application boundary
 
+See also the [backend lifecycle guidance](#diagnose-backend-flakes-at-the-lifecycle-boundary)
+when reviewing fixtures or investigating intermittent failures.
+
 The production-aligned test projects under `tests/` contain backend HTTP behavior,
 cross-service integration, real PostgreSQL/RabbitMQ/Keycloak contracts,
 delivery/recovery and privacy checks.
@@ -294,3 +297,82 @@ Delivery/recovery fixtures retain their own durable state and provider container
 Provider containers are reused by default. The Keycloak diagnostics privacy test is an explicit
 exception: it owns a fresh provider so its complete log-history assertions cannot
 see negative authentication events from other tests.
+
+## Diagnose backend flakes at the lifecycle boundary
+
+Start with the earliest causal failure in a run, including fixture initialization.
+Later failures against the same stopped or partly initialized provider may be cascades.
+Record the source revision, runner/platform, concurrency, failing operation and phase,
+elapsed time and safe error category. Preserve the original failure and a regression
+that fails for that reason; a successful rerun alone does not establish a repair.
+
+### Provider readiness after startup and restart
+
+A listening TCP port establishes transport availability. It does not establish that
+the protocol handshake, authentication, virtual host or required provider state is
+ready. Choose readiness at the boundary the next operation actually consumes. For
+RabbitMQ, establish an authenticated AMQP connection before returning a successful
+fixture startup or restart. An HTTP management response is a different boundary.
+
+Review initial startup, restart, reused-container startup and partial-initialization
+failure separately. Reuse the readiness policy where these paths promise the same
+postcondition. Keep intentional outage, invalid credentials and permission-denial
+tests observable: setup retries must not retry the business operation under test.
+Apply the [resilience rules](resilience.md) to readiness attempts, including an
+overall budget, per-attempt timeout, cancellation, transient classification and
+bounded exponential backoff with jitter. Permanent failures remain failures.
+
+### Separate admission, active work and teardown
+
+When fixtures limit expensive setup, distinguish waiting for a setup slot from doing
+the work. Diagnose capacity and queued waves at the intended full-suite concurrency
+before choosing admission budgets. Report safe active/pending counts and elapsed
+admission time when capacity is exhausted. An individual setup deadline should cover
+the entire active operation, including database creation, extensions and migrations.
+Do not start that deadline while the operation is still waiting for admission.
+
+Propagate cancellation through active work and release capacity when that work ends,
+including failure paths. A timeout around an uncancellable synchronous host startup
+does not stop that startup. Releasing its slot while it continues creates false
+capacity and leaks work into later tests. Design ownership and shutdown before adding
+such a wrapper. Keep application request/recovery budgets distinct from fixture setup
+budgets; increasing either requires evidence about the phase actually failing.
+
+### Observe progress and own cleanup
+
+Coordinate concurrent tests through observable conditions or explicit barriers, with
+bounded waits. Start a negative observation window after the relevant operation has
+entered the intended state. Avoid assuming that a process emitted its startup marker
+before its execution timeout began. Keep real latency requirements explicit: a
+contractual one-second delivery assertion is a performance requirement, not permission
+to replace it with an arbitrary longer wait. Record the measurement environment and
+distinguish it from a functional assertion about eventual delivery.
+
+Follow [cleanup and failure preservation](tooling.md#cleanup-and-verification) for
+fixtures as well as scripts. Attempt every owned resource after partial setup or
+failure; one disposal failure must not prevent later disposal or hide the primary
+failure. Give teardown a fresh bounded budget when the test token is cancelled.
+Terminate and reap owned child processes on timeout/cancellation, with bounded
+post-termination waits, and observe owned background tasks before returning. Disposing
+a process handle alone does not terminate its child process.
+
+### Verification and review evidence
+
+For a lifecycle repair, exercise the policy with controlled time/failures where useful,
+then run the actual affected provider startup/restart scenario and the complete suite
+at its normal concurrency. Helper tests do not establish real-provider readiness.
+Report unavailable prerequisites and platform-specific skips separately; Linux CI
+qualification remains necessary for Unix-only contracts. Keep failures actionable
+without exposing credentials, connection strings or raw private provider output.
+
+During review, check each fixture's readiness postcondition, admission/active/cleanup
+budgets, cancellation propagation, partial-initialization cleanup and shared-state
+ownership. Review process helpers and tight observation windows alongside application
+assertions. Preserve the [parallelism policy](#backend-parallelism-is-the-default);
+do not conceal contention by serializing the suite or adding whole-test retries.
+
+These examples clarify the existing determinism, bounded resilience, cleanup and
+verification requirements. They do not prescribe universal timeout values. The
+[feature 013 stability audit](../../specs/013-local-kubernetes/team/backend-test-stability-audit.md)
+records the concrete repairs, remaining risks and qualification evidence that prompted
+this guidance.

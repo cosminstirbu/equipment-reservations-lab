@@ -4,6 +4,13 @@
 
 ## Summary
 
+Backend stability follow-up (2026-10-22): apply the testing guide's
+[lifecycle guidance](../../docs/engineering/testing.md#diagnose-backend-flakes-at-the-lifecycle-boundary).
+The [backend audit](team/backend-test-stability-audit.md) records recent admission
+and AMQP repairs, remaining risks and qualification limits. The owner authorized
+committing/pushing these repairs and monitoring PR #15; existing runtime,
+independent-review and human-acceptance gates remain pending.
+
 Implement the complete single-instance kind/Podman demo and reviewed GHCR/Argo release
 path while preserving everyday Aspire development. Preparation is not runtime acceptance:
 minimal kind proof passed; complete-system, trusted issuer and published-image checks

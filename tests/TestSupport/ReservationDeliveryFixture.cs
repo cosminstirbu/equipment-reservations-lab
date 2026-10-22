@@ -101,9 +101,11 @@ public sealed class ReservationDeliveryFixture : IAsyncLifetime
         Assert.Equal(0, result.ExitCode);
     }
 
-    public Task StartBrokerAsync(CancellationToken cancellationToken)
+    public async Task StartBrokerAsync(CancellationToken cancellationToken)
     {
-        return broker!.StartAsync(cancellationToken);
+        await broker!.StartAsync(cancellationToken);
+        await using IConnection connection = await BrokerReadiness.ConnectAsync(
+            token => RabbitConnection.Factory(Messaging, TimeSpan.FromSeconds(3)).CreateConnectionAsync(token), cancellationToken);
     }
 
     public async Task AssertProtectedFilesAsync(CancellationToken cancellationToken)
