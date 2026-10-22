@@ -501,10 +501,11 @@ test('the manual selection CLI emits all component outputs without provider publ
         encoding: 'utf8',
         env: {
           ...process.env,
-          GITHUB_EVENT_NAME: 'workflow_dispatch',
-          GITHUB_REF: 'refs/heads/feature/nested',
-          GITHUB_SHA: repo.base,
-          GITHUB_OUTPUT: output,
+          ...runEnvironment({
+            GITHUB_SHA: repo.base,
+            GITHUB_OUTPUT: output,
+            GH_TOKEN: '',
+          }),
         },
       },
     );
