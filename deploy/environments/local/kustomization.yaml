@@ -20,7 +20,14 @@ patches:
     patch:
       '[{"op": "add", "path": "/spec/volumeName", "value": "equipment-rabbitmq"},
       {"op": "replace", "path": "/spec/storageClassName", "value": "equipment-retain"}]'
-images: []
+images: [
+  {
+    "name": "web",
+    "newName": "ghcr.io/cosminstirbu/equipment-reservations-lab-web",
+    "digest": "sha256:59fcd3868c0cbe67dc400cc742bee119dc6ed943ac982080af04a38f232310ba"
+  }
+]
+
 generators:
   - configuration.yaml
   - web-configuration.yaml
