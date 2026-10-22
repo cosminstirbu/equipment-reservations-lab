@@ -24,6 +24,9 @@ images:
   - name: identity-bootstrap
     newName: ghcr.io/cosminstirbu/equipment-reservations-lab-identity-bootstrap
     digest: sha256:cd500e697ec7b8595c9161432b65e51827e7d306ecfb7d5a42c43e944ca7fc78
+  - name: database-bootstrap
+    newName: ghcr.io/cosminstirbu/equipment-reservations-lab-database-bootstrap
+    digest: sha256:fd3e3463adba7988672f946f9a0edd44c3d9243eb93cc14f09a35fd12a9cf14b
 generators:
   - configuration.yaml
   - web-configuration.yaml
