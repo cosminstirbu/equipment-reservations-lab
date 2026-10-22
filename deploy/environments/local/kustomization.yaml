@@ -20,7 +20,10 @@ patches:
     patch:
       '[{"op": "add", "path": "/spec/volumeName", "value": "equipment-rabbitmq"},
       {"op": "replace", "path": "/spec/storageClassName", "value": "equipment-retain"}]'
-images: []
+images:
+  - name: broker-bootstrap
+    newName: ghcr.io/cosminstirbu/equipment-reservations-lab-broker-bootstrap
+    digest: sha256:f75768ede80edc1f194fb11a211f11bc22c74d19fc1ce8eea7597bf0824a8bd8
 generators:
   - configuration.yaml
   - web-configuration.yaml
