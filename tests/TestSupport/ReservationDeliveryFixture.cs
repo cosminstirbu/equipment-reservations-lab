@@ -63,7 +63,9 @@ public sealed class ReservationDeliveryFixture : IAsyncLifetime
             Messaging = $"amqp://fixture:{password}@{ports.Hostname}:{ports.Port(5672)}/equipment";
             Publisher = $"amqp://reservations-publisher:{publisherPassword}@{ports.Hostname}:{ports.Port(5672)}/equipment";
             Consumer = $"amqp://notifications-consumer:{consumerPassword}@{ports.Hostname}:{ports.Port(5672)}/equipment";
-            await ResetQueueAsync(deadline.Token);
+            await using IConnection connection = await BrokerReadiness.ConnectAsync(
+                token => RabbitConnection.Factory(Messaging, TimeSpan.FromSeconds(3)).CreateConnectionAsync(token), deadline.Token);
+            await ResetQueueAsync(connection, deadline.Token);
         }
         catch
         {
@@ -75,6 +77,11 @@ public sealed class ReservationDeliveryFixture : IAsyncLifetime
     public async Task ResetQueueAsync(CancellationToken cancellationToken)
     {
         await using IConnection connection = await RabbitConnection.Factory(Messaging, TimeSpan.FromSeconds(3)).CreateConnectionAsync(cancellationToken);
+        await ResetQueueAsync(connection, cancellationToken);
+    }
+
+    private static async Task ResetQueueAsync(IConnection connection, CancellationToken cancellationToken)
+    {
         await using IChannel channel = await connection.CreateChannelAsync(cancellationToken: cancellationToken);
         await channel.ExchangeDeclareAsync("reservations", ExchangeType.Direct, true, cancellationToken: cancellationToken);
         _ = await channel.QueueDeclareAsync("reservation-notifications", true, false, false, cancellationToken: cancellationToken);
