@@ -8,4 +8,4 @@ spec:
     spec:
       initContainers:
         - name: definitions
-          image: broker-bootstrap
+          image: ghcr.io/cosminstirbu/equipment-reservations-lab-broker-bootstrap@sha256:2efcbe71bcf8ee56ed469ca0e023ec29634c42d0aa085b882249f0a01e19e825

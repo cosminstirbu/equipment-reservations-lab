@@ -1,0 +1,15 @@
+{
+  "component": "broker-bootstrap",
+  "digest": "sha256:2efcbe71bcf8ee56ed469ca0e023ec29634c42d0aa085b882249f0a01e19e825",
+  "image": "ghcr.io/cosminstirbu/equipment-reservations-lab-broker-bootstrap",
+  "repository": {
+    "id": 1426639177,
+    "name": "cosminstirbu/equipment-reservations-lab"
+  },
+  "runAttempt": 1,
+  "runId": 39803954908,
+  "schemaVersion": 1,
+  "sourceRef": "refs/heads/main",
+  "sourceRevision": "bda1e89c531ac6dbeb6098dd8d0f23e1b31481f8",
+  "workflow": ".github/workflows/validate.yaml"
+}
