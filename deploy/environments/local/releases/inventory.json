@@ -1,0 +1,15 @@
+{
+  "component": "inventory",
+  "digest": "sha256:b7fb9d74eca12f4505cd10b0cce550cbf8a8e35c65bea4f967ba63b5f61f3db1",
+  "image": "ghcr.io/cosminstirbu/equipment-reservations-lab-inventory",
+  "repository": {
+    "id": 1426639177,
+    "name": "cosminstirbu/equipment-reservations-lab"
+  },
+  "runAttempt": 1,
+  "runId": 39785375367,
+  "schemaVersion": 1,
+  "sourceRef": "refs/heads/main",
+  "sourceRevision": "088d6cc121d50cfce06b4dd822f5faf416ff75ed",
+  "workflow": ".github/workflows/validate.yaml"
+}
