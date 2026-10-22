@@ -3,6 +3,40 @@ import { createServer } from 'node:http';
 import { test } from 'node:test';
 import { verifyDeployedTelemetry } from './deployment-diagnostics.mjs';
 
+test('private telemetry body-read failure never retains the raw transport cause', async () => {
+  const original = globalThis.fetch;
+  globalThis.fetch = async () => ({
+    status: 200,
+    headers: new Map(),
+    body: {
+      getReader: () => ({
+        read: async () => {
+          throw new Error('PRIVATE_TRANSPORT_MARKER');
+        },
+        cancel: async () => {},
+      }),
+    },
+  });
+  try {
+    await assert.rejects(
+      verifyDeployedTelemetry({
+        dashboardOrigin: 'https://dashboard.invalid',
+        apiKey: 'PRIVATE_KEY',
+        traceIds,
+        privateValues: [],
+        timeoutMs: 10,
+      }),
+      (error) => {
+        assert.equal(error.cause, undefined);
+        assert.doesNotMatch(JSON.stringify(error), /PRIVATE_TRANSPORT_MARKER/);
+        return true;
+      },
+    );
+  } finally {
+    globalThis.fetch = original;
+  }
+});
+
 const traceIds = {
   book: '1'.repeat(32),
   cancel: '2'.repeat(32),

@@ -1,5 +1,4 @@
 import assert from 'node:assert/strict';
-import { spawnSync } from 'node:child_process';
 import { randomBytes } from 'node:crypto';
 import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
@@ -7,6 +6,7 @@ import { join, resolve } from 'node:path';
 import { test } from 'node:test';
 import { setTimeout as delay } from 'node:timers/promises';
 import parsers from '@stoplight/spectral-parsers';
+import { cleanupAll, executeProcess } from './process.mjs';
 
 const root = resolve(import.meta.dirname, '..');
 const runtime = process.env.CONTAINER_RUNTIME ?? 'podman';
@@ -20,18 +20,18 @@ const childId = '33'.repeat(8);
 const attribute = (key, stringValue) => ({ key, value: { stringValue } });
 
 function command(args, timeout = 180_000) {
-  const result = spawnSync(runtime, args, {
+  let output = 'private-capture';
+  if (args[0] === 'port') output = 'public-capture';
+  if (args[0] === 'rm') output = 'stream';
+  return executeProcess(runtime, args, {
     cwd: root,
+    operation: 'Dashboard provider operation',
+    tool: runtime,
+    output,
     encoding: 'utf8',
     timeout,
     killSignal: 'SIGKILL',
-  });
-  assert.equal(
-    result.status,
-    0,
-    `${runtime} ${args[0]} failed: ${result.stderr || result.error}`,
-  );
-  return result.stdout.trim();
+  }).trim();
 }
 
 function records(payload, kind) {
@@ -101,13 +101,22 @@ test(
     writeFileSync(envfile, environment, { mode: 0o600 });
     const name = `equipment-dashboard-contract-${process.pid}`;
     let owned = false;
-    t.after(() => {
-      try {
-        if (owned) command(['rm', '-f', name], 30_000);
-      } finally {
-        rmSync(directory, { recursive: true, force: true });
-      }
-    });
+    t.after(() =>
+      cleanupAll([
+        ...(owned
+          ? [
+              {
+                operation: 'remove Dashboard container',
+                run: () => command(['rm', '-f', name], 30_000),
+              },
+            ]
+          : []),
+        {
+          operation: 'remove Dashboard private fixture',
+          run: () => rmSync(directory, { recursive: true, force: true }),
+        },
+      ]),
+    );
     const size = (name) =>
       pod.volumes
         .find((entry) => entry.name === name)

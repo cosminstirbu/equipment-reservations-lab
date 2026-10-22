@@ -1,6 +1,33 @@
 {
   "exceptions": [
     {
+      "id": "EX-013-003",
+      "finding": "DQ-P001",
+      "policy": "Constitution II intended-behavior failing test before implementation",
+      "scope": [
+        "Before-exit stdout and stderr visibility",
+        "Independent 4000-character failure tails and truncation including quiet formatter integration",
+        "Malformed private smoke HTTP JSON projection",
+        "Malformed default OCI index JSON projection",
+        "Original CI Job-wait process metadata retention",
+        "Parent-smoke safe child stdout/stderr and HTTP phase/status propagation"
+      ],
+      "deviation": "These six contracts were implemented before valid intended-behavior red evidence. Missing-module and early parent provider-fixture failures were not evidence of the intended behavior. Later passing or mutation runs do not reconstruct original test-first ordering.",
+      "rationale": "The historical sequence cannot be recovered honestly. Retain the corrected chronology, current passing process/CLI/privacy regressions and independent code review; accept only the scoped historical sequencing deviation.",
+      "impact": "Allows original quality reviewer to close DQ-P001 after validating this approval. No general policy relaxation or completion is implied.",
+      "owner": "Human repository owner",
+      "date": "2026-10-22",
+      "authorization": "Explicit user reply: I approve the scoped test-first exception",
+      "exclusions": [
+        "No waiver for future or unlisted fixes",
+        "No correctness, privacy or security waiver",
+        "No unavailable-test or runtime verification waiver",
+        "No feature acceptance",
+        "No commit, push, workflow dispatch or publication authorization"
+      ],
+      "status": "human_approved"
+    },
+    {
       "id": "EX-012-001",
       "finding": "Q-I006",
       "policy": "Constitution II intended-behavior failing test before implementation",

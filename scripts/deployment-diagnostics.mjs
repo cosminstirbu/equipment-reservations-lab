@@ -1,5 +1,6 @@
 import { setTimeout as delay } from 'node:timers/promises';
 import { TextDecoder } from 'node:util';
+import { OperationalFailure } from './process.mjs';
 
 const maximumBody = 2 * 1024 * 1024;
 const requiredResources = [
@@ -27,31 +28,37 @@ function privacy(value, privateValues) {
       /eyJ[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+/.test(value) ||
       /https?:\/\/[^\s"'<>]*\?/i.test(value)
     )
-      throw new Error('Telemetry privacy rule rejected private material.');
+      throw new OperationalFailure(
+        'Telemetry privacy rule rejected private material.',
+      );
     return;
   }
   if (!value || typeof value !== 'object') return;
   if (typeof value.key === 'string') {
     if (forbiddenAttribute.test(value.key))
-      throw new Error('Telemetry privacy rule rejected a forbidden attribute.');
+      throw new OperationalFailure(
+        'Telemetry privacy rule rejected a forbidden attribute.',
+      );
     if (
       value.key === 'exception.message' &&
       value.value?.stringValue !== 'Database operation failed'
     )
-      throw new Error(
+      throw new OperationalFailure(
         'Telemetry privacy rule rejected an unsafe exception message.',
       );
     if (
       value.key === 'exception.stacktrace' &&
       value.value?.stringValue !== '[redacted]'
     )
-      throw new Error(
+      throw new OperationalFailure(
         'Telemetry privacy rule rejected an unsafe exception stack.',
       );
   }
   for (const [key, child] of Object.entries(value)) {
     if (forbiddenAttribute.test(key))
-      throw new Error('Telemetry privacy rule rejected a forbidden field.');
+      throw new OperationalFailure(
+        'Telemetry privacy rule rejected a forbidden field.',
+      );
     privacy(child, privateValues);
   }
 }
@@ -59,7 +66,7 @@ function privacy(value, privateValues) {
 async function boundedJson(url, apiKey, deadline, privateValues) {
   const remaining = deadline - Date.now();
   if (remaining <= 0)
-    throw new Error('Telemetry observation deadline expired.');
+    throw new OperationalFailure('Telemetry observation deadline expired.');
   let response;
   try {
     response = await globalThis.fetch(url, {
@@ -68,14 +75,18 @@ async function boundedJson(url, apiKey, deadline, privateValues) {
       signal: globalThis.AbortSignal.timeout(Math.min(5000, remaining)),
     });
   } catch {
-    throw new Error(
+    throw new OperationalFailure(
       'Telemetry API request failed or exceeded its bounded deadline.',
     );
   }
   if (response.status !== 200)
-    throw new Error(`Telemetry API access failed (HTTP ${response.status}).`);
+    throw new OperationalFailure(
+      `Telemetry API access failed (HTTP ${response.status}).`,
+    );
   if (Number(response.headers.get('content-length')) > maximumBody)
-    throw new Error('Telemetry payload exceeds the response body bound.');
+    throw new OperationalFailure(
+      'Telemetry payload exceeds the response body bound.',
+    );
   const reader = response.body.getReader();
   let size = 0;
   const chunks = [];
@@ -85,14 +96,15 @@ async function boundedJson(url, apiKey, deadline, privateValues) {
       if (done) break;
       size += value.byteLength;
       if (size > maximumBody)
-        throw new Error('Telemetry payload exceeds the response body bound.');
+        throw new OperationalFailure(
+          'Telemetry payload exceeds the response body bound.',
+        );
       chunks.push(value);
     }
   } catch (error) {
-    if (error.message.startsWith('Telemetry payload')) throw error;
-    throw new Error(
+    if (error instanceof OperationalFailure) throw error;
+    throw new OperationalFailure(
       'Telemetry API body read failed or exceeded its bounded deadline.',
-      { cause: error },
     );
   } finally {
     // Cancellation can reject again after the observation signal already aborted the stream.
@@ -108,7 +120,7 @@ async function boundedJson(url, apiKey, deadline, privateValues) {
   try {
     data = JSON.parse(new TextDecoder().decode(bytes));
   } catch {
-    throw new Error('Telemetry API payload is not valid JSON.');
+    throw new OperationalFailure('Telemetry API payload is not valid JSON.');
   }
   privacy(data, privateValues);
   return data;
@@ -122,7 +134,7 @@ function records(payload, kind) {
     payload.returnedCount > 500 ||
     payload.totalCount !== payload.returnedCount
   )
-    throw new Error(
+    throw new OperationalFailure(
       'Telemetry response counts are invalid or truncated. Obtain a safe fresh capture.',
     );
   const resourceKey = kind === 'spans' ? 'resourceSpans' : 'resourceLogs';
@@ -130,14 +142,20 @@ function records(payload, kind) {
   const itemKey = kind === 'spans' ? 'spans' : 'logRecords';
   const resources = payload.data?.[resourceKey];
   if (!Array.isArray(resources))
-    throw new Error('Telemetry payload resource collection is invalid.');
+    throw new OperationalFailure(
+      'Telemetry payload resource collection is invalid.',
+    );
   const result = [];
   for (const resource of resources) {
     if (!Array.isArray(resource[scopeKey]))
-      throw new Error('Telemetry payload scope collection is invalid.');
+      throw new OperationalFailure(
+        'Telemetry payload scope collection is invalid.',
+      );
     for (const scope of resource[scopeKey]) {
       if (!Array.isArray(scope[itemKey]))
-        throw new Error('Telemetry payload record collection is invalid.');
+        throw new OperationalFailure(
+          'Telemetry payload record collection is invalid.',
+        );
       for (const record of scope[itemKey]) {
         const validIds =
           /^[a-f0-9]{32}$/.test(record.traceId ?? '') &&
@@ -149,7 +167,9 @@ function records(payload, kind) {
             id === undefined || id === null || id === '' || /^0+$/.test(id),
         );
         if (!validIds && !(kind === 'logs' && uncorrelated))
-          throw new Error('Telemetry trace/span identifiers are invalid.');
+          throw new OperationalFailure(
+            'Telemetry trace/span identifiers are invalid.',
+          );
         result.push({
           ...record,
           resource: resource.resource,
@@ -159,13 +179,17 @@ function records(payload, kind) {
     }
   }
   if (result.length !== payload.returnedCount)
-    throw new Error('Telemetry response record count is inconsistent.');
+    throw new OperationalFailure(
+      'Telemetry response record count is inconsistent.',
+    );
   if (
     kind === 'spans' &&
     new Set(result.map((record) => `${record.traceId}:${record.spanId}`))
       .size !== result.length
   )
-    throw new Error('Telemetry trace/span identifiers are duplicated.');
+    throw new OperationalFailure(
+      'Telemetry trace/span identifiers are duplicated.',
+    );
   return result;
 }
 function attribute(record, key) {
@@ -187,7 +211,9 @@ function descendant(record, ancestor, spans) {
 }
 function requireObservation(condition, message) {
   if (!condition)
-    throw new Error(`Telemetry observation incomplete: ${message}`);
+    throw new OperationalFailure(
+      `Telemetry observation incomplete: ${message}`,
+    );
 }
 
 export async function verifyDeployedTelemetry({
@@ -206,11 +232,11 @@ export async function verifyDeployedTelemetry({
     ) ||
     new Set(Object.values(traceIds)).size !== 3
   )
-    throw new Error(
+    throw new OperationalFailure(
       'Telemetry verification requires three fresh distinct workflow trace IDs and private API authentication.',
     );
   if (timeoutMs <= 0 || timeoutMs > 60000 || intervalMs < 0)
-    throw new Error('Telemetry observation budget is invalid.');
+    throw new OperationalFailure('Telemetry observation budget is invalid.');
   const deadline = Date.now() + timeoutMs;
   const known = privateValues.filter((value) => typeof value === 'string');
   const get = async (kind, filter) => {
@@ -240,7 +266,7 @@ export async function verifyDeployedTelemetry({
             typeof entry.hasTraces !== 'boolean',
         )
       )
-        throw new Error('Telemetry resource payload is invalid.');
+        throw new OperationalFailure('Telemetry resource payload is invalid.');
       for (const name of requiredResources)
         requireObservation(
           resources.some(
@@ -367,7 +393,7 @@ export async function verifyDeployedTelemetry({
       if (!error.message.startsWith('Telemetry observation incomplete:'))
         throw error;
       if (Date.now() + intervalMs >= deadline)
-        throw new Error(
+        throw new OperationalFailure(
           'Telemetry observation deadline expired; required fresh workflow/dependency/bootstrap exports are incomplete.',
           { cause: error },
         );

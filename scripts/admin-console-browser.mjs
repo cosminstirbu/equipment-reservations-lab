@@ -3,6 +3,7 @@ import { Buffer } from 'node:buffer';
 import { randomUUID } from 'node:crypto';
 import { existsSync } from 'node:fs';
 import { createRequire } from 'node:module';
+import { clearTimeout } from 'node:timers';
 
 const requireWeb = createRequire(
   new URL('../src/Web/package.json', import.meta.url),
@@ -161,12 +162,15 @@ async function rabbit(page) {
       api('DELETE', `queues/%2F/${encodeURIComponent(queue)}`),
       api('DELETE', `exchanges/%2F/${encodeURIComponent(exchange)}`),
     ]);
-    for (const result of cleanup) {
+    for (const [index, result] of cleanup.entries()) {
       if (
         result.status !== 'fulfilled' ||
         !(result.value.ok() || result.value.status() === 404)
       ) {
         cleanupFailed = true;
+        console.error(
+          `Cleanup failure: Rabbit ${index === 0 ? 'queue' : 'exchange'} cleanup failed; private provider details suppressed.`,
+        );
       }
     }
   }
@@ -342,17 +346,31 @@ try {
   } else {
     throw new Error('Unknown console workflow');
   }
-} catch (error) {
-  if (process.argv[2] === 'postgres') {
-    console.error(
-      `pgAdmin failure category: ${error.name}; assertion: ${error.message.split('\n')[0]}`,
-    );
-  }
-
+} catch {
   console.error(
     `Administration browser workflow failed at: ${stage}. No credentials or page content retained.`,
   );
   process.exitCode = 1;
 } finally {
-  await browser?.close();
+  if (browser) {
+    let timer;
+    try {
+      await Promise.race([
+        browser.close(),
+        new Promise((_, reject) => {
+          timer = setTimeout(
+            () => reject(new Error('Browser shutdown deadline expired.')),
+            5000,
+          );
+        }),
+      ]);
+    } catch {
+      console.error(
+        'Cleanup failure: administration browser shutdown failed or exceeded 5 seconds.',
+      );
+      process.exitCode = 1;
+    } finally {
+      clearTimeout(timer);
+    }
+  }
 }

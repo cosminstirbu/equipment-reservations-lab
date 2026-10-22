@@ -1,5 +1,7 @@
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
+import { performance } from 'node:perf_hooks';
+import { cleanupAll, executeProcess, processFailure } from './process.mjs';
 import { createHash, randomBytes } from 'node:crypto';
 import {
   chmodSync,
@@ -34,7 +36,8 @@ const failureTypes = new Set([
   'TypeInitializationException',
 ]);
 function processResult(command, args, options = {}) {
-  return spawnSync(command, args, {
+  const started = performance.now();
+  const result = spawnSync(command, args, {
     cwd: root,
     encoding: 'utf8',
     timeout: 180000,
@@ -43,15 +46,34 @@ function processResult(command, args, options = {}) {
     stdio: ['pipe', 'pipe', 'pipe'],
     ...options,
   });
+  if (result.status !== 0 || result.error)
+    console.error(
+      processFailure(result.error ?? result, {
+        operation: 'DatabaseBootstrap provider query',
+        tool: command,
+        durationMs: performance.now() - started,
+      }).message,
+    );
+  return result;
 }
 function command(program, args, label, options = {}) {
-  const result = processResult(program, args, options);
-  assert.equal(
-    result.status,
-    0,
-    `${label} failed; private provider output suppressed.`,
-  );
-  return result.stdout.trim();
+  let output = 'private-capture';
+  if (program === 'git' || args[0] === 'kustomize' || args[0] === 'image')
+    output = 'public-capture';
+  if (
+    program === 'tar' ||
+    ['build', 'network', 'volume', 'rm'].includes(args[0])
+  )
+    output = 'stream';
+  return executeProcess(program, args, {
+    cwd: root,
+    encoding: 'utf8',
+    timeout: 180000,
+    operation: label,
+    tool: program,
+    output,
+    ...options,
+  }).trim();
 }
 function environment(container, configuration, bundle) {
   const result = { ...configuration };
@@ -100,39 +122,66 @@ test(
       volume: false,
       image: false,
     };
-    t.after(() => {
-      const failures = [];
-      for (const name of created.containers)
-        if (
-          processResult(runtime, ['rm', '--force', name], { timeout: 30000 })
-            .status !== 0
-        )
-          failures.push('container cleanup');
-      if (
-        created.volume &&
-        processResult(runtime, ['volume', 'rm', volume], { timeout: 30000 })
-          .status !== 0
-      )
-        failures.push('volume cleanup');
-      if (
-        created.network &&
-        processResult(runtime, ['network', 'rm', network], { timeout: 30000 })
-          .status !== 0
-      )
-        failures.push('network cleanup');
-      if (
-        created.image &&
-        processResult(runtime, ['image', 'rm', image], { timeout: 30000 })
-          .status !== 0
-      )
-        failures.push('image cleanup');
-      rmSync(directory, { recursive: true, force: true });
-      assert.deepEqual(
-        failures,
-        [],
-        'all exact owned provider resources must clean up',
-      );
-    });
+    t.after(() =>
+      cleanupAll([
+        ...[...created.containers].map((name) => ({
+          operation: 'remove database fixture container',
+          run: () =>
+            command(
+              runtime,
+              ['rm', '--force', name],
+              'remove database fixture container',
+              { timeout: 30000 },
+            ),
+        })),
+        ...(created.volume
+          ? [
+              {
+                operation: 'remove database fixture volume',
+                run: () =>
+                  command(
+                    runtime,
+                    ['volume', 'rm', volume],
+                    'remove database fixture volume',
+                    { timeout: 30000 },
+                  ),
+              },
+            ]
+          : []),
+        ...(created.network
+          ? [
+              {
+                operation: 'remove database fixture network',
+                run: () =>
+                  command(
+                    runtime,
+                    ['network', 'rm', network],
+                    'remove database fixture network',
+                    { timeout: 30000 },
+                  ),
+              },
+            ]
+          : []),
+        ...(created.image
+          ? [
+              {
+                operation: 'remove database fixture image',
+                run: () =>
+                  command(
+                    runtime,
+                    ['image', 'rm', image],
+                    'remove database fixture image',
+                    { timeout: 30000 },
+                  ),
+              },
+            ]
+          : []),
+        {
+          operation: 'remove database private fixture',
+          run: () => rmSync(directory, { recursive: true, force: true }),
+        },
+      ]),
+    );
     const context = join(directory, 'source');
     mkdirSync(context, { mode: 0o700 });
     const revision = command(

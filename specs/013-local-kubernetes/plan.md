@@ -10,6 +10,28 @@ minimal kind proof passed; complete-system, trusted issuer and published-image c
 remain explicit gates. [Research](research.md) records decisions, exact host evidence
 and sources; [runtime contract](contracts/runtime.md) owns operational interfaces.
 
+## Targeted manual branch publication amendment — 2026-10-22
+
+FR-012/AC-3.4/SC-010 add maintainer manual publication from any nonempty repository
+branch while retaining main-only automatic pushes and main-only promotion. The
+[branch release design](team/branch-release-design.md) defines event/ref guards at
+workflow and CLI boundaries, global serialized concurrency, source-SHA provenance,
+unchanged permissions/validation, and the existing CLI/Bash/YAML regression seams.
+Append T054–T058; independent preparation review precedes dependent implementation.
+No new dependency, policy exception, external execution or feature acceptance is
+implied. Previous tasks, historical evidence and remaining full-feature gates persist.
+
+The owner's 2026-10-22 follow-up retires commit `623bfaf`'s temporary Validate
+`image-build-diagnostics` job and its dedicated builder diagnostic option/CLI path.
+Apply a targeted removal rather than a wholesale Git revert: preserve overlapping
+uncommitted safe-output repairs, normal image-build metadata/cleanup behavior and
+manual branch release changes. T059 records test-first absence/rejection checks and
+removal within this batch; it changes temporary plumbing, not product requirements.
+Independent review/convergence must assess the combined final scope.
+Promotion must use the case-sensitive Bash-derived main flag described in the design,
+because GitHub expression string comparisons ignore case; manual `Main` publication
+must not promote as lowercase `main`. Existing T055/T056 cover this guard clarification.
+
 ## Technical Context
 
 **Language/Version**: .NET 10.0.301/C#14, existing locked Angular/TypeScript/Node;
@@ -168,6 +190,24 @@ only its own ephemeral cluster/images; no second supported local workflow.
 
 No constitutional violation. Two controllers (ingress and GitOps) serve explicit existing
 requirements; no chart, service mesh, secret operator or extra provisioning service.
+
+## Targeted script diagnostics amendment — 2026-10-21
+
+Owner-approved FR-019–FR-021 extend US4 across every script and test helper. The
+[diagnostics design](team/diagnostics-design.md) records the per-operation inventory,
+minimal process-helper interface, trust boundaries, output budgets and test design.
+The new authoritative [tooling guide](../../docs/engineering/tooling.md) applies with
+formatting, testing, observability and resilience; the engineering index routes
+future work to it. Existing constitutional policies suffice; no amendment or exception
+is proposed. Mandatory engineering practices have explicit owner approval.
+
+Preparation review must pass on this amendment before dependent implementation.
+Append T042 onward and preserve all completed IDs and pending acceptance tasks.
+The coordinator records a new bounded scope batch without resetting historical repair
+counts. Real-process and CLI diagnostics evidence is required in addition to provider
+integration evidence; incompatible Windows signal/file-mode cases remain pending
+until verified on a supported host. No commit/push/workflow action or feature acceptance
+is implied. Existing full-feature acceptance gates remain unchanged.
 
 ## Targeted implementation clarification — broker definitions executable
 

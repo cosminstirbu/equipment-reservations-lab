@@ -10,6 +10,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { setTimeout as delay } from 'node:timers/promises';
 import parsers from '@stoplight/spectral-parsers';
+import { cleanupAll } from './process.mjs';
 
 const nodeImage =
   'docker.io/library/node@sha256:4e6b70dd6cbfc88c8157ba19aa3d9f9cce6ba4703576d55459e45efcbc9c5f5d';
@@ -41,6 +42,7 @@ export async function verifyConfigRollout({
   namespace = 'equipment',
 }) {
   const directory = mkdtempSync(join(tmpdir(), 'equipment-live-rollout-'));
+  let primary;
   try {
     cpSync(join(root, 'deploy'), join(directory, 'deploy'), {
       recursive: true,
@@ -346,7 +348,17 @@ export async function verifyConfigRollout({
     );
     assert.equal(currentClaim.metadata.uid, oldClaim.metadata.uid);
     assert.equal(currentClaim.spec.volumeName, oldClaim.spec.volumeName);
+  } catch (error) {
+    primary = error;
   } finally {
-    rmSync(directory, { recursive: true, force: true });
+    await cleanupAll(
+      [
+        {
+          operation: 'remove rollout fixture',
+          run: () => rmSync(directory, { recursive: true, force: true }),
+        },
+      ],
+      { primary },
+    );
   }
 }

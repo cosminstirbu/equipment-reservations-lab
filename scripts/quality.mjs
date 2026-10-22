@@ -1,9 +1,15 @@
-import { spawn, spawnSync } from 'node:child_process';
+import { spawn } from 'node:child_process';
 import { mkdirSync, readdirSync, realpathSync, rmSync } from 'node:fs';
 import { dirname, extname, isAbsolute, relative, resolve } from 'node:path';
 import { setTimeout, clearTimeout } from 'node:timers';
 import { fileURLToPath } from 'node:url';
 import { runNpm } from './npm.mjs';
+import {
+  executeProcess,
+  processFailure,
+  cleanupAll,
+  OperationalFailure,
+} from './process.mjs';
 
 export const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const excluded = new Set([
@@ -22,6 +28,7 @@ const excluded = new Set([
   'TestResults',
   'playwright-report',
   '.cache',
+  '.local',
 ]);
 const extensions = new Set([
   '.cs',
@@ -81,16 +88,13 @@ function sources(directory = root) {
 }
 
 function run(command, args, quiet = false) {
-  const result = spawnSync(command, args, {
+  return executeProcess(command, args, {
     cwd: root,
-    stdio: quiet ? 'pipe' : 'inherit',
-    encoding: 'utf8',
+    tool: command === process.execPath ? 'node' : command,
+    operation: quiet ? 'format verification' : 'quality check',
+    output: quiet ? 'public-capture' : 'stream',
+    timeout: 900000,
   });
-  if (result.error) throw result.error;
-  if (result.status !== 0)
-    throw new Error(
-      `${command} exited ${result.status ?? result.signal}\n${quiet ? (result.stdout + result.stderr).slice(-2000) : ''}`,
-    );
 }
 
 async function withFormattingLock(action) {
@@ -105,17 +109,27 @@ async function withFormattingLock(action) {
     } catch (error) {
       if (error.code !== 'EEXIST') throw error;
       if (Date.now() >= deadline)
-        throw new Error(
+        throw new OperationalFailure(
           'Formatting lock timed out. Check for an active formatter before removing .cache/quality-format.lock.',
-          { cause: error },
         );
       await new Promise((resolve) => setTimeout(resolve, 100));
     }
   }
+  let primary;
   try {
     action();
+  } catch (error) {
+    primary = error;
   } finally {
-    rmSync(lock, { recursive: true });
+    await cleanupAll(
+      [
+        {
+          operation: 'format lock cleanup',
+          run: () => rmSync(lock, { recursive: true }),
+        },
+      ],
+      { primary },
+    );
   }
 }
 
@@ -182,6 +196,7 @@ async function checkOpenApi() {
     ['Inventory', 'Reservations', 'Notifications'].map(
       (service) =>
         new Promise((resolve, reject) => {
+          const started = Date.now();
           const child = spawn(
             'dotnet',
             [
@@ -194,15 +209,46 @@ async function checkOpenApi() {
             ],
             { cwd: root, stdio: 'inherit' },
           );
-          child.on('error', reject);
-          child.on('close', (code, signal) => resolve({ code, signal }));
+          let expired = false;
+          const timer = setTimeout(() => {
+            expired = true;
+            child.kill('SIGKILL');
+          }, 900000);
+          child.on('error', (error) => {
+            clearTimeout(timer);
+            reject(
+              processFailure(error, {
+                operation: 'OpenAPI contract tests',
+                tool: 'dotnet',
+                durationMs: Date.now() - started,
+              }),
+            );
+          });
+          child.on('close', (code, signal) => {
+            clearTimeout(timer);
+            resolve({
+              code,
+              signal,
+              durationMs: Date.now() - started,
+              expired,
+            });
+          });
         }),
     ),
   );
   const failure = results.find((result) => result.code !== 0);
   if (failure)
-    throw new Error(
-      `dotnet OpenAPI tests exited ${failure.code ?? failure.signal}`,
+    throw processFailure(
+      {
+        status: failure.code,
+        signal: failure.signal,
+        code: failure.expired ? 'ETIMEDOUT' : undefined,
+      },
+      {
+        operation: 'OpenAPI contract tests',
+        tool: 'dotnet',
+        durationMs: failure.durationMs,
+      },
     );
 }
 
@@ -222,6 +268,7 @@ async function testDeployment(paths) {
   // Provider lanes share the existing VM budget; a parent deadline also bounds blocked child event loops.
   for (const file of files) {
     await new Promise((resolve, reject) => {
+      const started = Date.now();
       const child = spawn(process.execPath, [file], {
         cwd: root,
         stdio: 'inherit',
@@ -236,18 +283,33 @@ async function testDeployment(paths) {
       child.once('error', (error) => {
         clearTimeout(timer);
         clearTimeout(force);
-        reject(error);
+        reject(
+          processFailure(error, {
+            operation: 'deployment test execution',
+            tool: 'node',
+            durationMs: Date.now() - started,
+          }),
+        );
       });
       child.once('close', (code, signal) => {
         clearTimeout(timer);
         clearTimeout(force);
         if (expired)
           reject(
-            new Error(`Deployment test file ${file} exceeded ${timeout} ms`),
+            new Error(
+              `Deployment test file ${file} exceeded ${timeout} ms. ${processFailure({ code: 'ETIMEDOUT', status: code, signal }, { operation: 'deployment test execution', tool: 'node', durationMs: Date.now() - started }).message}`,
+            ),
           );
         else if (code !== 0)
           reject(
-            new Error(`Deployment test file ${file} exited ${code ?? signal}`),
+            processFailure(
+              { status: code, signal },
+              {
+                operation: 'deployment test execution',
+                tool: 'node',
+                durationMs: Date.now() - started,
+              },
+            ),
           );
         else resolve();
       });

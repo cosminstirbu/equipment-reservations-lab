@@ -1,5 +1,10 @@
 import { readFileSync, writeFileSync, renameSync, rmSync } from 'node:fs';
-import { execFileSync } from 'node:child_process';
+import {
+  executeProcess,
+  OperationalFailure,
+  safeFailure,
+  cleanupAllSync,
+} from './process.mjs';
 import { Buffer } from 'node:buffer';
 import { createHash, randomUUID } from 'node:crypto';
 import { join } from 'node:path';
@@ -29,7 +34,7 @@ export function promotionFiles(release, kustomization, jobInputs) {
   validateRelease(release);
   const parsed = parsers.Yaml.parse(kustomization);
   if (parsed.diagnostics.some((item) => item.severity === 0))
-    throw new Error('Invalid kustomization');
+    throw new OperationalFailure('Invalid kustomization');
   const overlay = parsed.data;
   const replacements = Object.entries(release.images).map(([name, entry]) => ({
     name,
@@ -65,7 +70,7 @@ export function jobWrapperFiles(release, inputs) {
       Object.keys(job).some((key) => !['template', 'wrapper'].includes(key)),
     )
   )
-    throw new Error('Unexpected Job input field');
+    throw new OperationalFailure('Unexpected Job input field');
   const files = {};
   const proposal = { ...inputs, jobs: {} };
   for (const name of jobNames) {
@@ -85,7 +90,7 @@ export function jobWrapperFiles(release, inputs) {
     proposal.jobs[name] = { ...job, wrapper };
   }
   if (Object.keys(inputs.jobs).some((name) => !jobNames.includes(name)))
-    throw new Error('Unexpected Job input');
+    throw new OperationalFailure('Unexpected Job input');
   validateJobSuffixes(release, proposal);
   return files;
 }
@@ -96,6 +101,7 @@ export function refreshJobSuffixes(root) {
   const inputs = readJobInputs(root);
   const files = jobWrapperFiles(release, inputs);
   const temporary = [];
+  let primary;
   try {
     for (const [path, content] of Object.entries(files)) {
       const temporaryPath = join(root, `${path}.${randomUUID()}.tmp`);
@@ -106,12 +112,27 @@ export function refreshJobSuffixes(root) {
       readPublicFile(root, releasePath) !== releaseText ||
       JSON.stringify(readJobInputs(root)) !== JSON.stringify(inputs)
     )
-      throw new Error('Public release or Job input changed during refresh');
+      throw new OperationalFailure(
+        'Public release or Job input changed during refresh',
+      );
     for (const { path, temporaryPath } of temporary)
       renameSync(temporaryPath, join(root, path));
+  } catch (error) {
+    primary =
+      error instanceof OperationalFailure
+        ? error
+        : new OperationalFailure(
+            'Job suffix refresh failed; private filesystem details suppressed.',
+          );
   } finally {
-    for (const { temporaryPath } of temporary)
-      rmSync(temporaryPath, { force: true });
+    cleanupAllSync(
+      temporary.map(({ temporaryPath }) => ({
+        operation: 'Job suffix temporary cleanup',
+        tool: 'filesystem',
+        run: () => rmSync(temporaryPath, { force: true }),
+      })),
+      { primary },
+    );
   }
   return Object.keys(files);
 }
@@ -119,7 +140,7 @@ export function refreshJobSuffixes(root) {
 function neutralField(text, key) {
   const parsed = parsers.Yaml.parse(text);
   if (parsed.diagnostics.some((item) => item.severity === 0))
-    throw new Error('Invalid parent YAML');
+    throw new OperationalFailure('Invalid parent YAML');
   const node = parsed.ast.mappings.find((mapping) => mapping.key.value === key);
   if (!node) return `${text.trimEnd()}\n<${key}>`;
   return `${text.slice(0, node.key.startPosition).trimEnd()}\n<${key}>\n${text.slice(node.value.endPosition).trimStart()}`.trimEnd();
@@ -132,7 +153,7 @@ function assertCompatibleParent(parent, main) {
     parent.jobInputs.baseConfiguration !== main.jobInputs.baseConfiguration ||
     parent.jobInputs.localConfiguration !== main.jobInputs.localConfiguration
   )
-    throw new Error(
+    throw new OperationalFailure(
       'Promotion parent has unrelated main or branch changes; review manually',
     );
   for (const name of jobNames) {
@@ -142,7 +163,7 @@ function assertCompatibleParent(parent, main) {
       neutralField(parent.jobInputs.jobs[name].wrapper, 'nameSuffix') !==
         neutralField(main.jobInputs.jobs[name].wrapper, 'nameSuffix')
     )
-      throw new Error(
+      throw new OperationalFailure(
         'Promotion parent public inputs or unrelated wrapper fields changed',
       );
   }
@@ -160,21 +181,21 @@ export async function promote({
     state.base !== checkoutRevision ||
     release.sourceRevision !== checkoutRevision
   )
-    throw new Error(
+    throw new OperationalFailure(
       'Remote main advanced beyond the verified checkout revision; rerun release from current main',
     );
   if (state.head !== expectedHead || (state.head && !state.managed))
-    throw new Error(
+    throw new OperationalFailure(
       'Promotion head changed or is not managed; review existing branch manually',
     );
   const parentRevision = state.head ?? state.base;
   const parent = await gateway.readSnapshot(parentRevision);
   if (parent.revision !== parentRevision)
-    throw new Error('Promotion parent revision mismatch');
+    throw new OperationalFailure('Promotion parent revision mismatch');
   if (state.head) {
     const main = await gateway.readSnapshot(state.base);
     if (main.revision !== state.base)
-      throw new Error('Main snapshot revision mismatch');
+      throw new OperationalFailure('Main snapshot revision mismatch');
     assertCompatibleParent(parent, main);
   }
   const files = promotionFiles(release, parent.kustomization, parent.jobInputs);
@@ -184,7 +205,9 @@ export async function promote({
     current.head !== state.head ||
     (current.head && !current.managed)
   )
-    throw new Error('Main or promotion parent changed before mutation');
+    throw new OperationalFailure(
+      'Main or promotion parent changed before mutation',
+    );
   const commit = await gateway.commit(
     files,
     parentRevision,
@@ -200,28 +223,46 @@ export function githubGateway({
   request = globalThis.fetch,
 }) {
   if (!/^[\w.-]+\/[\w.-]+$/.test(repository) || !token)
-    throw new Error('Repository and promotion token required');
+    throw new OperationalFailure('Repository and promotion token required');
   const root = `https://api.github.com/repos/${repository}`;
   const owner = repository.split('/')[0];
   async function api(path, method = 'GET', body, allowMissing = false) {
-    const response = await request(
-      path === 'graphql' ? 'https://api.github.com/graphql' : `${root}${path}`,
-      {
-        method,
-        headers: {
-          Authorization: `Bearer ${token}`,
-          Accept: 'application/vnd.github+json',
-          'X-GitHub-Api-Version': '2022-11-28',
-          'Content-Type': 'application/json',
+    let response;
+    try {
+      response = await request(
+        path === 'graphql'
+          ? 'https://api.github.com/graphql'
+          : `${root}${path}`,
+        {
+          method,
+          headers: {
+            Authorization: `Bearer ${token}`,
+            Accept: 'application/vnd.github+json',
+            'X-GitHub-Api-Version': '2022-11-28',
+            'Content-Type': 'application/json',
+          },
+          body: body === undefined ? undefined : JSON.stringify(body),
+          signal: globalThis.AbortSignal.timeout(15000),
         },
-        body: body === undefined ? undefined : JSON.stringify(body),
-        signal: globalThis.AbortSignal.timeout(15000),
-      },
-    );
+      );
+    } catch {
+      throw new OperationalFailure(
+        'GitHub authenticated request failed: transport or timeout.',
+      );
+    }
     if (allowMissing && response.status === 404) return null;
     if (!response.ok)
-      throw new Error(`GitHub ${method} ${path} failed: ${response.status}`);
-    return response.status === 204 ? null : response.json();
+      throw new OperationalFailure(
+        `GitHub authenticated request failed (HTTP ${Number.isInteger(response.status) && response.status >= 100 && response.status <= 599 ? response.status : 'unavailable'}).`,
+      );
+    if (response.status === 204) return null;
+    try {
+      return await response.json();
+    } catch {
+      throw new OperationalFailure(
+        'GitHub authenticated response payload is invalid.',
+      );
+    }
   }
   return {
     async readState() {
@@ -262,36 +303,40 @@ export function githubGateway({
     },
     async readSnapshot(revision) {
       if (!/^[a-f0-9]{40}$/.test(revision))
-        throw new Error('Exact parent commit revision required');
+        throw new OperationalFailure('Exact parent commit revision required');
       const commit = await api(`/git/commits/${revision}`);
       if (
         commit.sha !== revision ||
         !/^[a-f0-9]{40}$/.test(commit.tree?.sha ?? '')
       )
-        throw new Error('Parent commit identity mismatch');
+        throw new OperationalFailure('Parent commit identity mismatch');
       const tree = await api(`/git/trees/${commit.tree.sha}?recursive=1`);
       if (tree.sha !== commit.tree.sha)
-        throw new Error('Parent tree identity mismatch');
-      if (tree.truncated) throw new Error('Incomplete parent tree rejected');
+        throw new OperationalFailure('Parent tree identity mismatch');
+      if (tree.truncated)
+        throw new OperationalFailure('Incomplete parent tree rejected');
       async function file(path, optional = false) {
         const matches = tree.tree.filter((item) => item.path === path);
-        if (matches.length > 1) throw new Error('Ambiguous parent tree input');
+        if (matches.length > 1)
+          throw new OperationalFailure('Ambiguous parent tree input');
         const entry = matches[0];
         if (!entry && optional) return null;
         if (!entry || entry.type !== 'blob' || entry.mode !== '100644')
-          throw new Error('Missing or symlinked parent input rejected');
+          throw new OperationalFailure(
+            'Missing or symlinked parent input rejected',
+          );
         const blob = await api(`/git/blobs/${entry.sha}`);
         if (blob.encoding !== 'base64')
-          throw new Error('Unexpected parent blob encoding');
+          throw new OperationalFailure('Unexpected parent blob encoding');
         const bytes = Buffer.from(blob.content, 'base64');
         const objectId = createHash('sha1')
           .update(Buffer.concat([Buffer.from(`blob ${bytes.length}\0`), bytes]))
           .digest('hex');
         if (blob.sha !== entry.sha || objectId !== entry.sha)
-          throw new Error('Parent blob identity mismatch');
+          throw new OperationalFailure('Parent blob identity mismatch');
         const text = bytes.toString('utf8');
         if (!Buffer.from(text, 'utf8').equals(bytes))
-          throw new Error('Invalid parent UTF-8 input');
+          throw new OperationalFailure('Invalid parent UTF-8 input');
         return text;
       }
       const jobInputs = {
@@ -320,7 +365,7 @@ export function githubGateway({
         Object.keys(files).length !== allowedPaths.length ||
         Object.keys(files).some((path) => !allowedPaths.includes(path))
       )
-        throw new Error('Unexpected promotion file');
+        throw new OperationalFailure('Unexpected promotion file');
       const parentCommit = await api(`/git/commits/${parent}`);
       const tree = await api('/git/trees', 'POST', {
         base_tree: parentCommit.tree.sha,
@@ -359,7 +404,7 @@ export function githubGateway({
         },
       });
       if (result.errors?.length || !result.data?.updateRefs)
-        throw new Error(
+        throw new OperationalFailure(
           'Promotion head changed or atomic update rejected; no PR was created',
         );
     },
@@ -368,7 +413,9 @@ export function githubGateway({
         `/pulls?state=open&head=${encodeURIComponent(`${owner}:${branch}`)}&base=main`,
       );
       if (prs.length > 1)
-        throw new Error('Multiple promotion PRs require manual review');
+        throw new OperationalFailure(
+          'Multiple promotion PRs require manual review',
+        );
       if (prs.length) return prs[0];
       return api('/pulls', 'POST', {
         title: marker,
@@ -384,28 +431,41 @@ if (
   process.argv[1] &&
   import.meta.url === pathToFileURL(process.argv[1]).href
 ) {
-  if (process.argv[2] === 'refresh') {
-    refreshJobSuffixes(process.argv[3] ?? process.cwd());
-    console.log(
-      'Refreshed only local bootstrap Job suffixes; review the configuration diff.',
+  try {
+    if (process.argv[2] === 'refresh') {
+      refreshJobSuffixes(process.argv[3] ?? process.cwd());
+      console.log(
+        'Refreshed only local bootstrap Job suffixes; review the configuration diff.',
+      );
+    } else {
+      const release = parseRelease(readFileSync(process.argv[2], 'utf8'));
+      verifyReleaseIndexes(release);
+      const gateway = githubGateway({
+        repository: process.env.GITHUB_REPOSITORY,
+        token: process.env.GH_TOKEN,
+      });
+      const state = await gateway.readState();
+      const result = await promote({
+        release,
+        checkoutRevision: executeProcess('git', ['rev-parse', 'HEAD'], {
+          encoding: 'utf8',
+          timeout: 15000,
+          operation: 'promotion revision inspection',
+          tool: 'git',
+          output: 'public-capture',
+        }).trim(),
+        expectedHead: state.head,
+        gateway,
+      });
+      console.log(`Promotion PR: ${result.number}`);
+    }
+  } catch (error) {
+    console.error(
+      safeFailure(
+        error,
+        'Promotion failed; private transport and provider payloads are suppressed.',
+      ),
     );
-  } else {
-    const release = parseRelease(readFileSync(process.argv[2], 'utf8'));
-    verifyReleaseIndexes(release);
-    const gateway = githubGateway({
-      repository: process.env.GITHUB_REPOSITORY,
-      token: process.env.GH_TOKEN,
-    });
-    const state = await gateway.readState();
-    const result = await promote({
-      release,
-      checkoutRevision: execFileSync('git', ['rev-parse', 'HEAD'], {
-        encoding: 'utf8',
-        timeout: 15000,
-      }).trim(),
-      expectedHead: state.head,
-      gateway,
-    });
-    console.log(`Promotion PR: ${result.number}`);
+    process.exitCode = 1;
   }
 }

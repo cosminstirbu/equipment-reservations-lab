@@ -5,22 +5,6 @@ on:
 permissions:
   contents: read
 jobs:
-  image-build-diagnostics:
-    if: github.event_name == 'workflow_dispatch'
-    runs-on: ubuntu-24.04
-    timeout-minutes: 120
-    steps:
-      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
-        with:
-          persist-credentials: false
-      - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444
-        with:
-          node-version: 24.15.0
-      - run: npm ci
-      - uses: docker/setup-qemu-action@c7c53464625b32c7a7e944ae62b3e17d2b600130
-      - uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f
-      - name: Build both architectures without publication
-        run: node scripts/deployment-ci.mjs diagnose-build
   quality:
     runs-on: ubuntu-24.04
     timeout-minutes: 30

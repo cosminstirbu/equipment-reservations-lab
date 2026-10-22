@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { request as httpRequest } from 'node:http';
-import { spawnSync } from 'node:child_process';
+import { executeProcess, cleanupAll } from './process.mjs';
 import {
   mkdtempSync,
   writeFileSync,
@@ -24,17 +24,14 @@ const node =
   'docker.io/library/node:24.15.0-bookworm-slim@sha256:4e6b70dd6cbfc88c8157ba19aa3d9f9cce6ba4703576d55459e45efcbc9c5f5d';
 
 function container(...args) {
-  const result = spawnSync(runtime, args, {
+  return executeProcess(runtime, args, {
     encoding: 'utf8',
     timeout: 180_000,
     killSignal: 'SIGKILL',
-  });
-  assert.equal(
-    result.status,
-    0,
-    `${args[0]}: ${result.stderr || result.error}`,
-  );
-  return result.stdout.trim();
+    operation: 'routing provider operation',
+    tool: runtime,
+    output: args[0] === 'port' ? 'public-capture' : 'stream',
+  }).trim();
 }
 
 test(
@@ -52,20 +49,34 @@ test(
     const services = ['inventory', 'reservations', 'notifications'];
     const upstreams = services.map((service) => `${network}-${service}`);
     const frontend = `${network}-frontend`;
-    t.after(() => {
-      for (const container of [frontend, ...upstreams])
-        spawnSync(runtime, ['rm', '-f', container], {
-          encoding: 'utf8',
-          timeout: 30_000,
-          killSignal: 'SIGKILL',
-        });
-      spawnSync(runtime, ['network', 'rm', network], {
-        encoding: 'utf8',
-        timeout: 30_000,
-        killSignal: 'SIGKILL',
-      });
-      rmSync(directory, { recursive: true, force: true });
-    });
+    t.after(() =>
+      cleanupAll([
+        ...[frontend, ...upstreams].map((name) => ({
+          operation: 'routing container cleanup',
+          run: () =>
+            executeProcess(runtime, ['rm', '-f', name], {
+              tool: runtime,
+              operation: 'routing container cleanup',
+              timeout: 30000,
+              output: 'stream',
+            }),
+        })),
+        {
+          operation: 'routing network cleanup',
+          run: () =>
+            executeProcess(runtime, ['network', 'rm', network], {
+              tool: runtime,
+              operation: 'routing network cleanup',
+              timeout: 30000,
+              output: 'stream',
+            }),
+        },
+        {
+          operation: 'routing fixture cleanup',
+          run: () => rmSync(directory, { recursive: true, force: true }),
+        },
+      ]),
+    );
     writeFileSync(
       resolve(directory, 'index.html'),
       '<html>production application</html>',

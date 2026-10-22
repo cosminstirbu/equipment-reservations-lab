@@ -1,0 +1,15 @@
+{
+    "snapshot":  "branch-release-01",
+    "date":  "2026-10-22",
+    "files":  {
+                  ".github/workflows/release.yaml":  "7ad78860963d95ede1ecf4877d75621db10d293190926764635193f4d143d15c",
+                  ".github/workflows/validate.yaml":  "c5824f13dbbe0d18c37c7bece74d3ea639a39e42527a3f395bde06d9861fea6c",
+                  "scripts/deployment-ci.mjs":  "971b1be5ce1c7ac2acd81e35383799229216cb65e28423f9058b482465f271ce",
+                  "scripts/deployment-ci.test.mjs":  "c772aec298537e56d4d99dd83a05c112f6ad7b949d2b8c0f05b4bfaf0e1c2a24",
+                  "scripts/deployment-validation.test.mjs":  "5555246861c2a7a95e9fda80cd73efc2f9b448dcd1274fa6b5f8f7df38bc7800",
+                  "specs/013-local-kubernetes/spec.md":  "ad28fd6f901ca8174a200cef6503d217ded3348df9ecca7be2c87c35b28efe6e",
+                  "specs/013-local-kubernetes/plan.md":  "345d40e91b2f27735a6df8de45728c81d439f34355a688119041f2ac9d414084",
+                  "specs/013-local-kubernetes/quickstart.md":  "8a3a39b602559952c4a4f418bf108497b4b4577c2764e50301f8819df5676b5b",
+                  "specs/013-local-kubernetes/tasks.md":  "1c9a0f2f4a2973b4563d5326bf086463ee247707c96361503fe0d6809e4e2654"
+              }
+}

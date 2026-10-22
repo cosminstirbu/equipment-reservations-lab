@@ -96,9 +96,22 @@ macOS trust. Do not use TLS-verification bypasses.
 ## First release and GitHub permissions
 
 Before setup, the repository owner separately authorizes first publication and promotion.
-The committed release workflow runs on application changes pushed/merged to main; it
-has no manual-dispatch trigger. Workflow creation does not authorize pushing, merging,
-publishing, creating PRs or changing repository settings in this session.
+The release workflow supports automatic publication for application changes pushed
+to main and manual dispatch against any repository branch. Select **Release application images**
+in Actions and choose the reviewed branch for an explicitly authorized manual run.
+Manual dispatch publishes even without application changes; tags and PR/fork events
+are excluded. Both architectures use the run's exact source SHA and immutable indexes.
+All release runs share one serialized concurrency group. Workflow creation does not
+authorize pushing, merging, publishing, creating PRs or changing repository settings
+in this session.
+
+Only main runs may create or update the deployment promotion PR. A manual feature
+branch run publishes images for diagnosis/review without changing deployment references
+or opening a promotion PR; it does not release that branch into the local environment.
+Required validation and publication permissions apply equally to manual branch runs.
+The branch-release implementation is present; final independent review and full-feature
+human acceptance remain pending. The temporary Validate image-build diagnostic job is
+being retired; use the ordinary authorized release path for future publication checks.
 
 The publication job requires job-scoped `packages:write`. Confirm repository linkage
 and package visibility allow unauthenticated pulls of each public GHCR package; a new

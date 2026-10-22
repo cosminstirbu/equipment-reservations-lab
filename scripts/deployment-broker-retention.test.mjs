@@ -1,6 +1,5 @@
 import assert from 'node:assert/strict';
 import { Buffer } from 'node:buffer';
-import { execFileSync } from 'node:child_process';
 import { randomBytes } from 'node:crypto';
 import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
@@ -9,6 +8,7 @@ import { fileURLToPath } from 'node:url';
 import { setTimeout as delay } from 'node:timers/promises';
 import { test } from 'node:test';
 import parsers from '@stoplight/spectral-parsers';
+import { cleanupAll, executeProcess } from './process.mjs';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const runtime = process.env.CONTAINER_RUNTIME ?? 'podman';
@@ -17,17 +17,16 @@ assert.ok(
   'CONTAINER_RUNTIME must be podman or docker',
 );
 function execute(args) {
-  try {
-    return execFileSync(runtime, args, {
-      encoding: 'utf8',
-      timeout: 45000,
-      stdio: ['pipe', 'pipe', 'pipe'],
-    });
-  } catch {
-    throw new Error(
-      'Scoped broker retention provider command failed; inspect owned resources privately.',
-    );
-  }
+  let output = 'stream';
+  if (args[0] === 'port') output = 'public-capture';
+  if (args[0] === 'run') output = 'private-capture';
+  return executeProcess(runtime, args, {
+    operation: 'broker retention provider operation',
+    tool: runtime,
+    output,
+    encoding: 'utf8',
+    timeout: 45000,
+  });
 }
 
 test(
@@ -50,25 +49,22 @@ test(
     const directory = mkdtempSync(
       join(tmpdir(), 'equipment-broker-retention-'),
     );
-    t.after(() => {
-      const cleanupFailures = [];
-      try {
-        execute(['rm', '--force', name]);
-      } catch (error) {
-        cleanupFailures.push(error.message);
-      }
-      try {
-        execute(['volume', 'rm', volume]);
-      } catch (error) {
-        cleanupFailures.push(error.message);
-      }
-      rmSync(directory, { recursive: true, force: true });
-      assert.deepEqual(
-        cleanupFailures,
-        [],
-        'owned provider resources must be cleaned',
-      );
-    });
+    t.after(() =>
+      cleanupAll([
+        {
+          operation: 'remove broker container',
+          run: () => execute(['rm', '--force', name]),
+        },
+        {
+          operation: 'remove broker volume',
+          run: () => execute(['volume', 'rm', volume]),
+        },
+        {
+          operation: 'remove broker private fixture',
+          run: () => rmSync(directory, { recursive: true, force: true }),
+        },
+      ]),
+    );
     const password = randomBytes(32).toString('hex');
     const environment = (broker.env ?? [])
       .filter((entry) => typeof entry.value === 'string')

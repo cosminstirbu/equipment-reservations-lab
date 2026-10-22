@@ -2,7 +2,7 @@ import { readFileSync, lstatSync } from 'node:fs';
 import { createHash } from 'node:crypto';
 import { Buffer } from 'node:buffer';
 import { resolve, join } from 'node:path';
-import { execFileSync } from 'node:child_process';
+import { executeProcess, OperationalFailure, safeFailure } from './process.mjs';
 import { pathToFileURL } from 'node:url';
 import parsers from '@stoplight/spectral-parsers';
 
@@ -31,21 +31,21 @@ export function validateRelease(release) {
       (key) => !['sourceRevision', 'images'].includes(key),
     )
   )
-    throw new Error('Unexpected release field');
+    throw new OperationalFailure('Unexpected release field');
   if (!/^[a-f0-9]{40}$/.test(release?.sourceRevision))
-    throw new Error('Release needs exact source revision');
+    throw new OperationalFailure('Release needs exact source revision');
   if (
     Object.keys(release.images ?? {}).some((name) => !imageNames.includes(name))
   )
-    throw new Error('Unknown application image');
+    throw new OperationalFailure('Unknown application image');
   for (const name of imageNames) {
     const entry = release.images?.[name];
     if (!entry || !/^ghcr\.io\/[a-z0-9._-]+\/[a-z0-9._/-]+$/.test(entry.image))
-      throw new Error(`Missing GHCR image: ${name}`);
+      throw new OperationalFailure(`Missing GHCR image: ${name}`);
     if (Object.keys(entry).some((key) => !['image', 'digest'].includes(key)))
-      throw new Error('Unexpected image field');
+      throw new OperationalFailure('Unexpected image field');
     if (!digestPattern.test(entry.digest))
-      throw new Error(`Invalid index digest: ${name}`);
+      throw new OperationalFailure(`Invalid index digest: ${name}`);
   }
   return release;
 }
@@ -57,7 +57,7 @@ export function validateIndex(index) {
       'application/vnd.docker.distribution.manifest.list.v2+json',
     ].includes(index.mediaType)
   )
-    throw new Error('Expected OCI image index');
+    throw new OperationalFailure('Expected OCI image index');
   for (const architecture of ['amd64', 'arm64']) {
     if (
       !index.manifests?.some(
@@ -67,7 +67,7 @@ export function validateIndex(index) {
           digestPattern.test(item.digest),
       )
     )
-      throw new Error(`Index missing linux/${architecture}`);
+      throw new OperationalFailure(`Index missing linux/${architecture}`);
   }
 }
 
@@ -82,7 +82,7 @@ export function validateManifests(text, { ciImages = [], ciRevision } = {}) {
           ),
       ))
   )
-    throw new Error(
+    throw new OperationalFailure(
       'CI image policy requires exact known names and committed revision',
     );
   const documents = text
@@ -91,28 +91,30 @@ export function validateManifests(text, { ciImages = [], ciRevision } = {}) {
     .map((document) => {
       const parsed = parsers.Yaml.parse(document);
       if (parsed.diagnostics.some((item) => item.severity === 0))
-        throw new Error('Invalid manifest YAML');
+        throw new OperationalFailure('Invalid manifest YAML');
       return parsed.data;
     });
   for (const resource of documents) {
     if (!resource?.apiVersion || !resource.kind || !resource.metadata?.name)
-      throw new Error('Manifest requires apiVersion/kind/name');
+      throw new OperationalFailure('Manifest requires apiVersion/kind/name');
     if (resource.kind === 'Secret')
-      throw new Error('Secret must be privately provisioned');
+      throw new OperationalFailure('Secret must be privately provisioned');
     if (
       resource.kind === 'PersistentVolume' &&
       resource.spec?.persistentVolumeReclaimPolicy !== 'Retain'
     )
-      throw new Error('Durable PV requires Retain');
+      throw new OperationalFailure('Durable PV requires Retain');
     if (['PersistentVolume', 'PersistentVolumeClaim'].includes(resource.kind)) {
       const options =
         resource.metadata.annotations?.['argocd.argoproj.io/sync-options'] ??
         '';
       if (!options.includes('Prune=false') || !options.includes('Delete=false'))
-        throw new Error('Durable storage requires prune/delete protection');
+        throw new OperationalFailure(
+          'Durable storage requires prune/delete protection',
+        );
     }
     if (resource.kind === 'Application' && resource.metadata.finalizers?.length)
-      throw new Error('Application must not cascade deletion');
+      throw new OperationalFailure('Application must not cascade deletion');
     const pod =
       resource.kind === 'Pod' ? resource.spec : resource.spec?.template?.spec;
     for (const container of [
@@ -123,18 +125,14 @@ export function validateManifests(text, { ciImages = [], ciRevision } = {}) {
         !/@sha256:[a-f0-9]{64}$/.test(container.image) &&
         !ciImages.includes(container.image)
       )
-        throw new Error(
-          `Container ${container.name} requires immutable digest`,
-        );
+        throw new OperationalFailure('Container requires immutable digest');
       if (
         !container.resources?.requests?.cpu ||
         !container.resources?.requests?.memory ||
         !container.resources?.limits?.cpu ||
         !container.resources?.limits?.memory
       )
-        throw new Error(
-          `Container ${container.name} requires CPU/memory bounds`,
-        );
+        throw new OperationalFailure('Container requires CPU/memory bounds');
     }
   }
   return documents;
@@ -142,14 +140,26 @@ export function validateManifests(text, { ciImages = [], ciRevision } = {}) {
 
 export function verifyReleaseIndexes(
   release,
-  inspect = (reference) =>
-    JSON.parse(
-      execFileSync(
-        'docker',
-        ['buildx', 'imagetools', 'inspect', '--raw', reference],
-        { encoding: 'utf8', timeout: 45000 },
-      ),
-    ),
+  inspect = (reference) => {
+    const raw = executeProcess(
+      'docker',
+      ['buildx', 'imagetools', 'inspect', '--raw', reference],
+      {
+        encoding: 'utf8',
+        timeout: 45000,
+        operation: 'release index inspection',
+        tool: 'docker',
+        output: 'private-capture',
+      },
+    );
+    try {
+      return JSON.parse(raw);
+    } catch {
+      throw new OperationalFailure(
+        'Release index response is not valid JSON; raw provider response suppressed.',
+      );
+    }
+  },
 ) {
   validateRelease(release);
   for (const entry of Object.values(release.images))
@@ -166,7 +176,7 @@ export function canonicalRelease(input) {
     if (
       parsers.Json.parse(input).diagnostics.some((item) => item.severity === 0)
     )
-      throw new Error('Ambiguous or invalid release JSON');
+      throw new OperationalFailure('Ambiguous or invalid release JSON');
     value = JSON.parse(input);
   }
   const visiting = new Set();
@@ -180,7 +190,7 @@ export function canonicalRelease(input) {
       visiting.has(item) ||
       (!Array.isArray(item) && Object.getPrototypeOf(item) !== Object.prototype)
     )
-      throw new Error('Release must contain finite JSON values');
+      throw new OperationalFailure('Release must contain finite JSON values');
     visiting.add(item);
     let encoded;
     if (Array.isArray(item))
@@ -224,7 +234,9 @@ export function jobSuffix(
     template,
   ]) {
     if (typeof input !== 'string')
-      throw new Error('Job hash requires exact public UTF-8 input');
+      throw new OperationalFailure(
+        'Job hash requires exact public UTF-8 input',
+      );
     const bytes = Buffer.from(input, 'utf8');
     const length = Buffer.alloc(8);
     length.writeBigUInt64BE(BigInt(bytes.length));
@@ -237,7 +249,7 @@ export function jobSuffix(
 export function validateWrapper(name, text) {
   const parsed = parsers.Yaml.parse(text);
   if (parsed.diagnostics.some((item) => item.severity === 0))
-    throw new Error('Invalid Job wrapper YAML');
+    throw new OperationalFailure('Invalid Job wrapper YAML');
   const wrapper = parsed.data;
   if (
     !jobNames.includes(name) ||
@@ -246,7 +258,7 @@ export function validateWrapper(name, text) {
       (key) => !['apiVersion', 'kind', 'resources', 'nameSuffix'].includes(key),
     )
   )
-    throw new Error('Unexpected Job wrapper field');
+    throw new OperationalFailure('Unexpected Job wrapper field');
   if (
     wrapper.apiVersion !== 'kustomize.config.k8s.io/v1beta1' ||
     wrapper.kind !== 'Kustomization' ||
@@ -255,7 +267,7 @@ export function validateWrapper(name, text) {
     wrapper.resources[0] !== `../../../../base/jobs/${name}` ||
     typeof wrapper.nameSuffix !== 'string'
   )
-    throw new Error('Unexpected Job wrapper fields or resources');
+    throw new OperationalFailure('Unexpected Job wrapper fields or resources');
   return parsed;
 }
 
@@ -270,9 +282,9 @@ export function validateJobSuffixes(release, inputs) {
       Object.keys(job).some((key) => !['template', 'wrapper'].includes(key)),
     )
   )
-    throw new Error('Unexpected Job input field');
+    throw new OperationalFailure('Unexpected Job input field');
   if (Object.keys(inputs.jobs).some((name) => !jobNames.includes(name)))
-    throw new Error('Unexpected Job input');
+    throw new OperationalFailure('Unexpected Job input');
   for (const name of jobNames) {
     const job = inputs.jobs[name];
     const parsed = validateWrapper(name, job.wrapper);
@@ -283,20 +295,22 @@ export function validateJobSuffixes(release, inputs) {
       job.template,
     );
     if (parsed.data.nameSuffix !== expected)
-      throw new Error(`Job ${name} has stale or malformed nameSuffix`);
+      throw new OperationalFailure(
+        `Job ${name} has stale or malformed nameSuffix`,
+      );
   }
 }
 
 export function readPublicFile(root, path) {
   let current = resolve(root);
   if (lstatSync(current).isSymbolicLink())
-    throw new Error('Symlinked public input root rejected');
+    throw new OperationalFailure('Symlinked public input root rejected');
   if (path.split('/').some((part) => !part || part === '..' || part === '.'))
-    throw new Error('Unexpected public input path');
+    throw new OperationalFailure('Unexpected public input path');
   for (const part of path.split('/')) {
     current = join(current, part);
     if (lstatSync(current).isSymbolicLink())
-      throw new Error('Symlinked public input rejected');
+      throw new OperationalFailure('Symlinked public input rejected');
   }
   return readFileSync(current, 'utf8');
 }
@@ -328,7 +342,7 @@ function sourceDocument(text, label) {
     typeof parsed.data !== 'object' ||
     Array.isArray(parsed.data)
   )
-    throw new Error(`Invalid public ${label} YAML`);
+    throw new OperationalFailure(`Invalid public ${label} YAML`);
   return parsed.data;
 }
 
@@ -349,7 +363,7 @@ export function validateCommittedState({
     !overlay.generators.includes('configuration.yaml') ||
     overlay.secretGenerator
   )
-    throw new Error('Invalid committed local Kustomization');
+    throw new OperationalFailure('Invalid committed local Kustomization');
   for (const [local, text] of [
     [false, jobInputs.baseConfiguration],
     [true, jobInputs.localConfiguration],
@@ -371,7 +385,9 @@ export function validateCommittedState({
       generator.options?.disableNameSuffixHash === true ||
       (local && generator.behavior !== 'merge')
     )
-      throw new Error('Invalid public runtime configuration generator');
+      throw new OperationalFailure(
+        'Invalid public runtime configuration generator',
+      );
   }
   for (const name of jobNames) {
     validateWrapper(name, jobInputs.jobs[name].wrapper);
@@ -381,7 +397,7 @@ export function validateCommittedState({
       job.kind !== 'Job' ||
       !job.spec?.template?.spec?.containers?.length
     )
-      throw new Error('Invalid public Job template');
+      throw new OperationalFailure('Invalid public Job template');
   }
   if (releaseText === null) {
     if (
@@ -392,7 +408,7 @@ export function validateCommittedState({
             .nameSuffix !== '-unreleased',
       )
     )
-      throw new Error(
+      throw new OperationalFailure(
         'Initial unreleased state requires empty images and only -unreleased Job suffixes',
       );
     return 'unreleased';
@@ -412,7 +428,7 @@ export function validateCommittedState({
       );
     })
   )
-    throw new Error(
+    throw new OperationalFailure(
       'Committed image references do not match the genuine release record',
     );
   validateJobSuffixes(release, jobInputs);
@@ -444,28 +460,38 @@ if (
   process.argv[1] &&
   import.meta.url === pathToFileURL(process.argv[1]).href
 ) {
-  const [command, ...args] = process.argv.slice(2);
-  if (command === 'classify') {
-    console.log(`publish=${classifyChanges(args)}`);
-  } else if (command === 'release') {
-    verifyReleaseIndexes(parseRelease(readFileSync(args[0], 'utf8')));
-  } else if (command === 'committed') {
-    console.log(
-      `Committed deployment state: ${validateCommittedDeployment(args[0] ?? process.cwd())}`,
-    );
-  } else if (command === 'jobs') {
-    const root = args[0] ?? process.cwd();
-    validateJobSuffixes(
-      parseRelease(
-        readPublicFile(root, 'deploy/environments/local/release.json'),
+  try {
+    const [command, ...args] = process.argv.slice(2);
+    if (command === 'classify') {
+      console.log(`publish=${classifyChanges(args)}`);
+    } else if (command === 'release') {
+      verifyReleaseIndexes(parseRelease(readFileSync(args[0], 'utf8')));
+    } else if (command === 'committed') {
+      console.log(
+        `Committed deployment state: ${validateCommittedDeployment(args[0] ?? process.cwd())}`,
+      );
+    } else if (command === 'jobs') {
+      const root = args[0] ?? process.cwd();
+      validateJobSuffixes(
+        parseRelease(
+          readPublicFile(root, 'deploy/environments/local/release.json'),
+        ),
+        readJobInputs(root),
+      );
+    } else if (command === 'manifests') {
+      validateManifests(readFileSync(args[0], 'utf8'));
+    } else {
+      throw new OperationalFailure(
+        'Usage: deployment-validation.mjs classify PATH... | release FILE | manifests FILE | jobs [ROOT] | committed [ROOT]',
+      );
+    }
+  } catch (error) {
+    console.error(
+      safeFailure(
+        error,
+        'Deployment validation failed; private provider details suppressed.',
       ),
-      readJobInputs(root),
     );
-  } else if (command === 'manifests') {
-    validateManifests(readFileSync(args[0], 'utf8'));
-  } else {
-    throw new Error(
-      'Usage: deployment-validation.mjs classify PATH... | release FILE | manifests FILE | jobs [ROOT] | committed [ROOT]',
-    );
+    process.exitCode = 1;
   }
 }

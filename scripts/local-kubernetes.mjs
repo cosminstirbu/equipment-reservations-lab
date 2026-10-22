@@ -1,4 +1,11 @@
-import { execFileSync, spawn } from 'node:child_process';
+import { spawn } from 'node:child_process';
+import {
+  executeProcess,
+  processFailure,
+  OperationalFailure,
+  cleanupAll,
+  safeFailure,
+} from './process.mjs';
 import { randomBytes, X509Certificate } from 'node:crypto';
 import {
   chmodSync,
@@ -47,7 +54,8 @@ const secretNames = [
 ];
 
 function processRun(command, args, settings) {
-  return execFileSync(command, args, {
+  return executeProcess(command, args, {
+    ...settings,
     cwd: settings.cwd,
     encoding: 'utf8',
     timeout: settings.timeout,
@@ -57,7 +65,6 @@ function processRun(command, args, settings) {
       ...settings.env,
       KIND_EXPERIMENTAL_PROVIDER: 'podman',
     },
-    stdio: ['pipe', 'pipe', 'pipe'],
     maxBuffer: 16 * 1024 * 1024,
   });
 }
@@ -94,7 +101,7 @@ async function closeForward(child) {
       hardTimer = setTimeout(
         () =>
           reject(
-            new Error(
+            new OperationalFailure(
               'Diagnostic forward did not terminate; inspect the owned process privately.',
             ),
           ),
@@ -127,12 +134,19 @@ async function hostPrerequisites({
           timer = setTimeout(
             () =>
               reject(
-                new Error(`DNS lookup for ${hostname} exceeded 5 seconds.`),
+                new OperationalFailure(
+                  `DNS lookup for ${hostname} exceeded 5 seconds.`,
+                ),
               ),
             5000,
           );
         }),
       ]);
+    } catch (error) {
+      if (error instanceof OperationalFailure) throw error;
+      throw new OperationalFailure(
+        'DNS prerequisite lookup failed; verify local DNS and certificate trust privately.',
+      );
     } finally {
       clearTimeout(timer);
     }
@@ -140,13 +154,13 @@ async function hostPrerequisites({
       !addresses.length ||
       addresses.some((entry) => entry.address !== '127.0.0.1')
     )
-      throw new Error(
+      throw new OperationalFailure(
         `Resolve ${hostname} to 127.0.0.1 explicitly before setup.`,
       );
   }
   for (const port of ports) {
     if (!(await probePort(port)))
-      throw new Error(
+      throw new OperationalFailure(
         `Port ${port} is unavailable; stop its owner explicitly.`,
       );
   }
@@ -157,17 +171,17 @@ async function hostPrerequisites({
       !lstatSync(path).isFile() ||
       lstatSync(path).isSymbolicLink()
     )
-      throw new Error(
+      throw new OperationalFailure(
         `Prepare private ${path} using your explicitly trusted local CA; setup never installs trust.`,
       );
   }
   if ((lstatSync(join(state, 'tls.key')).mode & 0o777) !== 0o600)
-    throw new Error('tls.key must have mode 0600.');
+    throw new OperationalFailure('tls.key must have mode 0600.');
   let certificate;
   try {
     certificate = new X509Certificate(readFileSync(join(state, 'tls.crt')));
   } catch {
-    throw new Error(
+    throw new OperationalFailure(
       'Invalid local TLS certificate; prepare the owner-issued local leaf privately.',
     );
   }
@@ -178,11 +192,11 @@ async function hostPrerequisites({
         wildcards: false,
       }) !== hostname
     )
-      throw new Error(
+      throw new OperationalFailure(
         `Local TLS certificate requires an exact DNS SAN for ${hostname}.`,
       );
   if (certificate.checkIP('127.0.0.1') !== '127.0.0.1')
-    throw new Error(
+    throw new OperationalFailure(
       'Local TLS certificate requires IP SAN 127.0.0.1 for authenticated Argo access.',
     );
   call('openssl', [
@@ -215,13 +229,13 @@ async function hostPrerequisites({
     join(state, 'tls.key'),
   ]);
   if (certPublic.trim() !== keyPublic.trim())
-    throw new Error('TLS certificate and key do not match.');
+    throw new OperationalFailure('TLS certificate and key do not match.');
   const caRoot = call('mkcert', ['-CAROOT']).trim();
   if (
     readFileSync(join(caRoot, 'rootCA.pem'), 'utf8').trim() !==
     readFileSync(join(state, 'ca.crt'), 'utf8').trim()
   )
-    throw new Error(
+    throw new OperationalFailure(
       'Public CA must match your explicitly installed mkcert CA.',
     );
   call('security', [
@@ -290,20 +304,60 @@ export function createLifecycle({
   function call(command, args, options = {}) {
     const remaining = deadline - Date.now();
     if (remaining <= 0)
-      throw new Error(
+      throw new OperationalFailure(
         'Setup exceeded its 15 minute budget; inspect status before retrying.',
       );
+    let operation = 'local private provider operation';
+    let policy = 'private-capture';
+    if (command === 'kind' && ['create', 'delete'].includes(args[0])) {
+      operation = 'local cluster lifecycle';
+      policy = 'stream';
+    } else if (command === 'kind' && args[0] === 'get') {
+      operation = 'local cluster discovery';
+      policy = 'public-capture';
+    } else if (command === 'kubectl' && args[0] === 'kustomize') {
+      operation = 'local public manifest rendering';
+      policy = 'public-capture';
+    } else if (command === 'kubectl' && args.includes('rollout')) {
+      operation = 'local deployment rollout';
+      policy = 'stream';
+    } else if (command === 'kubectl' && args.includes('wait')) {
+      operation = 'local bootstrap completion';
+      policy = 'stream';
+    } else if (command === 'kubectl' && args.includes('get')) {
+      operation = 'local private resource inspection';
+    } else if (
+      command === 'openssl' ||
+      command === 'mkcert' ||
+      command === 'security'
+    ) {
+      operation = 'local private TLS verification';
+    } else if (command === process.execPath) {
+      operation = 'local smoke verification';
+    } else if (command === 'git') {
+      operation = 'local release reference inspection';
+    }
+    const execution = {
+      operation,
+      tool: command === process.execPath ? 'node' : command,
+      output: policy,
+      ...options,
+    };
+    const started = Date.now();
     try {
       return run(command, args, {
         cwd: root,
         inherit: false,
-        ...options,
+        ...execution,
         timeout: Math.min(options.timeout ?? 180000, remaining),
       });
-    } catch {
-      throw new Error(
-        `${command} failed or timed out; inspect its availability and the named environment privately. Provider output suppressed to protect credentials.`,
-      );
+    } catch (error) {
+      throw processFailure(error, {
+        operation: execution.operation,
+        tool: execution.tool,
+        output: execution.output,
+        durationMs: Date.now() - started,
+      });
     }
   }
 
@@ -329,7 +383,7 @@ export function createLifecycle({
       (info.mode & 0o777) !== mode ||
       (mode === 0o700 ? !info.isDirectory() : !info.isFile())
     )
-      throw new Error(
+      throw new OperationalFailure(
         `Private state requires ${mode === 0o700 ? '0700 directory' : '0600 regular file'}: ${path}`,
       );
   }
@@ -337,7 +391,7 @@ export function createLifecycle({
   function credentials(durable) {
     const parent = join(root, '.local');
     if (existsSync(parent) && lstatSync(parent).isSymbolicLink())
-      throw new Error('Private state parent cannot be a symlink.');
+      throw new OperationalFailure('Private state parent cannot be a symlink.');
     if (existsSync(state)) privateFile(state, 0o700);
     else mkdirSync(state, { recursive: true, mode: 0o700 });
     if (existsSync(bundlePath)) {
@@ -346,7 +400,7 @@ export function createLifecycle({
       try {
         bundle = JSON.parse(readFileSync(bundlePath, 'utf8'));
       } catch {
-        throw new Error(
+        throw new OperationalFailure(
           'Invalid private credential bundle; restore the original private bundle.',
         );
       }
@@ -355,13 +409,13 @@ export function createLifecycle({
         !/^[a-f0-9]{64}$/.test(bundle.owner) ||
         secretNames.some((name) => !/^[a-f0-9]{64}$/.test(bundle[name]))
       )
-        throw new Error(
+        throw new OperationalFailure(
           'Invalid private credential bundle; restore the original private bundle.',
         );
       return bundle;
     }
     if (durable || existsSync(join(state, 'kubeconfig')))
-      throw new Error(
+      throw new OperationalFailure(
         'Durable state survives missing credentials: restore the original private credential bundle from your private backup; never generate replacement passwords. Explicit reset/teardown requires original ownership state.',
       );
     const bundle = { version: 1, owner: randomBytes(32).toString('hex') };
@@ -383,7 +437,9 @@ export function createLifecycle({
 
   function owned() {
     if (!hasCluster())
-      throw new Error(`Named cluster ${cluster} is absent; use setup.`);
+      throw new OperationalFailure(
+        `Named cluster ${cluster} is absent; use setup.`,
+      );
     const bundle = credentials(true);
     privateFile(join(state, 'kubeconfig'), 0o600);
     const marker = kubectl([
@@ -396,7 +452,7 @@ export function createLifecycle({
       'jsonpath={.data.id}',
     ]).trim();
     if (marker !== bundle.owner)
-      throw new Error(
+      throw new OperationalFailure(
         `Cluster ownership mismatch for ${cluster}; refusing operation.`,
       );
     return bundle;
@@ -415,19 +471,19 @@ export function createLifecycle({
     for (const [tool, args] of Object.entries(tools)) {
       try {
         call(tool, args);
-      } catch {
-        throw new Error(
-          `${tool} is required; install it yourself, then rerun prerequisites.`,
+      } catch (error) {
+        throw new OperationalFailure(
+          `${tool} is required; install it yourself, then rerun prerequisites. ${safeFailure(error, 'Prerequisite check failed.')}`,
         );
       }
     }
     if (!/^kind v0\.33\.0(?:\s|$)/.test(call('kind', ['version'])))
-      throw new Error('kind v0.33.0 is required.');
+      throw new OperationalFailure('kind v0.33.0 is required.');
     if (
       JSON.parse(call('kubectl', ['version', '--client', '-o', 'json']))
         .clientVersion?.gitVersion !== 'v1.35.8'
     )
-      throw new Error('kubectl v1.35.8 is required.');
+      throw new OperationalFailure('kubectl v1.35.8 is required.');
     const machine = JSON.parse(call('podman', ['machine', 'inspect']));
     const vm = machine.find((item) => item.State === 'running');
     if (
@@ -438,7 +494,7 @@ export function createLifecycle({
       vm.Resources?.CPUs < 6 ||
       vm.Resources?.Memory < 11000
     )
-      throw new Error(
+      throw new OperationalFailure(
         'Existing running rootful Podman VM requires >=6 CPU and >=11000 MiB; owner must make any VM changes.',
       );
     if (
@@ -448,7 +504,9 @@ export function createLifecycle({
         '{{.Host.Security.Rootless}}',
       ]).trim() !== 'false'
     )
-      throw new Error('Podman connection must target the existing rootful VM.');
+      throw new OperationalFailure(
+        'Podman connection must target the existing rootful VM.',
+      );
     const free = Number(
       call('podman', [
         'machine',
@@ -457,7 +515,7 @@ export function createLifecycle({
       ]).trim(),
     );
     if (!Number.isFinite(free) || free < 20 * 1024 * 1024)
-      throw new Error('Existing VM requires >=20 GiB free disk.');
+      throw new OperationalFailure('Existing VM requires >=20 GiB free disk.');
     const exists = hasCluster();
     if (exists) owned();
     await hostPrerequisites({
@@ -553,7 +611,7 @@ export function createLifecycle({
       ]) || '{}',
     );
     if (application.metadata?.finalizers?.length)
-      throw new Error(
+      throw new OperationalFailure(
         'Unexpected Application finalizer; refusing cascading deletion.',
       );
     kubectl([
@@ -582,7 +640,7 @@ export function createLifecycle({
       ]),
     );
     if (!application.metadata?.resourceVersion || application.operation)
-      throw new Error(
+      throw new OperationalFailure(
         'Application changed or already has an operation; inspect status privately before retrying.',
       );
     const policy = application.spec?.syncPolicy;
@@ -597,7 +655,7 @@ export function createLifecycle({
       !options.includes('CreateNamespace=false') ||
       !options.includes('FailOnSharedResource=true')
     )
-      throw new Error(
+      throw new OperationalFailure(
         'Unexpected Application sync/retry policy; refusing full sync.',
       );
     const request = randomBytes(16).toString('hex');
@@ -649,7 +707,7 @@ export function createLifecycle({
       );
       if (matches) {
         if (['Failed', 'Error', 'Terminating'].includes(current.phase))
-          throw new Error(
+          throw new OperationalFailure(
             'Current Argo sync failed; inspect retained hook diagnostics privately before an explicit retry.',
           );
         if (current.phase === 'Succeeded') {
@@ -657,7 +715,7 @@ export function createLifecycle({
             current.syncResult?.revision !== revision ||
             (status.sync?.revision && status.sync.revision !== revision)
           )
-            throw new Error(
+            throw new OperationalFailure(
               'Current Argo sync resolved an unexpected revision; refusing stale deployment success.',
             );
           if (
@@ -670,7 +728,7 @@ export function createLifecycle({
       }
       await new Promise((resolvePromise) => setTimeout(resolvePromise, 500));
     }
-    throw new Error(
+    throw new OperationalFailure(
       'Current Argo sync exceeded its 10 minute budget; inspect operation and retained hook diagnostics privately.',
     );
   }
@@ -690,32 +748,32 @@ export function createLifecycle({
         'teardown',
       ].includes(command)
     )
-      throw new Error(usage);
+      throw new OperationalFailure(usage);
     if (command === 'reset' && flag !== '--confirm-delete-data')
-      throw new Error(
+      throw new OperationalFailure(
         'reset requires --confirm-delete-data: deletes equipment namespace data only.',
       );
     if (command === 'teardown' && flag !== '--confirm-delete-cluster')
-      throw new Error(
+      throw new OperationalFailure(
         'teardown requires --confirm-delete-cluster: deletes equipment-local cluster and its data.',
       );
     if (command === 'access' && !['argocd', 'dashboard'].includes(flag))
-      throw new Error(usage);
+      throw new OperationalFailure(usage);
     if (
       command === 'smoke' &&
       flag &&
       !['--capture-persistence', '--verify-persistence'].includes(flag)
     )
-      throw new Error(usage);
+      throw new OperationalFailure(usage);
     if (!['reset', 'teardown', 'access', 'smoke'].includes(command) && flag)
-      throw new Error(usage);
+      throw new OperationalFailure(usage);
     if (command === 'prerequisites') return prerequisites();
     if (command === 'setup') {
       const exists = hasCluster();
       if (exists) owned();
       const release = join(root, 'deploy/environments/local/release.json');
       if (!existsSync(release))
-        throw new Error(
+        throw new OperationalFailure(
           'A genuine published GHCR release is required: authorize first publication and reviewed digest promotion; no local image overrides.',
         );
       const {
@@ -746,7 +804,7 @@ export function createLifecycle({
       ).trim();
       const match = /^([a-f0-9]{40})\s+refs\/heads\/main$/.exec(remote);
       if (!match)
-        throw new Error(
+        throw new OperationalFailure(
           'Cannot resolve exact reviewed main revision; refusing setup.',
         );
       const revision = match[1];
@@ -847,14 +905,17 @@ export function createLifecycle({
       output(
         `Authenticate manually using private credentials. Forward runs for at most 180 seconds at ${dashboard ? 'http://127.0.0.1:18888' : 'https://127.0.0.1:18443'}. No token URL is printed.`,
       );
-      kubectl([
-        '--namespace',
-        dashboard ? namespace : 'argocd',
-        'port-forward',
-        '--address=127.0.0.1',
-        dashboard ? 'service/dashboard' : 'service/argocd-server',
-        dashboard ? '18888:18888' : '18443:443',
-      ]);
+      kubectl(
+        [
+          '--namespace',
+          dashboard ? namespace : 'argocd',
+          'port-forward',
+          '--address=127.0.0.1',
+          dashboard ? 'service/dashboard' : 'service/argocd-server',
+          dashboard ? '18888:18888' : '18443:443',
+        ],
+        { operation: 'local authenticated access forward' },
+      );
       return;
     }
     if (command === 'smoke') {
@@ -884,6 +945,8 @@ export function createLifecycle({
           ],
           {
             timeout: 600000,
+            output: 'stream',
+            operation: 'local smoke verification',
             env: {
               NODE_EXTRA_CA_CERTS: join(state, 'ca.crt'),
               EQUIPMENT_DASHBOARD_ORIGIN: configuration.dashboardOrigin,
@@ -898,7 +961,7 @@ export function createLifecycle({
       }
       for (const port of [18888, 18890])
         if (!(await probePort(port)))
-          throw new Error(
+          throw new OperationalFailure(
             `Diagnostic port ${port} is occupied; stop its owner explicitly.`,
           );
       const child = spawnChild(
@@ -922,34 +985,59 @@ export function createLifecycle({
           stdio: 'ignore',
         },
       );
-      let failed = false;
-      child.on('error', () => {
-        failed = true;
+      const forwardStarted = Date.now();
+      output('Diagnostic forwarding starting on loopback.');
+      child.stdout?.resume();
+      child.stderr?.resume();
+      let failed;
+      child.on('error', (error) => {
+        failed = processFailure(error, {
+          operation: 'diagnostic forward startup',
+          tool: 'kubectl',
+          durationMs: Date.now() - forwardStarted,
+        });
       });
-      child.on('exit', () => {
-        failed = true;
+      child.on('exit', (status, signal) => {
+        failed = processFailure(
+          { status, signal },
+          {
+            operation: 'diagnostic forward unexpected exit',
+            tool: 'kubectl',
+            durationMs: Date.now() - forwardStarted,
+          },
+        );
       });
+      let primary;
       try {
         const readyDeadline = Date.now() + 15000;
         while (true) {
           const ready =
             (await connectPort(18888)) && (await connectPort(18890));
-          if (failed)
-            throw new Error(
-              'Diagnostic forwarding failed; provider output is suppressed.',
-            );
+          if (failed) throw failed;
           if (ready) break;
           if (Date.now() >= readyDeadline)
-            throw new Error(
+            throw new OperationalFailure(
               'Diagnostic forwarding exceeded its 15 second readiness budget.',
             );
           await new Promise((resolvePromise) =>
             setTimeout(resolvePromise, 100),
           );
         }
+        output('Diagnostic forwarding ready on loopback.');
         invokeSmoke();
+        if (failed) throw failed;
+      } catch (error) {
+        primary = error;
       } finally {
-        await closeForward(child);
+        await cleanupAll(
+          [
+            {
+              operation: 'diagnostic forward shutdown',
+              run: () => closeForward(child),
+            },
+          ],
+          { primary, report: output },
+        );
       }
       output('Deployment smoke passed.');
       return;
@@ -969,7 +1057,9 @@ export function createLifecycle({
         .filter(Boolean);
       for (const job of jobs) {
         if (!/^job\.batch\/[a-z0-9-]+$/.test(job))
-          throw new Error('Unexpected Job name; refusing mutation.');
+          throw new OperationalFailure(
+            'Unexpected Job name; refusing mutation.',
+          );
         kubectl([
           '--namespace',
           namespace,
@@ -1030,29 +1120,54 @@ export function createLifecycle({
   }
 
   async function execute(args) {
-    if (!['setup', 'stop', 'reset', 'teardown', 'smoke'].includes(args[0]))
-      return perform(args);
+    if (!['setup', 'stop', 'reset', 'teardown', 'smoke'].includes(args[0])) {
+      try {
+        return await perform(args);
+      } catch (error) {
+        throw error instanceof OperationalFailure
+          ? error
+          : new OperationalFailure(
+              'Local private response or state is invalid; raw details suppressed.',
+            );
+      }
+    }
     if (
       existsSync(join(root, '.local')) &&
       lstatSync(join(root, '.local')).isSymbolicLink()
     )
-      throw new Error('Private state parent cannot be a symlink.');
+      throw new OperationalFailure('Private state parent cannot be a symlink.');
     if (existsSync(state)) privateFile(state, 0o700);
     else mkdirSync(state, { recursive: true, mode: 0o700 });
     const lock = join(state, 'operation.lock');
     try {
       mkdirSync(lock, { mode: 0o700 });
     } catch {
-      throw new Error(
+      throw new OperationalFailure(
         'An operation lock exists; verify no operator command is running before explicitly removing the private operation.lock directory.',
       );
     }
     deadline = args[0] === 'setup' ? Date.now() + 900000 : Infinity;
+    let primary;
     try {
       return await perform(args);
+    } catch (error) {
+      primary =
+        error instanceof OperationalFailure
+          ? error
+          : new OperationalFailure(
+              'Local private response or state is invalid; raw details suppressed.',
+            );
     } finally {
       deadline = Infinity;
-      rmSync(lock, { recursive: true });
+      await cleanupAll(
+        [
+          {
+            operation: 'local operation lock cleanup',
+            run: () => rmSync(lock, { recursive: true }),
+          },
+        ],
+        { primary, report: output },
+      );
     }
   }
 
@@ -1066,7 +1181,12 @@ if (
   createLifecycle()
     .execute(process.argv.slice(2))
     .catch((error) => {
-      console.error(error.message);
+      console.error(
+        safeFailure(
+          error,
+          'Local operation failed; private provider details suppressed.',
+        ),
+      );
       process.exitCode = 1;
     });
 }

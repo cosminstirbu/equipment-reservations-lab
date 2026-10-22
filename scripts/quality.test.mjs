@@ -6,12 +6,13 @@ import {
   rmSync,
   symlinkSync,
   writeFileSync,
+  mkdirSync,
 } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { resolve } from 'node:path';
 import { test } from 'node:test';
 import { pathToFileURL } from 'node:url';
-import { root, sourcePath } from './quality.mjs';
+import { root, sourcePath, format } from './quality.mjs';
 import { runNpm } from './npm.mjs';
 
 test('npm scripts preserve arguments in paths with spaces and propagate failure', () => {
@@ -32,7 +33,15 @@ test('npm scripts preserve arguments in paths with spaces and propagate failure'
     writeFileSync(resolve(directory, 'fail.cjs'), 'process.exit(7);');
     runNpm(['run', 'probe', '--', ...args], directory);
     assert.deepEqual(JSON.parse(readFileSync(output, 'utf8')), args);
-    assert.throws(() => runNpm(['run', 'fail'], directory), /npm exited 7/);
+    assert.throws(
+      () => runNpm(['run', 'fail'], directory),
+      (error) => {
+        assert.match(error.message, /npm.*status=7/);
+        assert.equal(error.details.category, 'exit');
+        assert.ok(error.details.durationMs >= 0);
+        return true;
+      },
+    );
   } finally {
     rmSync(directory, { recursive: true, force: true });
   }
@@ -165,7 +174,7 @@ process.exit(process.argv[2] === 'test' && process.argv.some(arg => arg.includes
     preload,
     `import childProcess from 'node:child_process';
 import { syncBuiltinESMExports } from 'node:module';
-for (const method of ['spawn', 'spawnSync']) {
+for (const method of ['spawn', 'spawnSync','execFileSync']) {
   const original = childProcess[method];
   childProcess[method] = (command, args, options) => {
     if (command !== 'dotnet') throw new Error('Unexpected command: ' + command);
@@ -241,6 +250,37 @@ test('authored YAML is discoverable while the checksum-locked upstream Argo mani
     );
   } finally {
     rmSync(directory, { recursive: true });
+  }
+});
+
+test('private local state is never selected as source by quality tooling', () => {
+  const directory = mkdtempSync(resolve(root, '.formatter-fixture-'));
+  try {
+    mkdirSync(resolve(directory, '.local'));
+    const privatePath = resolve(directory, '.local', 'credentials.json');
+    writeFileSync(privatePath, 'PRIVATE_SOURCE_MARKER');
+    assert.equal(sourcePath(privatePath), null);
+  } finally {
+    rmSync(directory, { recursive: true, force: true });
+  }
+});
+
+test('quiet formatter failures expose independently bounded stdout and stderr tails', async () => {
+  const directory = mkdtempSync(resolve(root, '.formatter-fixture-'));
+  const path = resolve(directory, 'invalid.js');
+  writeFileSync(path, `const ${'x'.repeat(7000)} = ;`);
+  try {
+    await assert.rejects(format([path], true, true), (error) => {
+      assert.equal(error.details.operation, 'format verification');
+      assert.ok(error.details.stdout.length <= 4000);
+      assert.ok(error.details.stderr.length <= 4000);
+      assert.equal(error.details.stderrTruncated, true);
+      assert.match(error.message, /stdout:/);
+      assert.match(error.message, /stderr \(truncated\):/);
+      return true;
+    });
+  } finally {
+    rmSync(directory, { recursive: true, force: true });
   }
 });
 

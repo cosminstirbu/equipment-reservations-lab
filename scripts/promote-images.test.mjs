@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import { createHash } from 'node:crypto';
 import { Buffer } from 'node:buffer';
+import { spawnSync } from 'node:child_process';
 import {
   mkdtempSync,
   mkdirSync,
@@ -19,6 +20,32 @@ import {
   refreshJobSuffixes,
 } from './promote-images.mjs';
 import { imageNames } from './deployment-validation.mjs';
+
+test('authenticated GitHub failures retain safe phase or status without raw response data', async () => {
+  for (const failure of ['transport', 'body', 'status']) {
+    const gateway = githubGateway({
+      repository: 'example/equipment',
+      token: 'PRIVATE_TOKEN',
+      request: async () => {
+        if (failure === 'transport')
+          throw new Error('PRIVATE_PROVIDER_FAILURE');
+        return {
+          ok: failure !== 'status',
+          status: failure === 'status' ? 503 : 200,
+          json: async () => {
+            throw new Error('PRIVATE_PROVIDER_BODY');
+          },
+        };
+      },
+    });
+    await assert.rejects(gateway.readState(), (error) => {
+      assert.match(error.message, /GitHub.*(?:transport|payload|503)/);
+      assert.doesNotMatch(error.message + JSON.stringify(error), /PRIVATE_/);
+      assert.equal(error.cause, undefined);
+      return true;
+    });
+  }
+});
 
 const jobs = Object.fromEntries(
   ['database', 'identity'].map((name) => [
@@ -240,6 +267,56 @@ test('config-only refresh preserves images and unrelated wrapper fields and reje
     symlinkSync(join(root, 'deploy/environments/local/release.json'), config);
     assert.throws(() => refreshJobSuffixes(root), /Symlink/);
     assert.equal(readFileSync(join(root, wrapperPath), 'utf8'), wrapper);
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test('suffix refresh attempts every temporary cleanup and preserves its primary failure', () => {
+  const root = mkdtempSync(join(tmpdir(), 'promotion-cleanup-'));
+  const write = (path, content) => {
+    mkdirSync(dirname(join(root, path)), { recursive: true });
+    writeFileSync(join(root, path), content);
+  };
+  write('deploy/environments/local/release.json', JSON.stringify(release));
+  write('deploy/base/configuration.yaml', jobInputs.baseConfiguration);
+  write(
+    'deploy/environments/local/configuration.yaml',
+    jobInputs.localConfiguration,
+  );
+  for (const [name, job] of Object.entries(jobInputs.jobs)) {
+    write(`deploy/base/jobs/${name}/job.yaml`, job.template);
+    write(
+      `deploy/environments/local/jobs/${name}/kustomization.yaml`,
+      job.wrapper,
+    );
+  }
+  const driver = join(root, 'driver.mjs');
+  writeFileSync(
+    driver,
+    `import fs from 'node:fs';import{syncBuiltinESMExports}from'node:module';const original=fs.rmSync;fs.rmSync=(path,options)=>{if(String(path).endsWith('.tmp')){console.log('temporary cleanup attempted');throw Object.assign(new Error('PRIVATE_CLEANUP'),{code:'EACCES'});}return original(path,options);};const{OperationalFailure}=await import(${JSON.stringify(new URL('./process.mjs', import.meta.url).href)});if(process.env.PRIMARY==='true')fs.renameSync=()=>{throw new OperationalFailure('primary promotion write failed');};syncBuiltinESMExports();const{refreshJobSuffixes}=await import(${JSON.stringify(new URL('./promote-images.mjs', import.meta.url).href)});try{refreshJobSuffixes(${JSON.stringify(root)});}catch(error){console.error(error.message);process.exitCode=1;}`,
+  );
+  try {
+    for (const primary of [false, true]) {
+      const result = spawnSync(process.execPath, [driver], {
+        encoding: 'utf8',
+        timeout: 10000,
+        env: { ...process.env, PRIMARY: String(primary) },
+      });
+      assert.equal(result.status, 1);
+      assert.equal(
+        (result.stdout.match(/temporary cleanup attempted/g) ?? []).length,
+        2,
+      );
+      assert.match(
+        result.stderr,
+        /Cleanup failure:.*Job suffix temporary cleanup/,
+      );
+      if (primary)
+        assert.match(result.stderr, /primary promotion write failed/);
+      else assert.match(result.stderr, /cleanup operation/);
+      assert.doesNotMatch(result.stdout + result.stderr, /PRIVATE_/);
+    }
   } finally {
     rmSync(root, { recursive: true, force: true });
   }

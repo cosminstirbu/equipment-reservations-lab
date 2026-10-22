@@ -1,4 +1,4 @@
-import { spawnSync } from 'node:child_process';
+import { executeProcess } from './process.mjs';
 import { createRequire } from 'node:module';
 import { dirname, resolve } from 'node:path';
 
@@ -18,11 +18,11 @@ export function runNpm(args, cwd) {
       ),
       'bin/npm-cli.js',
     );
-  const result = spawnSync(process.execPath, [cli, ...args], {
+  executeProcess(process.execPath, [cli, ...args], {
     cwd,
-    stdio: 'inherit',
+    tool: 'node',
+    operation: 'npm',
+    output: 'stream',
+    timeout: 900000,
   });
-  if (result.error) throw result.error;
-  if (result.status !== 0)
-    throw new Error(`npm exited ${result.status ?? result.signal}`);
 }
