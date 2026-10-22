@@ -20,7 +20,14 @@ patches:
     patch:
       '[{"op": "add", "path": "/spec/volumeName", "value": "equipment-rabbitmq"},
       {"op": "replace", "path": "/spec/storageClassName", "value": "equipment-retain"}]'
-images: []
+images: [
+  {
+    "name": "database-bootstrap",
+    "newName": "ghcr.io/cosminstirbu/equipment-reservations-lab-database-bootstrap",
+    "digest": "sha256:64d9ece00c5778e702bb4d145f5445694a31983bcb07be5e506b9c5fc82de0bb"
+  }
+]
+
 generators:
   - configuration.yaml
   - web-configuration.yaml
