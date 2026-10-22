@@ -8,4 +8,4 @@ spec:
     spec:
       containers:
         - name: inventory
-          image: inventory
+          image: ghcr.io/cosminstirbu/equipment-reservations-lab-inventory@sha256:b189ff269f5067546c8d62721d3912b32432931f150d64ffd9f87b4681c92ad7
