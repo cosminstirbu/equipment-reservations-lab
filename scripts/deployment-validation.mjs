@@ -1,4 +1,4 @@
-import { readFileSync, lstatSync } from 'node:fs';
+import { readFileSync, lstatSync, readdirSync } from 'node:fs';
 import { createHash } from 'node:crypto';
 import { Buffer } from 'node:buffer';
 import { resolve, join } from 'node:path';
@@ -26,6 +26,8 @@ export function classifyChanges(paths) {
 }
 
 export function validateRelease(release) {
+  if (release?.schemaVersion !== undefined)
+    return validateComponentRelease(release);
   if (
     Object.keys(release ?? {}).some(
       (key) => !['sourceRevision', 'images'].includes(key),
@@ -48,6 +50,86 @@ export function validateRelease(release) {
       throw new OperationalFailure(`Invalid index digest: ${name}`);
   }
   return release;
+}
+
+export function validateComponentRelease(record) {
+  const keys = [
+    'schemaVersion',
+    'component',
+    'repository',
+    'sourceRevision',
+    'sourceRef',
+    'runId',
+    'runAttempt',
+    'workflow',
+    'image',
+    'digest',
+  ];
+  if (
+    !record ||
+    Object.keys(record).length !== keys.length ||
+    Object.keys(record).some((key) => !keys.includes(key)) ||
+    record.schemaVersion !== 1 ||
+    !imageNames.includes(record.component)
+  )
+    throw new OperationalFailure('Invalid component release schema');
+  const repository = record.repository;
+  if (
+    !repository ||
+    Object.keys(repository).length !== 2 ||
+    !Number.isSafeInteger(repository.id) ||
+    repository.id <= 0 ||
+    !/^[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+$/.test(repository.name ?? '')
+  )
+    throw new OperationalFailure('Invalid component repository identity');
+  if (
+    !/^[a-f0-9]{40}$/.test(record.sourceRevision ?? '') ||
+    !/^refs\/heads\/[^\s]+$/.test(record.sourceRef ?? '') ||
+    !Number.isSafeInteger(record.runId) ||
+    record.runId <= 0 ||
+    !Number.isSafeInteger(record.runAttempt) ||
+    record.runAttempt <= 0 ||
+    record.workflow !== '.github/workflows/validate.yaml'
+  )
+    throw new OperationalFailure(
+      'Invalid component source or workflow provenance',
+    );
+  if (
+    record.image !==
+      `ghcr.io/${repository.name.toLowerCase()}-${record.component}` ||
+    !digestPattern.test(record.digest ?? '')
+  )
+    throw new OperationalFailure('Invalid component image or index digest');
+  return record;
+}
+
+export function verifyComponentIndex(record, inspect) {
+  validateComponentRelease(record);
+  const reference = `${record.image}@${record.digest}`;
+  let index;
+  if (inspect) index = inspect(reference);
+  else {
+    const raw = executeProcess(
+      'docker',
+      ['buildx', 'imagetools', 'inspect', '--raw', reference],
+      {
+        encoding: 'utf8',
+        timeout: 45000,
+        operation: 'release index inspection',
+        tool: 'docker',
+        output: 'private-capture',
+      },
+    );
+    try {
+      index = JSON.parse(raw);
+    } catch {
+      throw new OperationalFailure(
+        'Release index response is not valid JSON; raw provider response suppressed.',
+      );
+    }
+  }
+  validateIndex(index);
+  return index;
 }
 
 export function validateIndex(index) {
@@ -162,6 +244,8 @@ export function verifyReleaseIndexes(
   },
 ) {
   validateRelease(release);
+  if (release.schemaVersion === 1)
+    return verifyComponentIndex(release, inspect);
   for (const entry of Object.values(release.images))
     validateIndex(inspect(`${entry.image}@${entry.digest}`));
 }
@@ -350,6 +434,7 @@ export function validateCommittedState({
   kustomization,
   jobInputs,
   releaseText,
+  records,
 }) {
   const overlay = sourceDocument(kustomization, 'Kustomization');
   if (
@@ -399,6 +484,49 @@ export function validateCommittedState({
     )
       throw new OperationalFailure('Invalid public Job template');
   }
+  if (records !== undefined) {
+    for (const [name, record] of Object.entries(records)) {
+      validateComponentRelease(record);
+      if (name !== record.component)
+        throw new OperationalFailure('Component record filename mismatch');
+    }
+    if (
+      overlay.images.length !== Object.keys(records).length ||
+      overlay.images.some(
+        (entry) =>
+          !records[entry.name] ||
+          Object.keys(entry).some(
+            (key) => !['name', 'newName', 'digest'].includes(key),
+          ) ||
+          records[entry.name].image !== entry.newName ||
+          records[entry.name].digest !== entry.digest,
+      ) ||
+      new Set(overlay.images.map((entry) => entry.name)).size !==
+        overlay.images.length
+    )
+      throw new OperationalFailure(
+        'Committed images do not match available component records',
+      );
+    for (const name of jobNames) {
+      const record = records[`${name}-bootstrap`];
+      const job = jobInputs.jobs[name];
+      const expected = record
+        ? jobSuffix(
+            record,
+            jobInputs.baseConfiguration,
+            jobInputs.localConfiguration,
+            job.template,
+          )
+        : '-unreleased';
+      if (validateWrapper(name, job.wrapper).data.nameSuffix !== expected)
+        throw new OperationalFailure(
+          `Job ${name} has stale or unreleased component suffix`,
+        );
+    }
+    if (Object.keys(records).length === imageNames.length) return 'released';
+    if (Object.keys(records).length) return 'partial';
+    return 'unreleased';
+  }
   if (releaseText === null) {
     if (
       overlay.images.length ||
@@ -436,6 +564,14 @@ export function validateCommittedState({
 }
 
 export function validateCommittedDeployment(root) {
+  let hasComponents = false;
+  try {
+    lstatSync(join(root, 'deploy/environments/local/releases'));
+    hasComponents = true;
+  } catch (error) {
+    if (error.code !== 'ENOENT') throw error;
+  }
+  if (hasComponents) return readComponentState(root).status;
   let releaseText;
   try {
     releaseText = readPublicFile(
@@ -456,6 +592,56 @@ export function validateCommittedDeployment(root) {
   });
 }
 
+export function readComponentState(root, { requireComplete = false } = {}) {
+  const records = {};
+  const directory = 'deploy/environments/local/releases';
+  let entries = [];
+  try {
+    readPublicFile(root, 'deploy/environments/local/kustomization.yaml');
+    let current = resolve(root);
+    for (const part of directory.split('/')) {
+      current = join(current, part);
+      if (lstatSync(current).isSymbolicLink())
+        throw new OperationalFailure('Symlinked component metadata rejected');
+    }
+    entries = readdirSync(current);
+  } catch (error) {
+    if (error.code !== 'ENOENT') throw error;
+  }
+  for (const entry of entries) {
+    const name = entry.replace(/\.json$/, '');
+    if (entry !== `${name}.json` || !imageNames.includes(name))
+      throw new OperationalFailure('Unknown component record file');
+    const text = readPublicFile(root, `${directory}/${entry}`);
+    if (Buffer.byteLength(text, 'utf8') > 65536)
+      throw new OperationalFailure('Component metadata exceeds 64KiB');
+    let record;
+    try {
+      record = JSON.parse(canonicalRelease(text));
+    } catch {
+      throw new OperationalFailure('Invalid component record JSON');
+    }
+    validateComponentRelease(record);
+    if (record.component !== name)
+      throw new OperationalFailure('Component record filename mismatch');
+    records[name] = record;
+  }
+  const missing = imageNames.filter((name) => !records[name]);
+  if (requireComplete && missing.length)
+    throw new OperationalFailure(
+      `Missing published components: ${missing.join(', ')}`,
+    );
+  const status = validateCommittedState({
+    kustomization: readPublicFile(
+      root,
+      'deploy/environments/local/kustomization.yaml',
+    ),
+    jobInputs: readJobInputs(root),
+    records,
+  });
+  return { records, missing, status };
+}
+
 if (
   process.argv[1] &&
   import.meta.url === pathToFileURL(process.argv[1]).href
@@ -472,12 +658,7 @@ if (
       );
     } else if (command === 'jobs') {
       const root = args[0] ?? process.cwd();
-      validateJobSuffixes(
-        parseRelease(
-          readPublicFile(root, 'deploy/environments/local/release.json'),
-        ),
-        readJobInputs(root),
-      );
+      readComponentState(root);
     } else if (command === 'manifests') {
       validateManifests(readFileSync(args[0], 'utf8'));
     } else {

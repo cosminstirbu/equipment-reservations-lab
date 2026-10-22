@@ -8,7 +8,7 @@
     "lint": "node scripts/quality.mjs lint",
     "check": "node scripts/quality.mjs check",
     "check:openapi": "node scripts/quality.mjs check:openapi",
-    "test:tooling": "node --test scripts/process.test.mjs scripts/deployment-provider-diagnostics.test.mjs scripts/quality.test.mjs scripts/openapi-lint.test.mjs src/Web/auth-config.test.cjs",
+    "test:tooling": "node --test scripts/component-selection.test.mjs scripts/component-workflows.test.mjs scripts/process.test.mjs scripts/deployment-provider-diagnostics.test.mjs scripts/quality.test.mjs scripts/openapi-lint.test.mjs src/Web/auth-config.test.cjs",
     "test:deployment": "node scripts/quality.mjs test:deployment"
   },
   "devDependencies": {

@@ -1,0 +1,45 @@
+name: Component identity-bootstrap
+on:
+  workflow_call:
+jobs:
+  build:
+    name: Build identity-bootstrap
+    permissions:
+      contents: read
+      packages: write
+      actions: read
+    uses: ./.github/workflows/component-build.yaml
+    with:
+      component: identity-bootstrap
+      publish: true
+  promote:
+    needs: [build]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    permissions:
+      contents: write
+      pull-requests: write
+      actions: read
+    concurrency:
+      group: local-component-promotion
+      queue: max
+      cancel-in-progress: false
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+      - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444
+        with:
+          node-version: 24.15.0
+      - run: npm ci
+      - name: Load original intent and verified component evidence
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          node scripts/component-pipelines.mjs load-intent --output "$RUNNER_TEMP/run-intent.json"
+          node scripts/component-pipelines.mjs load-result --component identity-bootstrap --output "$RUNNER_TEMP/component-result.json"
+      - name: Propose component update from exact target state
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: node scripts/promote-images.mjs "$RUNNER_TEMP/component-result.json" "$RUNNER_TEMP/run-intent.json"

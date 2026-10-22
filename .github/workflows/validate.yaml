@@ -1,6 +1,8 @@
-name: Validate
+name: Component pipelines
 on:
   pull_request:
+  push:
+    branches: [main]
   workflow_dispatch:
 permissions:
   contents: read
@@ -29,6 +31,221 @@ jobs:
           DOCKER_HOST: unix:///var/run/docker.sock
           TESTCONTAINERS_RYUK_DISABLED: 'false'
       - run: node --test scripts/deployment-validation.test.mjs scripts/promote-images.test.mjs scripts/deployment-ci.test.mjs
+  select:
+    name: Select components
+    needs: [quality]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      actions: read
+    outputs:
+      selected: ${{ steps.select.outputs.selected }}
+      inventory: ${{ steps.select.outputs.inventory }}
+      reservations: ${{ steps.select.outputs.reservations }}
+      notifications: ${{ steps.select.outputs.notifications }}
+      web: ${{ steps.select.outputs.web }}
+      database_bootstrap: ${{ steps.select.outputs.database_bootstrap }}
+      identity_bootstrap: ${{ steps.select.outputs.identity_bootstrap }}
+      broker_bootstrap: ${{ steps.select.outputs.broker_bootstrap }}
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444
+        with:
+          node-version: 24.15.0
+      - run: npm ci
+      - id: select
+        env:
+          BASE_REVISION: ${{ github.event.pull_request.base.sha }}
+          GH_TOKEN: ${{ github.event_name != 'pull_request' && github.token || '' }}
+        run: node scripts/component-pipelines.mjs select --output "$RUNNER_TEMP/component-selection.json"
+      - id: intent
+        if: github.event_name != 'pull_request'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: node scripts/component-pipelines.mjs intent --selection "$RUNNER_TEMP/component-selection.json" --output "$RUNNER_TEMP/run-intent.json"
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
+        if: github.event_name != 'pull_request' && steps.intent.outputs.created == 'true'
+        with:
+          name: run-intent-${{ github.run_id }}
+          path: ${{ runner.temp }}/run-intent.json
+          if-no-files-found: error
+          retention-days: 30
+  pr_inventory:
+    needs: [quality, select]
+    if: github.event_name == 'pull_request' && needs.select.outputs.inventory == 'true'
+    permissions:
+      contents: read
+    uses: ./.github/workflows/component-build.yaml
+    with:
+      component: inventory
+      publish: false
+  component_inventory:
+    name: Component inventory
+    needs: [quality, select]
+    if: github.event_name != 'pull_request' && needs.select.outputs.inventory == 'true'
+    permissions:
+      contents: write
+      packages: write
+      pull-requests: write
+      actions: read
+    uses: ./.github/workflows/component-inventory.yaml
+  pr_reservations:
+    needs: [quality, select]
+    if: github.event_name == 'pull_request' && needs.select.outputs.reservations == 'true'
+    permissions:
+      contents: read
+    uses: ./.github/workflows/component-build.yaml
+    with:
+      component: reservations
+      publish: false
+  component_reservations:
+    name: Component reservations
+    needs: [quality, select]
+    if: github.event_name != 'pull_request' && needs.select.outputs.reservations == 'true'
+    permissions:
+      contents: write
+      packages: write
+      pull-requests: write
+      actions: read
+    uses: ./.github/workflows/component-reservations.yaml
+  pr_notifications:
+    needs: [quality, select]
+    if: github.event_name == 'pull_request' && needs.select.outputs.notifications == 'true'
+    permissions:
+      contents: read
+    uses: ./.github/workflows/component-build.yaml
+    with:
+      component: notifications
+      publish: false
+  component_notifications:
+    name: Component notifications
+    needs: [quality, select]
+    if: github.event_name != 'pull_request' && needs.select.outputs.notifications == 'true'
+    permissions:
+      contents: write
+      packages: write
+      pull-requests: write
+      actions: read
+    uses: ./.github/workflows/component-notifications.yaml
+  pr_web:
+    needs: [quality, select]
+    if: github.event_name == 'pull_request' && needs.select.outputs.web == 'true'
+    permissions:
+      contents: read
+    uses: ./.github/workflows/component-build.yaml
+    with:
+      component: web
+      publish: false
+  component_web:
+    name: Component web
+    needs: [quality, select]
+    if: github.event_name != 'pull_request' && needs.select.outputs.web == 'true'
+    permissions:
+      contents: write
+      packages: write
+      pull-requests: write
+      actions: read
+    uses: ./.github/workflows/component-web.yaml
+  pr_database_bootstrap:
+    needs: [quality, select]
+    if: github.event_name == 'pull_request' && needs.select.outputs.database_bootstrap == 'true'
+    permissions:
+      contents: read
+    uses: ./.github/workflows/component-build.yaml
+    with:
+      component: database-bootstrap
+      publish: false
+  component_database_bootstrap:
+    name: Component database-bootstrap
+    needs: [quality, select]
+    if: github.event_name != 'pull_request' && needs.select.outputs.database_bootstrap == 'true'
+    permissions:
+      contents: write
+      packages: write
+      pull-requests: write
+      actions: read
+    uses: ./.github/workflows/component-database-bootstrap.yaml
+  pr_identity_bootstrap:
+    needs: [quality, select]
+    if: github.event_name == 'pull_request' && needs.select.outputs.identity_bootstrap == 'true'
+    permissions:
+      contents: read
+    uses: ./.github/workflows/component-build.yaml
+    with:
+      component: identity-bootstrap
+      publish: false
+  component_identity_bootstrap:
+    name: Component identity-bootstrap
+    needs: [quality, select]
+    if: github.event_name != 'pull_request' && needs.select.outputs.identity_bootstrap == 'true'
+    permissions:
+      contents: write
+      packages: write
+      pull-requests: write
+      actions: read
+    uses: ./.github/workflows/component-identity-bootstrap.yaml
+  pr_broker_bootstrap:
+    needs: [quality, select]
+    if: github.event_name == 'pull_request' && needs.select.outputs.broker_bootstrap == 'true'
+    permissions:
+      contents: read
+    uses: ./.github/workflows/component-build.yaml
+    with:
+      component: broker-bootstrap
+      publish: false
+  component_broker_bootstrap:
+    name: Component broker-bootstrap
+    needs: [quality, select]
+    if: github.event_name != 'pull_request' && needs.select.outputs.broker_bootstrap == 'true'
+    permissions:
+      contents: write
+      packages: write
+      pull-requests: write
+      actions: read
+    uses: ./.github/workflows/component-broker-bootstrap.yaml
+  summary:
+    if: always()
+    needs:
+      [
+        quality,
+        select,
+        pr_inventory,
+        component_inventory,
+        pr_reservations,
+        component_reservations,
+        pr_notifications,
+        component_notifications,
+        pr_web,
+        component_web,
+        pr_database_bootstrap,
+        component_database_bootstrap,
+        pr_identity_bootstrap,
+        component_identity_bootstrap,
+        pr_broker_bootstrap,
+        component_broker_bootstrap,
+      ]
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+      - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444
+        with:
+          node-version: 24.15.0
+      - run: npm ci
+      - name: Required independent component outcomes
+        env:
+          SELECTED_COMPONENTS: ${{ needs.select.outputs.selected }}
+          PIPELINE_NEEDS: ${{ toJSON(needs) }}
+        run: node scripts/deployment-ci.mjs summary
   deployment:
     # Temporarily disabled for local exploratory testing; see EX-013-002.
     if: ${{ false }}

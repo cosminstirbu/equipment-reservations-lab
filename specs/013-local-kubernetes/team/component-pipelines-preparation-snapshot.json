@@ -1,0 +1,12 @@
+{
+    "id":  "component-preparation-01",
+    "date":  "2026-10-22",
+    "files":  {
+                  "spec.md":  "9e6782a901902199a25fe773098e870474944943ff5093ac850879091e509fe0",
+                  "plan.md":  "767c95569c022b284d7b4d0f246ef5b1a580215ab5135380a65fe0f8c8f0dc61",
+                  "tasks.md":  "05310c3bda171af5ffb385886d8d19170bdd0bb5922589ec99384a09d66d62f7",
+                  "quickstart.md":  "807ee2bbe1a9e0bf5845e71abf3a8ae5380edbb4fc293707595f240a5732fe0b",
+                  "contracts/runtime.md":  "5fa6725526ba3da6dd8aa3b68d87ff1968f5e75f052356f573f8f45576b9686a",
+                  "team/component-pipelines-design.md":  "03d4c2e1b0ef5049d8ebdb1c2d5a6821782e3c806a2a41ff573395d382f928f2"
+              }
+}

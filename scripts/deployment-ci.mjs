@@ -22,12 +22,14 @@ import {
 import {
   imageNames,
   validateRelease,
-  verifyReleaseIndexes,
   readPublicFile,
   readJobInputs,
   jobSuffix,
   validateManifests,
   validateCommittedDeployment,
+  validateComponentRelease,
+  verifyComponentIndex,
+  validateIndex,
 } from './deployment-validation.mjs';
 
 const projects = {
@@ -81,6 +83,8 @@ export function buildImages({
   sourceRevision,
   repository,
   publish = false,
+  components = imageNames,
+  load = true,
   run = execute,
   metadata = (path) => JSON.parse(readFileSync(path, 'utf8')),
 }) {
@@ -88,11 +92,20 @@ export function buildImages({
     throw new OperationalFailure('Exact source revision required');
   if (publish && !/^[\w.-]+\/[\w.-]+$/.test(repository ?? ''))
     throw new OperationalFailure('Publication repository required');
+  if (
+    !Array.isArray(components) ||
+    !components.length ||
+    components.some((name) => !imageNames.includes(name)) ||
+    new Set(components).size !== components.length
+  )
+    throw new OperationalFailure(
+      'Select known distinct application components',
+    );
   const directory = mkdtempSync(join(tmpdir(), 'equipment-build-'));
   let primary;
   try {
     const images = {};
-    for (const name of imageNames) {
+    for (const name of components) {
       const image = publish
         ? `ghcr.io/${repository.toLowerCase()}-${name}`
         : `equipment-ci/${name}`;
@@ -104,6 +117,9 @@ export function buildImages({
           : name.endsWith('-bootstrap')
             ? 'bootstrap'
             : 'api';
+      let exportArguments = ['--output', 'type=cacheonly', '--progress=plain'];
+      if (publish) exportArguments = ['--push'];
+      else if (load) exportArguments = ['--load'];
       const args = [
         'buildx',
         'build',
@@ -114,8 +130,8 @@ export function buildImages({
         '--metadata-file',
         path,
         '--platform',
-        publish ? 'linux/amd64,linux/arm64' : 'linux/amd64',
-        publish ? '--push' : '--load',
+        publish || !load ? 'linux/amd64,linux/arm64' : 'linux/amd64',
+        ...exportArguments,
         '--label',
         `org.opencontainers.image.revision=${sourceRevision}`,
       ];
@@ -133,7 +149,8 @@ export function buildImages({
       });
       images[name] = {
         image,
-        digest: metadata(path)['containerimage.digest'],
+        digest:
+          publish || load ? metadata(path)['containerimage.digest'] : undefined,
         tag,
       };
     }
@@ -146,7 +163,8 @@ export function buildImages({
         ]),
       ),
     };
-    if (publish) validateRelease(release);
+    if (publish && components.length === imageNames.length)
+      validateRelease(release);
     return {
       ...release,
       tags: Object.values(images).map((entry) => entry.tag),
@@ -751,40 +769,170 @@ export function createEphemeralCluster({
   };
 }
 
+function pipelineSummary() {
+  const outcomes = new Set(['success', 'failure', 'cancelled', 'skipped']);
+  let needs = {};
+  let selected = imageNames;
+  let invalid = false;
+  try {
+    needs = JSON.parse(process.env.PIPELINE_NEEDS ?? '{}');
+    const requested = JSON.parse(process.env.SELECTED_COMPONENTS ?? 'null');
+    if (
+      !Array.isArray(requested) ||
+      requested.some((name) => !imageNames.includes(name)) ||
+      new Set(requested).size !== requested.length
+    )
+      invalid = true;
+    else selected = requested;
+  } catch {
+    invalid = true;
+  }
+  const status = (key) =>
+    outcomes.has(needs?.[key]?.result) ? needs[key].result : 'missing';
+  const lines = [
+    `quality: ${status('quality')}`,
+    `selection: ${status('select')}`,
+  ];
+  let failed =
+    invalid ||
+    status('quality') !== 'success' ||
+    status('select') !== 'success';
+  const lane =
+    process.env.GITHUB_EVENT_NAME === 'pull_request' ? 'pr' : 'component';
+  for (const name of imageNames) {
+    if (!selected.includes(name)) {
+      lines.push(`${name}: not selected`);
+      continue;
+    }
+    const result = status(`${lane}_${name.replaceAll('-', '_')}`);
+    lines.push(`${name}: ${result}`);
+    if (result !== 'success') failed = true;
+  }
+  console.log(lines.join('\n'));
+  if (process.env.GITHUB_STEP_SUMMARY)
+    appendFileSync(process.env.GITHUB_STEP_SUMMARY, lines.join('\n') + '\n');
+  if (failed)
+    throw new OperationalFailure(
+      'Required component work failed, was canceled, or is missing; rerun failed jobs or start a fresh run if retained evidence expired.',
+    );
+}
+
+function componentBuild() {
+  const component = process.argv[3];
+  if (!imageNames.includes(component))
+    throw new OperationalFailure('Select a known application component');
+  let publish = false;
+  let output;
+  const flags = process.argv.slice(4);
+  for (let index = 0; index < flags.length; index++) {
+    if (flags[index] === '--publish' && !publish) publish = true;
+    else if (flags[index] === '--output' && !output && flags[index + 1])
+      output = flags[++index];
+    else
+      throw new OperationalFailure(
+        'Usage: deployment-ci.mjs component NAME [--publish --output FILE]',
+      );
+  }
+  const event = process.env.GITHUB_EVENT_NAME;
+  const sourceRef = process.env.GITHUB_REF ?? '';
+  const mainPush = event === 'push' && sourceRef === 'refs/heads/main';
+  const manualBranch =
+    event === 'workflow_dispatch' && /^refs\/heads\/[^\s]+$/.test(sourceRef);
+  if (publish && !mainPush && !manualBranch)
+    throw new OperationalFailure(
+      'Publication requires an authorized main push or manual repository branch component job',
+    );
+  if (
+    !publish &&
+    (event !== 'pull_request' ||
+      !/^refs\/pull\/[1-9]\d*\/merge$/.test(sourceRef))
+  )
+    throw new OperationalFailure(
+      'Readonly component validation requires its pull-request context',
+    );
+  const sourceRevision = process.env.GITHUB_SHA;
+  const repository = process.env.GITHUB_REPOSITORY;
+  const identity = {
+    id: Number(process.env.GITHUB_REPOSITORY_ID),
+    name: repository,
+  };
+  const runId = Number(process.env.GITHUB_RUN_ID);
+  const runAttempt = Number(process.env.GITHUB_RUN_ATTEMPT);
+  if (
+    publish &&
+    (!output ||
+      ![identity.id, runId, runAttempt].every(
+        (value) => Number.isSafeInteger(value) && value > 0,
+      ))
+  )
+    throw new OperationalFailure(
+      'Publication requires an output path and exact repository/run identity',
+    );
+  validateCommittedDeployment(process.cwd());
+  const built = buildImages({
+    sourceRevision,
+    repository,
+    publish,
+    components: [component],
+    load: false,
+  });
+  if (!publish) {
+    console.log(
+      `Validated ${component} for linux/amd64 and linux/arm64 without publication.`,
+    );
+    return;
+  }
+  const entry = built.images[component];
+  const record = validateComponentRelease({
+    schemaVersion: 1,
+    component,
+    repository: identity,
+    sourceRevision,
+    sourceRef,
+    runId,
+    runAttempt,
+    workflow: '.github/workflows/validate.yaml',
+    ...entry,
+  });
+  const observed = verifyComponentIndex(record);
+  const index = {
+    mediaType: observed.mediaType,
+    manifests: ['amd64', 'arm64'].map((architecture) => {
+      const descriptor = observed.manifests.find(
+        (item) =>
+          item.platform?.os === 'linux' &&
+          item.platform?.architecture === architecture,
+      );
+      return {
+        digest: descriptor.digest,
+        platform: { os: 'linux', architecture },
+      };
+    }),
+  };
+  validateIndex(index);
+  const serialized = JSON.stringify({ record, index }, null, 2) + '\n';
+  if (Buffer.byteLength(serialized) > 64 * 1024)
+    throw new OperationalFailure(
+      'Public component result exceeds its 64KiB metadata bound.',
+    );
+  writeFileSync(output, serialized);
+  console.log(`Published ${component}; immutable component result is ready.`);
+}
+
 if (
   process.argv[1] &&
   import.meta.url === pathToFileURL(process.argv[1]).href
 ) {
   try {
-    const publish = process.argv[2] === 'publish';
-    if (publish) {
-      const event = process.env.GITHUB_EVENT_NAME;
-      const ref = process.env.GITHUB_REF ?? '';
-      const branchPrefix = 'refs/heads/';
-      const mainPush = event === 'push' && ref === `${branchPrefix}main`;
-      const manualBranch =
-        event === 'workflow_dispatch' &&
-        ref.startsWith(branchPrefix) &&
-        ref.length > branchPrefix.length;
-      if (!mainPush && !manualBranch)
-        throw new OperationalFailure(
-          'Publication requires an authorized main push or manual repository branch release job',
-        );
-      validateCommittedDeployment(process.cwd());
-      const release = buildImages({
-        sourceRevision: process.env.GITHUB_SHA,
-        repository: process.env.GITHUB_REPOSITORY,
-        publish: true,
-      });
-      delete release.tags;
-      verifyReleaseIndexes(release);
-      appendFileSync(
-        process.env.GITHUB_OUTPUT,
-        `release=${JSON.stringify(release)}\n`,
-      );
+    if (process.argv[2] === 'summary') {
+      pipelineSummary();
+    } else if (process.argv[2] === 'component') {
+      componentBuild();
     } else {
       if (process.argv.length > 2)
-        throw new OperationalFailure('Usage: deployment-ci.mjs [publish]');
+        throw new OperationalFailure(
+          'Usage: deployment-ci.mjs [component NAME [--publish --output FILE] | summary]',
+        );
       if (process.env.GITHUB_ACTIONS !== 'true')
         throw new OperationalFailure(
           'Ephemeral CI deployment requires its isolated GitHub Actions runner',

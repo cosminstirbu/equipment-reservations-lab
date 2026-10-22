@@ -171,3 +171,59 @@ is reset by this appended batch; its implementation is not full-feature acceptan
 
 T059 shares T055/T056 files and executes serially under coder ownership before final
 T057/T058 verification/review. Preserve all historical task markers and evidence.
+
+## Phase 12: US3 — Independent component pipelines (2026-10-22)
+
+This current amendment supersedes conflicting combined-release/main-only promotion
+implementation instructions in historical tasks; their IDs/status/evidence remain.
+Independent tests: quality-gated PR/main/manual selection, failed-component recovery,
+same-run reruns and independent partial-state/stale/no-op promotion (SC-010–SC-012).
+Exact file ownership/interfaces: team/component-pipelines-design.md.
+
+- [x] T060 [US3] Obtain independent preparation quality/security verdicts for current spec/plan/tasks and specs/013-local-kubernetes/team/component-pipelines-design.md, including readonly PR/common-core graph, trusted wrapper permissions, baseline evidence, rerun intent and independent promotion; coordinator records frozen snapshot before code (FR-011, FR-022–FR-024).
+- [x] T061 [US3] Owner B adds failing component schema/partial-state/own-bootstrap-hash and complete-runtime prerequisite cases in scripts/deployment-validation.test.mjs and scripts/local-kubernetes.test.mjs, then implements validateComponentRelease/readComponentState/verifyComponentIndex in scripts/deployment-validation.mjs and partial-state guards in scripts/local-kubernetes.mjs; use deploy/environments/local/releases/NAME.json, retain genuine source provenance and reject missing runtime components before mutation (FR-012, FR-024).
+- [x] T062 [US3] Owner A adds failing real temporary-Git impact/baseline tests in scripts/component-selection.test.mjs before implementing catalog/selectComponents and bounded baseline discovery in scripts/component-pipelines.mjs; include transitive API/bootstrap references, locks/ignore/global/pipeline inputs, rename/deletion, PR merge-base, failed publication followed by docs/deployment-only changes, unknown impact, absent/expired/force-push baseline and empty selection (FR-022, SC-011).
+- [x] T063 [US3] Owner A adds failing run/artifact/intent tests in scripts/component-selection.test.mjs before implementing validateRunIntent/validatePublicationEvidence and public CLI evidence reuse in scripts/component-pipelines.mjs; verify exact component/repository/ref/SHA/run/attempt/producer-job, success inside failed parent, bounded fixed-member ZIP, captured expected target/proposal, retained same-run results and missing-artifact fresh-run failure (FR-023, SC-012).
+- [x] T064 [US3] Owner B adds failing public promotion/transport regressions in scripts/promote-images.test.mjs before adapting scripts/promote-images.mjs to component-specific managed branches/PRs and fresh exact-parent patches: first partial component, unchanged-digest no-op preserving deployed provenance, divergent manual source, newer same-lineage rejection, changed expected target/proposal, unrelated main advance/component preservation, human-edit rejection and non-force CAS; update only selected record/image and own bootstrap suffix (FR-012, FR-024).
+- [x] T065 [US3] Owner C adds failing public single-component CLI and workflow/real Bash regressions in scripts/deployment-ci.test.mjs and scripts/component-workflows.test.mjs: both-platform PR no-push, main affected/manual all, seven independent wrapper outcomes, readonly fork permissions, required always summary, missing rerun artifacts and no sibling barrier; retain intended red evidence before dependent changes (FR-011–FR-012, FR-023).
+- [x] T066 [US3] Owner C implements single-component build/publication result in scripts/deployment-ci.mjs; replace duplicate release entrypoint with .github/workflows/validate.yaml parent, seven component-NAME.yaml trusted build/promote wrappers and component-build.yaml common core; quality once, readonly PR direct calls, least-permission trusted jobs, own-component dependencies, per-component results, promotion-only global serialization and final always summary; pin new actions by verified official SHA (FR-011–FR-012, FR-023).
+- [x] T067 [US3] Architect updates specs/013-local-kubernetes/quickstart.md and contracts/runtime.md for independent records/partial initial state, own-source promotion, baseline/retry/rerun limits and explicit merge boundary; coordinator registers new focused suites in package.json without editing worker-owned modules; preserve all prior pending local/runtime/human obligations (FR-018, FR-022–FR-024).
+- [ ] T068 [US3] Run focused public CLI/Git/HTTP/artifact/workflow suites and pinned actionlint or equivalent reusable-workflow semantic validation, npm run format-check, npm run lint, npm run check and applicable deployment checks; record source snapshot/environment/exits/provider fidelity and unavailable prerequisites in specs/013-local-kubernetes/team/component-pipelines-verification.md; inspect impact/privacy/trust/CAS manually (SC-010–SC-012).
+- [x] T069 [US3] Obtain independent final quality/security verdicts and coordinator convergence on the combined component implementation in specs/013-local-kubernetes/team/; preserve earlier findings/rounds/tasks and all pending authorized live-release/local/runtime/human acceptance gates; do not commit, push or run remote workflows automatically (SC-007, SC-010–SC-012).
+
+Dependencies/ownership: T060 blocks dependent code. T061 record schema precedes
+dependent A/C schema consumption. T062/T063 share A's files and serialize; T064
+consumes A's frozen intent schema and B's state seam. T065 may proceed in parallel
+with B/A after public interfaces freeze; T066 consumes their schemas/CLI outputs.
+T061/T064 share B files and serialize. T067 docs/check-registration can run alongside
+disjoint source work. T068 follows integration; T069 freezes fresh checked source.
+Each mixed test/implementation task requires intended red before its implementation,
+not one red test for all contracts. A/B/C must not edit each other's owned files.
+This increment delivers component pipelines, not full feature acceptance.
+
+CP-S001 targeted preparation repair binds T065/T066/T068: assert and implement
+`queue: max` with `cancel-in-progress: false` on every globally serialized promotion
+job. Cover all seven queued siblings and canceled/missing selected promotion outcomes
+as required-summary failure; overflow beyond GitHub's 100 pending limit must remain
+visible with recovery guidance. Use a schema validator supporting the current queue
+property or record incompatible tooling as pending; retain intent/CAS freshness guards.
+
+Rerun clarification for T063/T065: later-attempt missing/expired component result
+requires fresh dispatch when an earlier exact producer job succeeded. If every prior
+producer failed/canceled or did not reach the build, result absence is legitimate:
+available=false permits rebuilding that component. Verify producer history, not just
+artifact absence. Original intent remains mandatory on all later attempts. Capture
+intended red/green evidence for both branches; this clarifies retained-success Q9,
+not a new product requirement or exception.
+
+Retained-selection clarification for T063/T065/T066: original run intent includes
+top-level selected (catalog-ordered unique known component names; empty allowed).
+First attempt selects then captures selected/target intent once after quality; later
+attempts load original intent before emitting its exact selection, without querying
+newer baselines to recalculate it. Add intended-red regression for full rerun after
+successful publication/failed promotion remaining selected and reusing its result
+to retry promotion, plus malformed/absent intent and retained-empty selection cases.
+
+## Phase 13: Convergence
+
+- [ ] T070 [US3] Complete current component-pipeline qualification on the reviewed source: use an adequate queue-aware workflow semantic validator without removing queue:max, restore access to the existing container API and run the full required application check, and run applicable pinned Kubernetes/provider checks through retained T052; record exact revision/environment/results and obtain independent evidence review in team/component-pipelines-verification.md. Keep unavailable checks pending and preserve separate authorization for hosted publication/promotion/workflow execution and T053 human/runtime acceptance, per SC-007/SC-010–SC-012, plan component verification and T068 (partial).

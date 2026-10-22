@@ -34,6 +34,33 @@ must not promote as lowercase `main`. Existing T055/T056 cover this guard clarif
 
 ## Technical Context
 
+## Current component pipeline amendment — 2026-10-22
+
+The owner-confirmed [component requirements](team/component-pipelines-requirements.md)
+supersede earlier combined all-image publication and main-only promotion clauses in
+this plan, runtime contract and historical task descriptions. Current FR-011–FR-013,
+FR-022–FR-024 and AC-3.1–AC-3.7 require quality once, affected PR dual-platform builds
+without publication, affected main publication, manual all-seven branch publication
+and independent component PRs from either source. Existing complete-demo/human gates
+and historical evidence remain intact. This is a new bounded scope, not retroactive
+approval of previous implementation or reset of existing repair limits.
+
+[Component design](team/component-pipelines-design.md) owns current workflow graph,
+per-component successful baselines, exact source/run provenance, retained rerun intent,
+partial release records, stale/CAS promotion controls, interfaces and test design.
+Seven readonly PR calls directly use a common build core; seven trusted component
+wrappers each build and promote independently. This avoids nested write declarations
+under a readonly caller. No new compatibility gate, preproduction or business behavior
+is introduced. Existing testing, formatting, tooling, privacy and resilience guides
+apply; no policy exception or constitutional amendment is proposed.
+
+T060 onward is the dependency-ordered amendment; preparation quality/security gates
+must pass before code. Local/GHCR execution, commits/pushes and human acceptance are
+separately authorized actions. Current partial publication must never imply demo
+readiness; setup requires all seven genuine independent records.
+
+### Original technical context retained
+
 **Language/Version**: .NET 10.0.301/C#14, existing locked Angular/TypeScript/Node;
 JavaScript lifecycle/CI tooling and Kubernetes YAML.
 **Primary Dependencies**: Aspire 13.6.1, Keycloak 26.8.1, PostgreSQL 18.6,
