@@ -929,14 +929,7 @@ export async function runPipelineCommand({
       throw new OperationalFailure('Invalid target main snapshot');
     for (const component of componentNames) {
       const target = await gateway.readRecord(component, main);
-      const head = await gateway.readRef(
-        `heads/automation/local-image-promotion-${component}`,
-      );
-      const proposal =
-        head === null
-          ? null
-          : { head, record: await gateway.readRecord(component, head) };
-      intent.components[component] = { target, proposal };
+      intent.components[component] = { target, proposal: null };
     }
     validateRunIntent(intent);
     const output = argument(args, '--output');

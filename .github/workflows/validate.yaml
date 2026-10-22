@@ -47,13 +47,24 @@ jobs:
         if: steps.quality_scope.outputs.mode == 'full'
       - run: npm run lint
         if: steps.quality_scope.outputs.mode == 'full'
+      - name: Install pinned promotion validation tool
+        if: steps.quality_scope.outputs.mode == 'full'
+        shell: bash
+        run: |
+          mkdir -p "$RUNNER_TEMP/manifest-tools"
+          curl --fail --silent --show-error --location --connect-timeout 5 --max-time 15 https://dl.k8s.io/release/v1.35.8/bin/linux/amd64/kubectl -o "$RUNNER_TEMP/manifest-tools/kubectl"
+          echo "874d5e72dbb819f43cff16bcd1e4f8bac5b7f2361fe1e55049b0a6c676fb0cbf  $RUNNER_TEMP/manifest-tools/kubectl" | sha256sum --check --strict
+          chmod 0755 "$RUNNER_TEMP/manifest-tools/kubectl"
       - run: npm run check
         if: steps.quality_scope.outputs.mode == 'full'
         env:
           DOCKER_HOST: unix:///var/run/docker.sock
           TESTCONTAINERS_RYUK_DISABLED: 'false'
-      - run: node --test scripts/deployment-validation.test.mjs scripts/promote-images.test.mjs scripts/deployment-ci.test.mjs
+          MANIFEST_KUBECTL: ${{ runner.temp }}/manifest-tools/kubectl
+      - run: node --test scripts/direct-promotion.test.mjs scripts/deployment-validation.test.mjs scripts/promote-images.test.mjs scripts/deployment-ci.test.mjs
         if: steps.quality_scope.outputs.mode == 'full'
+        env:
+          MANIFEST_KUBECTL: ${{ runner.temp }}/manifest-tools/kubectl
       - name: Full application quality completed
         if: steps.quality_scope.outputs.mode == 'full'
         run: echo 'Full application quality completed'
@@ -129,7 +140,6 @@ jobs:
     permissions:
       contents: write
       packages: write
-      pull-requests: write
       actions: read
     uses: ./.github/workflows/component-inventory.yaml
   pr_reservations:
@@ -148,7 +158,6 @@ jobs:
     permissions:
       contents: write
       packages: write
-      pull-requests: write
       actions: read
     uses: ./.github/workflows/component-reservations.yaml
   pr_notifications:
@@ -167,7 +176,6 @@ jobs:
     permissions:
       contents: write
       packages: write
-      pull-requests: write
       actions: read
     uses: ./.github/workflows/component-notifications.yaml
   pr_web:
@@ -186,7 +194,6 @@ jobs:
     permissions:
       contents: write
       packages: write
-      pull-requests: write
       actions: read
     uses: ./.github/workflows/component-web.yaml
   pr_database_bootstrap:
@@ -205,7 +212,6 @@ jobs:
     permissions:
       contents: write
       packages: write
-      pull-requests: write
       actions: read
     uses: ./.github/workflows/component-database-bootstrap.yaml
   pr_identity_bootstrap:
@@ -224,7 +230,6 @@ jobs:
     permissions:
       contents: write
       packages: write
-      pull-requests: write
       actions: read
     uses: ./.github/workflows/component-identity-bootstrap.yaml
   pr_broker_bootstrap:
@@ -243,7 +248,6 @@ jobs:
     permissions:
       contents: write
       packages: write
-      pull-requests: write
       actions: read
     uses: ./.github/workflows/component-broker-bootstrap.yaml
   summary:

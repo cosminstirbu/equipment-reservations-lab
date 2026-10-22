@@ -8,6 +8,13 @@ resources:
   - jobs/identity
   - ingress.yaml
 patches:
+  - path: images/inventory.yaml
+  - path: images/reservations.yaml
+  - path: images/notifications.yaml
+  - path: images/web.yaml
+  - path: images/database-bootstrap.yaml
+  - path: images/identity-bootstrap.yaml
+  - path: images/broker-bootstrap.yaml
   - target:
       kind: PersistentVolumeClaim
       name: postgres-data
@@ -20,10 +27,7 @@ patches:
     patch:
       '[{"op": "add", "path": "/spec/volumeName", "value": "equipment-rabbitmq"},
       {"op": "replace", "path": "/spec/storageClassName", "value": "equipment-retain"}]'
-images:
-  - name: identity-bootstrap
-    newName: ghcr.io/cosminstirbu/equipment-reservations-lab-identity-bootstrap
-    digest: sha256:cd500e697ec7b8595c9161432b65e51827e7d306ecfb7d5a42c43e944ca7fc78
+images: []
 generators:
   - configuration.yaml
   - web-configuration.yaml

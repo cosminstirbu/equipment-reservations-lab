@@ -1,3 +1,4 @@
+import { imagePatch, imagePatchPath } from './component-images.mjs';
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import {
@@ -349,6 +350,23 @@ function committedFixture() {
     mkdirSync(dirname(join(root, path)), { recursive: true });
     writeFileSync(join(root, path), readFileSync(path));
   }
+  for (const name of imageNames) {
+    mkdirSync(dirname(join(root, imagePatchPath(name))), { recursive: true });
+    writeFileSync(join(root, imagePatchPath(name)), imagePatch(name));
+  }
+  for (const name of ['database', 'identity']) {
+    const path = join(
+      root,
+      `deploy/environments/local/jobs/${name}/kustomization.yaml`,
+    );
+    writeFileSync(
+      path,
+      readFileSync(path, 'utf8').replace(
+        /nameSuffix:[^\r\n]*/,
+        'nameSuffix: -unreleased',
+      ),
+    );
+  }
   return root;
 }
 
@@ -451,13 +469,9 @@ test('committed partial component state validates only genuine available images 
     const path = 'deploy/environments/local/releases/inventory.json';
     mkdirSync(dirname(join(root, path)), { recursive: true });
     writeFileSync(join(root, path), JSON.stringify(componentRecord));
-    const overlay = join(root, 'deploy/environments/local/kustomization.yaml');
     writeFileSync(
-      overlay,
-      readFileSync(overlay, 'utf8').replace(
-        'images: []',
-        `images: [{name: inventory, newName: ${componentRecord.image}, digest: ${digest}}]`,
-      ),
+      join(root, imagePatchPath('inventory')),
+      imagePatch('inventory', `${componentRecord.image}@${digest}`),
     );
     assert.equal(validateCommittedDeployment(root), 'partial');
     const { readComponentState } = await import('./deployment-validation.mjs');

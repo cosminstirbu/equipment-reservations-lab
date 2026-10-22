@@ -22,10 +22,13 @@ The exact eligible path set is:
 - `deploy/environments/local/kustomization.yaml`
 - `deploy/environments/local/jobs/database/kustomization.yaml`
 - `deploy/environments/local/jobs/identity/kustomization.yaml`
+- `deploy/environments/local/images/NAME.yaml`, with NAME one of the same seven fixed components.
 - `deploy/environments/local/releases/NAME.json`, with NAME one of the seven fixed
   application/bootstrap component names.
 
-These are the current generated local promotion outputs covered by static validation.
+The dedicated image patches are added by the owner-approved
+[direct promotion amendment](direct-component-promotion-design.md); its candidate
+checks apply before direct main updates. These are the current generated local promotion outputs covered by static validation.
 All other paths, including other deployment manifests, source/tests, scripts, workflow,
 Docker/ignore/build inputs, dependency/tool configuration and unknown metadata, select
 full quality. Expanding the allowlist requires actual validation coverage and review;

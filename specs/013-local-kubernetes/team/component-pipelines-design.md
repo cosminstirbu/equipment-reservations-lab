@@ -1,5 +1,9 @@
 # Independent component pipelines design
 
+Current amendment: [direct component promotion](direct-component-promotion-design.md)
+supersedes this historical design's generated PR/branch mutation and shared-image-file
+instructions. Retain original preparation/review evidence at its original scope.
+
 Date: 2026-10-22. Source baseline: `424a6701ac97206ecc0067e7ea41763fb3abc950`
 on `main`. Requirements: FR-011–FR-013, FR-022–FR-024; AC-3.1–AC-3.7;
 SC-010–SC-012. Supersedes the earlier all-image release/main-only promotion design

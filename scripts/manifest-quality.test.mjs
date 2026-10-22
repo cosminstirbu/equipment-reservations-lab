@@ -1,3 +1,5 @@
+import { imagePatch, imagePatchPath } from './component-images.mjs';
+import { imageNames } from './deployment-validation.mjs';
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { execFileSync } from 'node:child_process';
@@ -261,14 +263,29 @@ test(
         join(repo.root, 'deploy'),
         { recursive: true },
       );
+      rmSync(join(repo.root, 'deploy/environments/local/releases'), {
+        recursive: true,
+        force: true,
+      });
+      for (const name of imageNames)
+        repo.write(imagePatchPath(name), imagePatch(name));
+      for (const name of ['database', 'identity']) {
+        const path = `deploy/environments/local/jobs/${name}/kustomization.yaml`;
+        repo.write(
+          path,
+          readFileSync(join(repo.root, path), 'utf8').replace(
+            /nameSuffix:[^\r\n]*/,
+            'nameSuffix: -unreleased',
+          ),
+        );
+      }
       const kubectl = process.env.MANIFEST_KUBECTL;
       assert.equal(
         (await validateStaticDeployment({ root: repo.root, kubectl })).status,
         'unreleased',
       );
       const { promotionFiles } = await import('./promote-images.mjs');
-      const { imageNames, readJobInputs } =
-        await import('./deployment-validation.mjs');
+      const { readJobInputs } = await import('./deployment-validation.mjs');
       for (const [index, name] of imageNames.entries()) {
         const record = {
           schemaVersion: 1,

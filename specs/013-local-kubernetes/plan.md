@@ -2,6 +2,16 @@
 
 **Branch**: `013-local-kubernetes` | **Date**: 2026-10-20 | **Spec**: [spec.md](spec.md)
 
+## Current direct promotion amendment - 2026-10-22
+
+The [direct component design](team/direct-component-promotion-design.md) supersedes
+historical promotion branch/PR instructions in this plan. Use stable root references
+to seven component image patches, exact-parent candidate rendering/validation and
+non-force atomic commits to main. Preserve the quality/build graph and serialized
+mutation queue; no PR permission or branch-rule bypass. Owner authorizes the
+implementation PR, rebase merge after green PR checks, and post-main verification;
+stop on authorization failures. Feature acceptance remains pending.
+
 ## Summary
 
 Backend stability follow-up (2026-10-22): apply the testing guide's

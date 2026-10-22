@@ -100,15 +100,21 @@ see [the design](team/component-pipelines-design.md). Quality runs once before
 parallel component work. PRs build affected components for both architectures without
 publication; main publishes affected components relative to their own successful main
 baselines; manual repository-branch runs select all seven. Each successful component
-may independently open its own `automation/local-image-promotion-NAME` PR, including
-from a manual feature branch, with exact source SHA/ref and immutable digest. Nothing
-is adopted until the component PR is reviewed and merged into main.
+independently validates and commits its immutable image patch and provenance directly
+to main, including manual repository-branch runs. No generated promotion PR is needed.
+The image patches are `deploy/environments/local/images/NAME.yaml`; root references
+are stable. Only that component's record/patch and its own bootstrap Job suffix change.
+The promoting job validates formatting, committed consistency and real pinned
+Kustomize/static policy against the exact proposed main tree before atomic mutation.
+GITHUB_TOKEN pushes do not trigger another push workflow; Argo observes main normally.
+See [the current direct promotion design](team/direct-component-promotion-design.md).
+
 
 Proven promotion-metadata-only PRs and main pushes use static quality instead of
 application builds/tests: scoped formatting, committed component/bootstrap consistency
 and actual pinned Kustomize rendering plus existing structural/security policies.
 Eligibility is restricted to the local overlay, its two bootstrap wrappers and the
-seven known component record paths; other manifests and any source/script/workflow/
+seven known component record and image-patch paths; other manifests and any source/script/workflow/
 build-input or uncertain comparison use full quality. Main additionally requires a
 trusted successful full-quality ancestor, so a later manifest merge cannot bypass an
 earlier failed source check. No proof means full quality; manual runs always use full
@@ -122,7 +128,7 @@ but unpublished component inputs may still build/publish downstream; a manifest 
 does not erase that backlog. Source that has not passed full quality forces the full
 gate first.
 
-Records live at `deploy/environments/local/releases/NAME.json`. A first PR may contain
+Records live at `deploy/environments/local/releases/NAME.json`. A first promotion may contain
 only one real record: missing components remain explicitly unreleased, and setup fails
 before mutation until all seven are available. Never fill gaps with invented references.
 No new preproduction or compatibility gate is introduced. Live runs, commits/pushes
@@ -139,24 +145,24 @@ The temporary image-build diagnostic job is retired.
 Publication requires job-scoped `packages:write`. Confirm repository linkage and package
 visibility allow unauthenticated pulls of each public GHCR package; a new package must
 not be assumed public. Build jobs have no repository write authority. Promotion uses
-`contents:write`, `pull-requests:write` and read-only Actions evidence access. The owner
-must enable **Allow GitHub Actions to create and approve pull requests** where repository
-or organization policy permits. No elevated personal token is a fallback for rejected policy.
+`contents:write` and read-only Actions evidence access. Pull-request write access
+is unnecessary. Repository branch rules must permit the workflow identity to update
+main; authorization rejection stops promotion. Do not bypass branch rules, change
+repository policy or substitute an elevated personal token automatically.
 
-Review each `automation/local-image-promotion-NAME` PR independently. Its record contains
+Each direct promotion retains an auditable commit and record containing
 schemaVersion=1, component, repository `{id,name}`, sourceRevision, sourceRef, runId,
 runAttempt, workflow, image and digest. The workflow identity is
 `.github/workflows/validate.yaml`; the image must match that repository/component.
 The seven names are inventory, reservations, notifications, web, database-bootstrap,
 identity-bootstrap and broker-bootstrap. Every digest identifies an OCI index for Linux
-amd64 and arm64. A proposal changes only its component record/image entry and, for
-database-bootstrap or identity-bootstrap, its own derived Job suffix. Concurrent
-same-component or human-edited proposals fail closed; other components are preserved.
+amd64 and arm64. A promotion changes only its component record/image patch and, for
+database-bootstrap or identity-bootstrap, its own derived Job suffix. Changed same-component targets fail closed; other components are preserved.
 An identical deployed digest is a no-op and retains existing deployed provenance.
 A deployment-reference-only merge does not rebuild otherwise-current images; previously
 unpublished build changes remain selected until that component publishes successfully.
 
-If one component fails, successful siblings may still publish and propose their PRs.
+If one component fails, successful siblings may still publish and promote independently.
 Use Actions' failed-job rerun on that original run after correcting an authorized
 prerequisite; retained evidence must match its original SHA/run and target intent.
 If that component previously built successfully, missing or expired retained result
@@ -169,7 +175,7 @@ successfully published components selected when their promotion failed; updated
 publication baselines must not silently remove their pending promotion retries.
 The original empty selection likewise remains empty for that run.
 Do not substitute another run's artifact or manufacture a record. Changed same-component
-target/proposal state requires review and fresh intent; unrelated main commits can be
+target state requires fresh intent (an exact already-applied result is a no-op); unrelated main commits can be
 incorporated while preserving other component records. Missing old publication baselines
 conservatively rebuild; that does not authorize replacing required rerun evidence.
 
@@ -372,7 +378,7 @@ nonsensitive result. They are operator steps, not actions executed by this docum
 
   Repeat separately for the broker/identity/application dependency under examination;
   downtime is accepted. Never restart the existing Podman VM as part of this command.
-- **Normal update:** after an independently reviewed real promotion merges, observe
+- **Normal update:** after a validated real promotion commits to main, observe
   Argo's full sync/current successful operation, run status/smoke and verify persistence.
   An image rollback does not automatically undo database schema migrations.
 - **Prune/deletion safety:** agree the exact harmless drift or Application-only deletion

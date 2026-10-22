@@ -18,7 +18,6 @@ jobs:
     timeout-minutes: 10
     permissions:
       contents: write
-      pull-requests: write
       actions: read
     concurrency:
       group: local-component-promotion
@@ -39,7 +38,15 @@ jobs:
         run: |
           node scripts/component-pipelines.mjs load-intent --output "$RUNNER_TEMP/run-intent.json"
           node scripts/component-pipelines.mjs load-result --component broker-bootstrap --output "$RUNNER_TEMP/component-result.json"
-      - name: Propose component update from exact target state
+      - name: Install pinned static manifest tool
+        shell: bash
+        run: |
+          mkdir -p "$RUNNER_TEMP/manifest-tools"
+          curl --fail --silent --show-error --location --connect-timeout 5 --max-time 15 https://dl.k8s.io/release/v1.35.8/bin/linux/amd64/kubectl -o "$RUNNER_TEMP/manifest-tools/kubectl"
+          echo "874d5e72dbb819f43cff16bcd1e4f8bac5b7f2361fe1e55049b0a6c676fb0cbf  $RUNNER_TEMP/manifest-tools/kubectl" | sha256sum --check --strict
+          chmod 0755 "$RUNNER_TEMP/manifest-tools/kubectl"
+      - name: Validate and commit component update directly to main
         env:
           GH_TOKEN: ${{ github.token }}
+          PROMOTION_KUBECTL: ${{ runner.temp }}/manifest-tools/kubectl
         run: node scripts/promote-images.mjs "$RUNNER_TEMP/component-result.json" "$RUNNER_TEMP/run-intent.json"

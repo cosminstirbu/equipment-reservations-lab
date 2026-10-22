@@ -15,7 +15,7 @@ import {
   symlinkSync,
 } from 'node:fs';
 import { tmpdir } from 'node:os';
-import { join } from 'node:path';
+import { join, dirname } from 'node:path';
 import test, { after } from 'node:test';
 import { EventEmitter } from 'node:events';
 import { PassThrough } from 'node:stream';
@@ -131,6 +131,7 @@ test(
       'local-kubernetes.mjs',
       'process.mjs',
       'deployment-validation.mjs',
+      'component-images.mjs',
     ])
       copyFileSync(new URL(name, import.meta.url), join(scripts, name));
     symlinkSync(
@@ -442,14 +443,16 @@ async function releaseFixture(root) {
   };
   const base = copy('deploy/base/configuration.yaml');
   const local = copy('deploy/environments/local/configuration.yaml');
-  const overlay = copy('deploy/environments/local/kustomization.yaml');
-  writeFileSync(
-    join(root, 'deploy/environments/local/kustomization.yaml'),
-    overlay.replace(
-      'images: []',
-      `images: ${JSON.stringify(Object.values(records).map((record) => ({ name: record.component, newName: record.image, digest: record.digest })))}`,
-    ),
-  );
+  copy('deploy/environments/local/kustomization.yaml');
+  const { imagePatch, imagePatchPath } = await import('./component-images.mjs');
+  for (const record of Object.values(records)) {
+    const path = join(root, imagePatchPath(record.component));
+    mkdirSync(dirname(path), { recursive: true });
+    writeFileSync(
+      path,
+      imagePatch(record.component, `${record.image}@${record.digest}`),
+    );
+  }
   for (const name of jobNames) {
     const template = copy(`deploy/base/jobs/${name}/job.yaml`);
     const path = wrapperPath(name);
