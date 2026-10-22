@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { execFileSync } from 'node:child_process';
+import { cleanupAll, executeProcess } from './process.mjs';
 import {
   cpSync,
   mkdtempSync,
@@ -15,10 +15,16 @@ import parsers from '@stoplight/spectral-parsers';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 function render(directory) {
-  const text = execFileSync(
+  const text = executeProcess(
     process.env.EQUIPMENT_KUBECTL ?? 'kubectl',
     ['kustomize', join(directory, 'deploy/environments/local')],
-    { encoding: 'utf8', timeout: 15000 },
+    {
+      encoding: 'utf8',
+      timeout: 15000,
+      operation: 'render public rollout configuration',
+      tool: 'kubectl',
+      output: 'public-capture',
+    },
   );
   return text
     .split(/^---\s*$/m)
@@ -38,7 +44,14 @@ function change(path, before, after) {
 
 test('public configuration updates change consuming pod templates while preserving service and durable volume identities', (t) => {
   const directory = mkdtempSync(join(tmpdir(), 'equipment-config-rollout-'));
-  t.after(() => rmSync(directory, { recursive: true, force: true }));
+  t.after(() =>
+    cleanupAll([
+      {
+        operation: 'remove configuration rollout fixture',
+        run: () => rmSync(directory, { recursive: true, force: true }),
+      },
+    ]),
+  );
   cpSync(join(root, 'deploy'), join(directory, 'deploy'), { recursive: true });
   const before = render(directory);
   change(

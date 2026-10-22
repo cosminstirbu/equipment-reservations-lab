@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { execFileSync } from 'node:child_process';
+import { execFileSync, spawnSync } from 'node:child_process';
 import { pathToFileURL } from 'node:url';
 import {
   chmodSync,
@@ -11,6 +11,7 @@ import {
   statSync,
   unlinkSync,
   writeFileSync,
+  copyFileSync,
 } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
@@ -18,6 +19,150 @@ import test, { after } from 'node:test';
 import { EventEmitter } from 'node:events';
 import { PassThrough } from 'node:stream';
 import { createLifecycle } from './local-kubernetes.mjs';
+
+test('prerequisite CLI preserves safe provider failure metadata without private output', (t) => {
+  const directory = mkdtempSync(join(tmpdir(), 'lifecycle-provider-'));
+  t.after(() => rmSync(directory, { recursive: true, force: true }));
+  for (const tool of ['podman', 'git', 'kind']) {
+    const executable = join(
+      directory,
+      tool + (process.platform === 'win32' ? '.exe' : ''),
+    );
+    copyFileSync(process.execPath, executable);
+    chmodSync(executable, 0o755);
+  }
+  const preload = join(directory, 'provider.mjs');
+  writeFileSync(
+    preload,
+    `if(process.execPath.toLowerCase().endsWith(${JSON.stringify(process.platform === 'win32' ? 'kind.exe' : '/kind')})){process.stderr.write('PRIVATE_PROVIDER_SECRET');process.exit(19);}`,
+  );
+  const result = spawnSync(
+    process.execPath,
+    ['scripts/local-kubernetes.mjs', 'prerequisites'],
+    {
+      encoding: 'utf8',
+      timeout: 10000,
+      env: {
+        ...process.env,
+        PATH:
+          directory +
+          (process.platform === 'win32' ? ';' : ':') +
+          process.env.PATH,
+        NODE_OPTIONS: `--import=${pathToFileURL(preload).href}`,
+      },
+    },
+  );
+  assert.equal(result.status, 1);
+  assert.match(result.stderr, /kind.*status=19/);
+  assert.doesNotMatch(result.stdout + result.stderr, /PRIVATE_PROVIDER_SECRET/);
+});
+
+test('private machine JSON parse failures never escape the lifecycle public boundary', async () => {
+  const lifecycle = createLifecycle({
+    run: (command, args) => {
+      if (command === 'kind') return 'kind v0.33.0';
+      if (command === 'kubectl')
+        return JSON.stringify({ clientVersion: { gitVersion: 'v1.35.8' } });
+      if (command === 'podman' && args[0] === 'machine')
+        return 'PRIVATE_MACHINE_MARKER';
+      return '';
+    },
+  });
+  await assert.rejects(lifecycle.execute(['prerequisites']), (error) => {
+    assert.doesNotMatch(error.message + JSON.stringify(error), /PRIVATE_/);
+    assert.match(error.message, /private.*(?:response|state).*invalid/i);
+    return true;
+  });
+});
+
+test('host prerequisite failures retain a safe DNS and trust category without raw provider errors', async () => {
+  const lifecycle = createLifecycle({
+    lookupHost: async () => {
+      throw new Error('PRIVATE_HOST_MARKER');
+    },
+    run: (command, args) => {
+      if (command === 'kind')
+        return args[0] === 'version' ? 'kind v0.33.0' : '';
+      if (command === 'kubectl')
+        return JSON.stringify({ clientVersion: { gitVersion: 'v1.35.8' } });
+      if (
+        command === 'podman' &&
+        args[0] === 'machine' &&
+        args[1] === 'inspect'
+      )
+        return JSON.stringify([
+          {
+            State: 'running',
+            Rootful: true,
+            Resources: { CPUs: 6, Memory: 12000 },
+          },
+        ]);
+      if (command === 'podman' && args[0] === 'info') return 'false';
+      if (command === 'podman' && args[0] === 'machine' && args[1] === 'ssh')
+        return String(30 * 1024 * 1024);
+      return '';
+    },
+  });
+  await assert.rejects(lifecycle.execute(['prerequisites']), (error) => {
+    assert.match(error.message, /DNS.*certificate trust/);
+    assert.doesNotMatch(
+      error.message + JSON.stringify(error),
+      /PRIVATE_HOST_MARKER/,
+    );
+    return true;
+  });
+});
+
+test(
+  'parent smoke CLI retains the audited child HTTP phase and both progress streams',
+  {
+    skip:
+      process.platform === 'win32'
+        ? 'Requires real POSIX private-file modes'
+        : false,
+  },
+  (t) => {
+    const directory = mkdtempSync(join(tmpdir(), 'parent-smoke-'));
+    t.after(() => rmSync(directory, { recursive: true, force: true }));
+    const scripts = join(directory, 'scripts');
+    mkdirSync(scripts);
+    for (const name of ['local-kubernetes.mjs', 'process.mjs'])
+      copyFileSync(new URL(name, import.meta.url), join(scripts, name));
+    const bundle = createLifecycle({ root: directory }).credentials(false);
+    const state = join(directory, '.local/kubernetes');
+    for (const name of ['kubeconfig', 'ca.crt'])
+      writeFileSync(join(state, name), 'fixture', { mode: 0o600 });
+    for (const tool of ['kind', 'kubectl']) {
+      const executable = join(directory, tool);
+      const response = tool === 'kind' ? 'equipment-local' : bundle.owner;
+      assert.match(response, /^[a-z0-9-]+$/);
+      writeFileSync(executable, `#!/bin/sh\nprintf '%s\\n' '${response}'\n`);
+      chmodSync(executable, 0o755);
+    }
+    const preload = join(directory, 'provider.mjs');
+    writeFileSync(
+      preload,
+      `if(process.argv[1]?.endsWith('/deployment-smoke.mjs')){process.stdout.write('safe smoke stdout progress\\n');process.stderr.write('Smoke persistence verification failed. Identity login page failed (HTTP 503).\\n');process.exit(23);}`,
+    );
+    const result = spawnSync(
+      process.execPath,
+      [join(scripts, 'local-kubernetes.mjs'), 'smoke', '--verify-persistence'],
+      {
+        encoding: 'utf8',
+        timeout: 10000,
+        env: {
+          ...process.env,
+          PATH: directory + ':' + process.env.PATH,
+          NODE_OPTIONS: `--import=${pathToFileURL(preload).href}`,
+        },
+      },
+    );
+    assert.equal(result.status, 1);
+    assert.match(result.stdout, /safe smoke stdout progress/, result.stderr);
+    assert.match(result.stderr, /persistence verification failed.*HTTP 503/);
+    assert.match(result.stderr, /status=23/);
+  },
+);
 
 const certificateRoot = mkdtempSync(
   join(tmpdir(), 'equipment-lifecycle-certificates-'),
@@ -497,7 +642,7 @@ test('provider failures are bounded, secret-free and prevent later destructive s
     f.app.execute(['reset', '--confirm-delete-data']),
     (error) =>
       !error.message.includes('secret-token') &&
-      error.message.includes('timed out'),
+      error.message.includes('unknown'),
   );
   assert.equal(
     f.calls.some((c) => c.command === 'podman' && c.args.includes('rm')),

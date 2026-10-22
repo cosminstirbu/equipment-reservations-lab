@@ -6,10 +6,13 @@ import {
   readFileSync,
   writeFileSync,
   rmSync,
+  copyFileSync,
+  chmodSync,
 } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { tmpdir } from 'node:os';
 import { spawnSync } from 'node:child_process';
+import { pathToFileURL } from 'node:url';
 import { promotionFiles, refreshJobSuffixes } from './promote-images.mjs';
 import {
   classifyChanges,
@@ -25,6 +28,55 @@ import {
 } from './deployment-validation.mjs';
 
 const digest = `sha256:${'a'.repeat(64)}`;
+
+test('default OCI inspector excludes malformed private JSON and stderr from all error representations', (t) => {
+  const directory = mkdtempSync(join(tmpdir(), 'oci-private-json-'));
+  t.after(() => rmSync(directory, { recursive: true, force: true }));
+  const executable = join(
+    directory,
+    process.platform === 'win32' ? 'docker.exe' : 'docker',
+  );
+  copyFileSync(process.execPath, executable);
+  chmodSync(executable, 0o755);
+  const preload = join(directory, 'provider.mjs');
+  writeFileSync(
+    preload,
+    `if(process.execPath.toLowerCase().endsWith(${JSON.stringify(process.platform === 'win32' ? 'docker.exe' : '/docker')})){process.stdout.write('PRIVATE_OCI_JSON_MARKER');process.stderr.write('PRIVATE_OCI_STDERR_MARKER');process.exit(0);}`,
+  );
+  const release = {
+    sourceRevision: 'b'.repeat(40),
+    images: Object.fromEntries(
+      imageNames.map((name) => [
+        name,
+        { image: `ghcr.io/example/equipment-${name}`, digest },
+      ]),
+    ),
+  };
+  const driver = join(directory, 'driver.mjs');
+  writeFileSync(
+    driver,
+    `import{verifyReleaseIndexes}from ${JSON.stringify(new URL('./deployment-validation.mjs', import.meta.url).href)};import{inspect}from'node:util';try{verifyReleaseIndexes(${JSON.stringify(release)});}catch(error){console.error(error.message);console.error(JSON.stringify(error));console.error(inspect(error,{depth:10}));if(error.cause!==undefined)console.error('RAW_CAUSE_RETAINED');process.exitCode=23;}`,
+  );
+  const result = spawnSync(process.execPath, [driver], {
+    encoding: 'utf8',
+    timeout: 10000,
+    env: {
+      ...process.env,
+      PATH:
+        directory +
+        (process.platform === 'win32' ? ';' : ':') +
+        process.env.PATH,
+      NODE_OPTIONS: `--import=${pathToFileURL(preload).href}`,
+    },
+  });
+  assert.equal(result.status, 23);
+  assert.equal(result.stdout, '');
+  assert.match(result.stderr, /Release index response is not valid JSON/);
+  assert.doesNotMatch(
+    result.stdout + result.stderr,
+    /PRIVATE_|RAW_CAUSE_RETAINED|Unexpected token/,
+  );
+});
 
 test('only application and build changes publish; deployment promotion cannot loop', () => {
   assert.equal(
@@ -116,7 +168,20 @@ test('rendered policy rejects secrets, floating images, destructive storage and 
   );
 });
 
-test('workflow trust boundaries keep PR read-only and main publication isolated', async () => {
+test('validation no longer exposes the temporary image-build diagnostic job', async () => {
+  const { default: parsers } = await import('@stoplight/spectral-parsers');
+  const validate = parsers.Yaml.parse(
+    readFileSync('.github/workflows/validate.yaml', 'utf8'),
+  ).data;
+  assert.equal(validate.jobs['image-build-diagnostics'], undefined);
+  assert.ok(validate.jobs.quality);
+  assert.ok(validate.jobs.deployment);
+  for (const job of Object.values(validate.jobs))
+    for (const step of job.steps ?? [])
+      assert.doesNotMatch(step.run ?? '', /diagnose-build/);
+});
+
+test('workflow trust boundaries keep PR read-only and promotion restricted to main', async () => {
   const { readFile } = await import('node:fs/promises');
   const { default: parsers } = await import('@stoplight/spectral-parsers');
   const validate = parsers.Yaml.parse(
@@ -125,6 +190,16 @@ test('workflow trust boundaries keep PR read-only and main publication isolated'
   const release = parsers.Yaml.parse(
     await readFile('.github/workflows/release.yaml', 'utf8'),
   ).data;
+  assert.equal(
+    release.jobs.promote.if,
+    "needs.classify.outputs.promote == 'true'",
+    'non-main publication must not propose deployment changes',
+  );
+  assert.deepEqual(release.jobs.promote.needs, ['classify', 'publish']);
+  assert.equal(
+    release.jobs.classify.outputs.promote,
+    '${{ steps.changes.outputs.promote }}',
+  );
   assert.ok(
     validate.jobs.quality.steps.some((step) =>
       step.run?.includes('deployment-validation.mjs committed'),
@@ -152,42 +227,79 @@ test('workflow trust boundaries keep PR read-only and main publication isolated'
     /874d5e72dbb819f43cff16bcd1e4f8bac5b7f2361fe1e55049b0a6c676fb0cbf/,
   );
   assert.equal(release.jobs.publish.permissions.packages, 'write');
+  assert.equal(release.jobs.publish.permissions.contents, 'read');
   assert.equal(release.jobs.promote.permissions.packages, undefined);
   assert.equal(release.jobs.promote.permissions['pull-requests'], 'write');
   assert.match(release.jobs.publish.if, /publish == 'true'/);
   assert.equal(release.concurrency['cancel-in-progress'], false);
+  assert.equal(release.concurrency.group, 'local-application-release');
+  for (const job of Object.values(release.jobs))
+    for (const step of job.steps ?? [])
+      if (step.uses?.startsWith('actions/checkout@'))
+        assert.equal(step.with['persist-credentials'], false);
 });
 
-test('manual release on main publishes without a push diff and retains validation', async () => {
+test('release classifier permits manual repository branches and only automatic main pushes', async () => {
+  const { default: parsers } = await import('@stoplight/spectral-parsers');
+  const release = parsers.Yaml.parse(
+    readFileSync('.github/workflows/release.yaml', 'utf8'),
+  ).data;
+  assert.equal(
+    release.jobs.classify.if,
+    "(github.event_name == 'push' && github.ref == 'refs/heads/main') || (github.event_name == 'workflow_dispatch' && startsWith(github.ref, 'refs/heads/') && github.ref != 'refs/heads/')",
+  );
+  assert.deepEqual(release.on.push.branches, ['main']);
+  assert.ok(Object.hasOwn(release.on, 'workflow_dispatch'));
+  assert.equal(release.on.pull_request, undefined);
+  assert.equal(release.on.pull_request_target, undefined);
+  assert.equal(release.on.workflow_call, undefined);
+});
+
+test('manual branch release publishes without a push diff and retains validation', async () => {
   const { default: parsers } = await import('@stoplight/spectral-parsers');
   const release = parsers.Yaml.parse(
     readFileSync('.github/workflows/release.yaml', 'utf8'),
   ).data;
   assert.ok(Object.hasOwn(release.on, 'workflow_dispatch'));
-  assert.equal(release.jobs.classify.if, "github.ref == 'refs/heads/main'");
   const changes = release.jobs.classify.steps.find(
     (step) => step.id === 'changes',
   );
   const root = mkdtempSync(join(tmpdir(), 'manual-release-'));
   try {
     const output = join(root, 'output');
-    const result = spawnSync(
-      'bash',
-      ['-e', '-o', 'pipefail', '-c', changes.run],
-      {
-        cwd: root,
-        env: {
-          ...process.env,
-          EVENT_NAME: 'workflow_dispatch',
-          BEFORE: '',
-          GITHUB_OUTPUT: output,
-          RUNNER_TEMP: root,
+    for (const [ref, promote] of [
+      ['refs/heads/Main', 'false'],
+      ['refs/heads/main', 'true'],
+      ['refs/heads/MAIN', 'false'],
+      ['refs/heads/feature', 'false'],
+      ['refs/heads/feature/nested', 'false'],
+    ]) {
+      writeFileSync(output, '');
+      const result = spawnSync(
+        'bash',
+        ['-e', '-o', 'pipefail', '-c', changes.run],
+        {
+          cwd: root,
+          env: {
+            ...process.env,
+            EVENT_NAME: 'workflow_dispatch',
+            GITHUB_REF: ref,
+            BEFORE: '',
+            GITHUB_OUTPUT: output,
+            RUNNER_TEMP: root,
+          },
+          encoding: 'utf8',
         },
-        encoding: 'utf8',
-      },
-    );
-    assert.equal(result.status, 0, result.stderr);
-    assert.equal(readFileSync(output, 'utf8'), 'publish=true\n');
+      );
+      assert.equal(result.status, 0, `${ref}: ${result.stderr}`);
+      const outputs = Object.fromEntries(
+        readFileSync(output, 'utf8')
+          .trim()
+          .split('\n')
+          .map((line) => line.split('=')),
+      );
+      assert.deepEqual(outputs, { publish: 'true', promote }, ref);
+    }
     assert.ok(
       release.jobs.publish.steps.some((step) =>
         step.run?.includes('npm run check'),

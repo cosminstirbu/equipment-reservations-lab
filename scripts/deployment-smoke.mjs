@@ -4,20 +4,40 @@ import { resolve, join } from 'node:path';
 import { pathToFileURL, URLSearchParams } from 'node:url';
 import { setTimeout as delay } from 'node:timers/promises';
 import { verifyDeployedTelemetry } from './deployment-diagnostics.mjs';
+import { OperationalFailure, safeFailure } from './process.mjs';
 
 const services = ['inventory', 'reservations', 'notifications'];
 
 async function request(url, options = {}) {
-  return globalThis.fetch(url, {
-    ...options,
-    redirect: 'manual',
-    signal: globalThis.AbortSignal.timeout(5000),
-  });
+  try {
+    const response = await globalThis.fetch(url, {
+      ...options,
+      redirect: 'manual',
+      signal: globalThis.AbortSignal.timeout(5000),
+    });
+    const readJson = response.json.bind(response);
+    response.json = async () => {
+      try {
+        return await readJson();
+      } catch {
+        throw new OperationalFailure(
+          'Smoke HTTP response payload is invalid; private body suppressed.',
+        );
+      }
+    };
+    return response;
+  } catch {
+    throw new OperationalFailure(
+      'Smoke HTTP request failed: transport or timeout; private URL and response suppressed.',
+    );
+  }
 }
 
 function expect(response, statuses, operation) {
   if (!statuses.includes(response.status))
-    throw new Error(`${operation} failed (HTTP ${response.status}).`);
+    throw new OperationalFailure(
+      `${operation} failed (HTTP ${response.status}).`,
+    );
   return response;
 }
 
@@ -44,7 +64,7 @@ export async function verifyDeploymentSurface({
         /health|alive|metrics/.test(path),
       )
     )
-      throw new Error(`${service} document contract failed.`);
+      throw new OperationalFailure(`${service} document contract failed.`);
     expect(
       await request(`${applicationOrigin}${prefix}/scalar/v1`),
       [200],
@@ -111,7 +131,7 @@ export async function observeNotifications({
           entries.filter((entry) => entry.eventType === type).length > 1,
       )
     )
-      throw new Error('Duplicate notification effect.');
+      throw new OperationalFailure('Duplicate notification effect.');
     if (
       expectedTypes.every(
         (type) =>
@@ -121,7 +141,7 @@ export async function observeNotifications({
       return entries;
     await delay(Math.min(intervalMs, Math.max(0, deadline - Date.now())));
   } while (Date.now() < deadline);
-  throw new Error('Notification observation deadline expired.');
+  throw new OperationalFailure('Notification observation deadline expired.');
 }
 
 export async function verifyDiagnosticAuthentication({
@@ -135,14 +155,18 @@ export async function verifyDiagnosticAuthentication({
     // BrowserToken uses a login redirect; API callers must receive denial.
     if (path === '/') {
       if (![401, 403, 302, 303].includes(response.status))
-        throw new Error(
+        throw new OperationalFailure(
           'Unauthenticated dashboard browser access was admitted.',
         );
       const location = response.headers.get('location');
       if (location && (!/login/i.test(location) || /token=/i.test(location)))
-        throw new Error('Unauthenticated dashboard redirect is unsafe.');
+        throw new OperationalFailure(
+          'Unauthenticated dashboard redirect is unsafe.',
+        );
     } else if (![401, 403].includes(response.status))
-      throw new Error('Unauthenticated dashboard API access was admitted.');
+      throw new OperationalFailure(
+        'Unauthenticated dashboard API access was admitted.',
+      );
   }
   const response = await request(`${otlpOrigin}/v1/traces`, {
     method: 'POST',
@@ -150,7 +174,9 @@ export async function verifyDiagnosticAuthentication({
     body: '{}',
   });
   if (![401, 403].includes(response.status))
-    throw new Error('Unauthenticated OTLP ingestion was admitted.');
+    throw new OperationalFailure(
+      'Unauthenticated OTLP ingestion was admitted.',
+    );
   if (dashboardApiKey)
     expect(
       await request(`${dashboardOrigin}/api/telemetry/traces`, {
@@ -205,7 +231,7 @@ export async function capturePersistenceCheckpoint({
       (field) => typeof reservation[field] !== 'string' || !reservation[field],
     )
   )
-    throw new Error('Persistence reservation contract failed.');
+    throw new OperationalFailure('Persistence reservation contract failed.');
   const events = await expect(
     await request(`${applicationOrigin}/api/notifications`, { headers }),
     [200],
@@ -216,7 +242,7 @@ export async function capturePersistenceCheckpoint({
   );
   for (const type of ['ReservationConfirmed', 'ReservationCancelled']) {
     if (relevant.filter((entry) => entry.eventType === type).length > 1)
-      throw new Error('Duplicate persisted notification effect.');
+      throw new OperationalFailure('Duplicate persisted notification effect.');
   }
   if (
     relevant.length !== 2 ||
@@ -232,7 +258,7 @@ export async function capturePersistenceCheckpoint({
     ) ||
     relevant.some((entry) => entry.userKey !== reservation.userKey)
   )
-    throw new Error('Persistence notification contract failed.');
+    throw new OperationalFailure('Persistence notification contract failed.');
   return {
     schemaVersion: 1,
     reservation: Object.fromEntries(
@@ -258,14 +284,14 @@ export async function verifyPersistenceCheckpoint({
     checkpoint?.schemaVersion !== 1 ||
     typeof checkpoint.reservation?.id !== 'string'
   )
-    throw new Error('Persistence checkpoint is invalid.');
+    throw new OperationalFailure('Persistence checkpoint is invalid.');
   const actual = await capturePersistenceCheckpoint({
     applicationOrigin,
     token,
     reservationId: checkpoint.reservation.id,
   });
   if (JSON.stringify(actual) !== JSON.stringify(checkpoint))
-    throw new Error(
+    throw new OperationalFailure(
       'Persisted reservation, identity or notification effects changed.',
     );
   return actual;
@@ -317,10 +343,13 @@ export async function authenticateCodeFlow({
   remember(first);
   const html = await first.text();
   const action = html.match(/<form\b[^>]*\baction=["']([^"']+)["']/i)?.[1];
-  if (!action) throw new Error('Identity login form is unavailable.');
+  if (!action)
+    throw new OperationalFailure('Identity login form is unavailable.');
   const destination = new URL(decodeHtml(action), url);
   if (destination.origin !== url.origin)
-    throw new Error('Identity login form leaves the approved provider.');
+    throw new OperationalFailure(
+      'Identity login form leaves the approved provider.',
+    );
   const fields = new URLSearchParams({ username, password, credentialId: '' });
   const signed = expect(
     await request(destination, {
@@ -342,7 +371,7 @@ export async function authenticateCodeFlow({
     redirect.searchParams.get('state') !== state ||
     !redirect.searchParams.get('code')
   )
-    throw new Error('Identity callback/state validation failed.');
+    throw new OperationalFailure('Identity callback/state validation failed.');
   const token = expect(
     await request(`${authority}/protocol/openid-connect/token`, {
       method: 'POST',
@@ -360,7 +389,7 @@ export async function authenticateCodeFlow({
   );
   const result = await token.json();
   if (typeof result.access_token !== 'string' || !result.access_token)
-    throw new Error('Identity token response is invalid.');
+    throw new OperationalFailure('Identity token response is invalid.');
   return result.access_token;
 }
 
@@ -385,7 +414,7 @@ export async function runDeployedSmoke({
     'Identity discovery',
   ).json();
   if (discovery.issuer !== authority)
-    throw new Error('Identity discovery issuer mismatch.');
+    throw new OperationalFailure('Identity discovery issuer mismatch.');
   const alice = await authenticateCodeFlow({
     authority,
     applicationOrigin,
@@ -445,7 +474,10 @@ export async function runDeployedSmoke({
     'Equipment',
   ).json();
   const item = equipment.find((entry) => entry.operational);
-  if (!item) throw new Error('No operational equipment available for smoke.');
+  if (!item)
+    throw new OperationalFailure(
+      'No operational equipment available for smoke.',
+    );
   const start = Date.now() + 86400000 + Math.floor(Math.random() * 86400000);
   const body = JSON.stringify({
     equipmentId: item.id,
@@ -523,7 +555,7 @@ export async function runDeployedSmoke({
     'Controlled reservation validation failure',
   );
   if (!dashboardOrigin || !otlpOrigin)
-    throw new Error(
+    throw new OperationalFailure(
       'Explicit private dashboard/OTLP probe endpoints required.',
     );
   await verifyDiagnosticAuthentication({
@@ -558,6 +590,7 @@ if (
   process.argv[1] &&
   import.meta.url === pathToFileURL(process.argv[1]).href
 ) {
+  let phase = 'prerequisites';
   try {
     const args = process.argv.slice(2);
     const index = args.indexOf('--state');
@@ -570,7 +603,9 @@ if (
       lstatSync(directory).isSymbolicLink() ||
       (lstatSync(directory).mode & 0o777) !== 0o700
     )
-      throw new Error('Private state directory requires mode0700.');
+      throw new OperationalFailure(
+        'Private state directory requires mode0700.',
+      );
     const statePath = join(directory, 'smoke-state.json');
     let state = {};
     if (existsSync(statePath)) {
@@ -578,11 +613,13 @@ if (
         lstatSync(statePath).isSymbolicLink() ||
         (lstatSync(statePath).mode & 0o777) !== 0o600
       )
-        throw new Error('Private smoke state requires mode0600.');
+        throw new OperationalFailure('Private smoke state requires mode0600.');
       state = JSON.parse(readFileSync(statePath, 'utf8'));
     }
     if (args.includes('--ci') && state.context !== 'kind-equipment-ci')
-      throw new Error('CI smoke requires its explicit disposable context.');
+      throw new OperationalFailure(
+        'CI smoke requires its explicit disposable context.',
+      );
     const path = resolve(
       directory,
       state.credentialsFile ?? 'credentials.json',
@@ -591,26 +628,32 @@ if (
       lstatSync(path).isSymbolicLink() ||
       (lstatSync(path).mode & 0o777) !== 0o600
     )
-      throw new Error('Private credential file requires mode0600.');
+      throw new OperationalFailure(
+        'Private credential file requires mode0600.',
+      );
     const credentials = JSON.parse(readFileSync(path, 'utf8'));
     const capture = args.includes('--capture-persistence');
     const verify = args.includes('--verify-persistence');
-    if (capture && verify) throw new Error('Choose one persistence operation.');
+    if (capture && verify)
+      throw new OperationalFailure('Choose one persistence operation.');
     const checkpointPath = join(directory, 'persistence-checkpoint.json');
     const applicationOrigin =
       state.applicationOrigin ?? 'https://app.equipment.test';
     const authority =
       state.authority ?? 'https://identity.equipment.test/realms/equipment';
     if (capture && existsSync(checkpointPath))
-      throw new Error(
+      throw new OperationalFailure(
         'Existing persistence checkpoint must be retained; choose a new private state directory for another capture.',
       );
+    phase = verify ? 'persistence verification' : 'deployed HTTP smoke';
     if (verify) {
       if (
         lstatSync(checkpointPath).isSymbolicLink() ||
         (lstatSync(checkpointPath).mode & 0o777) !== 0o600
       )
-        throw new Error('Persistence checkpoint requires private mode0600.');
+        throw new OperationalFailure(
+          'Persistence checkpoint requires private mode0600.',
+        );
       const checkpoint = JSON.parse(readFileSync(checkpointPath, 'utf8'));
       const token = await authenticateCodeFlow({
         applicationOrigin,
@@ -651,9 +694,9 @@ if (
       }
       console.log('Deployed HTTP smoke passed.');
     }
-  } catch {
+  } catch (error) {
     console.error(
-      'Deployed smoke failed. Inspect private prerequisites and bounded service diagnostics; credentials and HTTP bodies are suppressed.',
+      `Smoke ${phase} failed. ${safeFailure(error, 'Private operation failed; credentials, transport details and HTTP bodies are suppressed.')}`,
     );
     process.exitCode = 1;
   }

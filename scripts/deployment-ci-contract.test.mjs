@@ -2,18 +2,21 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import { mkdtempSync, readFileSync, statSync, rmSync } from 'node:fs';
 import { X509Certificate } from 'node:crypto';
-import { execFileSync } from 'node:child_process';
+import { cleanupAll, executeProcess } from './process.mjs';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
 import { imageNames, jobSuffix } from './deployment-validation.mjs';
 import { prepareCiFixture } from './deployment-ci.mjs';
 
-test('CI fixture uses real public templates and temporary TLS while keeping deployment mutations at a scoped process boundary', () => {
+test('CI fixture uses real public templates and temporary TLS while keeping deployment mutations at a scoped process boundary', async () => {
   const kubectl = process.env.EQUIPMENT_KUBECTL ?? 'kubectl';
   assert.equal(
     JSON.parse(
-      execFileSync(kubectl, ['version', '--client', '-o', 'json'], {
+      executeProcess(kubectl, ['version', '--client', '-o', 'json'], {
         encoding: 'utf8',
+        operation: 'read CI public client version',
+        tool: 'kubectl',
+        output: 'public-capture',
       }),
     ).clientVersion.gitVersion,
     'v1.35.8',
@@ -38,14 +41,18 @@ test('CI fixture uses real public templates and temporary TLS while keeping depl
       command === 'openssl' ||
       (command === 'kubectl' && args[0] === 'kustomize')
     )
-      return execFileSync(command === 'kubectl' ? kubectl : command, args, {
+      return executeProcess(command === 'kubectl' ? kubectl : command, args, {
         encoding: 'utf8',
+        operation: 'prepare CI contract fixture',
+        tool: command,
+        output: command === 'openssl' ? 'private-capture' : 'public-capture',
         stdio: ['pipe', 'pipe', 'pipe'],
         timeout: 15000,
       });
     mutations.push({ command, args, input: options.input });
     return '';
   };
+  let primary;
   try {
     const prepared = prepareCiFixture({
       directory,
@@ -60,10 +67,15 @@ test('CI fixture uses real public templates and temporary TLS while keeping depl
       0o600,
     );
     assert.match(
-      execFileSync(
+      executeProcess(
         'openssl',
         ['verify', '-CAfile', prepared.ca, join(prepared.state, 'tls.crt')],
-        { encoding: 'utf8' },
+        {
+          encoding: 'utf8',
+          operation: 'verify CI contract certificate',
+          tool: 'openssl',
+          output: 'private-capture',
+        },
       ),
       /OK/,
     );
@@ -137,7 +149,17 @@ test('CI fixture uses real public templates and temporary TLS while keeping depl
         .filter((resource) => resource.kind === 'Job')
         .every((resource) => /-[a-f0-9]{16}$/.test(resource.metadata.name)),
     );
+  } catch (error) {
+    primary = error;
   } finally {
-    rmSync(directory, { recursive: true, force: true });
+    await cleanupAll(
+      [
+        {
+          operation: 'remove CI contract fixture',
+          run: () => rmSync(directory, { recursive: true, force: true }),
+        },
+      ],
+      { primary },
+    );
   }
 });

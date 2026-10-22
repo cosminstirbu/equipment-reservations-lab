@@ -109,10 +109,65 @@ are unresolved; coordinator may assign disjoint bounded ownership after design f
 
 ## Format and coverage
 
-40 stable tasks: preparation 3, foundation 7, US1 8, US2 7, US3 6, US4 5,
-handoff 4. All FR-001–FR-018 and AC-1.1–AC-4.3 have implementation/evidence tasks.
+Original 40 tasks: preparation 3, foundation 7, US1 8, US2 7, US3 6, US4 5,
+handoff 4; T041 preserves the earlier convergence history. T042–T050 append the
+owner-approved diagnostics batch. All FR-001–FR-021 and AC-1.1–AC-4.6 have
+implementation/evidence tasks across 50 stable IDs.
 Unchecked acceptance/external/human tasks cannot be checked from generated files alone.
 
 ## Phase 8: Convergence
 
 - [x] T041 Complete the missing deployed telemetry inspection from T032 in scripts/deployment-smoke.mjs and its public-interface tests: verify actual successful/controlled-failure span/log correlation, privacy and reported metric availability through the pinned Dashboard API with finite response/poll limits; retain detailed metric-dimension and retention-pressure inspection under T035, per FR-015, SC-005 and plan: telemetry validation (partial).
+
+## Phase 9: US4 — Whole-script diagnostics amendment (2026-10-21)
+
+Goal: every repository script/test helper has an explicit operation assessment and
+preserves useful safe output. Independent test: real public process/CLI outcomes
+prove both-stream visibility, safe capture/failure categories, privacy and both
+cleanup result combinations (AC-4.4–AC-4.6; SC-008–SC-009).
+
+- [x] T042 [US4] Obtain independent preparation quality/security verdicts for FR-019–FR-021, docs/engineering/tooling.md and its index row, plan.md and team/diagnostics-design.md; record explicit gates in specs/013-local-kubernetes/team/ before dependent code.
+- [ ] T043 [US4] Add failing real-process regression tests in scripts/process.test.mjs for public stdout/stderr streaming before exit, machine capture, both bounded 4000-character tails/truncation, exit/spawn/timeout/output-limit/termination categories, and private marker exclusion from all displayed/serialized failures; retain red commands/results in specs/013-local-kubernetes/team/ (FR-019, FR-020).
+- [ ] T044 [US4] Implement minimal classified synchronous execution and safe failure rendering in scripts/process.mjs per team/diagnostics-design.md, with fixed safe labels, validated tool/status/signal/category/duration, private default, separate public tails, finite capture budgets and no raw error causes/log persistence (FR-019, FR-020).
+- [ ] T045 [US4] Extend scripts/deployment-ci.test.mjs, scripts/local-kubernetes.test.mjs and scripts/deployment-smoke.test.mjs with failing public CLI regressions using real process execution/provider executable shims for ordinary both-stream progress, safe captured failures and HTTP phase/status projections, private markers and forward spawn/exit/shutdown behavior; retain real runner/outer catches and red evidence in specs/013-local-kubernetes/team/ (FR-019, FR-020).
+- [ ] T046 [US4] Apply per-operation policies in scripts/deployment-ci.mjs, scripts/local-kubernetes.mjs and scripts/deployment-smoke.mjs; retain machine parsing, allowlisted Job diagnostics, private credential/TLS/apply/auth flows and all publication/ownership guards; expose safe live-forward lifecycle failures and actionable smoke phases (FR-019, FR-020).
+- [ ] T047 [US4] Add failing regression cases then repair cleanup and output handling across scripts/deployment-routing.test.mjs, scripts/deployment-ingress.test.mjs, scripts/deployment-dashboard.test.mjs, scripts/deployment-broker-retention.test.mjs, scripts/deployment-database-bootstrap.test.mjs, scripts/deployment-config-rollout-live.mjs and affected lifecycle/CI code: attempt every owned cleanup, fail primary success on cleanup failure, preserve primary failure with separate safe cleanup diagnostics; retain red/green evidence in specs/013-local-kubernetes/team/ (FR-019–FR-021).
+- [ ] T048 [US4] Complete every remaining inventory row in specs/013-local-kubernetes/team/diagnostics-design.md against all scripts/*.mjs, including quality/npm, promotion, validation, OpenAPI, diagnostics, browser workflow, contract/config tests and their helpers; add failing regressions before behavior repairs, preserve sound paths with call-site evidence, and remove unsafe raw error echoes without losing safe categories (FR-019, FR-020, SC-008).
+- [ ] T049 [US4] Run revision-matched real-process/CLI and changed live-provider suites, npm run format-check, npm run lint, npm run check and required deployment checks; record Windows limitations and real POSIX signal/provider evidence or pending prerequisites in specs/013-local-kubernetes/team/diagnostics-verification.md; inspect privacy classifications and safe both-stream/cleanup output manually (FR-019–FR-021, SC-008, SC-009).
+- [ ] T050 [US4] Obtain independent quality/security reviews and coordinator convergence for this batch in specs/013-local-kubernetes/team/; retain prior reports, bounded repair counts and pending T018/T024/T025/T031/T035/T038–T040 acceptance gates; no feature completion, commit, push or workflow trigger follows automatically (SC-007–SC-009).
+
+Dependencies: T042 blocks T043–T048. T043 precedes T044; T044 and T045 precede
+T046. T047 tests precede each cleanup repair. T048 tests precede each remaining
+behavior repair. T049 follows all implementation; T050 follows fresh checks and
+freezes the reviewed snapshot. T043/T045 may proceed in parallel only under disjoint
+test ownership; T046/T047 share code and must serialize or receive explicit file
+ownership. T048 may run alongside other repairs only for disjoint files. No blanket
+[P] marker promises shared-file independence. This bounded batch improves US4
+diagnostics but does not replace the complete local demo or external release gates.
+
+## Phase 10: Convergence
+
+- [x] T051 CRITICAL Resolve DQ-P001 through an explicit human-owner scoped test-first exception or keep affected gates pending: identify the six contracts in team/findings.json, rationale, owner and date; retain current regression coverage and have the original quality reviewer validate closure without reconstructing historical red evidence, per Constitution II and T043/T045/T048 (contradicts).
+- [ ] T052 Complete remaining revision-matched Kubernetes/provider qualification with pinned kubectl/kind/OpenSSL in a compatible environment, run the full deployment suite including CI fixture/config/ingress/database contracts, retain diagnostics and fix any demonstrated failure through test-first implementation; update team/diagnostics-verification.md and re-review evidence without treating unavailable prerequisites as passes, per FR-017/FR-019–FR-021, SC-007–SC-009 and T049/T050 (partial).
+- [ ] T053 Complete the retained full-feature release/local/runtime/acceptance obligations from T012/T016/T018/T024/T025/T031/T035/T038–T040 with real immutable published indexes, approved promotion/adoption, supported-host trust/persistence/recovery and deployed telemetry evidence, final reviews/convergence and explicit human acceptance; external actions and VM/trust/destruction require their existing separate authorization, per FR-001–FR-018 and SC-001–SC-007 (partial).
+
+## Phase 11: US3 — Manual publication from repository branches
+
+Independent test: the public publication CLI and parsed workflow/real Bash changes
+step establish AC-3.4/SC-010 without contacting GHCR or creating a promotion PR.
+
+- [x] T054 [US3] Obtain independent preparation quality/security verdicts for the FR-012/AC-3.4/SC-010 amendment, plan.md, quickstart.md and team/branch-release-design.md in specs/013-local-kubernetes/team/; preserve prior diagnostics findings and pending acceptance gates.
+- [x] T055 [US3] Extend existing public publication CLI event/ref matrix in scripts/deployment-ci.test.mjs and workflow/real Bash changes-step checks in scripts/deployment-validation.test.mjs; retain failing manual feature/nested-branch evidence, block unsupported events/refs before Docker, verify main-only promotion/global concurrency/least permissions and exact source provenance, per team/branch-release-design.md (FR-012, SC-010).
+- [x] T056 [US3] Implement matching event/ref eligibility in .github/workflows/release.yaml and scripts/deployment-ci.mjs: manual nonempty refs/heads branches, automatic main push only, explicit main-only promotion, unchanged global serialized concurrency, validation, dual-platform SHA publication and permission boundaries (FR-011–FR-013, AC-3.4).
+- [x] T057 [US3] Run affected publication/workflow/Bash suites, npm run format-check, npm run lint and applicable required checks; inspect quickstart behavior against code and record tested snapshot/environment/exit statuses and unavailable checks in specs/013-local-kubernetes/team/branch-release-verification.md without triggering remote publication (SC-010).
+- [x] T058 [US3] Obtain independent quality/security reviews and coordinator convergence for branch publication in specs/013-local-kubernetes/team/; retain earlier incomplete tasks, separate external-action authorization and explicit human acceptance requirements (SC-007, SC-010).
+
+T054 blocks T055; intended red evidence from T055 precedes T056. T057 follows
+implementation and T058 follows fresh verification/frozen review. Shared workflow/CLI
+ownership serializes these tasks. No historical task checkbox or bounded repair count
+is reset by this appended batch; its implementation is not full-feature acceptance.
+
+- [x] T059 [US3] Retire owner-identified temporary diagnostic plumbing from commit 623bfaf through targeted edits in .github/workflows/validate.yaml, scripts/deployment-ci.mjs, scripts/deployment-ci.test.mjs and scripts/deployment-validation.test.mjs: capture failing job-absence/retired-CLI rejection tests first, remove image-build-diagnostics plus diagnostic-only builder option/diagnose-build route, retain normal build metadata/cleanup coverage and overlapping safe-output/manual-branch release changes; record checks and include the combined snapshot in final review under specs/013-local-kubernetes/team/ (owner follow-up 2026-10-22; no new product SC).
+
+T059 shares T055/T056 files and executes serially under coder ownership before final
+T057/T058 verification/review. Preserve all historical task markers and evidence.

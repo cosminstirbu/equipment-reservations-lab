@@ -12,7 +12,13 @@ import { join } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import parsers from '@stoplight/spectral-parsers';
 import { createLifecycle, buildPrivateResources } from './local-kubernetes.mjs';
-import { execFileSync } from 'node:child_process';
+import {
+  executeProcess,
+  OperationalFailure,
+  safeFailure,
+  cleanupAllSync,
+  processFailure,
+} from './process.mjs';
 import {
   imageNames,
   validateRelease,
@@ -35,36 +41,55 @@ const projects = {
 const nodeImage =
   'kindest/node:v1.35.8@sha256:07b2536e30b803ed61d1677a79df6115f798ce64c80f9e22f6ed45afd09323c0';
 const execute = (command, args, options = {}) => {
-  try {
-    return execFileSync(command, args, {
-      encoding: 'utf8',
-      timeout: 900000,
-      stdio: ['pipe', 'pipe', 'pipe'],
-      maxBuffer: 16 * 1024 * 1024,
-      ...options,
-    });
-  } catch {
-    throw new Error(
-      `${command} failed or timed out; private provider output is suppressed.`,
-    );
+  let operation = 'CI private provider operation';
+  let output = 'private-capture';
+  if (command === 'kind' && args[0] === 'create') {
+    operation = 'CI cluster creation';
+    output = 'stream';
+  } else if (command === 'kind' && args[0] === 'load') {
+    operation = 'CI image loading';
+    output = 'stream';
+  } else if (command === 'kubectl' && args[0] === 'kustomize') {
+    operation = 'CI public manifest rendering';
+    output = 'public-capture';
+  } else if (command === 'kubectl' && args.includes('rollout')) {
+    operation = 'CI deployment rollout';
+    output = 'stream';
+  } else if (command === 'kubectl' && args.includes('wait')) {
+    operation = 'CI bootstrap completion';
+    output = 'stream';
+  } else if (command === 'kubectl' && args.includes('get')) {
+    operation = 'CI private status projection';
+  } else if (command === 'kubectl' && args.includes('logs')) {
+    operation = 'CI private bootstrap log projection';
+  } else if (command === 'openssl') {
+    operation = 'CI private TLS provisioning';
+  } else if (command === 'sudo') {
+    operation = 'CI public hostname configuration';
+    output = 'stream';
   }
+  return executeProcess(command, args, {
+    timeout: 900000,
+    operation,
+    output,
+    tool: command,
+    ...options,
+  });
 };
 
 export function buildImages({
   sourceRevision,
   repository,
   publish = false,
-  diagnostic = false,
   run = execute,
   metadata = (path) => JSON.parse(readFileSync(path, 'utf8')),
 }) {
-  if (diagnostic && publish)
-    throw new Error('Diagnostic builds cannot publish');
   if (!/^[a-f0-9]{40}$/.test(sourceRevision))
-    throw new Error('Exact source revision required');
+    throw new OperationalFailure('Exact source revision required');
   if (publish && !/^[\w.-]+\/[\w.-]+$/.test(repository ?? ''))
-    throw new Error('Publication repository required');
+    throw new OperationalFailure('Publication repository required');
   const directory = mkdtempSync(join(tmpdir(), 'equipment-build-'));
+  let primary;
   try {
     const images = {};
     for (const name of imageNames) {
@@ -89,10 +114,8 @@ export function buildImages({
         '--metadata-file',
         path,
         '--platform',
-        publish || diagnostic ? 'linux/amd64,linux/arm64' : 'linux/amd64',
-        ...(diagnostic
-          ? ['--output', 'type=cacheonly', '--progress=plain']
-          : [publish ? '--push' : '--load']),
+        publish ? 'linux/amd64,linux/arm64' : 'linux/amd64',
+        publish ? '--push' : '--load',
         '--label',
         `org.opencontainers.image.revision=${sourceRevision}`,
       ];
@@ -103,13 +126,14 @@ export function buildImages({
         );
       if (projects[name]) args.push('--build-arg', `PROJECT=${projects[name]}`);
       args.push('.');
-      if (diagnostic) run('docker', args, { stdio: 'inherit' });
-      else run('docker', args);
+      run('docker', args, {
+        operation: `image build ${name}`,
+        tool: 'docker',
+        output: 'stream',
+      });
       images[name] = {
         image,
-        digest: diagnostic
-          ? undefined
-          : metadata(path)['containerimage.digest'],
+        digest: metadata(path)['containerimage.digest'],
         tag,
       };
     }
@@ -127,8 +151,24 @@ export function buildImages({
       ...release,
       tags: Object.values(images).map((entry) => entry.tag),
     };
+  } catch (error) {
+    primary =
+      error instanceof OperationalFailure
+        ? error
+        : new OperationalFailure(
+            'Image build failed; private provider and metadata details suppressed.',
+          );
   } finally {
-    rmSync(directory, { recursive: true, force: true });
+    cleanupAllSync(
+      [
+        {
+          operation: 'image build temporary cleanup',
+          tool: 'filesystem',
+          run: () => rmSync(directory, { recursive: true, force: true }),
+        },
+      ],
+      { primary },
+    );
   }
 }
 
@@ -139,7 +179,7 @@ function documents(rendered) {
     .map((text) => {
       const parsed = parsers.Yaml.parse(text);
       if (parsed.diagnostics.some((item) => item.severity === 0))
-        throw new Error('Invalid CI manifest YAML');
+        throw new OperationalFailure('Invalid CI manifest YAML');
       return parsed.data;
     });
 }
@@ -154,7 +194,9 @@ export function ciResources(rendered, release, applicationReferences = {}) {
     new Set(Object.values(applicationReferences)).size !==
       Object.keys(applicationReferences).length
   )
-    throw new Error('Unexpected or ambiguous application image reference');
+    throw new OperationalFailure(
+      'Unexpected or ambiguous application image reference',
+    );
   return documents(rendered).map((original) => {
     const resource = JSON.parse(
       JSON.stringify(original).replaceAll(
@@ -176,11 +218,11 @@ export function ciResources(rendered, release, applicationReferences = {}) {
       if (name) {
         const tag = `equipment-ci/${name}:${release.sourceRevision}`;
         if (!release.tags.includes(tag))
-          throw new Error('Missing actual locally built CI image');
+          throw new OperationalFailure('Missing actual locally built CI image');
         container.image = tag;
         container.imagePullPolicy = 'Never';
       } else if (!/@sha256:[a-f0-9]{64}$/.test(container.image))
-        throw new Error('Unexpected unpinned CI image');
+        throw new OperationalFailure('Unexpected unpinned CI image');
     }
     validateManifests(JSON.stringify(resource), {
       ciImages: release.tags,
@@ -346,7 +388,7 @@ export function prepareCiFixture({
     readPublicFile(root, 'deploy/environments/local/kustomization.yaml'),
   );
   if (overlay.diagnostics.some((item) => item.severity === 0))
-    throw new Error('Invalid source image overlay');
+    throw new OperationalFailure('Invalid source image overlay');
   const applicationReferences = Object.fromEntries(
     (overlay.data.images ?? [])
       .filter((entry) => imageNames.includes(entry.name))
@@ -363,7 +405,8 @@ export function prepareCiFixture({
         item.kind === 'Job' &&
         item.metadata.labels?.['equipment.test/bootstrap'] === name,
     );
-    if (!resource) throw new Error(`Missing actual ${name} bootstrap Job`);
+    if (!resource)
+      throw new OperationalFailure(`Missing actual ${name} bootstrap Job`);
     resource.metadata.name = `${name}-bootstrap${jobSuffix({ sourceRevision: release.sourceRevision, images: release.images }, inputs.baseConfiguration, inputs.localConfiguration, inputs.jobs[name].template)}`;
   }
   const waves = [
@@ -482,7 +525,9 @@ function databaseFailureType(name, namespace, common, run) {
       { timeout: 6000, maxBuffer: 16384 },
     );
     if (typeof raw !== 'string' || Buffer.byteLength(raw) > 16384)
-      throw new Error('Private diagnostic response exceeds bound.');
+      throw new OperationalFailure(
+        'Private diagnostic response exceeds bound.',
+      );
     const matched = raw
       .split(/\r?\n/)
       .map(
@@ -513,7 +558,7 @@ function jobWaitFailure(resource, common, run) {
     name.length > 63 ||
     !publicIdentity.test(name)
   )
-    return new Error(
+    return new OperationalFailure(
       'CI Job wait failed for invalid public resource identity. {"diagnosticsUnavailable":true}',
     );
   const stage = `Job/${namespace}/${name}`;
@@ -534,7 +579,7 @@ function jobWaitFailure(resource, common, run) {
         { timeout: 6000, maxBuffer: 128 * 1024 },
       );
       if (typeof raw !== 'string' || Buffer.byteLength(raw) > 128 * 1024)
-        throw new Error('Status response exceeds bound.');
+        throw new OperationalFailure('Status response exceeds bound.');
       return JSON.parse(raw);
     };
     const job = query([`job/${name}`]);
@@ -545,7 +590,7 @@ function jobWaitFailure(resource, common, run) {
     ]);
     const conditions = job?.status?.conditions ?? [];
     if (!Array.isArray(conditions) || !Array.isArray(pods?.items))
-      throw new Error('Status response has invalid shape.');
+      throw new OperationalFailure('Status response has invalid shape.');
     status = {
       jobConditions: conditions.slice(0, 10).map((condition) => ({
         type: diagnosticEnum(condition?.type, jobConditionTypes),
@@ -556,7 +601,9 @@ function jobWaitFailure(resource, common, run) {
         const init = pod?.status?.initContainerStatuses ?? [];
         const containers = pod?.status?.containerStatuses ?? [];
         if (!Array.isArray(init) || !Array.isArray(containers))
-          throw new Error('Container status response has invalid shape.');
+          throw new OperationalFailure(
+            'Container status response has invalid shape.',
+          );
         return {
           phase: diagnosticEnum(pod?.status?.phase, podPhases),
           containers: [...init, ...containers].slice(0, 10).map((container) => {
@@ -575,7 +622,9 @@ function jobWaitFailure(resource, common, run) {
       }),
     };
     if (Buffer.byteLength(JSON.stringify(status)) > 16 * 1024)
-      throw new Error('Projected diagnostic response exceeds bound.');
+      throw new OperationalFailure(
+        'Projected diagnostic response exceeds bound.',
+      );
   } catch {
     status = { diagnosticsUnavailable: true };
   }
@@ -584,7 +633,9 @@ function jobWaitFailure(resource, common, run) {
     /^database-bootstrap-[a-f0-9]{16}$/.test(name)
   )
     Object.assign(status, databaseFailureType(name, namespace, common, run));
-  return new Error(`CI wait failed for ${stage}. ${JSON.stringify(status)}`);
+  return new OperationalFailure(
+    `CI wait failed for ${stage}. ${JSON.stringify(status)}`,
+  );
 }
 
 export function createEphemeralCluster({
@@ -594,7 +645,7 @@ export function createEphemeralCluster({
   root = process.cwd(),
 }) {
   if (!fixture)
-    throw new Error(
+    throw new OperationalFailure(
       'Real CI deployment fixture is required; local setup cannot substitute for this boundary',
     );
   validateCommittedDeployment(root);
@@ -678,8 +729,15 @@ export function createEphemeralCluster({
             ],
             { timeout: 310000 },
           );
-        } catch {
-          throw jobWaitFailure(resource, common, run);
+        } catch (error) {
+          const failure = processFailure(error, {
+            operation: 'CI bootstrap completion',
+            tool: 'kubectl',
+          });
+          const projection = jobWaitFailure(resource, common, run);
+          throw new OperationalFailure(
+            `${failure.message}\n${projection.message}`,
+          );
         }
       }
     }
@@ -697,50 +755,61 @@ if (
   process.argv[1] &&
   import.meta.url === pathToFileURL(process.argv[1]).href
 ) {
-  if (process.argv[2] === 'diagnose-build') {
-    buildImages({ sourceRevision: process.env.GITHUB_SHA, diagnostic: true });
-    process.exit(0);
-  }
-  const publish = process.argv[2] === 'publish';
-  if (publish) {
-    if (
-      !['push', 'workflow_dispatch'].includes(process.env.GITHUB_EVENT_NAME) ||
-      process.env.GITHUB_REF !== 'refs/heads/main'
-    )
-      throw new Error(
-        'Publication requires the separately authorized main release job',
+  try {
+    const publish = process.argv[2] === 'publish';
+    if (publish) {
+      const event = process.env.GITHUB_EVENT_NAME;
+      const ref = process.env.GITHUB_REF ?? '';
+      const branchPrefix = 'refs/heads/';
+      const mainPush = event === 'push' && ref === `${branchPrefix}main`;
+      const manualBranch =
+        event === 'workflow_dispatch' &&
+        ref.startsWith(branchPrefix) &&
+        ref.length > branchPrefix.length;
+      if (!mainPush && !manualBranch)
+        throw new OperationalFailure(
+          'Publication requires an authorized main push or manual repository branch release job',
+        );
+      validateCommittedDeployment(process.cwd());
+      const release = buildImages({
+        sourceRevision: process.env.GITHUB_SHA,
+        repository: process.env.GITHUB_REPOSITORY,
+        publish: true,
+      });
+      delete release.tags;
+      verifyReleaseIndexes(release);
+      appendFileSync(
+        process.env.GITHUB_OUTPUT,
+        `release=${JSON.stringify(release)}\n`,
       );
-    validateCommittedDeployment(process.cwd());
-    const release = buildImages({
-      sourceRevision: process.env.GITHUB_SHA,
-      repository: process.env.GITHUB_REPOSITORY,
-      publish: true,
-    });
-    delete release.tags;
-    verifyReleaseIndexes(release);
-    appendFileSync(
-      process.env.GITHUB_OUTPUT,
-      `release=${JSON.stringify(release)}\n`,
-    );
-  } else {
-    if (process.argv.length > 2)
-      throw new Error('Usage: deployment-ci.mjs [publish]');
-    if (process.env.GITHUB_ACTIONS !== 'true')
-      throw new Error(
-        'Ephemeral CI deployment requires its isolated GitHub Actions runner',
+    } else {
+      if (process.argv.length > 2)
+        throw new OperationalFailure('Usage: deployment-ci.mjs [publish]');
+      if (process.env.GITHUB_ACTIONS !== 'true')
+        throw new OperationalFailure(
+          'Ephemeral CI deployment requires its isolated GitHub Actions runner',
+        );
+      validateCommittedDeployment(process.cwd());
+      const release = buildImages({ sourceRevision: process.env.GITHUB_SHA });
+      const prepared = createEphemeralCluster({
+        fixture: prepareCiFixture,
+        release,
+      });
+      appendFileSync(
+        process.env.GITHUB_ENV,
+        `EQUIPMENT_CI_STATE=${prepared.state}\nNODE_EXTRA_CA_CERTS=${prepared.ca}\n`,
       );
-    validateCommittedDeployment(process.cwd());
-    const release = buildImages({ sourceRevision: process.env.GITHUB_SHA });
-    const prepared = createEphemeralCluster({
-      fixture: prepareCiFixture,
-      release,
-    });
-    appendFileSync(
-      process.env.GITHUB_ENV,
-      `EQUIPMENT_CI_STATE=${prepared.state}\nNODE_EXTRA_CA_CERTS=${prepared.ca}\n`,
+      console.log(
+        'Ephemeral deployment is ready for separately invoked smoke; private credentials were not printed.',
+      );
+    }
+  } catch (error) {
+    console.error(
+      safeFailure(
+        error,
+        'CI build or deployment failed; private state and provider responses suppressed.',
+      ),
     );
-    console.log(
-      'Ephemeral deployment is ready for separately invoked smoke; private credentials were not printed.',
-    );
+    process.exitCode = 1;
   }
 }

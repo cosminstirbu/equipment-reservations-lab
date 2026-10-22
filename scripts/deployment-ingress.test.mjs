@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { spawn, spawnSync } from 'node:child_process';
+import { spawn } from 'node:child_process';
 import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { request as httpRequest } from 'node:http';
 import { request as httpsRequest } from 'node:https';
@@ -7,6 +7,8 @@ import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 import { test } from 'node:test';
 import { clearTimeout } from 'node:timers';
+import { cleanupAll, executeProcess, processFailure } from './process.mjs';
+import { performance } from 'node:perf_hooks';
 import { verifyConfigRollout } from './deployment-config-rollout-live.mjs';
 
 const root = resolve(import.meta.dirname, '..');
@@ -20,20 +22,26 @@ const nginxImage =
   'docker.io/library/nginx:1.28.0-alpine@sha256:30f1c0d78e0ad60901648be663a710bdadf19e4c10ac6782c235200619158284';
 
 function run(command, args, options = {}) {
-  const result = spawnSync(command, args, {
+  let output = 'private-capture';
+  if (command === 'kind')
+    output = args[0] === 'get' ? 'public-capture' : 'stream';
+  if (command === 'kubectl' && !args.includes('secret') && !options.input) {
+    output =
+      args.includes('get') || args.includes('kustomize')
+        ? 'public-capture'
+        : 'stream';
+  }
+  return executeProcess(command, args, {
     cwd: root,
     env: environment,
     encoding: 'utf8',
     timeout: 180_000,
     killSignal: 'SIGKILL',
+    operation: 'Ingress fixture operation',
+    tool: command,
+    output,
     ...options,
-  });
-  assert.equal(
-    result.status,
-    0,
-    `${command} ${args[0]} failed: ${result.stderr || result.error}`,
-  );
-  return result.stdout.trim();
+  }).trim();
 }
 
 function forward(kubectl, port) {
@@ -54,25 +62,85 @@ function forward(kubectl, port) {
     );
     const timeout = setTimeout(() => {
       child.kill('SIGKILL');
-      reject(new Error(`Port-forward ${port} did not start within 15 seconds`));
+      child.stopping = true;
+      reject(
+        processFailure(
+          { code: 'ETIMEDOUT' },
+          {
+            operation: 'start ingress forward',
+            tool: 'kubectl',
+            durationMs: 15000,
+          },
+        ),
+      );
     }, 15_000);
+    const started = performance.now();
     let output = '';
+    child.forwardFailure = undefined;
     child.stdout.on('data', (data) => {
-      output += data;
+      output = (output + data).slice(-4000);
       const match = output.match(/Forwarding from 127[.]0[.]0[.]1:(\d+)/);
       if (match) {
         clearTimeout(timeout);
+        console.log('Ingress forward ready on loopback.');
         resolve({ child, port: Number(match[1]) });
       }
     });
-    child.on('error', reject);
-    child.on('exit', (code) => {
+    child.on('error', (error) => {
       clearTimeout(timeout);
-      if (!output.includes('Forwarding from'))
-        reject(new Error(`Port-forward ${port} exited ${code}`));
+      const failure = processFailure(error, {
+        operation: 'start ingress forward',
+        tool: 'kubectl',
+        durationMs: performance.now() - started,
+      });
+      child.forwardFailure = failure;
+      reject(failure);
+    });
+    child.on('exit', (code, signal) => {
+      clearTimeout(timeout);
+      if (!child.stopping) {
+        const failure = processFailure(
+          { status: code, signal },
+          {
+            operation: 'ingress forward exited',
+            tool: 'kubectl',
+            durationMs: performance.now() - started,
+          },
+        );
+        child.forwardFailure = failure;
+        if (!output.includes('Forwarding from')) reject(failure);
+        else console.error(failure.message);
+      }
     });
     child.stderr.resume();
   });
+}
+
+async function stopForward(child) {
+  child.stopping = true;
+  if (child.exitCode === null && child.signalCode === null) {
+    await new Promise((resolve, reject) => {
+      const timeout = setTimeout(() => {
+        child.kill('SIGKILL');
+        reject(
+          processFailure(
+            { code: 'ETIMEDOUT' },
+            {
+              operation: 'stop ingress forward',
+              tool: 'kubectl',
+              durationMs: 5000,
+            },
+          ),
+        );
+      }, 5000);
+      child.once('close', () => {
+        clearTimeout(timeout);
+        resolve();
+      });
+      child.kill('SIGTERM');
+    });
+  }
+  if (child.forwardFailure) throw child.forwardFailure;
 }
 
 function request(port, host, path, ca, servername = host, headers = {}) {
@@ -123,22 +191,34 @@ test(
     ];
     let owned = false;
     const forwards = [];
-    t.after(() => {
-      for (const child of forwards) child.kill('SIGTERM');
-      try {
-        if (owned)
-          run('kind', [
-            'delete',
-            'cluster',
-            '--name',
-            cluster,
-            '--kubeconfig',
-            kubeconfig,
-          ]);
-      } finally {
-        rmSync(directory, { recursive: true, force: true });
-      }
-    });
+    t.after(() =>
+      cleanupAll([
+        ...forwards.map((child) => ({
+          operation: 'stop ingress forward',
+          run: () => stopForward(child),
+        })),
+        ...(owned
+          ? [
+              {
+                operation: 'delete owned ingress cluster',
+                run: () =>
+                  run('kind', [
+                    'delete',
+                    'cluster',
+                    '--name',
+                    cluster,
+                    '--kubeconfig',
+                    kubeconfig,
+                  ]),
+              },
+            ]
+          : []),
+        {
+          operation: 'remove ingress private fixture',
+          run: () => rmSync(directory, { recursive: true, force: true }),
+        },
+      ]),
+    );
     const previousUmask = process.umask(0o077);
     try {
       for (const name of ['ca', 'wrong-ca']) {

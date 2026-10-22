@@ -10,10 +10,11 @@ concurrency:
   cancel-in-progress: false
 jobs:
   classify:
-    if: github.ref == 'refs/heads/main'
+    if: (github.event_name == 'push' && github.ref == 'refs/heads/main') || (github.event_name == 'workflow_dispatch' && startsWith(github.ref, 'refs/heads/') && github.ref != 'refs/heads/')
     runs-on: ubuntu-24.04
     outputs:
       publish: ${{ steps.changes.outputs.publish }}
+      promote: ${{ steps.changes.outputs.promote }}
     steps:
       - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
         with:
@@ -30,6 +31,11 @@ jobs:
           EVENT_NAME: ${{ github.event_name }}
         shell: bash
         run: |
+          if [[ "$GITHUB_REF" == 'refs/heads/main' ]]; then
+            printf 'promote=true\n' >> "$GITHUB_OUTPUT"
+          else
+            printf 'promote=false\n' >> "$GITHUB_OUTPUT"
+          fi
           if [[ "$EVENT_NAME" == "workflow_dispatch" ]]; then
             printf 'publish=true\n' >> "$GITHUB_OUTPUT"
             exit 0
@@ -74,7 +80,8 @@ jobs:
         name: Publish indexes and retain exact source provenance
         run: node scripts/deployment-ci.mjs publish
   promote:
-    needs: publish
+    needs: [classify, publish]
+    if: needs.classify.outputs.promote == 'true'
     runs-on: ubuntu-24.04
     timeout-minutes: 10
     permissions:

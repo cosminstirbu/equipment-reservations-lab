@@ -8,6 +8,8 @@ import {
   rmSync,
   mkdtempSync,
   existsSync,
+  copyFileSync,
+  chmodSync,
 } from 'node:fs';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
@@ -20,8 +22,211 @@ import {
   ciResources,
   prepareCiFixture,
 } from './deployment-ci.mjs';
+import { executeProcess } from './process.mjs';
 
-test('publication CLI permits push and manual releases only on main', () => {
+test('publication CLI streams both provider streams and preserves safe process failure evidence', (t) => {
+  const directory = mkdtempSync(join(tmpdir(), 'build-progress-'));
+  t.after(() => rmSync(directory, { recursive: true, force: true }));
+  const executable = join(
+    directory,
+    process.platform === 'win32' ? 'docker.exe' : 'docker',
+  );
+  copyFileSync(process.execPath, executable);
+  chmodSync(executable, 0o755);
+  const preload = join(directory, 'provider.mjs');
+  writeFileSync(
+    preload,
+    `if(process.execPath.toLowerCase().endsWith(${JSON.stringify(process.platform === 'win32' ? 'docker.exe' : '/docker')})){process.stdout.write('build stdout progress\\n');process.stderr.write('build stderr progress\\n');process.exit(17);}`,
+  );
+  const result = spawnSync(
+    process.execPath,
+    ['scripts/deployment-ci.mjs', 'publish'],
+    {
+      encoding: 'utf8',
+      timeout: 10000,
+      env: {
+        ...process.env,
+        PATH:
+          directory +
+          (process.platform === 'win32' ? ';' : ':') +
+          process.env.PATH,
+        NODE_OPTIONS: `--import=${pathToFileURL(preload).href}`,
+        GITHUB_SHA: 'a'.repeat(40),
+        GITHUB_EVENT_NAME: 'workflow_dispatch',
+        GITHUB_REF: 'refs/heads/main',
+        GITHUB_REPOSITORY: 'example/equipment',
+      },
+    },
+  );
+  assert.notEqual(result.status, 0);
+  assert.match(result.stdout, /build stdout progress/);
+  assert.match(result.stderr, /build stderr progress/);
+  assert.match(result.stderr, /image build inventory.*status=17/);
+});
+
+test('retired diagnostic build CLI is rejected before any provider invocation', (t) => {
+  const directory = mkdtempSync(join(tmpdir(), 'retired-build-'));
+  t.after(() => rmSync(directory, { recursive: true, force: true }));
+  const executable = join(
+    directory,
+    process.platform === 'win32' ? 'docker.exe' : 'docker',
+  );
+  copyFileSync(process.execPath, executable);
+  chmodSync(executable, 0o755);
+  const calls = join(directory, 'calls');
+  writeFileSync(calls, '');
+  const preload = join(directory, 'provider.mjs');
+  writeFileSync(
+    preload,
+    `import{appendFileSync}from'node:fs';if(process.execPath.toLowerCase().endsWith(${JSON.stringify(process.platform === 'win32' ? 'docker.exe' : '/docker')})){appendFileSync(${JSON.stringify(calls)},'docker invoked');process.exit(17);}`,
+  );
+  const result = spawnSync(
+    process.execPath,
+    ['scripts/deployment-ci.mjs', 'diagnose-build'],
+    {
+      encoding: 'utf8',
+      timeout: 10000,
+      env: {
+        ...process.env,
+        GITHUB_SHA: 'a'.repeat(40),
+        PATH:
+          directory +
+          (process.platform === 'win32' ? ';' : ':') +
+          process.env.PATH,
+        NODE_OPTIONS: `--import=${pathToFileURL(preload).href}`,
+      },
+    },
+  );
+  assert.equal(result.status, 1);
+  assert.equal(readFileSync(calls, 'utf8'), '');
+  assert.match(result.stderr, /Usage: deployment-ci.mjs/);
+});
+
+test('routing CLI streams audited progress and reports primary and all cleanup failures', (t) => {
+  const directory = mkdtempSync(join(tmpdir(), 'routing-failure-'));
+  t.after(() => rmSync(directory, { recursive: true, force: true }));
+  const executable = join(
+    directory,
+    process.platform === 'win32' ? 'docker.exe' : 'docker',
+  );
+  copyFileSync(process.execPath, executable);
+  chmodSync(executable, 0o755);
+  const calls = join(directory, 'calls');
+  const preload = join(directory, 'provider.mjs');
+  writeFileSync(
+    preload,
+    `import{appendFileSync}from'node:fs';if(process.execPath.toLowerCase().endsWith(${JSON.stringify(process.platform === 'win32' ? 'docker.exe' : '/docker')})){const args=process.argv.slice(1);appendFileSync(${JSON.stringify(calls)},JSON.stringify(args)+'\\n');process.stdout.write('routing stdout progress\\n');process.stderr.write('routing stderr progress\\n');process.exit(args.includes('create')?42:43);}`,
+  );
+  const result = spawnSync(
+    process.execPath,
+    ['scripts/deployment-routing.test.mjs'],
+    {
+      encoding: 'utf8',
+      timeout: 15000,
+      env: {
+        ...process.env,
+        CONTAINER_RUNTIME: 'docker',
+        NODE_TEST_CONTEXT: '',
+        PATH:
+          directory +
+          (process.platform === 'win32' ? ';' : ':') +
+          process.env.PATH,
+        NODE_OPTIONS: `--import=${pathToFileURL(preload).href}`,
+      },
+    },
+  );
+  assert.equal(result.status, 1);
+  const output = result.stdout + result.stderr;
+  assert.match(output, /status=42/);
+  assert.match(output, /Cleanup failure:.*status=43/);
+  assert.match(result.stdout, /routing stdout progress/);
+  assert.match(result.stderr, /routing stderr progress/);
+  const commands = readFileSync(calls, 'utf8')
+    .trim()
+    .split('\n')
+    .map((line) => JSON.parse(line));
+  assert.equal(
+    commands.filter((args) =>
+      args.some((argument) => /(?:^|[/\\])rm$/.test(argument)),
+    ).length,
+    5,
+  );
+});
+
+test('image-build cleanup preserves primary failure and reports cleanup after success', (t) => {
+  const directory = mkdtempSync(join(tmpdir(), 'build-cleanup-'));
+  t.after(() => rmSync(directory, { recursive: true, force: true }));
+  const driver = join(directory, 'driver.mjs');
+  writeFileSync(
+    driver,
+    `import fs from 'node:fs';import{syncBuiltinESMExports}from'node:module';const original=fs.rmSync;fs.rmSync=(path,options)=>{if(String(path).includes('equipment-build-'))throw Object.assign(new Error('PRIVATE_FS_MARKER'),{code:'EACCES'});return original(path,options);};syncBuiltinESMExports();const{buildImages}=await import(${JSON.stringify(new URL('./deployment-ci.mjs', import.meta.url).href)});const{OperationalFailure}=await import(${JSON.stringify(new URL('./process.mjs', import.meta.url).href)});try{buildImages({sourceRevision:'a'.repeat(40),run:(command,args)=>{if(process.env.PRIMARY==='true')throw new OperationalFailure('primary image build failed');fs.writeFileSync(args[args.indexOf('--metadata-file')+1],JSON.stringify({'containerimage.digest':'sha256:'+'a'.repeat(64)}));}});}catch(error){console.error(error.message);process.exitCode=1;}`,
+  );
+  for (const primary of [false, true]) {
+    const result = spawnSync(process.execPath, [driver], {
+      encoding: 'utf8',
+      timeout: 10000,
+      env: { ...process.env, PRIMARY: String(primary) },
+    });
+    assert.equal(result.status, 1);
+    assert.match(
+      result.stderr,
+      /Cleanup failure:.*image build temporary cleanup/,
+    );
+    if (primary) assert.match(result.stderr, /primary image build failed/);
+    else assert.match(result.stderr, /cleanup operation/);
+    assert.doesNotMatch(result.stderr + result.stdout, /PRIVATE_FS_MARKER/);
+  }
+});
+
+test('browser reports both Rabbit cleanup failures after primary workflow failure', (t) => {
+  const directory = mkdtempSync(join(tmpdir(), 'browser-cleanup-'));
+  t.after(() => rmSync(directory, { recursive: true, force: true }));
+  const preload = join(directory, 'browser.cjs');
+  writeFileSync(
+    preload,
+    `const Module=require('node:module');const original=Module._load;Module._load=function(name,...args){if(name==='@playwright/test')return {chromium:{launch:async()=>({newContext:async()=>({newPage:async()=>({setDefaultTimeout(){},setDefaultNavigationTimeout(){},on(){},goto:async()=>{throw new Error('PRIVATE_PRIMARY');},request:{fetch:async(url)=>{console.log(url.includes('/queues/')?'queue cleanup attempted':'exchange cleanup attempted');throw new Error('PRIVATE_CLEANUP');}}})}),close:async()=>{}})},expect:{configure:()=>({})}};return original.call(this,name,...args);};`,
+  );
+  const result = spawnSync(
+    process.execPath,
+    ['--require', preload, 'scripts/admin-console-browser.mjs', 'rabbit'],
+    {
+      encoding: 'utf8',
+      timeout: 10000,
+      env: {
+        ...process.env,
+        RABBIT_URL: 'http://127.0.0.1',
+        RABBIT_USERNAME: 'private',
+        RABBIT_PASSWORD: 'private',
+      },
+    },
+  );
+  assert.equal(result.status, 1);
+  assert.match(result.stderr, /failed at: rabbit login/);
+  assert.match(result.stderr, /Cleanup failure:.*Rabbit/);
+  assert.match(result.stdout, /queue cleanup attempted/);
+  assert.match(result.stdout, /exchange cleanup attempted/);
+  assert.doesNotMatch(result.stdout + result.stderr, /PRIVATE_/);
+});
+
+test('browser CLI reports fixed stage and category without raw browser exception material', (t) => {
+  const directory = mkdtempSync(join(tmpdir(), 'browser-private-'));
+  t.after(() => rmSync(directory, { recursive: true, force: true }));
+  const preload = join(directory, 'browser.cjs');
+  writeFileSync(
+    preload,
+    `const Module=require('node:module');const original=Module._load;Module._load=function(name,...args){if(name==='@playwright/test')return {chromium:{launch:async()=>{const error=new Error('PRIVATE_BROWSER_MESSAGE');error.name='PRIVATE_BROWSER_NAME';throw error;}},expect:{configure:()=>({})}};return original.call(this,name,...args);};`,
+  );
+  const result = spawnSync(
+    process.execPath,
+    ['--require', preload, 'scripts/admin-console-browser.mjs', 'postgres'],
+    { encoding: 'utf8', timeout: 10000 },
+  );
+  assert.equal(result.status, 1);
+  assert.match(result.stderr, /configuration/);
+  assert.doesNotMatch(result.stderr + result.stdout, /PRIVATE_BROWSER/);
+});
+
+test('publication CLI permits manual branch releases and only automatic main pushes', () => {
   const directory = mkdtempSync(join(tmpdir(), 'release-trigger-'));
   const preload = join(directory, 'docker.mjs');
   const calls = join(directory, 'calls.jsonl');
@@ -51,10 +256,26 @@ syncBuiltinESMExports();
     for (const [event, ref, allowed] of [
       ['push', 'refs/heads/main', true],
       ['workflow_dispatch', 'refs/heads/main', true],
+      ['workflow_dispatch', 'refs/heads/feature', true],
+      ['workflow_dispatch', 'refs/heads/feature/nested', true],
+      ['workflow_dispatch', 'refs/heads/Main', true],
+      ['workflow_dispatch', 'refs/heads/MAIN', true],
+      ['push', 'refs/heads/Main', false],
+      ['push', 'refs/heads/MAIN', false],
       ['pull_request', 'refs/heads/main', false],
       ['workflow_call', 'refs/heads/main', false],
-      ['workflow_dispatch', 'refs/heads/feature', false],
       ['push', 'refs/heads/feature', false],
+      ['push', 'refs/heads/feature/nested', false],
+      ['push', 'refs/tags/v1', false],
+      ['workflow_dispatch', 'refs/tags/v1', false],
+      ['workflow_dispatch', 'refs/pull/1/merge', false],
+      ['pull_request', 'refs/heads/feature', false],
+      ['workflow_call', 'refs/heads/feature', false],
+      ['schedule', 'refs/heads/main', false],
+      ['workflow_dispatch', '', false],
+      ['workflow_dispatch', 'refs/heads/', false],
+      ['push', '', false],
+      ['push', 'refs/heads/', false],
     ]) {
       writeFileSync(calls, '');
       writeFileSync(output, '');
@@ -105,12 +326,29 @@ syncBuiltinESMExports();
           commands.filter((args) => args.includes('imagetools')).length,
           imageNames.length,
         );
+        for (const args of commands.filter((args) => args.includes('--push'))) {
+          assert.equal(
+            args[args.indexOf('--platform') + 1],
+            'linux/amd64,linux/arm64',
+            context,
+          );
+          assert.match(
+            args[args.indexOf('--tag') + 1],
+            new RegExp(`:${'b'.repeat(40)}$`),
+            context,
+          );
+          assert.ok(
+            args.includes(
+              `org.opencontainers.image.revision=${'b'.repeat(40)}`,
+            ),
+            context,
+          );
+        }
+        for (const image of Object.values(release.images))
+          assert.equal(image.digest, `sha256:${'a'.repeat(64)}`, context);
       } else {
         assert.notEqual(result.status, 0, context);
-        assert.match(
-          result.stderr,
-          /Publication requires the separately authorized main release job/,
-        );
+        assert.match(result.stderr, /Publication requires/);
         assert.equal(readFileSync(calls, 'utf8'), '');
         assert.equal(readFileSync(output, 'utf8'), '');
       }
@@ -150,46 +388,6 @@ test('CI builds only local test images without publication; release indexes reta
         ([, args]) =>
           args.includes('--push') && args.includes('linux/amd64,linux/arm64'),
       ),
-  );
-});
-
-test('diagnostic builds both architectures without loading or publishing and exposes build progress', () => {
-  const calls = [];
-  buildImages({
-    sourceRevision: 'b'.repeat(40),
-    diagnostic: true,
-    run: (command, args, options) => calls.push({ command, args, options }),
-    metadata: () => ({}),
-  });
-  assert.equal(calls.length, imageNames.length);
-  for (const { command, args, options } of calls) {
-    assert.equal(command, 'docker');
-    assert.ok(args.includes('linux/amd64,linux/arm64'));
-    assert.ok(args.includes('type=cacheonly'));
-    assert.ok(args.includes('--progress=plain'));
-    assert.ok(!args.includes('--push'));
-    assert.ok(!args.includes('--load'));
-    assert.equal(options.stdio, 'inherit');
-  }
-  assert.throws(
-    () =>
-      buildImages({
-        sourceRevision: 'b'.repeat(40),
-        diagnostic: true,
-        publish: true,
-      }),
-    /Diagnostic builds cannot publish/,
-  );
-  assert.throws(
-    () =>
-      buildImages({
-        sourceRevision: 'b'.repeat(40),
-        diagnostic: true,
-        run: () => {
-          throw new Error('build failed');
-        },
-      }),
-    /build failed/,
   );
 });
 
@@ -350,6 +548,7 @@ function failedJobFixture(
   logResponse = () => '',
   jobName,
   namespace = 'equipment',
+  waitFailure,
 ) {
   const calls = [];
   let directory;
@@ -360,6 +559,8 @@ function failedJobFixture(
       const path = args[args.indexOf('--kubeconfig') + 1];
       writeFileSync(path, 'test-kubeconfig', { mode: 0o600 });
     }
+    if (command === 'kubectl' && args.includes('wait') && waitFailure)
+      return waitFailure();
     if (command === 'kubectl' && args.includes('wait'))
       throw new Error('provider-private-password sentinel');
     if (command === 'kubectl' && args.includes('logs'))
@@ -395,6 +596,31 @@ function failedJobFixture(
       }),
   };
 }
+
+test('CI Job projection preserves real process status category and duration', (t) => {
+  const fixture = failedJobFixture(
+    t,
+    () => JSON.stringify({ items: [] }),
+    () => '',
+    undefined,
+    'equipment',
+    () =>
+      executeProcess(
+        process.execPath,
+        ['-e', "process.stderr.write('PRIVATE_JOB_MARKER');process.exit(23)"],
+        { operation: 'CI bootstrap completion', tool: 'kubectl' },
+      ),
+  );
+  assert.throws(fixture.invoke, (error) => {
+    assert.match(
+      error.message,
+      /CI bootstrap completion.*exit; status=23.*duration=\d+ms/,
+    );
+    assert.match(error.message, /CI wait failed for Job\/equipment\//);
+    assert.doesNotMatch(error.message, /PRIVATE_JOB_MARKER/);
+    return true;
+  });
+});
 
 test('failed CI Job wait identifies exact public stage and emits only bounded allowlisted status fields', (t) => {
   const fixture = failedJobFixture(t, (args) =>

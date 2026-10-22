@@ -1,6 +1,54 @@
 {
   "findings": [
     {
+      "id": "DQ-C001",
+      "category": "code",
+      "severity": "medium",
+      "blocking": true,
+      "owner": "coder",
+      "status": "closed",
+      "closure_evidence": "Original quality/security reviewers closed source findings in diagnostics-quality-02.md and diagnostics-security-02.md, retained by snapshot03 addenda; final Linux97/97 public regressions pass.",
+      "description": "Build/promotion cleanup can replace primary failure or abort remaining removals; Rabbit browser simultaneous cleanup failure is hidden.",
+      "evidence": "diagnostics-quality-01.md and diagnostics-security-01.md (DQC001 alias); snapshot diagnostics-01",
+      "remediation": "Preserve primary, attempt all exact owned resources, report separate safe cleanup errors, fail success on cleanup failure; add public boundary regressions."
+    },
+    {
+      "id": "DQ-C002",
+      "category": "code",
+      "severity": "medium",
+      "blocking": true,
+      "owner": "coder",
+      "status": "closed",
+      "closure_evidence": "Original quality reviewer closed source in diagnostics-quality-02.md/03.md; final Linux97/97 includes actual parent smoke and CI Job process metadata. Test-first chronology remains separately open as DQ-P001.",
+      "description": "Parent local smoke capture drops safe child diagnostics; CI Job projection replaces validated process metadata.",
+      "evidence": "diagnostics-quality-01.md; snapshot diagnostics-01",
+      "remediation": "Retain safe phase/status/projections across parent boundaries plus validated original process metadata with regression tests."
+    },
+    {
+      "id": "DQ-C003",
+      "category": "code",
+      "severity": "medium",
+      "blocking": true,
+      "owner": "coder",
+      "status": "closed",
+      "closure_evidence": "Original quality reviewer closed per-operation classification in diagnostics-quality-02.md/03.md; final CLI regression checks both streams and all cleanup failures. Real routing rerun remains a separate verification gate.",
+      "description": "Routing helper leaves all operations private/unclassified, including audited ordinary network/fixture/cleanup operations.",
+      "evidence": "diagnostics-quality-01.md; snapshot diagnostics-01",
+      "remediation": "Finish per-operation classification and stream stdout/stderr for audited ordinary operations with real CLI regression."
+    },
+    {
+      "id": "DQ-P001",
+      "category": "code",
+      "severity": "high",
+      "blocking": true,
+      "owner": "verifier_reviewer",
+      "status": "closed_by_exception",
+      "closure_evidence": "Human owner approved EX-013-003 on 2026-10-22; original verifier validated scope/rationale/owner/date/exclusions in diagnostics-exception-review.md. Historical chronology retained; future/unlisted fixes and pending evidence excluded.",
+      "description": "Six diagnostic behavior contracts lack intended-behavior failing evidence before implementation: before-exit both-stream visibility; independent 4000-character tails/truncation including quiet formatter integration; smoke authenticated JSON parse protection; default OCI index JSON parse protection; original CI Job-wait metadata preservation; parent-smoke safe child progress and HTTP phase/status propagation.",
+      "evidence": "diagnostics-implementation.md explicitly records setup-only missing-module failure and green-only behavior chronology. Verifier confirmed scope in both implementation rounds; no later mutation run is treated as historical evidence.",
+      "remediation": "Retain current correctness/privacy verification; obtain explicit human-owner scoped test-first exception for these six contracts, rationale, owner and date before closing affected completion gates. Preserve all unrelated test-first requirements; keep T043 and affected task gates pending until reviewer validates resolution."
+    },
+    {
       "id": "Q-D001",
       "category": "design",
       "severity": "medium",

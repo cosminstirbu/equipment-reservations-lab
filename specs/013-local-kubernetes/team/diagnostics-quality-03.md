@@ -1,0 +1,7 @@
+# Diagnostics quality addendum — snapshot 03
+
+Reviewed the test-only local-kubernetes fixture correction and amended chronology at `diagnostics-snapshot-03.json`. The POSIX kind/kubectl shell fixtures emit fixed validated cluster/ownership values without interpreting provider arguments; Node preload is confined to the external smoke-child boundary. Assertions exercise actual parent stdout/stderr, retained HTTP phase/status and exit23. No additional code finding; DQ-C001/C002/C003 source closures stand with unchanged production hashes.
+
+**DQ-P001 remains open, high/blocking.** Exact six contractual areas needing an explicit scoped human decision are: before-exit both-stream visibility; independent 4000-character tail bounds/truncation including quiet formatter integration; malformed private smoke JSON projection; malformed default OCI JSON projection; CI Job-wait metadata retention; parent-smoke safe child stdout/stderr and HTTP phase/status propagation. The earlier parent-smoke red was a fixture failure before invocation, so it supplies no intended-red evidence. Current passing regression evidence establishes behavior, not historical test-first ordering. The corrected record appropriately makes no reconstructed-red claim.
+
+Final quality verdict remains **changes_requested** for DQ-P001 plus required checks still pending; original feature acceptance is separate. No reviewer writes or test executions performed.

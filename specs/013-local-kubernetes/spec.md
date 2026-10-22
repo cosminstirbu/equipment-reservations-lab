@@ -8,6 +8,19 @@
 
 **Input**: Implement the approved decisions in [handoff](../../docs/local-kubernetes-handoff.md) and [planning interview](../../docs/local-kubernetes-planning.md) from main revision `4dd685c4e34288f94e932dcd49beb22eea965075` in an isolated worktree.
 
+## Clarifications
+
+### Session 2026-10-21
+
+- Q: Which script operations should expose tool output? → A: Across all repository scripts and test helpers, ordinary audited commands stream both standard output and standard error; machine-readable and sensitive operations explicitly capture output.
+- Q: What diagnostics remain available for captured and sensitive failures? → A: Report a safe operation name, tool, duration, exit status or signal when available, and failure category; show bounded safe standard-output and standard-error tails with marked truncation, or safe projections for sensitive output, without secrets, raw arguments, environment values or input payloads. Do not automatically save raw logs or provide a privacy-bypassing debug mode.
+- Q: What happens when cleanup fails? → A: Cleanup failure fails an otherwise successful command or test; when primary and cleanup operations both fail, retain the primary failure and report cleanup problems separately.
+- Q: What scope and authority does this approval establish? → A: The owner approved this amendment, all scripts and test helpers, a mandatory discoverable engineering guide, implementation and independent review within feature 013. Existing commits do not establish feature acceptance, and this batch does not authorize commits, pushes or workflow execution.
+
+### Session 2026-10-22
+
+- Owner request: Allow running the release workflow from any branch. Coordinator interpretation: permit manual release invocation from any repository branch, retain automatic publication only for main, and retain promotion proposals only for main so unmerged sources are not adopted. This implementation scope does not authorize an actual publication run, commit or push.
+
 ## User Scenarios & Testing *(mandatory)*
 
 ### User Story 1 - Set up and use the complete local demo (Priority: P1)
@@ -53,6 +66,7 @@ As a maintainer, I can validate changes safely and review a release update befor
 1. **Given** an untrusted or ordinary pull request, **When** validation runs, **Then** required application and deployment checks run without publication or exposure of publish credentials (AC-3.1).
 2. **Given** an application change merged to main and separately authorized external execution, **When** release automation runs, **Then** it publishes images for both target architectures and proposes a reviewable update containing immutable references and source revision; an existing promotion or concurrent update is handled without lost changes (AC-3.2).
 3. **Given** an approved merged deployment update, **When** reconciliation runs, **Then** the actual published release becomes active and drift is corrected; a deployment-only merge does not republish images or recursively propose promotions (AC-3.3).
+4. **Given** a maintainer selects any repository branch and separately authorizes manual release execution, **When** the release workflow runs, **Then** it publishes images for both target architectures with source provenance; a non-main branch creates no promotion proposal and changes no deployment references, and an ordinary push to that branch does not trigger publication (AC-3.4).
 
 ### User Story 4 - Diagnose securely and retain everyday development (Priority: P2)
 
@@ -67,6 +81,9 @@ As a developer, I can inspect correlated success/failure diagnostics securely an
 1. **Given** successful and controlled failing workflows, **When** diagnostics are inspected, **Then** correlated traces, structured logs and metrics include relevant database, broker, identity and bootstrap operations, contain no forbidden sensitive fields and obey documented finite resource/retention limits (AC-4.1).
 2. **Given** operational interfaces and ingestion, **When** unauthenticated access is attempted, **Then** it is rejected; browser interfaces require authentication through loopback-bound forwarding and internal telemetry ingestion is authenticated (AC-4.2).
 3. **Given** the existing development identity volume, **When** development starts with new persistent identity storage, **Then** realm/demo accounts are bootstrapped, login, API documentation and correlated telemetry work, and the old volume remains until explicitly removed; old sessions/manual configuration need not migrate (AC-4.3).
+4. **Given** an ordinary audited tool operation in any repository script or test helper, **When** it executes, **Then** both standard output and standard error remain visible during execution; machine-readable results remain capturable without corrupting their consumers (AC-4.4).
+5. **Given** a captured tool failure, **When** the script reports it, **Then** the developer receives the safe operation name, tool, duration, failure category and available exit status or termination signal, plus bounded safe tails from both output streams with truncation marked; sensitive operations provide safe diagnostic projections without exposing secrets, raw arguments, environment values or input payloads, automatically saving raw logs, or offering a privacy-bypassing debug mode (AC-4.5).
+6. **Given** script or test cleanup fails, **When** the result is reported, **Then** an otherwise successful operation fails; if a primary failure also occurred, it remains the primary diagnostic and cleanup failures are reported separately (AC-4.6).
 
 ### Edge Cases
 
@@ -78,6 +95,8 @@ As a developer, I can inspect correlated success/failure diagnostics securely an
 - A rollback must not claim to reverse database schema changes automatically.
 - Hosted-runner success cannot substitute for macOS networking, trust or VM-restart evidence.
 - Temporary diagnostic data may disappear after viewer restart; business data may disappear after explicit reset/cluster deletion.
+- A tool may fail to start, time out, terminate by signal, report only on standard output or standard error, or exceed the diagnostic output bound; each case retains actionable safe failure information.
+- A successful operation followed by failed cleanup is not successful overall; simultaneous primary and cleanup failures must not replace or obscure the primary cause.
 
 ## Requirements *(mandatory)*
 
@@ -94,13 +113,16 @@ As a developer, I can inspect correlated success/failure diagnostics securely an
 - **FR-009**: Protect durable resources from ordinary synchronization and accidental application deletion; document reconciliation ownership, pruning and intentional removal (AC-2.3).
 - **FR-010**: Provide distinct stop, explicitly destructive application reset and cluster teardown operations, suspending reconciliation as necessary, with successful setup after reset (AC-2.4).
 - **FR-011**: Validate pull requests without publication, protect fork/untrusted execution, minimize job permissions and pin external automation dependencies (AC-3.1).
-- **FR-012**: Publish application releases for both target architectures after application merges and propose only local immutable-reference updates with source provenance; safely handle existing promotions and concurrency (AC-3.2).
+- **FR-012**: Automatically publish application releases for both target architectures after application merges to main, and allow maintainers to invoke publication manually from any repository branch. Retain source provenance, limit promotion proposals to main with only local immutable-reference updates, and safely handle existing promotions and concurrency. Ordinary non-main pushes do not trigger publication; non-main publication changes no deployment references (AC-3.2, AC-3.4).
 - **FR-013**: Automatically apply merged approved deployment changes and correct drift without a recursive publication/promotion loop on deployment-only changes (AC-3.3).
 - **FR-014**: Expose only required application/login paths publicly within the local environment; keep databases, brokers, management, detailed health and identity administration internal or explicitly forwarded (AC-1.2, AC-4.2).
 - **FR-015**: Authenticate operational browser access and internal telemetry ingestion; bound temporary telemetry and inspect actual success/failure exports for privacy, correlation and safe metric cardinality (AC-4.1, AC-4.2).
 - **FR-016**: Retain everyday unpushed development with fresh bootstrapped identity storage, separate scoped identity database credentials and preservation of the old identity volume until explicit deletion (AC-4.3).
 - **FR-017**: Provide separately invoked deployment verification and hosted ephemeral deployment checks while normal application tests remain independent of Kubernetes and AppHost; record local-only acceptance separately (AC-1.1–AC-4.3).
 - **FR-018**: Provide a quickstart covering prerequisites, explicit trust/DNS actions, setup/status/access, safe credential retrieval, initial release/promotion permissions, failure recovery, state semantics and destruction (AC-1.1, AC-2.2, AC-2.4, AC-3.2, AC-4.2).
+- **FR-019**: Review all repository scripts and test helpers and make ordinary audited tool operations stream both standard output and standard error during execution; explicitly capture operations whose output is machine-readable or sensitive (AC-4.4).
+- **FR-020**: Preserve actionable captured-failure diagnostics: safe operation name, tool, duration, failure category, available exit status or signal, and bounded safe tails from both streams with truncation marked. For sensitive operations use safe projections and exclude secrets, raw arguments, environment values and input payloads; do not automatically persist raw logs or offer a privacy-bypassing debug mode (AC-4.5).
+- **FR-021**: Surface cleanup failures and fail otherwise successful commands or tests; preserve the original primary failure when cleanup also fails, reporting cleanup failures separately (AC-4.6).
 
 ### Key Entities
 
@@ -121,6 +143,9 @@ As a developer, I can inspect correlated success/failure diagnostics securely an
 - **SC-005**: Representative success and controlled failure exports show correlated workflow/dependency diagnostics, zero forbidden sensitive fields and enforced documented diagnostic limits.
 - **SC-006**: One explicit reset followed by setup succeeds; ordinary synchronization/deletion safety and distinct lifecycle effects have recorded evidence.
 - **SC-007**: Required application checks, deployment checks, local acceptance and development regression checks each have revision-matched results; independent reviews, convergence and explicit human acceptance remain required before completion.
+- **SC-008**: Every repository script and test helper has a recorded output-handling assessment; representative ordinary operations expose both streams, and controlled captured failures cover start failure, timeout, signal termination, output on either stream and output exceeding the documented bound, with zero forbidden sensitive disclosures (AC-4.4, AC-4.5).
+- **SC-009**: Controlled cleanup failures prove both unsuccessful cleanup after primary success and simultaneous primary/cleanup failure preserve the required overall result and diagnostics (AC-4.6).
+- **SC-010**: Release verification covers manual invocation from main and a non-main repository branch, automatic publication restricted to main, and zero promotion proposals or deployment-reference changes from non-main publication; actual external executions require separate authorization (AC-3.2, AC-3.4).
 
 ## Assumptions
 

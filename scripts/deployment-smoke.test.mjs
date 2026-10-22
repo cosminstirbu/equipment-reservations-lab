@@ -2,11 +2,45 @@ import assert from 'node:assert/strict';
 import { createServer } from 'node:http';
 import { test } from 'node:test';
 import { URLSearchParams } from 'node:url';
+import { spawnSync } from 'node:child_process';
+import { inspect } from 'node:util';
 import {
   verifyDeploymentSurface,
   observeNotifications,
   verifyDiagnosticAuthentication,
 } from './deployment-smoke.mjs';
+
+test('smoke CLI reports safe prerequisite phase without echoing private paths', () => {
+  const result = spawnSync(
+    process.execPath,
+    ['scripts/deployment-smoke.mjs', '--state', 'missing-PRIVATE_STATE_MARKER'],
+    { encoding: 'utf8', timeout: 10000 },
+  );
+  assert.equal(result.status, 1);
+  assert.match(result.stderr, /prerequisites.*failed/i);
+  assert.doesNotMatch(
+    result.stderr + result.stdout,
+    /PRIVATE_STATE_MARKER|ENOENT|node:fs/,
+  );
+});
+
+test('HTTP transport failures expose a safe phase without raw transport causes', async () => {
+  await assert.rejects(
+    verifyDeploymentSurface({
+      applicationOrigin: 'http://127.0.0.1:1/?PRIVATE_URL_MARKER',
+      authority: 'http://127.0.0.1:1',
+    }),
+    (error) => {
+      assert.match(error.message, /HTTP.*transport|HTTP.*timeout/i);
+      assert.equal(error.cause, undefined);
+      assert.doesNotMatch(
+        JSON.stringify(error) + error.message,
+        /PRIVATE_URL_MARKER|fetch failed/,
+      );
+      return true;
+    },
+  );
+});
 
 async function provider(t, handler) {
   const server = createServer(handler);
@@ -14,6 +48,30 @@ async function provider(t, handler) {
   t.after(() => new Promise((resolve) => server.close(resolve)));
   return `http://127.0.0.1:${server.address().port}`;
 }
+
+test('malformed private HTTP JSON retains only the safe payload category', async (t) => {
+  const origin = await provider(t, (request, response) => {
+    if (request.url.endsWith('/openapi/v1.json')) {
+      response.setHeader('content-type', 'application/json');
+      response.end('{"PRIVATE_HTTP_JSON_MARKER":');
+    } else response.end('<html>Application</html>');
+  });
+  await assert.rejects(
+    verifyDeploymentSurface({
+      applicationOrigin: origin,
+      authority: `${origin}/realms/equipment`,
+    }),
+    (error) => {
+      assert.match(error.message, /Smoke HTTP response payload is invalid/);
+      assert.equal(error.cause, undefined);
+      assert.doesNotMatch(
+        error.message + JSON.stringify(error) + inspect(error, { depth: 10 }),
+        /PRIVATE_|Unexpected token|JSON at position/,
+      );
+      return true;
+    },
+  );
+});
 
 test('deployed surface checks actual HTTP documents and rejects exposed administration', async (t) => {
   let exposed = false;

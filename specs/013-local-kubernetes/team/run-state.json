@@ -1,598 +1,676 @@
 {
-  "feature_directory": "specs/013-local-kubernetes",
-  "status": "repair_in_progress",
-  "ci_round_05": {
-    "baseline": "94081ed2da5bf8003aeb9314afdb124e2d972d44",
-    "authorization": "Owner instructed Fix both tests on 2026-10-20 after investigation of release 39429285803 attempt 1; coordinator resumes one bounded batch from persisted state, retaining rounds 1-4. Owner also supplied attempt 2 retention failure for investigation.",
-    "scope": "Investigate and repair recurring IdentityAccess startup starvation and forced-container-replacement durability fixture; historical HTTP503 boundary remains unproven.",
-    "status": "locally_validated_hosted_confirmation_pending",
-    "constraints": "Keep application budgets, assertions and native test scheduling; require causal regression evidence, independent reviews and current-revision checks. No Kubernetes changes or release publication.",
-    "branch": "fix/identity-ci-timeouts",
-    "owner_constraints": "Earlier no-commit/no-push instruction superseded by explicit owner request to commit fixes, push and create a PR.",
-    "reports": [
-      "ci-validation-05.md",
-      "ci-identity-pg-repair-05.md",
-      "ci-identity-http-repair-05.md",
-      "ci-database-retention-repair-05.md",
-      "ci-quality-review-05.md",
-      "ci-security-review-05.md",
-      "ci-convergence-05.md"
-    ],
-    "source_sha256": {
-      "tests/TestSupport/ApplicationStartup.cs": "c905da150fe57f26b34fab8197f9742907f03777b73a078704aaa4b1773b4373",
-      "tests/TestSupport/IdentityHttpHarness.cs": "6fd953e11e663f64d89662f9e9f8ed6dfd44e5e00093bef27221fa478cb8d328",
-      "tests/TestSupport/PostgresFixture.cs": "b5ec7b1062330b2323ce9d82dec680563254700a69fa67365901d376cc9bbf7b",
-      "tests/TestSupport/BookingScenario.cs": "11608f5cf56237da9520f8d03b409ae029af3ba7675aad380d0081462d915e47",
-      "tests/IdentityAccess.Tests/ServiceIdentityTests.cs": "2c3d79de1fdc7d6a7b8a53088675d6f7cc24e790b43769ee8e76715d4756cbca",
-      "tests/DatabaseBootstrap.Tests/DatabaseProvisioningTests.cs": "a651568fb307aaf77e9acd2cd88ac458d26423a4bbc6187d41f83c9bdf42a25e"
-    },
-    "checks": {
-      "format-check": "pass",
-      "lint": "pass; zero warnings/errors",
-      "check": "pass; 564 backend,64 frontend,24 tooling; zero failed/skipped; backend3m23.166s",
-      "linux_causal_regression": "pass; actualquota4 full9 564/564 zero skips3m01.998s; early migration opens191/202ms vs16.4/13.5s failures",
-      "git_diff_check": "pass"
-    },
-    "reviews": {
-      "quality": "pass; final localrepair validation, source and causal regression; ci-quality-review-05.md",
-      "security": "pass; final static API and source scope"
-    },
-    "remaining": [
-      "Historical HTTP503 boundary not independently reproduced; hostedamd64 recovery requires validation of eventual published changes.",
-      "Existing ten feature runtime/release/review/human acceptance tasks remain pending."
-    ],
-    "publication": "Owner authorized commit, push and pull request on 2026-10-20 after local validation; hosted results pending."
-  },
-  "baseline_revision": "4dd685c4e34288f94e932dcd49beb22eea965075",
-  "preparation_round": 2,
-  "implementation_round": 4,
-  "limits": {
-    "preparation_repairs": 3,
-    "implementation_repairs": 3,
-    "no_progress_recurrences": 2
-  },
-  "required_checks": [
-    {
-      "command": "npm run format-check",
-      "status": "pass",
-      "exit_status": 0,
-      "revision": "implementation-012-02a",
-      "note": "02a differs from checked02 only in excluded-from-format Markdown sentence; formatted inputs identical"
-    },
-    {
-      "command": "npm run lint",
-      "status": "pass",
-      "exit_status": 0,
-      "revision": "implementation-012-02a",
-      "result": "audited build0warnings0errors;ESLint and suggestion-level style pass"
-    },
-    {
-      "command": "npm run check",
-      "status": "pass",
-      "exit_status": 0,
-      "revision": "implementation-012-02a",
-      "result": "541backend64frontend24tooling;0skipped;2m49.350s;all temporary diagnostics removed"
-    },
-    {
-      "command": "npm run test:deployment",
-      "status": "pass",
-      "exit_status": 0,
-      "revision": "implementation-012-02a",
-      "result": "12serialfiles77tests;0failures/cancellations/skips;actual broker/Dashboard/Kind rollout/nginx probes"
-    },
-    {
-      "command": "git diff --check",
-      "status": "pass",
-      "exit_status": 0,
-      "revision": "implementation-012-02a"
-    },
-    {
-      "command": "local deployment acceptance matrix",
-      "status": "pending",
-      "revision": null,
-      "prerequisite": "genuine published release plus explicit owner DNS/trust and local acceptance actions"
-    },
-    {
-      "command": "hosted ephemeral CI deployment verification",
-      "status": "pending",
-      "revision": null,
-      "prerequisite": "separately authorized external branch/PR workflow execution"
-    }
-  ],
-  "acceptance_evidence": [],
-  "quality_review": {
-    "verdict": "pass",
-    "revision": "implementation-012-02a",
-    "findings": [],
-    "report": "implementation-quality-review-02a.md",
-    "feature_completion": "pending required runtime/external/human gates",
-    "scope": "implemented code"
-  },
-  "security_review": {
-    "verdict": "pass",
-    "revision": "implementation-012-02a",
-    "findings": [],
-    "report": "implementation-security-review-02a.md",
-    "feature_completion": "pending required runtime/external/human gates",
-    "scope": "implemented code"
-  },
-  "convergence": {
-    "verdict": "needs_information",
-    "buildable_scope": "no additional actionable build tasks after T041 repair",
-    "revision": "implementation-012-02a",
-    "report": "convergence-02a.md",
-    "tasks_bytes_unchanged": true,
-    "remaining": "10 existing runtime/external/completion tasks remain unchecked; no duplicate implementation tasks appended"
-  },
-  "human_acceptance_required": true,
-  "human_acceptance": null,
-  "pending_decisions": [],
-  "baseline_working_tree": "Clean main baseline; only owner-provided untracked handoff/planning copied. Original modified docs/engineering/openapi.md excluded.",
-  "worktree": "/Users/cosmin.stirbu/Desktop/codex-speckit-team",
-  "preparation_snapshot": "prep-012-01 (formal artifacts under construction; no application changes)",
-  "setup_evidence": [
-    {
-      "command": "npm ci --ignore-scripts",
-      "exit_status": 0,
-      "result": "296 packages; 0 vulnerabilities"
-    },
-    {
-      "command": "npm --prefix src/Web ci --ignore-scripts",
-      "exit_status": 0,
-      "result": "291 packages; 0 vulnerabilities"
-    },
-    {
-      "command": "npm run format-check",
-      "exit_status": 0,
-      "result": "Baseline formatting passed; workspace loading warning reported",
-      "revision": "4dd685c4e34288f94e932dcd49beb22eea965075"
-    }
-  ],
-  "requirements_review": {
-    "quality": "pass",
-    "security": "pass",
-    "snapshot": "spec.md prepared 2026-10-20; FR-001\u2013018; requirements translation only",
-    "reports": [
-      "requirements-quality-review.md",
-      "requirements-security-review.md"
-    ]
-  },
-  "preparation_reviews": {
-    "snapshot": "prep-design-012-03",
-    "quality": "pass",
-    "security": "pass",
-    "analyze": "pass",
-    "blocking_findings": [],
-    "reports": [
-      "preparation-quality-review-03.md",
-      "preparation-security-review-03.md"
-    ]
-  },
-  "policy_amendments": {
-    "status": "pass \u2014 exact authoritative diffs reviewed by independent quality/security",
-    "authorization": "owner-approved narrow scope in handoff",
-    "files": [
-      "docs/engineering/testing.md",
-      "docs/engineering/openapi.md"
-    ],
-    "reports": [
-      "policy-quality-review.md",
-      "policy-security-review.md"
-    ]
-  },
-  "implementation_batch": {
-    "tasks": "T004\u2013T010",
-    "owner": "coder",
-    "status": "implemented",
-    "scope": "foundation source/test portability"
-  },
-  "metadata_changes_after_review": "Coordinator team evidence/state only after final implementation-012-02a; source/spec/tasks unchanged",
-  "implementation_batches": [
-    {
-      "tasks": "T004\u2013T010",
-      "owner": "/root/implementation",
-      "scope": "src/tests foundation",
-      "status": "implementation present; story-specific runtime/external acceptance remains explicit in tasks"
-    },
-    {
-      "tasks": "T011\u2013T012",
-      "owner": "/root/images",
-      "scope": "deploy/images + deployment-routing test",
-      "status": "implementation present; story-specific runtime/external acceptance remains explicit in tasks"
-    },
-    {
-      "tasks": "T013\u2013T014,T019\u2013T023,T034",
-      "owner": "/root/lifecycle",
-      "scope": "lifecycle CLI/tests; deploy/platform + argocd; .gitignore; local PVC binding integration deferred",
-      "status": "implementation present; story-specific runtime/external acceptance remains explicit in tasks"
-    },
-    {
-      "tasks": "T026\u2013T030",
-      "owner": "/root/delivery",
-      "scope": "validation/promotion scripts + workflows; quickstart integration deferred",
-      "status": "implementation present; story-specific runtime/external acceptance remains explicit in tasks"
-    },
-    {
-      "tasks": "T015\u2013T017,T032\u2013T034 implementation only",
-      "owner": "/root/deployment",
-      "scope": "deploy/base + local overlay; deployment smoke scripts",
-      "status": "implementation present; story-specific runtime/external acceptance remains explicit in tasks"
-    }
-  ],
-  "cleanup": {
-    "cluster": "equipment-compat-012",
-    "status": "deleted after each owned fixture",
-    "authorization": "Explicit user reply: Yes, delete the temporary cluster",
-    "verification": "kind get clusters exit0:No kind clusters; owned test container prefixes absent; original VM/workloads not mutated"
-  },
-  "host_tools": {
-    "kind": "/opt/homebrew/bin/kind 0.33.0",
-    "kubectl": "/opt/homebrew/bin/kubectl 1.37.1 (unsupported two-minor skew from selected node; use temporary1.35.8)",
-    "mkcert": "/opt/homebrew/bin/mkcert 1.4.4",
-    "trust_install": "not performed"
-  },
-  "runtime_diagnosis": {
-    "symptom": "Docker API info timeout while _ping200",
-    "evidence": "bounded5s curl timeout exit28; later same endpoint200 without restart/config change",
-    "status": "recovered; root cause not established; retain prerequisite failures separately",
-    "mutation": "none"
-  },
-  "task_evidence": {
-    "11": "images-evidence.md actual nginx HTTP1/1",
-    "13": "lifecycle-evidence.md focused17tests, scoped ESLint/format, offline renders; actual runtime pending",
-    "14": "lifecycle-evidence.md focused17tests, scoped ESLint/format, offline renders; actual runtime pending",
-    "19": "lifecycle-evidence.md focused17tests, scoped ESLint/format, offline renders; actual runtime pending",
-    "20": "lifecycle-evidence.md focused17tests, scoped ESLint/format, offline renders; actual runtime pending",
-    "22": "lifecycle-evidence.md focused17tests, scoped ESLint/format, offline renders; actual runtime pending",
-    "23": "lifecycle-evidence.md focused17tests, scoped ESLint/format, offline renders; actual runtime pending"
-  },
-  "author_check_status": "Round4 six-source hashes independently reviewed and verified unchanged; format/lint pass, full application564backend64frontend24tooling pass, all13deployment modules and final14targeted CI cases pass. Hosted bootstrap/PG/AMQP causes and full-feature gates remain pending.",
-  "manual_aspire_evidence": {
-    "browser": "27/27 pass",
-    "recovery": "owned DB outage API/readiness503, alive200, restoredAPI200",
-    "telemetry": "824spans/804logs/287traces;385SQL/28messaging/113identityHTTP; knownsecret/JWT0 forbiddenattributes0;798correlatedlogs",
-    "metrics": "resource presence observed; detailed dashboard instrument inspection pending",
-    "cleanup": "exact isolated session stopped; private credentials removed; original session/identity volume preserved",
-    "evidence": "implementation-evidence.md"
-  },
-  "image_evidence": {
-    "native_arm64": "7/7 built; final broker telemetry rebuild supersedes earlier ID",
-    "amd64": "not executed",
-    "publication": "not authorized/performed",
-    "dashboard": "actual browser/API/OTLPHTTP+gRPC auth positive/negative pass",
-    "evidence": "images-evidence.md",
-    "latest_broker_arm64_image": "44dd75db1dbec746853b4de3838cf3124933feff0bcea4018dbb5764392a5f25",
-    "latest_broker_native_source": "6091fd516fc8906e3d93f05bf2969ab06475eed6207bffcb34bd2f2ac7296925"
-  },
-  "external_gates": [
-    "actual hosted CI deployment run",
-    "actual amd64 image builds and multiarchitecture index publication",
-    "public GHCR visibility and reviewed promotion/main merge",
-    "integrated local deployment/browser/business/bootstrap/recovery and lifecycle acceptance",
-    "owner DNS/CA trust and VM-restart persistence acceptance",
-    "detailed deployed telemetry dimensions/retention-pressure and complete-system resources",
-    "overall acceptance convergence after pending evidence",
-    "explicit human feature acceptance"
-  ],
-  "frozen_snapshot": "implementation-012-02a",
-  "frozen_digest": "e95304733cc8b247af38ec077a72f7a9b8d9bcf496b5e1f277af2dd12098f29a",
-  "implementation_repair_round": 4,
-  "check_results_01": [
-    {
-      "command": "npm run format-check",
-      "exit_status": 0,
-      "snapshot": "implementation-012-01"
-    },
-    {
-      "command": "npm run lint",
-      "exit_status": 0,
-      "snapshot": "implementation-012-01",
-      "detail": "audited build0warnings0errors and style gates pass"
-    },
-    {
-      "command": "npm run check",
-      "exit_status": 0,
-      "snapshot": "implementation-012-01",
-      "result": "530backend+64frontend+22tooling passed;0skipped",
-      "environment": "macOSarm64 rootfulPodman6.0.2; DockerSocket; Ryukdisabled per local procedure"
-    }
-  ],
-  "approved_exceptions": [
-    "EX-012-001",
-    "EX-013-002"
-  ],
-  "historical_count_erratum": "requirements-quality-review.md reported16AC; actual numbered scenarios14. Historical report preserved; convergence uses14.",
-  "original_checkout": "Owner edits remain isolated and untouched; additional endpoint/guide changes appeared in original checkout during implementation and were not imported.",
-  "check_results_02_attempt_1": {
-    "command": "npm run check",
-    "exit_status": 1,
-    "input_hashes": "application-check-02-inputs.json",
-    "backend": {
-      "total": 541,
-      "passed": 535,
-      "failed": 6,
-      "skipped": 0,
-      "duration": "3m39s"
-    },
-    "frontend": {
-      "passed": 64
-    },
-    "tooling": {
-      "passed": 24
-    },
-    "build": "0warnings0errors",
-    "failure": "Reservations module6 errors; observed Npgsql read timeouts during fixture connection/type bootstrap. Other8modules passed.",
-    "diagnosis": "VMfree snapshot4874MiBavailable; no memory-exhaustion conclusion or established root cause. Existing PodmanAPI intermittent delays previously observed. Native image build overlapped initial run; no retry yet.",
-    "mutation": "No VM changes, restarts or unrelated workload modifications."
-  },
-  "check_results_02_attempt_2": {
-    "command": "npm run check",
-    "exit_status": 1,
-    "input_hashes": "application-check-02-retry-inputs.json",
-    "overlap": "No concurrent image builds or deployment provider probes",
-    "backend": {
-      "total": 541,
-      "passed": 539,
-      "failed": 2,
-      "skipped": 0,
-      "duration": "3m08s"
-    },
-    "frontend": {
-      "passed": 64
-    },
-    "tooling": {
-      "passed": 24
-    },
-    "build": "0warnings0errors",
-    "failures": [
-      "ReservationFailureBoundaryTests.InvalidMediaParametersAreRejectedBeforeDependencies",
-      "CancellationTests.MissingOrMalformedReservationHasSafeErrorAndNoEffects"
-    ],
-    "diagnosis": "Npgsql connection/type-bootstrap read timeouts in per-scenario database provisioning, before application assertions; cause under controlled investigation, not waived."
-  },
-  "diagnostic_checks": [
-    {
-      "command": "npm run check with temporary aggregate instrumentation",
-      "session": 93636,
-      "exit_status": 0,
-      "backend": "541/541",
-      "frontend": "64/64",
-      "tooling": "24/24",
-      "skipped": 0,
-      "limitation": "Successful module stdout suppressed diagnostics; not a causal fix or final uninstrumented gate."
-    },
-    {
-      "command": "npm run check with temporary private-file aggregate instrumentation",
-      "session": 52521,
-      "exit_status": 1,
-      "backend": "521/541;20 Reservations failures;8othermodules pass",
-      "skipped": 0,
-      "duration": "2m53s",
-      "observations": "Primary fixture149create/extension attempts129migrations;20first-open timeouts3001\u20133215ms; createDBmax11489ms; low continuing ThreadPoolpending0\u201316. No precise CPU/IO/root-cause attribution."
-    }
-  ],
-  "test_infrastructure_design": {
-    "verdict": "independent quality design pass, provisional measured capacity repair",
-    "scope": "four-slot asynchronous per-fixture admission around database creation/extensions/migrations only; release before host/request",
-    "queue_budget": "60s with current test cancellation; expiry fails prerequisite",
-    "unchanged": "native parallel methods/modules/requests and application3s/5s budgets/assertions",
-    "validation": "same full scheduler intended20RED\u2192GREEN with queue outcomes then remove temporary diagnostics and revalidate final source"
-  },
-  "capacity_comparison_1": {
-    "session": 66873,
-    "exit_status": 1,
-    "backend": "537/541;4 IdentityAccess failures;Reservations passed",
-    "duration": "2m42s",
-    "primary_fixture": {
-      "attempts": 149,
-      "acquisitions": 149,
-      "queue_failures": 0,
-      "setup_errors": 0,
-      "max_queue_wait_ms": 6950,
-      "max_create_ms": 306,
-      "max_extension_ms": 207,
-      "max_migration_ms": 182
-    },
-    "remaining": "Different IdentityAccess fixture raw admin TCP-open15s timeouts; queue/completion pressure measured, exact blocking method not sampled."
-  },
-  "host_startup_design": {
-    "review": "quality provisional design pass; no new exception",
-    "scope": "separate per-fixture4slot initial WAF.CreateClient admission; async60squeue/currenttestcancel; release before HTTP; DBlease released beforehostlease",
-    "ownership": [
-      "tests/TestSupport/PostgresFixture.cs",
-      "tests/TestSupport/BookingScenario.cs",
-      "tests/IdentityAccess.Tests/ServiceIdentityTests.cs"
-    ],
-    "validation": "same full scheduler4RED\u2192GREEN, queue/maxactive/wait outcomes; remove temporary diagnostics then final checks",
-    "limits": "No Task.Run, ThreadPoolminimum overrides, request/testmethod serial execution, assertion or application timeout changes"
-  },
-  "capacity_comparison_2": {
-    "session": 17528,
-    "exit_status": 0,
-    "backend": "541/541",
-    "frontend": "64/64",
-    "tooling": "24/24",
-    "skipped": 0,
-    "duration": "2m43s",
-    "scope": "controlled comparison with temporary aggregate diagnostics, now removed; final uninstrumented check pending",
-    "primary_fixture": "149DB/139host starts;0failures;hostmaxactive4;hostwait8924ms;DBwait10995ms",
-    "identity_fixture": "25DB/40host starts;0failures;hostmaxactive4;hostwait1709ms;DBwait9237ms",
-    "interpretation": "Measured targeted capacity repair; no claim all transient queueing or specific provider CPU/IO cause eliminated"
-  },
-  "snapshot_02a_amendment": {
-    "changed": [
-      "specs/012-local-kubernetes/contracts/runtime.md"
-    ],
-    "scope": "One runtime-contract sentence aligned with already approved secure identical-output reconciliation; no behavior/source change",
-    "review": "quality/security agreed narrow correction; exact final diff/hash recheck pending"
-  },
-  "quality_review_history": [
-    {
-      "verdict": "changes_requested",
-      "revision": "implementation-012-01",
-      "findings": [
-        "Q-I001",
-        "Q-I002",
-        "Q-I003",
-        "Q-I004"
-      ]
-    }
-  ],
-  "security_review_history": [
-    {
-      "verdict": "changes_requested",
-      "revision": "implementation-012-01",
-      "findings": [
-        "SEC-IMPL-001",
-        "SEC-IMPL-002"
-      ]
-    }
-  ],
-  "completion_metadata_check": {
-    "spec_status": "Implementation in progress; runtime/release/human gates accurately pending",
-    "tasks": "31checked/41total;10pending acceptance/release/completion tasks retained",
-    "human_acceptance": null,
-    "exception": "EX-012-001 historical process approval only; no feature acceptance/security waiver",
-    "reviewed_snapshot": "implementation-012-02a",
-    "metadata_changes_after_freeze": "team evidence/state only; no source/spec/task edits after final snapshot"
-  },
-  "initial_source_contract_freeze": {
-    "status": "configuration shapes frozen; focused docs green/manual Aspire pending",
-    "evidence": "identity24/24; DB isolation1/1; broker executable2/2",
-    "scope": "unblocks manifest/smoke authoring, not actual runtime acceptance"
-  },
-  "preparation_metadata_changes_after_review": "T001\u2013T003 checkbox completion only; no task descriptions or requirements changed",
-  "publication_authorization": {
-    "commit_push_pr": "Explicitly authorized by owner on 2026-10-20 for validation workflow testing",
-    "merge_release_and_host_changes": "Not authorized"
-  },
-  "relocation_and_rebase": {
-    "current_branch": "013-local-kubernetes",
-    "previous_directory": "specs/012-local-kubernetes",
-    "local_main_baseline": "d168646",
-    "remote_main_baseline": "4dd685c",
-    "historical_evidence": "Existing 012 snapshot identifiers, hashes and paths describe their original reviewed revision; checks must be rerun after rebase."
-  },
-  "ci_repair_013": {
-    "status": "locally_validated_ready_for_hosted_validation",
-    "trigger": "Owner requested fixes for all three hosted failures on 2026-10-20",
-    "baseline": "6d79ef755218bbd08317ae7177a273b65f8a0f45",
-    "failed_run": "https://github.com/cosminstirbu/equipment-reservations-lab/actions/runs/39412807716",
-    "scope": [
-      "CoreDNS actual configuration parse/startup regression",
-      "Stable provider endpoints across real stop/start without random-port reservation races",
-      "Correct conservative commit-to-publisher timing under unchanged one-second requirement"
-    ],
-    "gates": "Test-first evidence, real providers, native scheduling unchanged, exact-revision independent delta reviews and local/hosted validation required. Historical reviews remain valid only for their original snapshots.",
-    "source_snapshot": "ci-repair-snapshot-01.json",
-    "quality_review": {
-      "verdict": "pass",
-      "scope": "repair code",
-      "report": "ci-quality-review-01.md"
-    },
-    "security_review": {
-      "verdict": "pass",
-      "scope": "repair code",
-      "report": "ci-security-review-01.md"
-    },
-    "convergence": "No additional actionable build tasks in repair scope; existing ten external/runtime/completion tasks remain pending (ci-convergence-01.md).",
-    "local_checks": {
-      "format-check": "pass",
-      "lint": "pass (zero warnings/errors)",
-      "check": "pass (541 backend, 64 frontend, 24 tooling, zero failures/skips)",
-      "test:deployment": "pass (12 serialized files, 77 tests, pinned kubectl1.35.8, zero failures/cancellations/skips)"
-    },
-    "hosted_validation": {
-      "record": "https://github.com/cosminstirbu/equipment-reservations-lab/pull/1/checks",
-      "requirement": "Actual Docker run must pass; final outcomes are external per-commit records and summarized in PR description. No hosted pass inferred from local Podman."
-    },
-    "validation_report": "ci-validation-01.md"
-  },
-  "ci_followup_013": {
-    "status": "locally_validated_hosted_execution_required",
-    "baseline": "c1ac45c75a7c29dd92dc1e29b9a3c33fa09a2509",
-    "run": "https://github.com/cosminstirbu/equipment-reservations-lab/actions/runs/39417401158",
-    "observations": {
-      "quality": "492/541 passed. All 49 Notifications cases failed before execution because the PostgreSQL assembly fixture Docker startup could not listen on its random TCP publication. The other eight modules, including the repaired Broker, Identity and Integration outbox cases, passed.",
-      "deployment": "Actual CoreDNS/platform regressions passed. Application deployment advanced past CoreDNS, but an unknown bootstrap Job completion wait timed out after 300 seconds. The previous wrapper omitted Job identity/status; its underlying failure remains unproven."
-    },
-    "approved_scope": [
-      "Two total initial container starts only for the exact documented Docker 500 pre-process network/publication failure; original deadline/cancellation intact",
-      "Whitelisted, bounded failed-Job status diagnostics; no speculative application/bootstrap fix"
-    ],
-    "completion": "Original three repair-source changes remain independently reviewed; new startup and diagnostic scope needs own regression, review and validation. Unknown Job failure remains pending; no overall feature completion claimed.",
-    "snapshot": "ci-followup-snapshot-03.json",
-    "checks": {
-      "format-check": "pass",
-      "lint": "pass (zero warnings/errors, no style suppressions)",
-      "check": "pass (555 backend, 64 frontend, 24 tooling, zero failures/skips)",
-      "targeted_ci_deployment": "pass (10 cases, pinned kubectl1.35.8)"
-    },
-    "reviews": {
-      "quality": "pass for final six-file code snapshot; ci-quality-review-03.md",
-      "security": "pass for final six-file code snapshot; ci-security-review-03.md"
-    },
-    "remaining": "Unknown hosted bootstrap Job failure needs next bounded status capture. No speculative fix or full feature acceptance claimed.",
-    "report": "ci-validation-03.md"
-  },
-  "implementation_repair_limit_override": {
-    "limit": 4,
-    "approved_by": "human owner",
-    "date": "2026-10-20",
-    "scope": "One additional repair round covering the newly observed Docker bind-error variant and concrete bootstrap failure identified by the diagnostic run; regression tests, independent review and validation retained.",
-    "approval": "Approve one additional repair round",
-    "original_default_limit": 3
-  },
-  "ci_round_04": {
-    "status": "hosted_validation_failed_repair_budget_exhausted",
-    "baseline": "ca766491c2937624d40a98350ac0ee201b22b6de",
-    "failed_hosted_run": "https://github.com/cosminstirbu/equipment-reservations-lab/actions/runs/39420693665",
-    "observations": {
-      "quality": "525/555 passed. 27 IdentityBootstrap cases blocked by new initial holder TCP bind-error variant; two separate IdentityAccess migration connection timeouts and one Broker post-restart AMQP handshake/reset failure remain distinct.",
-      "deployment": "Database bootstrap Job c7b985ad83f6fb4e failed BackoffLimitExceeded with three exit-code-1 Pods. This now establishes the failing CLI, not its exception/root cause."
-    },
-    "work": "Narrow Docker bind classifier extension and actual production-image bootstrap contract implemented; exact database-only private failure-type diagnostics added. No speculative Npgsql/AMQP retries, timeout or scheduling changes.",
-    "snapshot": "ci-repair-snapshot-04.json",
-    "reviews": {
-      "quality": "pass; ci-quality-review-04.md",
-      "security": "pass; ci-security-review-04.md",
-      "scope": "Final six source hashes, including exact equipment namespace correction. Hosted recovery is not established."
-    },
-    "checks": {
-      "check": "pass:564 backend,64 frontend,24 tooling;zero failures/skips;3m14.690s backend",
-      "test:deployment": "pass:all13 serial modules; final CI diagnostic/render contracts separately14/14 after namespace repair",
-      "final_format_lint_ci": "pass:format-check,lint zero warnings/errors,targeted14/14 zero failures/skips",
-      "git_diff_check": "pass"
-    },
-    "reports": [
-      "ci-validation-04.md",
-      "ci-container-start-repair.md",
-      "ci-db-bootstrap-repair-04.md",
-      "ci-db-diagnostic-04.md",
-      "ci-convergence-04.md"
-    ],
-    "remaining": [
-      "Kubernetes bootstrap NpgsqlException inner cause/phase",
-      "IdentityAccess503 token/Inventory boundary failure or timeout",
-      "Full-feature existing ten runtime/release/acceptance tasks"
-    ],
-    "commit": "b22d1317167b7343f59f343c77975994a25a0ab8",
-    "hosted_run": "https://github.com/cosminstirbu/equipment-reservations-lab/actions/runs/39425930936",
-    "hosted_result": {
-      "quality": "562/564 passed,2failed,0skipped. Both new IdentityAccess HTTP availability assertions503 expected200 after setup. Previous Docker bind/listen, PG setup timeout and AMQP reset signatures absent in this run; not permanent closure.",
-      "deployment": "Real serialized provider regressions including actual bootstrap Docker image passed; both standalone CLI invocations exit0. In kind, database-bootstrap-dd12203655c8834a failed with three exit1 Pods/BackoffLimitExceeded. Private diagnostic projected allowlisted NpgsqlException; inner connection cause not established.",
-      "cleanup": "Hosted disposable cluster cleanup completed; no merge/publication/host changes."
-    },
-    "next_decision": "Owner approval required for an additional bounded repair round under docs/agent-team/protocol.md bounded execution; default3 overridden only to4. Proposed safe phase/inner-cause outcome diagnostics before behavior changes; keep budgets/scheduling/assertions."
-  },
-  "temporary_deployment_validation": {
-    "status": "owner_disabled_pending_reenable",
-    "exception": "EX-013-002",
-    "scope": "Validate deployment job only; quality and release checks remain enabled.",
-    "restoration": "Remove constant-false deployment job guard and comment after exploratory testing.",
-    "quality": "Latest actual hosted runb22d131:562/564 pass,two503failures; not waived.",
-    "authorization": "Explicit owner request2026-10-20; no automatic merge/publication performed.",
-    "checks": "format-check pass;lint pass0warnings0errors;36 workflow/promotion/orchestration contracts pass0skip;gitdiffcheck pass",
-    "reviews": "Independentquality/securitypass atworkflowhashc5824f13dbbe0d18c37c7bece74d3ea639a39e42527a3f395bde06d9861fea6c; temporary-deployment-review.md"
-  }
+    "feature_directory":  "specs/013-local-kubernetes",
+    "status":  "repair_in_progress",
+    "branch_release_batch":  {
+                                 "authorization_date":  "2026-10-22",
+                                 "authorization":  "Owner requested release workflow runnable from any branch. Implement manual repository-branch dispatch, retain automatic main push and main-only promotion; no actual commit/push/remote workflow execution authorized.",
+                                 "baseline":  "diagnostics-snapshot-04.json plus approved exception metadata; existing uncommitted diagnostics preserved",
+                                 "tasks":  "T054-T059",
+                                 "status":  "scoped_implementation_verified_and_independently_reviewed_feature_acceptance_pending",
+                                 "preparation_quality":  "pass; branch-release-preparation-quality.md",
+                                 "preparation_security":  "pass; branch-release-preparation-security.md",
+                                 "preparation_round":  0,
+                                 "implementation_round":  0,
+                                 "repair_limit":  3,
+                                 "human_acceptance":  null,
+                                 "snapshot":  "branch-release-snapshot-01.json",
+                                 "verification":  "branch-release-verification.md; 50 Linux tests pass, format-check/lint pass",
+                                 "quality_review":  "pass; branch-release-quality.md",
+                                 "security_review":  "pass; branch-release-security.md",
+                                 "convergence":  "No bounded implementation gaps; full feature T052/T053 remain pending"
+                             },
+    "script_diagnostics_batch":  {
+                                     "baseline_revision":  "623bfaf8b6439d9d9bad94bdaf5d492432d557c1",
+                                     "authorization_date":  "2026-10-21",
+                                     "authorization":  "Owner approved grilling Q1-Q7: all script and test-helper diagnostics, mandatory engineering guide, team implementation/review/convergence. No commit, push, workflow dispatch or feature acceptance authorized for this batch.",
+                                     "feature_directory":  "specs/013-local-kubernetes",
+                                     "status":  "runtime_verification_pending_exception_resolved",
+                                     "preparation_quality":  "pass; diagnostics-preparation-quality.md; CHK001-CHK010 satisfied by reviewer",
+                                     "preparation_security":  "pass; diagnostics-preparation-security.md",
+                                     "tasks":  "T042 complete; T043-T048 implemented through speckit-implement with affected process gates pending; T049/T050 verification/quality incomplete; convergence appended T051-T053 without changing earlier markers.",
+                                     "final_snapshot":  "diagnostics-snapshot-04.json; subsequent tasks/team edits metadata-only",
+                                     "verification":  {
+                                                          "format_check":  "pass; final source snapshot04",
+                                                          "lint":  "pass; final snapshot04, build zero warnings/errors",
+                                                          "application_check":  "pass; unchanged application/tooling inputs, 550 backend succeeded/14 approved Windows skips, 64 frontend pass, 41 tooling pass/1 POSIX skip covered on Linux",
+                                                          "linux_script_suites":  "pass; core97/97 zero skips, final smoke/validation modules23/23 zero skips",
+                                                          "real_provider_checks":  "pass; Dashboard1, broker retention1, repaired routing1",
+                                                          "full_deployment_suite":  "pending prerequisite; attempted exit1, missing pinned kubectl before CI fixture; kind-dependent and remaining provider evidence unavailable"
+                                                      },
+                                     "convergence":  "tasks_appended T051-T053; diagnostics-convergence.md; feature not converged or accepted",
+                                     "exception_request":  "Approved as EX-013-003 on 2026-10-22; original reviewer validated closure in diagnostics-exception-review.md; remaining evidence and feature acceptance unchanged",
+                                     "reports":  [
+                                                     "diagnostics-requirements.md",
+                                                     "diagnostics-design.md",
+                                                     "diagnostics-preparation-quality.md",
+                                                     "diagnostics-preparation-security.md",
+                                                     "diagnostics-implementation.md",
+                                                     "diagnostics-provider-implementation.md",
+                                                     "diagnostics-quality-01.md",
+                                                     "diagnostics-security-01.md",
+                                                     "diagnostics-quality-02.md",
+                                                     "diagnostics-security-02.md",
+                                                     "diagnostics-quality-03.md",
+                                                     "diagnostics-security-03.md",
+                                                     "diagnostics-quality-04.md",
+                                                     "diagnostics-security-04.md",
+                                                     "diagnostics-verification.md",
+                                                     "diagnostics-convergence.md",
+                                                     "diagnostics-exception-request.md"
+                                                 ],
+                                     "preparation_round":  0,
+                                     "implementation_round":  1,
+                                     "implementation_quality":  "Source findings closed; DQ-P001 resolved under EX-013-003 by original reviewer on 2026-10-22; overall quality still pending required runtime/deployment evidence",
+                                     "implementation_security":  "pass for reviewed code privacy/cleanup; diagnostics-security-02.md and diagnostics-security-03.md",
+                                     "open_findings":  [
+
+                                                       ],
+                                     "repair_limit":  3,
+                                     "prior_rounds":  "Preserved; this is a newly authorized bounded diagnostics scope, not a reset of historical repair evidence.",
+                                     "human_acceptance":  null
+                                 },
+    "ci_round_05":  {
+                        "baseline":  "94081ed2da5bf8003aeb9314afdb124e2d972d44",
+                        "authorization":  "Owner instructed Fix both tests on 2026-10-20 after investigation of release 39429285803 attempt 1; coordinator resumes one bounded batch from persisted state, retaining rounds 1-4. Owner also supplied attempt 2 retention failure for investigation.",
+                        "scope":  "Investigate and repair recurring IdentityAccess startup starvation and forced-container-replacement durability fixture; historical HTTP503 boundary remains unproven.",
+                        "status":  "locally_validated_hosted_confirmation_pending",
+                        "constraints":  "Keep application budgets, assertions and native test scheduling; require causal regression evidence, independent reviews and current-revision checks. No Kubernetes changes or release publication.",
+                        "branch":  "fix/identity-ci-timeouts",
+                        "owner_constraints":  "Earlier no-commit/no-push instruction superseded by explicit owner request to commit fixes, push and create a PR.",
+                        "reports":  [
+                                        "ci-validation-05.md",
+                                        "ci-identity-pg-repair-05.md",
+                                        "ci-identity-http-repair-05.md",
+                                        "ci-database-retention-repair-05.md",
+                                        "ci-quality-review-05.md",
+                                        "ci-security-review-05.md",
+                                        "ci-convergence-05.md"
+                                    ],
+                        "source_sha256":  {
+                                              "tests/TestSupport/ApplicationStartup.cs":  "c905da150fe57f26b34fab8197f9742907f03777b73a078704aaa4b1773b4373",
+                                              "tests/TestSupport/IdentityHttpHarness.cs":  "6fd953e11e663f64d89662f9e9f8ed6dfd44e5e00093bef27221fa478cb8d328",
+                                              "tests/TestSupport/PostgresFixture.cs":  "b5ec7b1062330b2323ce9d82dec680563254700a69fa67365901d376cc9bbf7b",
+                                              "tests/TestSupport/BookingScenario.cs":  "11608f5cf56237da9520f8d03b409ae029af3ba7675aad380d0081462d915e47",
+                                              "tests/IdentityAccess.Tests/ServiceIdentityTests.cs":  "2c3d79de1fdc7d6a7b8a53088675d6f7cc24e790b43769ee8e76715d4756cbca",
+                                              "tests/DatabaseBootstrap.Tests/DatabaseProvisioningTests.cs":  "a651568fb307aaf77e9acd2cd88ac458d26423a4bbc6187d41f83c9bdf42a25e"
+                                          },
+                        "checks":  {
+                                       "format-check":  "pass",
+                                       "lint":  "pass; zero warnings/errors",
+                                       "check":  "pass; 564 backend,64 frontend,24 tooling; zero failed/skipped; backend3m23.166s",
+                                       "linux_causal_regression":  "pass; actualquota4 full9 564/564 zero skips3m01.998s; early migration opens191/202ms vs16.4/13.5s failures",
+                                       "git_diff_check":  "pass"
+                                   },
+                        "reviews":  {
+                                        "quality":  "pass; final localrepair validation, source and causal regression; ci-quality-review-05.md",
+                                        "security":  "pass; final static API and source scope"
+                                    },
+                        "remaining":  [
+                                          "Historical HTTP503 boundary not independently reproduced; hostedamd64 recovery requires validation of eventual published changes.",
+                                          "Existing ten feature runtime/release/review/human acceptance tasks remain pending."
+                                      ],
+                        "publication":  "Owner authorized commit, push and pull request on 2026-10-20 after local validation; hosted results pending."
+                    },
+    "baseline_revision":  "4dd685c4e34288f94e932dcd49beb22eea965075",
+    "preparation_round":  2,
+    "implementation_round":  4,
+    "limits":  {
+                   "preparation_repairs":  3,
+                   "implementation_repairs":  3,
+                   "no_progress_recurrences":  2
+               },
+    "required_checks":  [
+                            {
+                                "command":  "npm run format-check",
+                                "status":  "pass",
+                                "exit_status":  0,
+                                "revision":  "implementation-012-02a",
+                                "note":  "02a differs from checked02 only in excluded-from-format Markdown sentence; formatted inputs identical"
+                            },
+                            {
+                                "command":  "npm run lint",
+                                "status":  "pass",
+                                "exit_status":  0,
+                                "revision":  "implementation-012-02a",
+                                "result":  "audited build0warnings0errors;ESLint and suggestion-level style pass"
+                            },
+                            {
+                                "command":  "npm run check",
+                                "status":  "pass",
+                                "exit_status":  0,
+                                "revision":  "implementation-012-02a",
+                                "result":  "541backend64frontend24tooling;0skipped;2m49.350s;all temporary diagnostics removed"
+                            },
+                            {
+                                "command":  "npm run test:deployment",
+                                "status":  "pass",
+                                "exit_status":  0,
+                                "revision":  "implementation-012-02a",
+                                "result":  "12serialfiles77tests;0failures/cancellations/skips;actual broker/Dashboard/Kind rollout/nginx probes"
+                            },
+                            {
+                                "command":  "git diff --check",
+                                "status":  "pass",
+                                "exit_status":  0,
+                                "revision":  "implementation-012-02a"
+                            },
+                            {
+                                "command":  "local deployment acceptance matrix",
+                                "status":  "pending",
+                                "revision":  null,
+                                "prerequisite":  "genuine published release plus explicit owner DNS/trust and local acceptance actions"
+                            },
+                            {
+                                "command":  "hosted ephemeral CI deployment verification",
+                                "status":  "pending",
+                                "revision":  null,
+                                "prerequisite":  "separately authorized external branch/PR workflow execution"
+                            }
+                        ],
+    "acceptance_evidence":  [
+
+                            ],
+    "quality_review":  {
+                           "verdict":  "pass",
+                           "revision":  "implementation-012-02a",
+                           "findings":  [
+
+                                        ],
+                           "report":  "implementation-quality-review-02a.md",
+                           "feature_completion":  "pending required runtime/external/human gates",
+                           "scope":  "implemented code"
+                       },
+    "security_review":  {
+                            "verdict":  "pass",
+                            "revision":  "implementation-012-02a",
+                            "findings":  [
+
+                                         ],
+                            "report":  "implementation-security-review-02a.md",
+                            "feature_completion":  "pending required runtime/external/human gates",
+                            "scope":  "implemented code"
+                        },
+    "convergence":  {
+                        "verdict":  "needs_information",
+                        "buildable_scope":  "no additional actionable build tasks after T041 repair",
+                        "revision":  "implementation-012-02a",
+                        "report":  "convergence-02a.md",
+                        "tasks_bytes_unchanged":  true,
+                        "remaining":  "10 existing runtime/external/completion tasks remain unchecked; no duplicate implementation tasks appended"
+                    },
+    "human_acceptance_required":  true,
+    "human_acceptance":  null,
+    "pending_decisions":  [
+
+                          ],
+    "baseline_working_tree":  "Clean main baseline; only owner-provided untracked handoff/planning copied. Original modified docs/engineering/openapi.md excluded.",
+    "worktree":  "/Users/cosmin.stirbu/Desktop/codex-speckit-team",
+    "preparation_snapshot":  "prep-012-01 (formal artifacts under construction; no application changes)",
+    "setup_evidence":  [
+                           {
+                               "command":  "npm ci --ignore-scripts",
+                               "exit_status":  0,
+                               "result":  "296 packages; 0 vulnerabilities"
+                           },
+                           {
+                               "command":  "npm --prefix src/Web ci --ignore-scripts",
+                               "exit_status":  0,
+                               "result":  "291 packages; 0 vulnerabilities"
+                           },
+                           {
+                               "command":  "npm run format-check",
+                               "exit_status":  0,
+                               "result":  "Baseline formatting passed; workspace loading warning reported",
+                               "revision":  "4dd685c4e34288f94e932dcd49beb22eea965075"
+                           }
+                       ],
+    "requirements_review":  {
+                                "quality":  "pass",
+                                "security":  "pass",
+                                "snapshot":  "spec.md prepared 2026-10-20; FR-001–018; requirements translation only",
+                                "reports":  [
+                                                "requirements-quality-review.md",
+                                                "requirements-security-review.md"
+                                            ]
+                            },
+    "preparation_reviews":  {
+                                "snapshot":  "prep-design-012-03",
+                                "quality":  "pass",
+                                "security":  "pass",
+                                "analyze":  "pass",
+                                "blocking_findings":  [
+
+                                                      ],
+                                "reports":  [
+                                                "preparation-quality-review-03.md",
+                                                "preparation-security-review-03.md"
+                                            ]
+                            },
+    "policy_amendments":  {
+                              "status":  "pass — exact authoritative diffs reviewed by independent quality/security",
+                              "authorization":  "owner-approved narrow scope in handoff",
+                              "files":  [
+                                            "docs/engineering/testing.md",
+                                            "docs/engineering/openapi.md"
+                                        ],
+                              "reports":  [
+                                              "policy-quality-review.md",
+                                              "policy-security-review.md"
+                                          ]
+                          },
+    "implementation_batch":  {
+                                 "tasks":  "T004–T010",
+                                 "owner":  "coder",
+                                 "status":  "implemented",
+                                 "scope":  "foundation source/test portability"
+                             },
+    "metadata_changes_after_review":  "Coordinator team evidence/state only after final implementation-012-02a; source/spec/tasks unchanged",
+    "implementation_batches":  [
+                                   {
+                                       "tasks":  "T004–T010",
+                                       "owner":  "/root/implementation",
+                                       "scope":  "src/tests foundation",
+                                       "status":  "implementation present; story-specific runtime/external acceptance remains explicit in tasks"
+                                   },
+                                   {
+                                       "tasks":  "T011–T012",
+                                       "owner":  "/root/images",
+                                       "scope":  "deploy/images + deployment-routing test",
+                                       "status":  "implementation present; story-specific runtime/external acceptance remains explicit in tasks"
+                                   },
+                                   {
+                                       "tasks":  "T013–T014,T019–T023,T034",
+                                       "owner":  "/root/lifecycle",
+                                       "scope":  "lifecycle CLI/tests; deploy/platform + argocd; .gitignore; local PVC binding integration deferred",
+                                       "status":  "implementation present; story-specific runtime/external acceptance remains explicit in tasks"
+                                   },
+                                   {
+                                       "tasks":  "T026–T030",
+                                       "owner":  "/root/delivery",
+                                       "scope":  "validation/promotion scripts + workflows; quickstart integration deferred",
+                                       "status":  "implementation present; story-specific runtime/external acceptance remains explicit in tasks"
+                                   },
+                                   {
+                                       "tasks":  "T015–T017,T032–T034 implementation only",
+                                       "owner":  "/root/deployment",
+                                       "scope":  "deploy/base + local overlay; deployment smoke scripts",
+                                       "status":  "implementation present; story-specific runtime/external acceptance remains explicit in tasks"
+                                   }
+                               ],
+    "cleanup":  {
+                    "cluster":  "equipment-compat-012",
+                    "status":  "deleted after each owned fixture",
+                    "authorization":  "Explicit user reply: Yes, delete the temporary cluster",
+                    "verification":  "kind get clusters exit0:No kind clusters; owned test container prefixes absent; original VM/workloads not mutated"
+                },
+    "host_tools":  {
+                       "kind":  "/opt/homebrew/bin/kind 0.33.0",
+                       "kubectl":  "/opt/homebrew/bin/kubectl 1.37.1 (unsupported two-minor skew from selected node; use temporary1.35.8)",
+                       "mkcert":  "/opt/homebrew/bin/mkcert 1.4.4",
+                       "trust_install":  "not performed"
+                   },
+    "runtime_diagnosis":  {
+                              "symptom":  "Docker API info timeout while _ping200",
+                              "evidence":  "bounded5s curl timeout exit28; later same endpoint200 without restart/config change",
+                              "status":  "recovered; root cause not established; retain prerequisite failures separately",
+                              "mutation":  "none"
+                          },
+    "task_evidence":  {
+                          "11":  "images-evidence.md actual nginx HTTP1/1",
+                          "13":  "lifecycle-evidence.md focused17tests, scoped ESLint/format, offline renders; actual runtime pending",
+                          "14":  "lifecycle-evidence.md focused17tests, scoped ESLint/format, offline renders; actual runtime pending",
+                          "19":  "lifecycle-evidence.md focused17tests, scoped ESLint/format, offline renders; actual runtime pending",
+                          "20":  "lifecycle-evidence.md focused17tests, scoped ESLint/format, offline renders; actual runtime pending",
+                          "22":  "lifecycle-evidence.md focused17tests, scoped ESLint/format, offline renders; actual runtime pending",
+                          "23":  "lifecycle-evidence.md focused17tests, scoped ESLint/format, offline renders; actual runtime pending"
+                      },
+    "author_check_status":  "Round4 six-source hashes independently reviewed and verified unchanged; format/lint pass, full application564backend64frontend24tooling pass, all13deployment modules and final14targeted CI cases pass. Hosted bootstrap/PG/AMQP causes and full-feature gates remain pending.",
+    "manual_aspire_evidence":  {
+                                   "browser":  "27/27 pass",
+                                   "recovery":  "owned DB outage API/readiness503, alive200, restoredAPI200",
+                                   "telemetry":  "824spans/804logs/287traces;385SQL/28messaging/113identityHTTP; knownsecret/JWT0 forbiddenattributes0;798correlatedlogs",
+                                   "metrics":  "resource presence observed; detailed dashboard instrument inspection pending",
+                                   "cleanup":  "exact isolated session stopped; private credentials removed; original session/identity volume preserved",
+                                   "evidence":  "implementation-evidence.md"
+                               },
+    "image_evidence":  {
+                           "native_arm64":  "7/7 built; final broker telemetry rebuild supersedes earlier ID",
+                           "amd64":  "not executed",
+                           "publication":  "not authorized/performed",
+                           "dashboard":  "actual browser/API/OTLPHTTP+gRPC auth positive/negative pass",
+                           "evidence":  "images-evidence.md",
+                           "latest_broker_arm64_image":  "44dd75db1dbec746853b4de3838cf3124933feff0bcea4018dbb5764392a5f25",
+                           "latest_broker_native_source":  "6091fd516fc8906e3d93f05bf2969ab06475eed6207bffcb34bd2f2ac7296925"
+                       },
+    "external_gates":  [
+                           "actual hosted CI deployment run",
+                           "actual amd64 image builds and multiarchitecture index publication",
+                           "public GHCR visibility and reviewed promotion/main merge",
+                           "integrated local deployment/browser/business/bootstrap/recovery and lifecycle acceptance",
+                           "owner DNS/CA trust and VM-restart persistence acceptance",
+                           "detailed deployed telemetry dimensions/retention-pressure and complete-system resources",
+                           "overall acceptance convergence after pending evidence",
+                           "explicit human feature acceptance"
+                       ],
+    "frozen_snapshot":  "implementation-012-02a",
+    "frozen_digest":  "e95304733cc8b247af38ec077a72f7a9b8d9bcf496b5e1f277af2dd12098f29a",
+    "implementation_repair_round":  4,
+    "check_results_01":  [
+                             {
+                                 "command":  "npm run format-check",
+                                 "exit_status":  0,
+                                 "snapshot":  "implementation-012-01"
+                             },
+                             {
+                                 "command":  "npm run lint",
+                                 "exit_status":  0,
+                                 "snapshot":  "implementation-012-01",
+                                 "detail":  "audited build0warnings0errors and style gates pass"
+                             },
+                             {
+                                 "command":  "npm run check",
+                                 "exit_status":  0,
+                                 "snapshot":  "implementation-012-01",
+                                 "result":  "530backend+64frontend+22tooling passed;0skipped",
+                                 "environment":  "macOSarm64 rootfulPodman6.0.2; DockerSocket; Ryukdisabled per local procedure"
+                             }
+                         ],
+    "approved_exceptions":  [
+                                "EX-012-001",
+                                "EX-013-002"
+                            ],
+    "historical_count_erratum":  "requirements-quality-review.md reported16AC; actual numbered scenarios14. Historical report preserved; convergence uses14.",
+    "original_checkout":  "Owner edits remain isolated and untouched; additional endpoint/guide changes appeared in original checkout during implementation and were not imported.",
+    "check_results_02_attempt_1":  {
+                                       "command":  "npm run check",
+                                       "exit_status":  1,
+                                       "input_hashes":  "application-check-02-inputs.json",
+                                       "backend":  {
+                                                       "total":  541,
+                                                       "passed":  535,
+                                                       "failed":  6,
+                                                       "skipped":  0,
+                                                       "duration":  "3m39s"
+                                                   },
+                                       "frontend":  {
+                                                        "passed":  64
+                                                    },
+                                       "tooling":  {
+                                                       "passed":  24
+                                                   },
+                                       "build":  "0warnings0errors",
+                                       "failure":  "Reservations module6 errors; observed Npgsql read timeouts during fixture connection/type bootstrap. Other8modules passed.",
+                                       "diagnosis":  "VMfree snapshot4874MiBavailable; no memory-exhaustion conclusion or established root cause. Existing PodmanAPI intermittent delays previously observed. Native image build overlapped initial run; no retry yet.",
+                                       "mutation":  "No VM changes, restarts or unrelated workload modifications."
+                                   },
+    "check_results_02_attempt_2":  {
+                                       "command":  "npm run check",
+                                       "exit_status":  1,
+                                       "input_hashes":  "application-check-02-retry-inputs.json",
+                                       "overlap":  "No concurrent image builds or deployment provider probes",
+                                       "backend":  {
+                                                       "total":  541,
+                                                       "passed":  539,
+                                                       "failed":  2,
+                                                       "skipped":  0,
+                                                       "duration":  "3m08s"
+                                                   },
+                                       "frontend":  {
+                                                        "passed":  64
+                                                    },
+                                       "tooling":  {
+                                                       "passed":  24
+                                                   },
+                                       "build":  "0warnings0errors",
+                                       "failures":  [
+                                                        "ReservationFailureBoundaryTests.InvalidMediaParametersAreRejectedBeforeDependencies",
+                                                        "CancellationTests.MissingOrMalformedReservationHasSafeErrorAndNoEffects"
+                                                    ],
+                                       "diagnosis":  "Npgsql connection/type-bootstrap read timeouts in per-scenario database provisioning, before application assertions; cause under controlled investigation, not waived."
+                                   },
+    "diagnostic_checks":  [
+                              {
+                                  "command":  "npm run check with temporary aggregate instrumentation",
+                                  "session":  93636,
+                                  "exit_status":  0,
+                                  "backend":  "541/541",
+                                  "frontend":  "64/64",
+                                  "tooling":  "24/24",
+                                  "skipped":  0,
+                                  "limitation":  "Successful module stdout suppressed diagnostics; not a causal fix or final uninstrumented gate."
+                              },
+                              {
+                                  "command":  "npm run check with temporary private-file aggregate instrumentation",
+                                  "session":  52521,
+                                  "exit_status":  1,
+                                  "backend":  "521/541;20 Reservations failures;8othermodules pass",
+                                  "skipped":  0,
+                                  "duration":  "2m53s",
+                                  "observations":  "Primary fixture149create/extension attempts129migrations;20first-open timeouts3001–3215ms; createDBmax11489ms; low continuing ThreadPoolpending0–16. No precise CPU/IO/root-cause attribution."
+                              }
+                          ],
+    "test_infrastructure_design":  {
+                                       "verdict":  "independent quality design pass, provisional measured capacity repair",
+                                       "scope":  "four-slot asynchronous per-fixture admission around database creation/extensions/migrations only; release before host/request",
+                                       "queue_budget":  "60s with current test cancellation; expiry fails prerequisite",
+                                       "unchanged":  "native parallel methods/modules/requests and application3s/5s budgets/assertions",
+                                       "validation":  "same full scheduler intended20RED→GREEN with queue outcomes then remove temporary diagnostics and revalidate final source"
+                                   },
+    "capacity_comparison_1":  {
+                                  "session":  66873,
+                                  "exit_status":  1,
+                                  "backend":  "537/541;4 IdentityAccess failures;Reservations passed",
+                                  "duration":  "2m42s",
+                                  "primary_fixture":  {
+                                                          "attempts":  149,
+                                                          "acquisitions":  149,
+                                                          "queue_failures":  0,
+                                                          "setup_errors":  0,
+                                                          "max_queue_wait_ms":  6950,
+                                                          "max_create_ms":  306,
+                                                          "max_extension_ms":  207,
+                                                          "max_migration_ms":  182
+                                                      },
+                                  "remaining":  "Different IdentityAccess fixture raw admin TCP-open15s timeouts; queue/completion pressure measured, exact blocking method not sampled."
+                              },
+    "host_startup_design":  {
+                                "review":  "quality provisional design pass; no new exception",
+                                "scope":  "separate per-fixture4slot initial WAF.CreateClient admission; async60squeue/currenttestcancel; release before HTTP; DBlease released beforehostlease",
+                                "ownership":  [
+                                                  "tests/TestSupport/PostgresFixture.cs",
+                                                  "tests/TestSupport/BookingScenario.cs",
+                                                  "tests/IdentityAccess.Tests/ServiceIdentityTests.cs"
+                                              ],
+                                "validation":  "same full scheduler4RED→GREEN, queue/maxactive/wait outcomes; remove temporary diagnostics then final checks",
+                                "limits":  "No Task.Run, ThreadPoolminimum overrides, request/testmethod serial execution, assertion or application timeout changes"
+                            },
+    "capacity_comparison_2":  {
+                                  "session":  17528,
+                                  "exit_status":  0,
+                                  "backend":  "541/541",
+                                  "frontend":  "64/64",
+                                  "tooling":  "24/24",
+                                  "skipped":  0,
+                                  "duration":  "2m43s",
+                                  "scope":  "controlled comparison with temporary aggregate diagnostics, now removed; final uninstrumented check pending",
+                                  "primary_fixture":  "149DB/139host starts;0failures;hostmaxactive4;hostwait8924ms;DBwait10995ms",
+                                  "identity_fixture":  "25DB/40host starts;0failures;hostmaxactive4;hostwait1709ms;DBwait9237ms",
+                                  "interpretation":  "Measured targeted capacity repair; no claim all transient queueing or specific provider CPU/IO cause eliminated"
+                              },
+    "snapshot_02a_amendment":  {
+                                   "changed":  [
+                                                   "specs/012-local-kubernetes/contracts/runtime.md"
+                                               ],
+                                   "scope":  "One runtime-contract sentence aligned with already approved secure identical-output reconciliation; no behavior/source change",
+                                   "review":  "quality/security agreed narrow correction; exact final diff/hash recheck pending"
+                               },
+    "quality_review_history":  [
+                                   {
+                                       "verdict":  "changes_requested",
+                                       "revision":  "implementation-012-01",
+                                       "findings":  [
+                                                        "Q-I001",
+                                                        "Q-I002",
+                                                        "Q-I003",
+                                                        "Q-I004"
+                                                    ]
+                                   }
+                               ],
+    "security_review_history":  [
+                                    {
+                                        "verdict":  "changes_requested",
+                                        "revision":  "implementation-012-01",
+                                        "findings":  [
+                                                         "SEC-IMPL-001",
+                                                         "SEC-IMPL-002"
+                                                     ]
+                                    }
+                                ],
+    "completion_metadata_check":  {
+                                      "spec_status":  "Implementation in progress; runtime/release/human gates accurately pending",
+                                      "tasks":  "31checked/41total;10pending acceptance/release/completion tasks retained",
+                                      "human_acceptance":  null,
+                                      "exception":  "EX-012-001 historical process approval only; no feature acceptance/security waiver",
+                                      "reviewed_snapshot":  "implementation-012-02a",
+                                      "metadata_changes_after_freeze":  "team evidence/state only; no source/spec/task edits after final snapshot"
+                                  },
+    "initial_source_contract_freeze":  {
+                                           "status":  "configuration shapes frozen; focused docs green/manual Aspire pending",
+                                           "evidence":  "identity24/24; DB isolation1/1; broker executable2/2",
+                                           "scope":  "unblocks manifest/smoke authoring, not actual runtime acceptance"
+                                       },
+    "preparation_metadata_changes_after_review":  "T001–T003 checkbox completion only; no task descriptions or requirements changed",
+    "publication_authorization":  {
+                                      "commit_push_pr":  "Explicitly authorized by owner on 2026-10-20 for validation workflow testing",
+                                      "merge_release_and_host_changes":  "Not authorized"
+                                  },
+    "relocation_and_rebase":  {
+                                  "current_branch":  "013-local-kubernetes",
+                                  "previous_directory":  "specs/012-local-kubernetes",
+                                  "local_main_baseline":  "d168646",
+                                  "remote_main_baseline":  "4dd685c",
+                                  "historical_evidence":  "Existing 012 snapshot identifiers, hashes and paths describe their original reviewed revision; checks must be rerun after rebase."
+                              },
+    "ci_repair_013":  {
+                          "status":  "locally_validated_ready_for_hosted_validation",
+                          "trigger":  "Owner requested fixes for all three hosted failures on 2026-10-20",
+                          "baseline":  "6d79ef755218bbd08317ae7177a273b65f8a0f45",
+                          "failed_run":  "https://github.com/cosminstirbu/equipment-reservations-lab/actions/runs/39412807716",
+                          "scope":  [
+                                        "CoreDNS actual configuration parse/startup regression",
+                                        "Stable provider endpoints across real stop/start without random-port reservation races",
+                                        "Correct conservative commit-to-publisher timing under unchanged one-second requirement"
+                                    ],
+                          "gates":  "Test-first evidence, real providers, native scheduling unchanged, exact-revision independent delta reviews and local/hosted validation required. Historical reviews remain valid only for their original snapshots.",
+                          "source_snapshot":  "ci-repair-snapshot-01.json",
+                          "quality_review":  {
+                                                 "verdict":  "pass",
+                                                 "scope":  "repair code",
+                                                 "report":  "ci-quality-review-01.md"
+                                             },
+                          "security_review":  {
+                                                  "verdict":  "pass",
+                                                  "scope":  "repair code",
+                                                  "report":  "ci-security-review-01.md"
+                                              },
+                          "convergence":  "No additional actionable build tasks in repair scope; existing ten external/runtime/completion tasks remain pending (ci-convergence-01.md).",
+                          "local_checks":  {
+                                               "format-check":  "pass",
+                                               "lint":  "pass (zero warnings/errors)",
+                                               "check":  "pass (541 backend, 64 frontend, 24 tooling, zero failures/skips)",
+                                               "test:deployment":  "pass (12 serialized files, 77 tests, pinned kubectl1.35.8, zero failures/cancellations/skips)"
+                                           },
+                          "hosted_validation":  {
+                                                    "record":  "https://github.com/cosminstirbu/equipment-reservations-lab/pull/1/checks",
+                                                    "requirement":  "Actual Docker run must pass; final outcomes are external per-commit records and summarized in PR description. No hosted pass inferred from local Podman."
+                                                },
+                          "validation_report":  "ci-validation-01.md"
+                      },
+    "ci_followup_013":  {
+                            "status":  "locally_validated_hosted_execution_required",
+                            "baseline":  "c1ac45c75a7c29dd92dc1e29b9a3c33fa09a2509",
+                            "run":  "https://github.com/cosminstirbu/equipment-reservations-lab/actions/runs/39417401158",
+                            "observations":  {
+                                                 "quality":  "492/541 passed. All 49 Notifications cases failed before execution because the PostgreSQL assembly fixture Docker startup could not listen on its random TCP publication. The other eight modules, including the repaired Broker, Identity and Integration outbox cases, passed.",
+                                                 "deployment":  "Actual CoreDNS/platform regressions passed. Application deployment advanced past CoreDNS, but an unknown bootstrap Job completion wait timed out after 300 seconds. The previous wrapper omitted Job identity/status; its underlying failure remains unproven."
+                                             },
+                            "approved_scope":  [
+                                                   "Two total initial container starts only for the exact documented Docker 500 pre-process network/publication failure; original deadline/cancellation intact",
+                                                   "Whitelisted, bounded failed-Job status diagnostics; no speculative application/bootstrap fix"
+                                               ],
+                            "completion":  "Original three repair-source changes remain independently reviewed; new startup and diagnostic scope needs own regression, review and validation. Unknown Job failure remains pending; no overall feature completion claimed.",
+                            "snapshot":  "ci-followup-snapshot-03.json",
+                            "checks":  {
+                                           "format-check":  "pass",
+                                           "lint":  "pass (zero warnings/errors, no style suppressions)",
+                                           "check":  "pass (555 backend, 64 frontend, 24 tooling, zero failures/skips)",
+                                           "targeted_ci_deployment":  "pass (10 cases, pinned kubectl1.35.8)"
+                                       },
+                            "reviews":  {
+                                            "quality":  "pass for final six-file code snapshot; ci-quality-review-03.md",
+                                            "security":  "pass for final six-file code snapshot; ci-security-review-03.md"
+                                        },
+                            "remaining":  "Unknown hosted bootstrap Job failure needs next bounded status capture. No speculative fix or full feature acceptance claimed.",
+                            "report":  "ci-validation-03.md"
+                        },
+    "implementation_repair_limit_override":  {
+                                                 "limit":  4,
+                                                 "approved_by":  "human owner",
+                                                 "date":  "2026-10-20",
+                                                 "scope":  "One additional repair round covering the newly observed Docker bind-error variant and concrete bootstrap failure identified by the diagnostic run; regression tests, independent review and validation retained.",
+                                                 "approval":  "Approve one additional repair round",
+                                                 "original_default_limit":  3
+                                             },
+    "ci_round_04":  {
+                        "status":  "hosted_validation_failed_repair_budget_exhausted",
+                        "baseline":  "ca766491c2937624d40a98350ac0ee201b22b6de",
+                        "failed_hosted_run":  "https://github.com/cosminstirbu/equipment-reservations-lab/actions/runs/39420693665",
+                        "observations":  {
+                                             "quality":  "525/555 passed. 27 IdentityBootstrap cases blocked by new initial holder TCP bind-error variant; two separate IdentityAccess migration connection timeouts and one Broker post-restart AMQP handshake/reset failure remain distinct.",
+                                             "deployment":  "Database bootstrap Job c7b985ad83f6fb4e failed BackoffLimitExceeded with three exit-code-1 Pods. This now establishes the failing CLI, not its exception/root cause."
+                                         },
+                        "work":  "Narrow Docker bind classifier extension and actual production-image bootstrap contract implemented; exact database-only private failure-type diagnostics added. No speculative Npgsql/AMQP retries, timeout or scheduling changes.",
+                        "snapshot":  "ci-repair-snapshot-04.json",
+                        "reviews":  {
+                                        "quality":  "pass; ci-quality-review-04.md",
+                                        "security":  "pass; ci-security-review-04.md",
+                                        "scope":  "Final six source hashes, including exact equipment namespace correction. Hosted recovery is not established."
+                                    },
+                        "checks":  {
+                                       "check":  "pass:564 backend,64 frontend,24 tooling;zero failures/skips;3m14.690s backend",
+                                       "test:deployment":  "pass:all13 serial modules; final CI diagnostic/render contracts separately14/14 after namespace repair",
+                                       "final_format_lint_ci":  "pass:format-check,lint zero warnings/errors,targeted14/14 zero failures/skips",
+                                       "git_diff_check":  "pass"
+                                   },
+                        "reports":  [
+                                        "ci-validation-04.md",
+                                        "ci-container-start-repair.md",
+                                        "ci-db-bootstrap-repair-04.md",
+                                        "ci-db-diagnostic-04.md",
+                                        "ci-convergence-04.md"
+                                    ],
+                        "remaining":  [
+                                          "Kubernetes bootstrap NpgsqlException inner cause/phase",
+                                          "IdentityAccess503 token/Inventory boundary failure or timeout",
+                                          "Full-feature existing ten runtime/release/acceptance tasks"
+                                      ],
+                        "commit":  "b22d1317167b7343f59f343c77975994a25a0ab8",
+                        "hosted_run":  "https://github.com/cosminstirbu/equipment-reservations-lab/actions/runs/39425930936",
+                        "hosted_result":  {
+                                              "quality":  "562/564 passed,2failed,0skipped. Both new IdentityAccess HTTP availability assertions503 expected200 after setup. Previous Docker bind/listen, PG setup timeout and AMQP reset signatures absent in this run; not permanent closure.",
+                                              "deployment":  "Real serialized provider regressions including actual bootstrap Docker image passed; both standalone CLI invocations exit0. In kind, database-bootstrap-dd12203655c8834a failed with three exit1 Pods/BackoffLimitExceeded. Private diagnostic projected allowlisted NpgsqlException; inner connection cause not established.",
+                                              "cleanup":  "Hosted disposable cluster cleanup completed; no merge/publication/host changes."
+                                          },
+                        "next_decision":  "Owner approval required for an additional bounded repair round under docs/agent-team/protocol.md bounded execution; default3 overridden only to4. Proposed safe phase/inner-cause outcome diagnostics before behavior changes; keep budgets/scheduling/assertions."
+                    },
+    "temporary_deployment_validation":  {
+                                            "status":  "owner_disabled_pending_reenable",
+                                            "exception":  "EX-013-002",
+                                            "scope":  "Validate deployment job only; quality and release checks remain enabled.",
+                                            "restoration":  "Remove constant-false deployment job guard and comment after exploratory testing.",
+                                            "quality":  "Latest actual hosted runb22d131:562/564 pass,two503failures; not waived.",
+                                            "authorization":  "Explicit owner request2026-10-20; no automatic merge/publication performed.",
+                                            "checks":  "format-check pass;lint pass0warnings0errors;36 workflow/promotion/orchestration contracts pass0skip;gitdiffcheck pass",
+                                            "reviews":  "Independentquality/securitypass atworkflowhashc5824f13dbbe0d18c37c7bece74d3ea639a39e42527a3f395bde06d9861fea6c; temporary-deployment-review.md"
+                                        }
 }
