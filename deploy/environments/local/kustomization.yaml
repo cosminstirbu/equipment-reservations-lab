@@ -20,7 +20,10 @@ patches:
     patch:
       '[{"op": "add", "path": "/spec/volumeName", "value": "equipment-rabbitmq"},
       {"op": "replace", "path": "/spec/storageClassName", "value": "equipment-retain"}]'
-images: []
+images:
+  - name: identity-bootstrap
+    newName: ghcr.io/cosminstirbu/equipment-reservations-lab-identity-bootstrap
+    digest: sha256:cd500e697ec7b8595c9161432b65e51827e7d306ecfb7d5a42c43e944ca7fc78
 generators:
   - configuration.yaml
   - web-configuration.yaml
