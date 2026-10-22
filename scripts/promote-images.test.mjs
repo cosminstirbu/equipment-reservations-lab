@@ -558,6 +558,80 @@ test('GitHub snapshot rejects content not matching its parent blob object ID', a
   );
 });
 
+test('first promotion branches remain managed on rerun with quoted unreleased Job suffixes', async () => {
+  const changes = [
+    ["'-unreleased'", '-1ba05fd4ba467463', true],
+    ['"-unreleased"', '"-1ba05fd4ba467463"', true],
+    ['-unreleased', "'-1ba05fd4ba467463'", true],
+    ["'-unreleased'", '\'-1ba05fd4ba467463"', false],
+    ['\'-unreleased"', '-1ba05fd4ba467463', false],
+    ["'-unreleased'", "'-arbitrary'", false],
+    ["'-unreleased'", '-1ba05fd4ba467463\n+resources: []', false],
+  ];
+  for (const component of [
+    undefined,
+    'database-bootstrap',
+    'identity-bootstrap',
+  ]) {
+    for (const [previous, next, managed] of changes) {
+      let existing = false;
+      const base = 'a'.repeat(40);
+      const head = 'd'.repeat(40);
+      const names = component
+        ? [component.split('-')[0]]
+        : ['database', 'identity'];
+      const gateway = githubGateway({
+        repository: 'example/equipment',
+        component,
+        token: 'private',
+        request: async (url) => {
+          let data;
+          if (url.endsWith('/heads/main')) data = { object: { sha: base } };
+          else if (url.includes('/git/ref/')) {
+            if (!existing) return { ok: false, status: 404 };
+            data = { object: { sha: head } };
+          } else
+            data = {
+              behind_by: 0,
+              merge_base_commit: { sha: base },
+              ahead_by: 1,
+              commits: [
+                {
+                  sha: head,
+                  author: { login: 'github-actions[bot]' },
+                  commit: {
+                    message:
+                      'chore: promote local application images\n\nSource: ' +
+                      base,
+                  },
+                },
+              ],
+              files: names.map((name) => ({
+                filename: `deploy/environments/local/jobs/${name}/kustomization.yaml`,
+                status: 'modified',
+                patch: `@@ -3,4 +3,4 @@\n-nameSuffix: ${previous}\n+nameSuffix: ${next}`,
+              })),
+            };
+          return { ok: true, status: 200, json: async () => data };
+        },
+      });
+      assert.deepEqual(await gateway.readState(), {
+        base,
+        head: null,
+        managed: true,
+      });
+      existing = true;
+      const rerun = await gateway.readState();
+      assert.equal(rerun.head, head);
+      assert.equal(
+        rerun.managed,
+        managed,
+        `${component ?? 'legacy release'}: ${previous} -> ${next}`,
+      );
+    }
+  }
+});
+
 test('managed branch validation rejects earlier human commits and cumulative unrelated changes', async () => {
   for (const problem of ['human-history', 'unrelated-file', 'advanced-main']) {
     const head = 'd'.repeat(40);

@@ -524,7 +524,9 @@ export function githubGateway({
                   ?.split('\n')
                   .filter((line) => /^[+-]/.test(line))
                   .every((line) =>
-                    /^[+-]nameSuffix: -(?:[a-f0-9]{16}|unreleased)$/.test(line),
+                    /^[+-]nameSuffix: (['"]?)-(?:[a-f0-9]{16}|unreleased)\1$/.test(
+                      line,
+                    ),
                   ))),
         );
       return {
