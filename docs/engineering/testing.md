@@ -136,7 +136,9 @@ above before claiming compliance with the testing principles.
 ## Backend code coverage in VS Code and CI
 
 [coverage.runsettings](../../coverage.runsettings) configures Microsoft Code Coverage
-to exclude source files under `obj` directories. Its source-path expression handles
+to exclude generated `obj` sources and limit collection to application assemblies
+(including unexecuted code through static instrumentation), excluding test helpers and
+AppHost. Its source-path expression handles
 both Windows and Unix separators. C# Dev Kit uses Microsoft's collector rather than
 Coverlet; Coverlet exclusion settings are not interchangeable with this configuration.
 
@@ -145,13 +147,10 @@ file. Use **Run Tests with Coverage** to regenerate IDE results after changing i
 VS Code workspace settings do not configure command-line or CI test runs; pass the
 coverage settings explicitly there.
 
-The CLI uses the native .NET 10 Microsoft Testing Platform runner. Before enabling
-CLI coverage, add a pinned, MTP-compatible `Microsoft.Testing.Extensions.CodeCoverage`
-package reference to the test projects through the existing test-only item group in
-`tests/Directory.Build.props`, excluding TestSupport, and update their package lockfiles.
-The repository does not currently reference this extension, so the following command
-requires that setup first. Installing C# Dev Kit does not install the CLI extension
-into the test projects.
+The CLI uses the native .NET 10 Microsoft Testing Platform runner. A pinned,
+MTP-compatible `Microsoft.Testing.Extensions.CodeCoverage` reference is installed
+through `tests/Directory.Build.props` for the nine test projects, excluding TestSupport.
+Installing C# Dev Kit alone does not install this CLI extension.
 
 From the repository root, with the normal container runtime environment from the README:
 
@@ -165,15 +164,44 @@ dotnet test --solution EquipmentReservation.slnx \
 
 This example uses a POSIX shell; in PowerShell, pass an absolute settings path using
 `(Join-Path $PWD 'coverage.runsettings')` and use PowerShell line continuation syntax.
-Use `dotnet test --project <project> --help` after adding the extension to confirm
+Use the test executable?s `--help` output to confirm
 the available coverage options. CI still needs the pinned SDK and the container
 prerequisites for real PostgreSQL, RabbitMQ and Keycloak integration tests.
 
-Publish the generated Cobertura reports from the test results directories as pipeline
-artifacts. Each test module produces its own report; preserve distinct report paths
-and merge them with a compatible reporting tool if the pipeline needs one solution-wide
-coverage percentage. Do not direct parallel modules to the same output filename.
+Each test module produces a uniquely named report; preserve distinct report paths
+before merging. Do not direct parallel modules to the same output filename.
 `npm run check` continues to run the normal suite without collecting coverage.
+
+### Application reports in CI
+
+Full PR/main quality uses `npm run check -- --reports`. After the usual prerequisites,
+this mode attempts both Vitest and the nine parallel backend modules even if a test
+suite fails; it preserves failure status and publishes available assessed results.
+Failed build/setup prerequisites still prevent dependent tests. Manifest-only quality
+is unchanged. This explicit mode is also available locally with normal prerequisites.
+
+Test Reporter displays separate backend/frontend application test summaries.
+ReportGenerator merges backend modules and produces separate backend/frontend HTML,
+Cobertura and Markdown coverage reports. Coverage is informational; no threshold or
+percentage regression gate is configured. Missing expected reports or generation
+failure fails quality. Reports run after failed application tests, without checks:write,
+PR comments or privileged workflow_run. Tooling, browser and Kubernetes tests are not
+included in these application reports.
+
+Raw TRX/JUnit/Cobertura inputs stay in owner-restricted temporary scratch and are
+removed after projection. Public JUnit retains source-backed test identities, outcomes,
+numeric durations and a fixed failure note; it drops data-row values, assertion
+payloads, exceptions, console output and attachments. Full diagnostics remain in live
+job logs. Coverage retains application source locations and numeric line/branch data;
+ReportGenerator HTML includes public application source. Only projected/generated
+reports under `test-results/application/` are uploaded, with 14-day retention. Local
+reports remain there; raw scratch is `.cache/application-reporting/raw/`.
+
+Frontend collection includes unexecuted `src/**/*.ts`, excluding spec files and test
+setup. Backend collection uses the shared application assembly allowlist and static
+instrumentation; neither test assemblies nor AppHost/tooling belong in its denominator.
+Do not combine backend and frontend percentages into one metric. See the
+[feature design and evidence](../../specs/013-local-kubernetes/team/application-reporting.md).
 
 Sources: [Microsoft Testing Platform coverage options and package compatibility](https://learn.microsoft.com/en-us/dotnet/core/testing/microsoft-testing-platform-code-coverage),
 [Microsoft Code Coverage configuration](https://github.com/microsoft/codecoverage/blob/main/docs/configuration.md).

@@ -332,3 +332,9 @@ Preserve earlier task IDs, evidence and acceptance gates.
 
 - [x] T107 Implement the owner-confirmed workflow split in pull-request.yaml and validate.yaml with shared Kubernetes verification, concurrent quality/runtime checks after classification, no separate PR component builds, fail-closed release/summary gates and joint quality/Kubernetes main ancestor proof. Preserve manual branch release and independent affected-component publication; run focused/full tooling, pinned Kustomize, formatting/lint and workflow syntax checks and record evidence in plan.md (FR-011, AC-3.1/AC-3.8/AC-3.9, SC-011/SC-013).
 - [ ] T108 Qualify the split through actual hosted PR execution, full and manifest-only scheduling, failed/cancelled validation gates and separately authorized main/manual release execution. Preserve existing deployment runtime failures and broader feature/reviewer/human acceptance obligations; local workflow/CLI tests do not establish GitHub scheduling or real deployment success (SC-007, SC-011, SC-013).
+
+
+## Phase 23: Application test and coverage reports
+
+- [x] T109 Add intended-red report privacy/completeness and failure-propagation regressions, implement explicit reporting mode, native MTP/Vitest collectors, assessed JUnit/Cobertura projection and readonly Test Reporter/ReportGenerator summaries/artifacts; update documentation and run local checks (FR-027, SC-015).
+- [ ] T110 Under owner authorization create branch, commit/push and PR; inspect hosted application results, separate coverage reports/artifacts and final quality/release gating. Record actual checks and any retained failures; do not claim broader Kubernetes feature acceptance (SC-007, SC-015).

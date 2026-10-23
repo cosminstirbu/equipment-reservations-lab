@@ -236,7 +236,9 @@ test('full quality installs the pinned renderer before actual promotion regressi
   const install = steps.findIndex(
     (step) => step.name === 'Install pinned promotion validation tool',
   );
-  const checks = steps.findIndex((step) => step.run === 'npm run check');
+  const checks = steps.findIndex((step) =>
+    /^npm run check(?: -- --reports)?$/.test(step.run ?? ''),
+  );
   assert.ok(install > 0 && install < checks);
   assert.match(
     steps[install].run,
