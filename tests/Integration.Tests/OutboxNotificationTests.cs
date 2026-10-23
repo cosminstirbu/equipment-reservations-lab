@@ -64,7 +64,7 @@ public sealed class OutboxNotificationTests(PostgresFixture postgres, ITestOutpu
         await worker.StartAsync(TestContext.Current.CancellationToken);
         try
         {
-            Assert.Equal(TimeSpan.FromSeconds(30), await schedule.NextAsync());
+            await schedule.AwaitWorkerDelayAsync(TimeSpan.FromSeconds(30));
             // A deferred provider trigger gates the real HTTP transaction at commit,
             // after first-request work, without replacing application persistence.
             await using NpgsqlCommand trigger = scenario.Database.CreateCommand("""
@@ -140,7 +140,7 @@ public sealed class OutboxNotificationTests(PostgresFixture postgres, ITestOutpu
         using (OutboxWorker worker = Worker(scenario, publisher, schedule))
         {
             await worker.StartAsync(TestContext.Current.CancellationToken);
-            Assert.Equal(TimeSpan.FromSeconds(4), await schedule.NextAsync());
+            await schedule.AwaitWorkerDelayAsync(TimeSpan.FromSeconds(4));
             Assert.Empty(publisher.Events);
             await worker.StopAsync(TestContext.Current.CancellationToken);
         }
@@ -148,7 +148,7 @@ public sealed class OutboxNotificationTests(PostgresFixture postgres, ITestOutpu
         using var restartedSchedule = new ManualSchedule();
         using OutboxWorker restarted = Worker(scenario, publisher, restartedSchedule);
         await restarted.StartAsync(TestContext.Current.CancellationToken);
-        Assert.Equal(TimeSpan.FromSeconds(4), await restartedSchedule.NextAsync());
+        await restartedSchedule.AwaitWorkerDelayAsync(TimeSpan.FromSeconds(4));
         scenario.Clock.Now = due;
         await restartedSchedule.AdvanceAsync();
         _ = await publisher.NextAsync();
@@ -163,7 +163,7 @@ public sealed class OutboxNotificationTests(PostgresFixture postgres, ITestOutpu
         using var publisher = new AttemptPublisher();
         using OutboxWorker worker = Worker(scenario, publisher, schedule);
         await worker.StartAsync(TestContext.Current.CancellationToken);
-        _ = await schedule.NextAsync();
+        await schedule.AwaitWorkerDelayAsync(TimeSpan.FromSeconds(30));
         int original = await ListenerPidAsync(scenario.Database);
         await using NpgsqlCommand kill = scenario.Database.CreateCommand("SELECT pg_terminate_backend($1)");
         _ = kill.Parameters.AddWithValue(original);
@@ -195,7 +195,7 @@ public sealed class OutboxNotificationTests(PostgresFixture postgres, ITestOutpu
                 publishers.Add(publisher);
                 workers.Add(worker);
                 await worker.StartAsync(TestContext.Current.CancellationToken);
-                _ = await schedule.NextAsync();
+                await schedule.AwaitWorkerDelayAsync(TimeSpan.FromSeconds(30));
             }
 
             for (int index = 0; index < replicas; index++)
@@ -263,7 +263,7 @@ public sealed class OutboxNotificationTests(PostgresFixture postgres, ITestOutpu
         using var publisher = new AttemptPublisher();
         using OutboxWorker worker = Worker(scenario, publisher, schedule);
         await worker.StartAsync(TestContext.Current.CancellationToken);
-        Assert.Equal(TimeSpan.FromSeconds(30), await schedule.NextAsync());
+        await schedule.AwaitWorkerDelayAsync(TimeSpan.FromSeconds(30));
         _ = await scenario.BookAsync();
         Assert.Empty(publisher.Events);
         await schedule.AdvanceAsync();
@@ -445,33 +445,65 @@ public sealed class OutboxNotificationTests(PostgresFixture postgres, ITestOutpu
         Assert.Equal(0, await ListenerPidAsync(scenario.Database));
     }
 
-    [Fact]
-    public async Task LegacyPollingAndListeningWorkersShareLocksAndStableEventIds()
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task LegacyPollingAndListeningWorkersShareLocksAndStableEventIds(bool delayedStartup)
     {
         await using BookingScenario scenario = await BookingScenario.CreateAsync(postgres);
         using var modernSchedule = new ManualSchedule();
         using var legacySchedule = new ManualSchedule();
         using var modernPublisher = new AttemptPublisher(gated: true);
         using var legacyPublisher = new AttemptPublisher(gated: true);
-        using OutboxWorker modern = Worker(scenario, modernPublisher, modernSchedule);
+        var settings = new NpgsqlConnectionStringBuilder(postgres.ConnectionStringFor(scenario.Database)) { MaxPoolSize = 2 };
+        await using var startupDatabase = NpgsqlDataSource.Create(settings.ConnectionString);
+        await using NpgsqlConnection firstHeldConnection = await startupDatabase.OpenConnectionAsync(TestContext.Current.CancellationToken);
+        await using NpgsqlConnection secondHeldConnection = await startupDatabase.OpenConnectionAsync(TestContext.Current.CancellationToken);
+        using OutboxWorker modern = Worker(scenario, modernPublisher, modernSchedule, source: delayedStartup ? startupDatabase : scenario.Database);
         using var legacy = new LegacyPollingWorker(scenario.Database, legacyPublisher, legacySchedule, scenario.Clock);
-        await modern.StartAsync(TestContext.Current.CancellationToken);
-        await legacy.StartAsync(TestContext.Current.CancellationToken);
-        Assert.Equal(TimeSpan.FromSeconds(30), await modernSchedule.NextAsync());
-        Assert.Equal(TimeSpan.FromSeconds(10), await legacySchedule.NextAsync());
-        _ = await scenario.BookAsync();
-        _ = await scenario.BookAsync(equipment: "laptop-001");
-        ReservationEvent first = await modernPublisher.NextAsync();
-        await legacySchedule.AdvanceAsync();
-        ReservationEvent second = await legacyPublisher.NextAsync();
-        Assert.NotEqual(first.EventId, second.EventId);
-        modernPublisher.Release();
-        legacyPublisher.Release();
-        await AwaitPublishedAsync(scenario.Database, 2);
-        Assert.Equal(1, modernPublisher.MaximumConcurrency);
-        Assert.Equal(1, legacyPublisher.MaximumConcurrency);
-        await modern.StopAsync(TestContext.Current.CancellationToken);
-        await legacy.StopAsync(TestContext.Current.CancellationToken);
+        Exception? primaryFailure = null;
+        try
+        {
+            await modern.StartAsync(TestContext.Current.CancellationToken);
+            if (delayedStartup)
+            {
+                await modernSchedule.Entered.Task.WaitAsync(TimeSpan.FromSeconds(10), TestContext.Current.CancellationToken);
+            }
+
+            await firstHeldConnection.DisposeAsync();
+            await secondHeldConnection.DisposeAsync();
+            await legacy.StartAsync(TestContext.Current.CancellationToken);
+            await modernSchedule.AwaitWorkerDelayAsync(TimeSpan.FromSeconds(30));
+            Assert.Equal(TimeSpan.FromSeconds(10), await legacySchedule.NextAsync());
+            _ = await scenario.BookAsync();
+            _ = await scenario.BookAsync(equipment: "laptop-001");
+            ReservationEvent first = await modernPublisher.NextAsync();
+            await legacySchedule.AdvanceAsync();
+            ReservationEvent second = await legacyPublisher.NextAsync();
+            Assert.NotEqual(first.EventId, second.EventId);
+            modernPublisher.Release();
+            legacyPublisher.Release();
+            await AwaitPublishedAsync(scenario.Database, 2);
+            Assert.Equal(1, modernPublisher.MaximumConcurrency);
+            Assert.Equal(1, legacyPublisher.MaximumConcurrency);
+        }
+        catch (Exception exception)
+        {
+            primaryFailure = exception;
+            throw;
+        }
+        finally
+        {
+            using var cleanup = new CancellationTokenSource(TimeSpan.FromSeconds(10));
+            try
+            {
+                await Task.WhenAll(modern.StopAsync(cleanup.Token), legacy.StopAsync(cleanup.Token));
+            }
+            catch (Exception exception) when (primaryFailure is not null)
+            {
+                output.WriteLine($"Outbox coexistence worker cleanup also failed ({exception.GetType().Name}); original failure retained.");
+            }
+        }
     }
 
     private sealed class LegacyPollingWorker(NpgsqlDataSource database, AttemptPublisher publisher, ManualSchedule schedule, TimeProvider time) : Microsoft.Extensions.Hosting.BackgroundService
@@ -718,6 +750,8 @@ public sealed class OutboxNotificationTests(PostgresFixture postgres, ITestOutpu
         private readonly Channel<(TimeSpan Delay, TaskCompletionSource Completion)> delays = Channel.CreateUnbounded<(TimeSpan, TaskCompletionSource)>();
         private TaskCompletionSource? current;
 
+        public TaskCompletionSource Entered { get; } = new(TaskCreationOptions.RunContinuationsAsynchronously);
+
         public double Jitter()
         {
             return 0.5;
@@ -728,6 +762,7 @@ public sealed class OutboxNotificationTests(PostgresFixture postgres, ITestOutpu
             var completion = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
             using CancellationTokenRegistration registration = cancellationToken.Register(() => completion.TrySetCanceled(cancellationToken));
             await delays.Writer.WriteAsync((delay, completion), cancellationToken);
+            _ = Entered.TrySetResult();
             await completion.Task;
         }
 
@@ -736,6 +771,23 @@ public sealed class OutboxNotificationTests(PostgresFixture postgres, ITestOutpu
             using var budget = CancellationTokenSource.CreateLinkedTokenSource(TestContext.Current.CancellationToken);
             budget.CancelAfter(TimeSpan.FromSeconds(5));
             return await SelectLiveDelayAsync(budget.Token);
+        }
+
+        public async Task AwaitWorkerDelayAsync(TimeSpan expected)
+        {
+            using var budget = CancellationTokenSource.CreateLinkedTokenSource(TestContext.Current.CancellationToken);
+            budget.CancelAfter(TimeSpan.FromSeconds(30));
+            while (true)
+            {
+                TimeSpan delay = await SelectLiveDelayAsync(budget.Token);
+                if (delay == expected)
+                {
+                    return;
+                }
+
+                Assert.Contains(delay, new[] { TimeSpan.FromSeconds(1), TimeSpan.FromSeconds(2), TimeSpan.FromSeconds(10) });
+                _ = current!.TrySetResult();
+            }
         }
 
         public async Task AdvanceAsync()
