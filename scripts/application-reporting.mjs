@@ -126,8 +126,10 @@ function junit(name, cases) {
   if (!cases.length) throw new Error('No application test cases were reported');
   return {
     testsuites: {
+      '@_time': cases.reduce((total, entry) => total + entry['@_time'], 0),
       testsuite: {
         '@_name': name,
+        '@_time': cases.reduce((total, entry) => total + entry['@_time'], 0),
         '@_tests': cases.length,
         '@_failures': cases.filter((entry) => entry.failure).length,
         '@_errors': 0,
