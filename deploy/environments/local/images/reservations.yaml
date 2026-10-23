@@ -8,4 +8,4 @@ spec:
     spec:
       containers:
         - name: reservations
-          image: ghcr.io/cosminstirbu/equipment-reservations-lab-reservations@sha256:c36189e5ebfdee9d7e5fcb61e284729cbe6a955bb88d59ac1c2858f3f71af579
+          image: ghcr.io/cosminstirbu/equipment-reservations-lab-reservations@sha256:ebb20903cfc7b5d3ab2abcf367d981bd333e69d717d296b79ee7e3cfd1602c65
