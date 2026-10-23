@@ -111,7 +111,10 @@ storage; private ignored credential bundle; local Retain PVs.
 **Testing**: existing xUnit v3/MTP/Testcontainers, Angular tests/browser tests;
 separate opt-in deployed smoke and hosted ephemeral kind verification.
 **Target Platform**: existing macOS arm64 rootful Podman VM and hosted Linux CI;
-application and third-party images must support linux/arm64 and linux/amd64.
+owner-approved Windows/WSL Podman qualification is tracked in
+[Windows local setup](team/windows-local-setup.md), including the explicit experimental
+8 GiB trial. Default macOS capacity, trust and private-state requirements remain intact.
+Application and third-party images must support linux/arm64 and linux/amd64.
 **Project Type**: deployment/platform tooling plus existing web/API portability.
 **Performance Goals**: setup <=15 minutes excluding first image download/build;
 individual dependency waits <=180s, total bootstrap <=300s, smoke <=10 minutes.

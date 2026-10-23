@@ -21,6 +21,12 @@ import { connect, createServer } from 'node:net';
 import { clearTimeout, setTimeout } from 'node:timers';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import {
+  assertPrivatePath,
+  createPrivateDirectory,
+  verifySystemTrust,
+  vmMemoryMiB,
+} from './local-platform.mjs';
 
 const repository = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const cluster = 'equipment-local';
@@ -123,6 +129,7 @@ async function hostPrerequisites({
   state,
   lookupHost,
   probePort,
+  platform,
 }) {
   for (const hostname of ['app.equipment.test', 'identity.equipment.test']) {
     let timer;
@@ -175,8 +182,7 @@ async function hostPrerequisites({
         `Prepare private ${path} using your explicitly trusted local CA; setup never installs trust.`,
       );
   }
-  if ((lstatSync(join(state, 'tls.key')).mode & 0o777) !== 0o600)
-    throw new OperationalFailure('tls.key must have mode 0600.');
+  assertPrivatePath(join(state, 'tls.key'), 0o600);
   let certificate;
   try {
     certificate = new X509Certificate(readFileSync(join(state, 'tls.crt')));
@@ -238,15 +244,12 @@ async function hostPrerequisites({
     throw new OperationalFailure(
       'Public CA must match your explicitly installed mkcert CA.',
     );
-  call('security', [
-    'verify-cert',
-    '-c',
-    join(state, 'tls.crt'),
-    '-p',
-    'ssl',
-    '-s',
-    'identity.equipment.test',
-  ]);
+  verifySystemTrust({
+    platform,
+    certificatePath: join(state, 'tls.crt'),
+    caCertificate: readFileSync(join(state, 'ca.crt'), 'utf8'),
+    call,
+  });
 }
 
 export function buildPrivateResources({
@@ -296,6 +299,8 @@ export function createLifecycle({
   connectPort = connectHostPort,
   spawnChild = spawn,
   output = console.log,
+  platform = process.platform,
+  experimental8GiB = process.env.EQUIPMENT_EXPERIMENTAL_8G === '1',
 } = {}) {
   const state = join(root, '.local/kubernetes');
   const bundlePath = join(state, 'credentials.json');
@@ -377,15 +382,7 @@ export function createLifecycle({
   }
 
   function privateFile(path, mode) {
-    const info = lstatSync(path);
-    if (
-      info.isSymbolicLink() ||
-      (info.mode & 0o777) !== mode ||
-      (mode === 0o700 ? !info.isDirectory() : !info.isFile())
-    )
-      throw new OperationalFailure(
-        `Private state requires ${mode === 0o700 ? '0700 directory' : '0600 regular file'}: ${path}`,
-      );
+    assertPrivatePath(path, mode);
   }
 
   function credentials(durable) {
@@ -393,7 +390,7 @@ export function createLifecycle({
     if (existsSync(parent) && lstatSync(parent).isSymbolicLink())
       throw new OperationalFailure('Private state parent cannot be a symlink.');
     if (existsSync(state)) privateFile(state, 0o700);
-    else mkdirSync(state, { recursive: true, mode: 0o700 });
+    else createPrivateDirectory(state);
     if (existsSync(bundlePath)) {
       privateFile(bundlePath, 0o600);
       let bundle;
@@ -466,7 +463,7 @@ export function createLifecycle({
       kubectl: ['version', '--client'],
       mkcert: ['-version'],
       openssl: ['version'],
-      security: ['help'],
+      ...(platform === 'darwin' ? { security: ['help'] } : {}),
     };
     for (const [tool, args] of Object.entries(tools)) {
       try {
@@ -491,11 +488,10 @@ export function createLifecycle({
       !vm.Rootful ||
       !Number.isFinite(vm.Resources?.CPUs) ||
       !Number.isFinite(vm.Resources?.Memory) ||
-      vm.Resources?.CPUs < 6 ||
-      vm.Resources?.Memory < 11000
+      vm.Resources?.CPUs < 6
     )
       throw new OperationalFailure(
-        'Existing running rootful Podman VM requires >=6 CPU and >=11000 MiB; owner must make any VM changes.',
+        'Existing running rootful Podman VM requires >=6 CPU; owner must make any VM changes.',
       );
     if (
       call('podman', [
@@ -506,6 +502,11 @@ export function createLifecycle({
     )
       throw new OperationalFailure(
         'Podman connection must target the existing rootful VM.',
+      );
+    const memory = vmMemoryMiB({ platform, vm, call, experimental8GiB });
+    if (experimental8GiB)
+      output(
+        `Experimental Windows 8 GiB trial: guest memory ${memory} MiB; capacity acceptance remains pending.`,
       );
     const free = Number(
       call('podman', [
@@ -524,6 +525,7 @@ export function createLifecycle({
       state,
       lookupHost,
       probePort,
+      platform,
     });
     output(
       'Prerequisites passed; DNS, trust and VM settings were not changed.',
@@ -844,7 +846,7 @@ export function createLifecycle({
         'exec',
         `${cluster}-control-plane`,
         'chmod',
-        '0700',
+        '2770',
         '/var/local/equipment/postgres',
         '/var/local/equipment/rabbitmq',
       ]);
@@ -1135,7 +1137,7 @@ export function createLifecycle({
     )
       throw new OperationalFailure('Private state parent cannot be a symlink.');
     if (existsSync(state)) privateFile(state, 0o700);
-    else mkdirSync(state, { recursive: true, mode: 0o700 });
+    else createPrivateDirectory(state);
     const lock = join(state, 'operation.lock');
     try {
       mkdirSync(lock, { mode: 0o700 });

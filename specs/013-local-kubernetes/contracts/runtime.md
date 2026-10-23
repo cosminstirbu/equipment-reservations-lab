@@ -36,11 +36,16 @@ approved origin; Development retains canonical loopback HTTP support.
 CLI lifecycle: `prerequisites`, `setup`, `status`, `access argocd|dashboard`, `smoke`,
 `stop`, `reset --confirm-delete-data`, `teardown --confirm-delete-cluster`.
 All commands bind to named cluster/context and reject unexpected ownership. Setup
-reuses private ignored `.local/kubernetes` state mode 0700/files 0600, creates no
+reuses private ignored `.local/kubernetes` state with Unix mode 0700/files 0600
+or owner-restricted Windows NTFS ACLs (SYSTEM/Administrators may also have access), creates no
 secrets if durable state survives missing bundle, and provisions Secret resources
 before Argo sync. Never print secret values or dashboard token URLs. Access forwards
 127.0.0.1 only. Destructive commands disable/remove reconciliation first and explicitly
 scope their data loss. Certificate trust/DNS/VM changes are documented owner actions.
+Windows validates the retained CA against the system trust store; macOS retains
+`security verify-cert`. The normal 11000 MiB memory minimum is unchanged; the
+owner-approved Windows-only 8 GiB trial is explicit and recorded in
+[qualification](../team/windows-local-setup.md).
 
 Image contract: application references are GHCR OCI index digests with linux/arm64
 and linux/amd64 manifests. Source provenance belongs beside references. Missing genuine

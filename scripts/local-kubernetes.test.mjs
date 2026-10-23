@@ -8,7 +8,6 @@ import {
   mkdirSync,
   readFileSync,
   rmSync,
-  statSync,
   unlinkSync,
   writeFileSync,
   copyFileSync,
@@ -20,6 +19,10 @@ import test, { after } from 'node:test';
 import { EventEmitter } from 'node:events';
 import { PassThrough } from 'node:stream';
 import { createLifecycle } from './local-kubernetes.mjs';
+import {
+  assertPrivatePath,
+  createPrivateDirectory,
+} from './local-platform.mjs';
 
 test('prerequisite CLI preserves safe provider failure metadata without private output', (t) => {
   const directory = mkdtempSync(join(tmpdir(), 'lifecycle-provider-'));
@@ -129,6 +132,7 @@ test(
     mkdirSync(scripts);
     for (const name of [
       'local-kubernetes.mjs',
+      'local-platform.mjs',
       'process.mjs',
       'deployment-validation.mjs',
       'component-images.mjs',
@@ -219,7 +223,7 @@ function certificateFixture(includeIp) {
 function fixture(t, options = {}) {
   const root = mkdtempSync(join(tmpdir(), 'equipment-lifecycle-'));
   t.after(() => rmSync(root, { recursive: true, force: true }));
-  mkdirSync(join(root, '.local/kubernetes'), { recursive: true, mode: 0o700 });
+  createPrivateDirectory(join(root, '.local/kubernetes'));
   const leaf = certificateFixture(!options.missingIp);
   for (const [name, contents] of Object.entries({
     'tls.crt': leaf.certificate,
@@ -362,6 +366,8 @@ function fixture(t, options = {}) {
   const app = createLifecycle({
     root,
     run,
+    platform: 'darwin',
+    experimental8GiB: false,
     lookupHost: async () => {
       if (options.hostError) throw new Error(options.hostError);
       return options.addresses ?? [{ address: '127.0.0.1' }];
@@ -506,8 +512,8 @@ test('private credentials are create-once with restricted modes and no replaceme
   const before = readFileSync(path);
   assert.deepEqual(f.app.credentials(false), first);
   assert.deepEqual(readFileSync(path), before);
-  assert.equal(statSync(path).mode & 0o777, 0o600);
-  assert.equal(statSync(join(f.root, '.local/kubernetes')).mode & 0o777, 0o700);
+  assertPrivatePath(path, 0o600);
+  assertPrivatePath(join(f.root, '.local/kubernetes'), 0o700);
   unlinkSync(path);
   assert.throws(() => f.app.credentials(true), /restore.*private.*bundle/i);
   assert.equal(f.calls.length, 0);
@@ -579,15 +585,24 @@ test('access only forwards approved interfaces to loopback and never prints toke
   assert.equal(forward.settings.inherit, false);
 });
 
-test('symlinked or permissive private state is rejected', (t) => {
-  const f = fixture(t);
-  mkdirSync(join(f.root, '.local/kubernetes'), {
-    recursive: true,
-    mode: 0o755,
-  });
-  chmodSync(join(f.root, '.local/kubernetes'), 0o755);
-  assert.throws(() => f.app.credentials(false), /0700/);
-});
+test(
+  'symlinked or permissive private state is rejected',
+  {
+    skip:
+      process.platform === 'win32'
+        ? 'Unix mode contract; Windows ACLs have real platform coverage.'
+        : false,
+  },
+  (t) => {
+    const f = fixture(t);
+    mkdirSync(join(f.root, '.local/kubernetes'), {
+      recursive: true,
+      mode: 0o755,
+    });
+    chmodSync(join(f.root, '.local/kubernetes'), 0o755);
+    assert.throws(() => f.app.credentials(false), /0700/);
+  },
+);
 
 test('prerequisites reject insufficient VM resources, disk, rootless provider and host failures without mutation', async (t) => {
   for (const options of [
@@ -732,7 +747,9 @@ test('setup sends private Secrets before Argo sync and reuses original credentia
     c.settings.input?.includes('equipment-credentials'),
   );
   const argo = f.calls.findIndex((c) =>
-    c.args.some((arg) => arg.endsWith('deploy/argocd/local.yaml')),
+    c.args.some((arg) =>
+      arg.replaceAll('\\', '/').endsWith('deploy/argocd/local.yaml'),
+    ),
   );
   assert.ok(privateSecret >= 0 && argo > privateSecret);
   assert.deepEqual(f.app.credentials(true), first);
@@ -780,7 +797,7 @@ test('smoke uses private state and CA before child startup with owned loopback d
   await f.app.execute(['smoke']);
   const directory = join(f.root, '.local/kubernetes');
   const statePath = join(directory, 'smoke-state.json');
-  assert.equal(statSync(statePath).mode & 0o777, 0o600);
+  assertPrivatePath(statePath, 0o600);
   assert.deepEqual(JSON.parse(readFileSync(statePath, 'utf8')), {
     applicationOrigin: 'https://app.equipment.test',
     authority: 'https://identity.equipment.test/realms/equipment',
@@ -901,18 +918,11 @@ test('the real process adapter supplies the CA environment to Node before its fi
   f.app.credentials(false);
   const directory = join(f.root, '.local/kubernetes');
   writeFileSync(join(directory, 'kubeconfig'), 'private', { mode: 0o600 });
-  const binaries = join(f.root, 'bin');
-  mkdirSync(binaries);
   mkdirSync(join(f.root, 'scripts'));
+  const preload = join(f.root, 'provider.mjs');
   writeFileSync(
-    join(binaries, 'kind'),
-    '#!/usr/bin/env node\nprocess.stdout.write("equipment-local\\n");\n',
-    { mode: 0o755 },
-  );
-  writeFileSync(
-    join(binaries, 'kubectl'),
-    '#!/usr/bin/env node\nconst fs=require("node:fs");const path=require("node:path");process.stdout.write(JSON.parse(fs.readFileSync(path.join(process.cwd(),".local/kubernetes/credentials.json"),"utf8")).owner);\n',
-    { mode: 0o755 },
+    preload,
+    `import{readFileSync}from'node:fs';import{join}from'node:path';import childProcess from'node:child_process';import{syncBuiltinESMExports}from'node:module';const original=childProcess.execFileSync;childProcess.execFileSync=(command,...args)=>{if(command==='kind')return'equipment-local\\n';if(command==='kubectl')return JSON.parse(readFileSync(join(process.cwd(),'.local/kubernetes/credentials.json'),'utf8')).owner;return original(command,...args);};syncBuiltinESMExports();`,
   );
   writeFileSync(
     join(f.root, 'scripts/deployment-smoke.mjs'),
@@ -924,9 +934,12 @@ test('the real process adapter supplies the CA environment to Node before its fi
   const source = `import {createLifecycle} from ${JSON.stringify(moduleUrl)};import{EventEmitter}from'node:events';await createLifecycle({root:${JSON.stringify(f.root)},output:()=>{},probePort:async()=>true,connectPort:async()=>true,spawnChild:()=>{const child=new EventEmitter();child.pid=123;child.exitCode=null;child.kill=()=>{child.exitCode=0;child.emit('exit',0);return true;};return child;}}).execute(['smoke']);`;
   execFileSync(process.execPath, ['--input-type=module', '-e', source], {
     cwd: f.root,
-    env: { ...process.env, PATH: binaries + ':' + process.env.PATH },
+    env: {
+      ...process.env,
+      NODE_OPTIONS: `--import=${pathToFileURL(preload).href}`,
+    },
     stdio: 'pipe',
-    timeout: 10000,
+    timeout: 30000,
   });
   assert.deepEqual(
     JSON.parse(readFileSync(join(f.root, 'child-observation.json'), 'utf8')),
@@ -1017,7 +1030,7 @@ test('setup sends the matching Argo server TLS Secret privately before Argo inst
   const installation = f.calls.findIndex(
     (c) =>
       c.args.includes('-k') &&
-      c.args.some((arg) => arg.endsWith('deploy/argocd')),
+      c.args.some((arg) => arg.replaceAll('\\', '/').endsWith('deploy/argocd')),
   );
   assert.ok(installation > index);
   assert.equal(
@@ -1039,6 +1052,22 @@ test('partial component publication names missing images before any setup mutati
   assert.equal(
     f.calls.some((c) => c.args.includes('create') || c.args.includes('apply')),
     false,
+  );
+});
+
+test('setup prepares retained volume roots for non-recursive group ownership', async (t) => {
+  const f = fixture(t);
+  await releaseFixture(f.root);
+  await f.app.execute(['setup']);
+  const modes = f.calls.filter(
+    (entry) => entry.command === 'podman' && entry.args.includes('chmod'),
+  );
+  assert.ok(
+    modes.some(
+      (entry) =>
+        entry.args.includes('2770') &&
+        entry.args.includes('/var/local/equipment/rabbitmq'),
+    ),
   );
 });
 
