@@ -53,3 +53,27 @@ test('broker pod replacement does not recursively widen the retained Erlang cook
   const pod = resource('rabbitmq.yaml').spec.template.spec;
   assert.equal(pod.securityContext.fsGroupChangePolicy, 'OnRootMismatch');
 });
+
+test('local Argo project admits workload children while retaining private and cluster resource boundaries', () => {
+  const text = readFileSync(
+    new URL('../deploy/argocd/local.yaml', import.meta.url),
+    'utf8',
+  );
+  const project = parsers.Yaml.parse(text.split(/^---\s*$/m)[0]).data;
+  const allowed = project.spec.namespaceResourceWhitelist;
+  for (const [group, kind] of [
+    ['', 'Pod'],
+    ['apps', 'ReplicaSet'],
+  ])
+    assert.ok(
+      allowed.some((entry) => entry.group === group && entry.kind === kind),
+      `${group || 'core'}/${kind} must be permitted`,
+    );
+  assert.ok(
+    allowed.every(
+      (entry) =>
+        entry.group !== '*' && entry.kind !== '*' && entry.kind !== 'Secret',
+    ),
+  );
+  assert.deepEqual(project.spec.clusterResourceWhitelist, []);
+});

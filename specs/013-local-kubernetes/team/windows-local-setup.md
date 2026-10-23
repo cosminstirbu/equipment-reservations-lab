@@ -1,5 +1,26 @@
 # Windows local setup qualification
 
+## Application child-resource policy amendment — 2026-10-23
+
+The owner approved adding core Pods and apps ReplicaSets to the local AppProject's
+namespaced resource allowlist so the Application tree includes Deployment children.
+This also permits Applications in the project to directly manage those kinds;
+it is not a visibility-only setting. Repository, destination, Secret exclusions
+and cluster-scoped restrictions retain their existing scope.
+
+Regression design: parse the actual public AppProject manifest and verify the
+requested child kinds are admitted while Secrets, wildcards and cluster-scoped
+resources stay outside the allowlist. No doubles are needed for this declarative
+policy boundary. Apply only the AppProject to the owned local cluster, then verify
+the effective allowlist and resource-tree visibility without printing credentials.
+
+The regression failed on the missing core Pod permission, then all four Argo policy/
+ordering tests passed. Applied only the AppProject and requested a normal comparison
+refresh. Authenticated resource-tree API verification changed from zero Pods/zero
+ReplicaSets to 36 Pods/10 ReplicaSets; counts include retained completed Pods.
+Application health remained Healthy/Synced. No credentials or token values were
+printed, and no workload manifests were reapplied.
+
 ## Interactive Argo access amendment — 2026-10-23
 
 The owner requested that `access argocd` remain open until manually interrupted.
