@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Npgsql;
+using Xunit;
 
 namespace TestSupport;
 
@@ -99,6 +100,14 @@ internal sealed class BookingScenario : IAsyncDisposable
     public Task<HttpResponseMessage> AvailabilityAsync(string start = "2030-01-02T12:00:00Z", string end = "2030-01-02T13:00:00Z", string equipment = "camera-001")
     {
         return Client.GetAsync($"/api/availability?equipmentId={Uri.EscapeDataString(equipment)}&startAt={Uri.EscapeDataString(start)}&endAt={Uri.EscapeDataString(end)}");
+    }
+
+    public async Task<BookedReservation> BookConfirmedAsync()
+    {
+        using HttpResponseMessage response = await BookAsync();
+        Assert.True(response.StatusCode == HttpStatusCode.Created,
+            $"Fixture reservation setup expected HTTP 201; received HTTP {(int)response.StatusCode}.");
+        return (await response.Content.ReadFromJsonAsync<BookedReservation>(cancellationToken: TestContext.Current.CancellationToken))!;
     }
 
     public async Task<long> CountAsync(string table)

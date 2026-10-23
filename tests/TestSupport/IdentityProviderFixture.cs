@@ -48,6 +48,29 @@ public sealed class IdentityProviderFixture : IAsyncLifetime
                     ["approver"] = Guid.NewGuid().ToString("N"),
                     ["equipment-staff"] = Guid.NewGuid().ToString("N")
                 }, Guid.NewGuid().ToString("N"), ["http://localhost:19877/oauth/callback", "http://localhost:19878/oauth/callback", "http://localhost:19879/oauth/callback"]);
+            using var readiness = new HttpClient { Timeout = Timeout.InfiniteTimeSpan };
+            await IdentityReadiness.WaitAsync(async token =>
+            {
+                using var credentials = new FormUrlEncodedContent(new Dictionary<string, string>
+                {
+                    ["grant_type"] = "password",
+                    ["client_id"] = "admin-cli",
+                    ["username"] = Settings.AdminUsername,
+                    ["password"] = Settings.AdminPassword
+                });
+                using HttpResponseMessage response = await readiness.PostAsync(root + "/realms/master/protocol/openid-connect/token", credentials, token);
+                if (response.StatusCode == HttpStatusCode.OK)
+                {
+                    using JsonDocument authority = await JsonDocument.ParseAsync(await response.Content.ReadAsStreamAsync(token), cancellationToken: token);
+                    if (!authority.RootElement.TryGetProperty("access_token", out JsonElement access)
+                        || access.ValueKind != JsonValueKind.String || string.IsNullOrWhiteSpace(access.GetString()))
+                    {
+                        throw new InvalidOperationException("Identity fixture readiness returned an invalid authority response.");
+                    }
+                }
+
+                return response.StatusCode;
+            }, deadline.Token);
         }
         catch
         {

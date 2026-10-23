@@ -60,7 +60,7 @@ public sealed class SecurityBrowserWriteTests(PostgresFixture postgres)
     public async Task UntrustedOrMalformedOriginCannotCreateOrCancelEvenWithForgedSameOriginMetadata(string origin)
     {
         await using BookingScenario scenario = await BookingScenario.CreateAsync(postgres);
-        BookedReservation original = (await (await scenario.BookAsync()).Content.ReadFromJsonAsync<BookedReservation>(cancellationToken: TestContext.Current.CancellationToken))!;
+        BookedReservation original = await scenario.BookConfirmedAsync();
         int calls = scenario.Inventory.Calls;
         using HttpRequestMessage create = CreateRequest("text/plain");
         _ = create.Headers.TryAddWithoutValidation("Origin", origin);
@@ -78,6 +78,14 @@ public sealed class SecurityBrowserWriteTests(PostgresFixture postgres)
         Assert.Equal(1L, await scenario.CountAsync("reservations"));
         Assert.Equal(1L, await scenario.CountAsync("reservation_outbox"));
         Assert.Equal(calls, scenario.Inventory.Calls);
+    }
+
+    [Fact]
+    public async Task FailedFixtureBookingReportsHttpStatusBeforeReadingAReservation()
+    {
+        await using BookingScenario scenario = await BookingScenario.CreateAsync(postgres, new InventoryBoundary { Unavailable = true });
+        Xunit.Sdk.XunitException failure = await Assert.ThrowsAnyAsync<Xunit.Sdk.XunitException>(scenario.BookConfirmedAsync);
+        Assert.Contains("HTTP 503", failure.Message, StringComparison.Ordinal);
     }
 
     [Theory]

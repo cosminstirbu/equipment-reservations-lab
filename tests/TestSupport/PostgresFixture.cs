@@ -52,6 +52,7 @@ public sealed class PostgresFixture : IAsyncLifetime
         var settings = new NpgsqlConnectionStringBuilder(container.GetConnectionString())
         {
             Database = name,
+            ApplicationName = "equipment-fixture-runtime",
             Timeout = 3,
             CommandTimeout = 5,
             IncludeErrorDetail = false,
@@ -73,6 +74,7 @@ public sealed class PostgresFixture : IAsyncLifetime
         {
             var settings = new NpgsqlConnectionStringBuilder(ConnectionStringFor(source))
             {
+                ApplicationName = "equipment-fixture-provisioning",
                 Timeout = 30,
                 CommandTimeout = 30
             };
@@ -95,6 +97,13 @@ public sealed class PostgresFixture : IAsyncLifetime
                     break;
                 default:
                     throw new ArgumentException("Unknown database owner.", nameof(service));
+            }
+
+            await using (NpgsqlConnection ready = await DatabaseReadiness.ConnectAsync(
+                token => source.OpenConnectionAsync(token).AsTask(), cancellationToken))
+            {
+                await using var probe = new NpgsqlCommand("SELECT 1", ready);
+                _ = await probe.ExecuteScalarAsync(cancellationToken);
             }
 
             return source;

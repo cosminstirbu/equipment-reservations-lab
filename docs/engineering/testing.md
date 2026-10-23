@@ -314,6 +314,16 @@ ready. Choose readiness at the boundary the next operation actually consumes. Fo
 RabbitMQ, establish an authenticated AMQP connection before returning a successful
 fixture startup or restart. An HTTP management response is a different boundary.
 
+Likewise, a successful schema migration on an administrative connection does not
+establish readiness of a separate runtime datasource. Establish its authenticated
+session during fixture setup rather than making the first application request or
+assertion query perform cold connection setup under a request budget. For an identity
+provider, a realm HTTP page does not establish that administration authentication is
+ready for provisioning. Preserve the actual application timeout settings and keep
+readiness retries confined to the declared setup operation. Check successful setup
+response status before deserializing a business DTO; otherwise a provider error can
+be misreported as a serialization failure.
+
 Review initial startup, restart, reused-container startup and partial-initialization
 failure separately. Reuse the readiness policy where these paths promise the same
 postcondition. Keep intentional outage, invalid credentials and permission-denial
@@ -348,6 +358,16 @@ contractual one-second delivery assertion is a performance requirement, not perm
 to replace it with an arbitrary longer wait. Record the measurement environment and
 distinguish it from a functional assertion about eventual delivery.
 
+For background workers, `StartAsync` starts execution but does not prove that the
+listener, connection or idle loop is ready. A shared test schedule may receive both
+startup-recovery and normal processing delays; its first entry is not inherently a
+readiness signal. Establish the required idle/listening state before inserting work,
+measuring a delivery SLA or injecting a later-phase fault. Exercise transient startup
+separately at the real provider boundary where practical, then drive bounded recovery
+to the prerequisite state. Keep intentional retry/backoff assertions strict after the
+relevant publication attempt or injected failure has been observed; do not filter
+arbitrary delays until an assertion happens to match.
+
 Follow [cleanup and failure preservation](tooling.md#cleanup-and-verification) for
 fixtures as well as scripts. Attempt every owned resource after partial setup or
 failure; one disposal failure must not prevent later disposal or hide the primary
@@ -370,6 +390,12 @@ budgets, cancellation propagation, partial-initialization cleanup and shared-sta
 ownership. Review process helpers and tight observation windows alongside application
 assertions. Preserve the [parallelism policy](#backend-parallelism-is-the-default);
 do not conceal contention by serializing the suite or adding whole-test retries.
+
+Record the specific call sites inspected and distinguish verified repairs from
+unproven risks. For example, classify timer assertions as startup preconditions,
+intentional recovery contracts or delivery SLAs, and verify how each reaches its
+starting state. A file inventory or a generic timing-risk finding does not establish
+that every assertion in that file has been reviewed.
 
 These examples clarify the existing determinism, bounded resilience, cleanup and
 verification requirements. They do not prescribe universal timeout values. The
