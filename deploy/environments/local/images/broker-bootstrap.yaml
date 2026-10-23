@@ -8,4 +8,4 @@ spec:
     spec:
       initContainers:
         - name: definitions
-          image: ghcr.io/cosminstirbu/equipment-reservations-lab-broker-bootstrap@sha256:90d4ffacd97aaea73df0d5023947b63edcba8c983213f141bdd9534b27b3f078
+          image: ghcr.io/cosminstirbu/equipment-reservations-lab-broker-bootstrap@sha256:2b9a7830e18c7e8d40f01cb871a5e154a9a091de73e29bffa6aed1f22670f371
