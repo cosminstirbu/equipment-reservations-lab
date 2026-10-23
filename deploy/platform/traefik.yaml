@@ -100,6 +100,7 @@ spec:
             - --entrypoints.websecure.http.tls=true
             - --entrypoints.ping.address=:9000
             - --providers.kubernetesingress=true
+            - --providers.kubernetesingress.ingressendpoint.ip=127.0.0.1
             - --providers.kubernetesingress.namespaces=equipment
             - --providers.kubernetesingress.ingressclass=traefik
             - --providers.kubernetesingress.allowexternalnameservices=false

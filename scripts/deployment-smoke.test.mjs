@@ -5,6 +5,10 @@ import { URLSearchParams } from 'node:url';
 import { spawnSync } from 'node:child_process';
 import { inspect } from 'node:util';
 import {
+  assertPrivatePath,
+  createPrivateDirectory,
+} from './local-platform.mjs';
+import {
   verifyDeploymentSurface,
   observeNotifications,
   verifyDiagnosticAuthentication,
@@ -188,6 +192,42 @@ test('diagnostic probes fail if anonymous ingestion or browser access is admitte
   );
 });
 
+test('dashboard navigation is followed to a safe login, never mistaken for authentication denial', async (t) => {
+  let target = '/login';
+  let admitted = false;
+  const origin = await provider(t, (request, response) => {
+    if (request.url === '/') {
+      response.writeHead(302, { location: '/structuredlogs' });
+    } else if (request.url === '/structuredlogs') {
+      response.writeHead(admitted ? 200 : 302, { location: target });
+    } else response.statusCode = 401;
+    response.end();
+  });
+  const configuration = { dashboardOrigin: origin, otlpOrigin: origin };
+  await verifyDiagnosticAuthentication(configuration);
+  admitted = true;
+  await assert.rejects(
+    verifyDiagnosticAuthentication(configuration),
+    /admitted/i,
+  );
+  admitted = false;
+  for (target of [
+    'https://elsewhere.test/login',
+    '/login?token=PRIVATE_MARKER',
+    '/',
+    '/login?returnUrl=%2F%3Ftoken%3DPRIVATE_MARKER',
+  ]) {
+    await assert.rejects(
+      verifyDiagnosticAuthentication(configuration),
+      (error) => {
+        assert.match(error.message, /unsafe|redirect/i);
+        assert.doesNotMatch(error.message, /PRIVATE_MARKER/);
+        return true;
+      },
+    );
+  }
+});
+
 test('code login retains PKCE, exact callback/state and never uses password grant', async (t) => {
   const { authenticateCodeFlow } = await import('./deployment-smoke.mjs');
   let challenge;
@@ -324,17 +364,17 @@ test('persistence probe preserves reservation ownership and exact notification e
 });
 
 test('persistence checkpoint is created privately without replacing an earlier record', async (t) => {
-  const { mkdtempSync, readFileSync, lstatSync, rmSync } =
-    await import('node:fs');
+  const { mkdtempSync, readFileSync, rmSync } = await import('node:fs');
   const { tmpdir } = await import('node:os');
   const { join } = await import('node:path');
   const { savePersistenceCheckpoint } = await import('./deployment-smoke.mjs');
   const directory = mkdtempSync(join(tmpdir(), 'equipment-checkpoint-'));
   t.after(() => rmSync(directory, { recursive: true, force: true }));
+  createPrivateDirectory(directory);
   const path = join(directory, 'checkpoint.json');
   const checkpoint = { schemaVersion: 1, reservation: { id: 'r1' } };
   savePersistenceCheckpoint(path, checkpoint);
-  assert.equal(lstatSync(path).mode & 0o777, 0o600);
+  assertPrivatePath(path, 0o600);
   assert.deepEqual(JSON.parse(readFileSync(path, 'utf8')), checkpoint);
   assert.throws(() =>
     savePersistenceCheckpoint(path, {

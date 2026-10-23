@@ -1,10 +1,11 @@
 import { createHash, randomBytes } from 'node:crypto';
-import { readFileSync, lstatSync, existsSync, writeFileSync } from 'node:fs';
+import { readFileSync, existsSync, writeFileSync } from 'node:fs';
 import { resolve, join } from 'node:path';
 import { pathToFileURL, URLSearchParams } from 'node:url';
 import { setTimeout as delay } from 'node:timers/promises';
 import { verifyDeployedTelemetry } from './deployment-diagnostics.mjs';
 import { OperationalFailure, safeFailure } from './process.mjs';
+import { assertPrivatePath } from './local-platform.mjs';
 
 const services = ['inventory', 'reservations', 'notifications'];
 
@@ -144,30 +145,57 @@ export async function observeNotifications({
   throw new OperationalFailure('Notification observation deadline expired.');
 }
 
+async function verifyDashboardBrowserDenial(origin) {
+  let url = new URL('/', origin);
+  for (let redirects = 0; redirects < 3; redirects++) {
+    const response = await request(url);
+    if ([401, 403].includes(response.status)) return;
+    if (![302, 303].includes(response.status))
+      throw new OperationalFailure(
+        'Unauthenticated dashboard browser access was admitted.',
+      );
+    let next;
+    try {
+      next = new URL(response.headers.get('location'), url);
+      if (
+        next.origin !== new URL(origin).origin ||
+        next.username ||
+        next.password ||
+        /token=/i.test(decodeURIComponent(next.search)) ||
+        !['/structuredlogs', '/login'].includes(next.pathname)
+      )
+        throw new Error();
+      for (const [name, value] of next.searchParams)
+        if (
+          name.toLowerCase() === 'returnurl' &&
+          new URL(value, origin).origin !== new URL(origin).origin
+        )
+          throw new Error();
+    } catch {
+      throw new OperationalFailure(
+        'Unauthenticated dashboard redirect is unsafe.',
+      );
+    }
+    if (next.pathname === '/login') return;
+    url = next;
+  }
+  throw new OperationalFailure(
+    'Unauthenticated dashboard redirect limit exceeded.',
+  );
+}
+
 export async function verifyDiagnosticAuthentication({
   dashboardOrigin,
   otlpOrigin,
   dashboardApiKey,
   dashboardOtlpKey,
 }) {
-  for (const path of ['/', '/api/telemetry/traces']) {
-    const response = await request(`${dashboardOrigin}${path}`);
-    // BrowserToken uses a login redirect; API callers must receive denial.
-    if (path === '/') {
-      if (![401, 403, 302, 303].includes(response.status))
-        throw new OperationalFailure(
-          'Unauthenticated dashboard browser access was admitted.',
-        );
-      const location = response.headers.get('location');
-      if (location && (!/login/i.test(location) || /token=/i.test(location)))
-        throw new OperationalFailure(
-          'Unauthenticated dashboard redirect is unsafe.',
-        );
-    } else if (![401, 403].includes(response.status))
-      throw new OperationalFailure(
-        'Unauthenticated dashboard API access was admitted.',
-      );
-  }
+  await verifyDashboardBrowserDenial(dashboardOrigin);
+  const api = await request(`${dashboardOrigin}/api/telemetry/traces`);
+  if (![401, 403].includes(api.status))
+    throw new OperationalFailure(
+      'Unauthenticated dashboard API access was admitted.',
+    );
   const response = await request(`${otlpOrigin}/v1/traces`, {
     method: 'POST',
     headers: { 'content-type': 'application/json' },
@@ -599,21 +627,11 @@ if (
         ? args[index + 1]
         : (process.env.EQUIPMENT_CI_STATE ?? '.local/kubernetes'),
     );
-    if (
-      lstatSync(directory).isSymbolicLink() ||
-      (lstatSync(directory).mode & 0o777) !== 0o700
-    )
-      throw new OperationalFailure(
-        'Private state directory requires mode0700.',
-      );
+    assertPrivatePath(directory, 0o700);
     const statePath = join(directory, 'smoke-state.json');
     let state = {};
     if (existsSync(statePath)) {
-      if (
-        lstatSync(statePath).isSymbolicLink() ||
-        (lstatSync(statePath).mode & 0o777) !== 0o600
-      )
-        throw new OperationalFailure('Private smoke state requires mode0600.');
+      assertPrivatePath(statePath, 0o600);
       state = JSON.parse(readFileSync(statePath, 'utf8'));
     }
     if (args.includes('--ci') && state.context !== 'kind-equipment-ci')
@@ -624,13 +642,7 @@ if (
       directory,
       state.credentialsFile ?? 'credentials.json',
     );
-    if (
-      lstatSync(path).isSymbolicLink() ||
-      (lstatSync(path).mode & 0o777) !== 0o600
-    )
-      throw new OperationalFailure(
-        'Private credential file requires mode0600.',
-      );
+    assertPrivatePath(path, 0o600);
     const credentials = JSON.parse(readFileSync(path, 'utf8'));
     const capture = args.includes('--capture-persistence');
     const verify = args.includes('--verify-persistence');
@@ -647,13 +659,7 @@ if (
       );
     phase = verify ? 'persistence verification' : 'deployed HTTP smoke';
     if (verify) {
-      if (
-        lstatSync(checkpointPath).isSymbolicLink() ||
-        (lstatSync(checkpointPath).mode & 0o777) !== 0o600
-      )
-        throw new OperationalFailure(
-          'Persistence checkpoint requires private mode0600.',
-        );
+      assertPrivatePath(checkpointPath, 0o600);
       const checkpoint = JSON.parse(readFileSync(checkpointPath, 'utf8'));
       const token = await authenticateCodeFlow({
         applicationOrigin,

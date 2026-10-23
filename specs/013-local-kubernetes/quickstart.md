@@ -1,13 +1,62 @@
 # Local Kubernetes operational quickstart
 
-Run commands from the repository root on the existing macOS Podman machine. This is
+Run commands from the repository root on the existing macOS Podman machine, or use
+the Windows qualification steps below. This is
 one demo environment, `equipment-local`, with context `kind-equipment-local` and
 application namespace `equipment`. Aspire remains the workflow for unpushed development.
 
-The commands below are implemented. Integrated local setup and acceptance have not yet
-been executed, and the first genuine GHCR release is absent. Setup intentionally refuses
-that missing prerequisite. Generated files, focused tests and standalone probes do not
-establish a working complete deployment. See the evidence status at the end.
+Genuine component images have now been published and promoted to main. Integrated
+Windows qualification is in progress; macOS integrated acceptance remains pending.
+Generated files, focused tests and standalone probes do not establish a working
+complete deployment. See the evidence status at the end and the current
+[Windows qualification record](team/windows-local-setup.md).
+
+## Windows qualification
+
+Install the pinned kind 0.33.0, kubectl 1.35.8 and mkcert 1.4.4 Windows binaries.
+OpenSSL is also required (for example Git for Windows' `usr/bin/openssl.exe`).
+Use a new PowerShell terminal so installed tools are visible in PATH. Existing
+macOS commands and exact Unix private-file modes remain supported. Windows uses
+owner-restricted NTFS ACLs, accepts SYSTEM/Administrators access, and checks the
+exact local CA against the Windows system trust store without installing trust.
+
+The owner explicitly runs `mkcert -install`, approves its trust prompt, adds the
+two loopback DNS entries to the Windows hosts file, and generates the same TLS
+filenames/SANs documented below. Setup never performs those host changes. On a
+fresh Windows state directory, before generating private credentials:
+
+```powershell
+node --input-type=module -e "import {createPrivateDirectory} from './scripts/local-platform.mjs'; createPrivateDirectory('.local/kubernetes');"
+```
+
+This protects only that project-local directory; it does not change host trust.
+Retain existing credentials and keys. Files must inherit that restricted ACL and
+have no explicit grants to other users; setup refuses unsafe existing files.
+
+The normal memory minimum remains 11000 MiB. For the owner-approved experimental
+Windows 8 GiB trial only:
+
+```powershell
+$env:EQUIPMENT_EXPERIMENTAL_8G = '1'
+node scripts/local-kubernetes.mjs prerequisites
+node scripts/local-kubernetes.mjs setup
+node scripts/local-kubernetes.mjs status
+node scripts/local-kubernetes.mjs smoke
+Remove-Item Env:EQUIPMENT_EXPERIMENTAL_8G
+```
+
+This requires at least 7680 MiB as measured inside the running WSL guest, allowing
+for kernel overhead. Podman's Windows machine-memory metadata is not authoritative.
+The opt-in is rejected on macOS. It does not lower workload resource limits or
+establish measured capacity acceptance. Private state is local-only; copy selected
+credentials privately with PowerShell `Set-Clipboard`, never into logs or chat.
+
+The retained broker volume uses UID/GID 999 and a setgid 2770 root with no access
+for other users. OnRootMismatch avoids recursively widening private file modes
+when a pod is replaced. If an earlier deployment already changed `.erlang.cookie`
+to 0660, inspect only its mode/ownership privately and restore that exact retained
+file to 0600 before retrying. Never print, delete or regenerate the cookie or reset
+the volume to recover. See the actual recovery in the qualification record.
 
 ## Prerequisites and compatible tools
 
@@ -480,11 +529,17 @@ credential fixture was deleted, and the original session/old identity volume rem
 [deployment evidence](team/deployment-evidence.md) and [delivery evidence](team/delivery-evidence.md).
 These are bounded claims, not complete-system acceptance.
 
-Pending: actual amd64 builds and public GHCR indexes, hosted CI/publication/promotion
-runs, reviewed main/Argo adoption and drift correction, integrated local setup/reruns,
-browser login/logout/Scalar operations, actual export privacy/cardinality and pressure
-limits, persistence/pod/update/VM-restart experiments, reset/fresh setup, final required
-checks/independent reviews/convergence and explicit human acceptance. Detailed Aspire
+Publication qualification now includes successful hosted PR quality/image validation
+and all seven main publications/direct promotions in
+[run 39803954908](https://github.com/cosminstirbu/equipment-reservations-lab/actions/runs/39803954908).
+Integrated Windows setup, smoke and repeat-setup persistence results are recorded in
+[Windows qualification](team/windows-local-setup.md), including the local repairs that
+have not yet been adopted into main.
+
+Pending: fresh corrected-main/Argo adoption and drift correction, integrated macOS
+setup/reruns, browser login/logout/Scalar operations, detailed export/cardinality and
+pressure limits, remaining persistence/pod/update/VM-restart experiments, reset/fresh
+setup, final independent reviews/convergence and explicit human acceptance. Detailed Aspire
 metric-instrument inspection remains pending despite the bounded Aspire evidence above;
 Aspire results do not substitute for Kubernetes acceptance. Azure artifacts/provisioning/
 runtime validation remain outside this feature; no Azure action was performed or

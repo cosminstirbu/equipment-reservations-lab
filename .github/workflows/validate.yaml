@@ -61,7 +61,7 @@ jobs:
           DOCKER_HOST: unix:///var/run/docker.sock
           TESTCONTAINERS_RYUK_DISABLED: 'false'
           MANIFEST_KUBECTL: ${{ runner.temp }}/manifest-tools/kubectl
-      - run: node --test scripts/direct-promotion.test.mjs scripts/deployment-validation.test.mjs scripts/promote-images.test.mjs scripts/deployment-ci.test.mjs
+      - run: node --test scripts/direct-promotion.test.mjs scripts/deployment-validation.test.mjs scripts/promote-images.test.mjs scripts/deployment-ci.test.mjs scripts/local-platform.test.mjs scripts/local-kubernetes.test.mjs scripts/deployment-smoke.test.mjs scripts/argo-ordering.test.mjs
         if: steps.quality_scope.outputs.mode == 'full'
         env:
           MANIFEST_KUBECTL: ${{ runner.temp }}/manifest-tools/kubectl
