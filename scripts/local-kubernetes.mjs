@@ -899,8 +899,11 @@ export function createLifecycle({
     }
     if (command === 'access') {
       const dashboard = flag === 'dashboard';
+      const lifetime = dashboard
+        ? 'Forward runs for at most 180 seconds'
+        : 'Forward stays open until you press Ctrl+C';
       output(
-        `Authenticate manually using private credentials. Forward runs for at most 180 seconds at ${dashboard ? 'http://127.0.0.1:18888' : 'https://127.0.0.1:18443'}. No token URL is printed.`,
+        `Authenticate manually using private credentials. ${lifetime} at ${dashboard ? 'http://127.0.0.1:18888' : 'https://127.0.0.1:18443'}. No token URL is printed.`,
       );
       kubectl(
         [
@@ -911,7 +914,10 @@ export function createLifecycle({
           dashboard ? 'service/dashboard' : 'service/argocd-server',
           dashboard ? '18888:18888' : '18443:443',
         ],
-        { operation: 'local authenticated access forward' },
+        {
+          operation: 'local authenticated access forward',
+          timeout: dashboard ? 180000 : 0,
+        },
       );
       return;
     }
