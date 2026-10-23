@@ -5,6 +5,12 @@ import { setTimeout, clearTimeout } from 'node:timers';
 import { fileURLToPath } from 'node:url';
 import { runNpm } from './npm.mjs';
 import {
+  clearReports,
+  prepareReports,
+  publishReports,
+  runApplicationSuites,
+} from './application-reporting.mjs';
+import {
   executeProcess,
   processFailure,
   cleanupAll,
@@ -330,24 +336,72 @@ if (
     else if (command === 'test:deployment') await testDeployment(paths);
     else if (command === 'check:openapi') await checkOpenApi();
     else if (command === 'check') {
+      if (paths.length && (paths.length !== 1 || paths[0] !== '--reports'))
+        throw new Error('Usage: npm run check [-- --reports]');
+      const reports = paths[0] === '--reports';
+      if (reports) clearReports(root);
       await format(undefined, true);
       lint();
       runNpm(['run', 'test:tooling'], root);
       runNpm(['--prefix', 'src/Web', 'run', 'build'], root);
-      runNpm(['--prefix', 'src/Web', 'test'], root);
 
       const testModuleCount = sources().filter((path) =>
         path.endsWith('.Tests.csproj'),
       ).length;
 
-      run('dotnet', [
+      const backendArguments = [
         'test',
         '--solution',
         'EquipmentReservation.slnx',
         '--max-parallel-test-modules',
         String(testModuleCount),
         '--no-build',
-      ]);
+      ];
+      if (!reports) {
+        runNpm(['--prefix', 'src/Web', 'test'], root);
+        run('dotnet', backendArguments);
+      } else {
+        prepareReports(root);
+        const failures = [];
+        try {
+          runApplicationSuites([
+            () =>
+              runNpm(
+                [
+                  '--prefix',
+                  'src/Web',
+                  'test',
+                  '--',
+                  '--coverage',
+                  '--reporter=default',
+                  '--reporter=junit',
+                  '--outputFile=../../.cache/application-reporting/raw/frontend/results.xml',
+                ],
+                root,
+              ),
+            () =>
+              run('dotnet', [
+                ...backendArguments,
+                '--results-directory',
+                resolve(root, '.cache/application-reporting/raw/backend'),
+                '--report-xunit-trx',
+                '--coverage',
+                '--coverage-settings',
+                resolve(root, 'coverage.runsettings'),
+                '--coverage-output-format',
+                'cobertura',
+              ]),
+          ]);
+        } catch (error) {
+          failures.push(error.message);
+        }
+        try {
+          publishReports(root);
+        } catch (error) {
+          failures.push(error.message);
+        }
+        if (failures.length) throw new Error(failures.join('\n'));
+      }
     } else
       throw new Error(
         'Usage: npm run format|format-check|lint|check|check:openapi|test:deployment [-- files...]',

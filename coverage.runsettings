@@ -4,7 +4,16 @@
     <DataCollectors>
       <DataCollector friendlyName="Code Coverage">
         <Configuration>
+          <IncludeTestAssembly>False</IncludeTestAssembly>
           <CodeCoverage>
+            <EnableStaticManagedInstrumentation
+            >True</EnableStaticManagedInstrumentation>
+            <ModulePaths>
+              <Include>
+                <ModulePath
+                >.*[\\/](Inventory|Reservations|Notifications|IdentityAccess|Persistence|ReservationMessaging|DatabaseBootstrap|IdentityBootstrap|BrokerBootstrap|ApiDocumentation|ServiceDefaults)\.dll$</ModulePath>
+              </Include>
+            </ModulePaths>
             <Sources>
               <Exclude>
                 <Source>.*[\\/]obj[\\/].*</Source>

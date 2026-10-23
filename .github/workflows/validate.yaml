@@ -72,7 +72,8 @@ jobs:
           curl --fail --silent --show-error --location --connect-timeout 5 --max-time 15 https://dl.k8s.io/release/v1.35.8/bin/linux/amd64/kubectl -o "$RUNNER_TEMP/manifest-tools/kubectl"
           echo "874d5e72dbb819f43cff16bcd1e4f8bac5b7f2361fe1e55049b0a6c676fb0cbf  $RUNNER_TEMP/manifest-tools/kubectl" | sha256sum --check --strict
           chmod 0755 "$RUNNER_TEMP/manifest-tools/kubectl"
-      - run: npm run check
+      - id: application_quality
+        run: npm run check -- --reports
         if: needs.scope.outputs.mode == 'full'
         env:
           DOCKER_HOST: unix:///var/run/docker.sock
@@ -82,6 +83,9 @@ jobs:
         if: needs.scope.outputs.mode == 'full'
         env:
           MANIFEST_KUBECTL: ${{ runner.temp }}/manifest-tools/kubectl
+      - name: Application test and coverage reports
+        if: ${{ !cancelled() && needs.scope.outputs.mode == 'full' && steps.application_quality.outcome != 'skipped' }}
+        uses: ./.github/actions/application-reports
       - name: Full application quality completed
         if: needs.scope.outputs.mode == 'full'
         run: echo 'Full application quality completed'

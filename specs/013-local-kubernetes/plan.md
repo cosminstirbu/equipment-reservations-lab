@@ -753,3 +753,13 @@ Hosted scheduling, actual Kubernetes runtime/provider checks, main/manual releas
 revision-matched independent review/full-feature acceptance remain pending under T108
 and earlier tasks. This batch does not waive the Windows mode failure or prior runtime
 failures, and does not claim complete feature qualification.
+
+
+## Application test and coverage reports (2026-10-23)
+
+Owner-confirmed scope, output/privacy assessment, selected versions, test design and
+verification are recorded in [application reporting](team/application-reporting.md).
+Full PR/main quality opts into reporting explicitly; normal local checks and
+manifest-only gates remain unchanged. Preserve the joint validation/release gates
+and existing quality completion marker. This amendment adds no coverage threshold,
+privileged reporting workflow or feature acceptance.

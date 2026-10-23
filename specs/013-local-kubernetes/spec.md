@@ -66,6 +66,20 @@ dispatch retains full validation/all-component release. Re-enable deployment aft
 EX-013-002; prior failed runtime evidence and human feature acceptance remain pending.
 See [implementation and verification plan](plan.md#pr-validation-and-main-release-split-2026-10-23).
 
+## Application reporting amendment - 2026-10-23
+
+Owner approved application test reporting through Test Reporter and separate
+backend/frontend coverage through ReportGenerator in full PR/main quality. Coverage
+is informational, with no percentage gate. Both application suites are attempted after
+a test failure; build/setup prerequisites still gate their dependent tests. Preserve
+ordinary local check behavior with explicit reporting mode available. Reports include
+eligible unexecuted application code and exclude tests/generated code, AppHost and
+tooling. Use readonly workflow summaries and downloadable assessed reports, without
+PR comments, extra write permissions or external reporting services. Missing expected
+reports or report generation failure fails quality. No raw output attachments are
+published. Manifest-only quality is unchanged; broader feature acceptance is pending.
+Design and verification: [application reporting](team/application-reporting.md).
+
 ## Direct component promotion amendment - 2026-10-22
 
 The owner approved direct component promotion to main after successful quality,
@@ -204,6 +218,11 @@ As a developer, I can inspect correlated success/failure diagnostics securely an
 - **FR-025**: Obtain the approved Argo CD installation from verified immutable upstream content without maintaining a full copied upstream manifest. Preserve the approved controller version, image digests, local configuration, security and repeatable setup behavior. Reject unavailable or integrity-invalid upstream content within finite budgets before applying unverified content or replacing a working installation (AC-2.5, AC-2.6).
 - **FR-026**: Limit this amendment's authorized local replacement to Argo CD and restore its reconciliation configuration afterward. Preserve the existing cluster and all application database data, broker data, Dashboard history and application credentials; retain setup rerun, stop/resume and authenticated access behavior. Supporting migration of the prior Argo CD installation is outside scope (AC-2.7).
 
+- **FR-027**: Provide assessed application test results and separate backend/frontend
+  coverage in full PR/main quality using Test Reporter and ReportGenerator, per the
+  owner-approved application reporting amendment; missing expected reports or failed
+  generation fails quality, while coverage percentages remain informational (SC-015).
+
 ### Key Entities
 
 - **Local environment**: One disposable demo target with durable business/identity/messaging state, distinct application/platform ownership and explicit lifecycle operations.
@@ -232,6 +251,13 @@ As a developer, I can inspect correlated success/failure diagnostics securely an
 - **SC-013**: Verification proves eligible manifest-only pull requests and main merges run formatting and committed component/provenance/bootstrap plus static render/structure/policy validation with zero application build/test, runtime or image-build execution inside the lightweight quality gate; invalid manifest state fails. Manifest-only PRs select no downstream images; a main manifest-only push adds no build impact yet retains independent downstream retry of previously full-quality-validated unpublished components. Mixed changes, misleading branch names, unknown paths, unavailable/uncertain comparisons and earlier failed/unvalidated source quality select full validation. A failed source-quality or Kubernetes-verification run followed by a manifest-only main push cannot bypass full validation or permit publication based on that failure; manual runs always select full quality and Kubernetes verification. Generated promotion artifacts satisfy committed formatting, with the generator fix verified by regression tests and source-change quality checks (AC-3.8, AC-3.9).
 
 - **SC-014**: One locally tested controller replacement, one setup rerun and one stop/resume exercise restore healthy reconciliation and authenticated access while every recorded application database, broker, Dashboard and credential fixture is retained. Verification additionally covers unavailable upstream content and integrity mismatch, with zero unverified installation content applied and no replacement of a working installation on either failure (AC-2.5–AC-2.7).
+
+- **SC-015**: Full PR/main quality provides Test Reporter summaries and separate
+  ReportGenerator backend/frontend coverage summaries and downloadable HTML reports.
+  Both application suites are attempted after test failure; original failure remains
+  observable, and missing/malformed reports fail. Controlled private markers in raw
+  output/attachments are absent from published results. Local default checks and
+  manifest-only behavior remain unchanged; coverage percentages do not gate quality.
 
 ## Assumptions
 
