@@ -8,6 +8,12 @@ resources:
   - jobs/identity
   - ingress.yaml
 patches:
+  - target:
+      kind: PersistentVolumeClaim
+      name: dashboard-data
+    patch:
+      '[{"op": "add", "path": "/spec/volumeName", "value": "equipment-dashboard"},
+      {"op": "replace", "path": "/spec/storageClassName", "value": "equipment-retain"}]'
   - path: images/inventory.yaml
   - path: images/reservations.yaml
   - path: images/notifications.yaml

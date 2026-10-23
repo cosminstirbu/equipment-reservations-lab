@@ -100,6 +100,8 @@ test(
     const envfile = join(directory, 'private.env');
     writeFileSync(envfile, environment, { mode: 0o600 });
     const name = `equipment-dashboard-contract-${process.pid}`;
+    const volume = `${name}-data`;
+    let volumeOwned = false;
     let owned = false;
     t.after(() =>
       cleanupAll([
@@ -108,6 +110,14 @@ test(
               {
                 operation: 'remove Dashboard container',
                 run: () => command(['rm', '-f', name], 30_000),
+              },
+            ]
+          : []),
+        ...(volumeOwned
+          ? [
+              {
+                operation: 'remove Dashboard fixture volume',
+                run: () => command(['volume', 'rm', volume], 30_000),
               },
             ]
           : []),
@@ -122,42 +132,46 @@ test(
         .find((entry) => entry.name === name)
         .emptyDir.sizeLimit.replace('Mi', 'm');
     const memory = dashboard.resources.limits.memory.replace('Mi', 'm');
-    command([
-      'run',
-      '-d',
-      '--name',
-      name,
-      '--log-driver=none',
-      '--user',
-      `${pod.securityContext.runAsUser}:${pod.securityContext.runAsGroup}`,
-      '--memory',
-      memory,
-      '--memory-swap',
-      memory,
-      '--cpus',
-      String(Number(dashboard.resources.limits.cpu.replace('m', '')) / 1000),
-      '--cap-drop',
-      'all',
-      '--security-opt',
-      'no-new-privileges',
-      '--tmpfs',
-      `/data:rw,noexec,nosuid,size=${size('data')}`,
-      '--tmpfs',
-      `/tmp:rw,noexec,nosuid,size=${size('tmp')}`,
-      '--env-file',
-      envfile,
-      '-p',
-      '127.0.0.1::18888',
-      '-p',
-      '127.0.0.1::18890',
-      image,
-    ]);
+    command(['volume', 'create', volume]);
+    volumeOwned = true;
+    const start = () =>
+      command([
+        'run',
+        '-d',
+        '--name',
+        name,
+        '--log-driver=none',
+        '--user',
+        `${pod.securityContext.runAsUser}:${pod.securityContext.runAsGroup}`,
+        '--memory',
+        memory,
+        '--memory-swap',
+        memory,
+        '--cpus',
+        String(Number(dashboard.resources.limits.cpu.replace('m', '')) / 1000),
+        '--cap-drop',
+        'all',
+        '--security-opt',
+        'no-new-privileges',
+        '--volume',
+        `${volume}:/home/app`,
+        '--tmpfs',
+        `/tmp:rw,noexec,nosuid,size=${size('tmp')}`,
+        '--env-file',
+        envfile,
+        '-p',
+        '127.0.0.1::18888',
+        '-p',
+        '127.0.0.1::18890',
+        image,
+      ]);
+    start();
     owned = true;
     const port = (value) =>
       command(['port', name, `${value}/tcp`])
         .split(':')
         .at(-1);
-    const api = `http://127.0.0.1:${port(18888)}`;
+    let api = `http://127.0.0.1:${port(18888)}`;
     const otlp = `http://127.0.0.1:${port(18890)}`;
     const get = async (path, key = credentials.dashboardApi) => {
       const response = await globalThis.fetch(new URL(path, api), {
@@ -370,5 +384,32 @@ test(
     );
     assert.ok([null, undefined].includes(ordinary.traceId));
     assert.ok([null, undefined].includes(ordinary.spanId));
+    command(['rm', '-f', name], 30_000);
+    owned = false;
+    start();
+    owned = true;
+    api = `http://127.0.0.1:${port(18888)}`;
+    const recoveryDeadline = Date.now() + 45_000;
+    while (true) {
+      let recovered;
+      try {
+        recovered = await get(`/api/telemetry/spans?${query}`);
+      } catch {
+        /* Recreated container has a finite readiness budget. */
+      }
+      if (recovered?.status === 200) {
+        assert.equal(
+          records(recovered.body, 'spans').length,
+          2,
+          'synthetic telemetry survives container replacement',
+        );
+        break;
+      }
+      assert.ok(
+        Date.now() < recoveryDeadline,
+        'recreated Dashboard API starts within 45 seconds',
+      );
+      await delay(100);
+    }
   },
 );

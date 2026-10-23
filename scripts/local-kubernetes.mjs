@@ -831,6 +831,7 @@ export function createLifecycle({
         `${cluster}-control-plane`,
         'mkdir',
         '-p',
+        '/var/local/equipment/dashboard',
         '/var/local/equipment/postgres',
         '/var/local/equipment/rabbitmq',
       ]);
@@ -849,6 +850,20 @@ export function createLifecycle({
         '2770',
         '/var/local/equipment/postgres',
         '/var/local/equipment/rabbitmq',
+      ]);
+      call('podman', [
+        'exec',
+        `${cluster}-control-plane`,
+        'chown',
+        '1654:1654',
+        '/var/local/equipment/dashboard',
+      ]);
+      call('podman', [
+        'exec',
+        `${cluster}-control-plane`,
+        'chmod',
+        '0700',
+        '/var/local/equipment/dashboard',
       ]);
       kubectl(['apply', '-f', join(root, 'deploy/platform/storage.yaml')]);
       provision(bundle);
@@ -1101,6 +1116,7 @@ export function createLifecycle({
         'pv',
         'equipment-postgres',
         'equipment-rabbitmq',
+        'equipment-dashboard',
         '--ignore-not-found',
         '--wait=true',
         '--timeout=180s',
@@ -1113,6 +1129,7 @@ export function createLifecycle({
         '--',
         '/var/local/equipment/postgres',
         '/var/local/equipment/rabbitmq',
+        '/var/local/equipment/dashboard',
       ]);
       output(
         'Reset only equipment application data; private credentials retained. Setup recreates application resources.',
