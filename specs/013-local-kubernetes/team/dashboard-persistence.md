@@ -79,3 +79,13 @@ the complete end-to-end result remains failed due to this fixture assumption.
 Existing ephemeral telemetry was not migrated. This verification establishes
 persistence and correct tmp placement, not sustained disk capacity, VM restart
 durability or macOS runtime acceptance.
+
+Subsequent owner-authorized cleanup removed 29 terminal Pods belonging to the old
+Dashboard ReplicaSet. All eight current application Pods remained Running/Ready and
+Argo remained Healthy/Synced. No retained volume, current workload or bootstrap Job
+was deleted. Historical ReplicaSets with zero replicas remain ordinary rollout
+history; successful bootstrap Sync-hook cleanup policy has not been changed.
+
+Current specification and remaining qualification work are reconciled in
+[FR-015/AC-4.7](../spec.md), [runtime contract](../contracts/runtime.md) and
+[tasks Phase 18](../tasks.md#phase-18-cross-platform-local-qualification-and-dashboard-retention).

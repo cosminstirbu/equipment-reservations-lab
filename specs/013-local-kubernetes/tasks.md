@@ -268,3 +268,20 @@ merge-only adoption instructions; preserve historical task IDs and evidence.
 - [x] T082 Regress disjoint component ownership and direct-main expected-parent mutation before implementation; migrate seven image patches, committed/static validation, intent capture, trusted permissions and candidate validation while retaining no-op/stale/index/privacy guards.
 - [ ] T083 Complete affected tooling, real pinned Kustomize, formatting/lint and author inspection; push implementation PR, wait for green checks and rebase merge under owner authorization. Stop on authorization rejection; no branch-rule bypass.
 - [ ] T084 Verify post-merge main workflow including independent component publications/direct promotions is green; rerun identified flaky jobs and repair current-work failures through another tested PR. Preserve broader feature/runtime/reviewer/human acceptance gates.
+
+## Phase 18: Cross-platform local qualification and Dashboard retention
+
+Current decisions and executed evidence are linked from the spec's 2026-10-23
+clarifications, [Windows setup](team/windows-local-setup.md) and
+[Dashboard persistence](team/dashboard-persistence.md). Completed items below record
+implementation and specific checks, not independent acceptance. Earlier task status
+and reviewer verdicts are preserved; this reconciliation does not retrospectively
+approve the branch or claim all older pending checks passed.
+
+- [x] T085 Regress and repair Windows private ACL/system-trust handling while retaining Unix checks and explicit Windows 8 GiB opt-in; qualify actual setup, retained credentials and the original persistence checkpoint. Record dependency Service ordering, ingress health publication, RabbitMQ retained-cookie permissions and Dashboard redirect fixes with intended-red evidence and Windows/Linux results in team/windows-local-setup.md.
+- [x] T086 Regress and implement interruption-based interactive Argo forwarding with finite Dashboard/setup/smoke budgets; admit namespaced Pods/ReplicaSets without Secret, wildcard or cluster-resource permissions, and verify actual Application-tree visibility (AC-4.2).
+- [x] T087 Regress real Dashboard container-replacement telemetry retention before implementing Resume, stable application identity, retained local PV/PVC, setup/CI permissions and explicit reset scope. Verify policy, pinned provider, actual isolated kind Pod replacement, formatting/lint and candidate manifests; reconcile spec/plan/research/runtime/state model with team/dashboard-persistence.md (FR-015).
+- [x] T088 Under explicit owner authorization, push the branch, prepare retained platform storage, temporarily retarget live Argo, and verify successful exact-revision synchronization plus telemetry retention after replacing the actual Dashboard Pod. Remove obsolete terminal Dashboard Pods and verify all eight current application Pods remain ready; retain safe evidence (AC-2.1, AC-4.1).
+- [ ] T089 Repair the deployed smoke fixture's assumption that a random one-minute interval tomorrow is free: add an intended-failing public-interface regression with an existing booking covering that window, select an available fixture without deleting exploratory reservations, preserve genuine booking/cancellation and telemetry assertions, then rerun actual deployed smoke. The current HTTP 409 is failed evidence, not a passed test (AC-1.2, SC-007).
+- [ ] T090 Qualify this branch on macOS and complete sustained telemetry/storage capacity, Dashboard retention through setup/stop and VM restart, and separately authorized destructive reset/teardown checks. Obtain revision-matched independent quality/security review and convergence through the feature-team protocol before claiming feature completion; preserve T052/T053 and existing pending checks (AC-4.7, SC-007).
+- [ ] T091 After separately authorized merge, restore the live Argo Application to main, rerun current setup and required smoke/persistence checks at the merged revision, and record exact source/environment/results. The temporary live branch override does not change setup's main default or establish fresh-main adoption (SC-007).

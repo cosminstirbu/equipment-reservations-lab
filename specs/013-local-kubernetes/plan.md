@@ -14,6 +14,16 @@ stop on authorization failures. Feature acceptance remains pending.
 
 ## Summary
 
+Branch qualification reconciliation (2026-10-23): current Windows/WSL repairs,
+interactive access and child-resource admission are recorded in
+[local setup qualification](team/windows-local-setup.md). The owner-approved
+[Dashboard persistence repair](team/dashboard-persistence.md) supersedes temporary
+storage. The actual branch deployment is Healthy/Synced and Pod-replacement
+persistence passed; full deployed smoke currently stops on an existing booking
+covering its randomized time window. Track remaining work in tasks Phase 18.
+These results do not close macOS, capacity/VM-restart, independent-review or human
+acceptance gates. Older team evidence remains historical, not a current verdict.
+
 Backend stability follow-up (2026-10-22): apply the testing guide's
 [lifecycle guidance](../../docs/engineering/testing.md#diagnose-backend-flakes-at-the-lifecycle-boundary).
 The [backend audit](team/backend-test-stability-audit.md) records recent admission
@@ -107,7 +117,8 @@ JavaScript lifecycle/CI tooling and Kubernetes YAML.
 **Primary Dependencies**: Aspire 13.6.1, Keycloak 26.8.1, PostgreSQL 18.6,
 RabbitMQ 4.3.6, kind 0.33.0/Kubernetes 1.35.8, Traefik 3.7.15, Argo CD 3.5.5.
 **Storage**: one PostgreSQL with four separate databases/accounts; RabbitMQ durable
-storage; private ignored credential bundle; local Retain PVs.
+storage; retained Dashboard SQLite telemetry; private ignored credential bundle;
+three local Retain PVs.
 **Testing**: existing xUnit v3/MTP/Testcontainers, Angular tests/browser tests;
 separate opt-in deployed smoke and hosted ephemeral kind verification.
 **Target Platform**: existing macOS arm64 rootful Podman VM and hosted Linux CI;

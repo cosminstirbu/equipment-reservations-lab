@@ -170,7 +170,13 @@ Pinned Dashboard option names were checked against official v13.6.1
 MaxLogCount/MaxTraceCount/MaxMetricsCount, Frontend.MaxConsoleLogCount and
 Data.PersistenceMode exist. MaxMetricsCount applies per dimension; bound incoming
 metric cardinality separately. Standalone temporary data is SQLite, not an
-in-memory repository; set PersistenceMode=None and bounded ephemeral emptyDir.
+in-memory repository. The original None/emptyDir decision is superseded by the
+owner-approved 2026-10-23 [retained Dashboard repair](team/dashboard-persistence.md):
+Resume, a stable application name and a dedicated retained PV/PVC. None ignores the
+persistent data-directory option and created SQLite/WAL under the 16 MiB tmp mount,
+causing repeated evictions. The real provider and actual branch Pod-replacement
+checks passed with the revised configuration. Local PV capacity is not a hard quota;
+long-running retention and macOS/VM-restart qualification remain pending.
 
 
 ## Required-check dependency remediation — MessagePack (2026-10-20)

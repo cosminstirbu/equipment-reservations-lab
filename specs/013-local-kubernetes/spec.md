@@ -23,6 +23,23 @@
 - Historical owner request: Allow running the release workflow from any branch. The initial coordinator interpretation retained main-only promotion; the confirmed component-pipeline amendment below supersedes that restriction. This implementation scope does not authorize an actual publication run, commit or push.
 - Confirmed component-pipeline decisions: Run quality prerequisites first, then seven separate reusable component workflows in parallel. Pull requests build affected images for both target architectures without publication or publish secrets, including forks, and always produce a final required summary even when no component is affected. Main pushes publish affected components using transitive build-input impact and each component's successful publication baseline; uncertainty selects all. Manual runs from any repository branch select all components and may publish and commit validated component-specific local GitOps updates directly to main. Component failures do not cancel or block other components. Failed-job reruns retain successful results only from the same run and source SHA; missing required artifacts fail clearly and require a fresh run. Stale same-component promotions are blocked or refreshed, unrelated component proposals remain intact, and identical digests are a no-op. Each result retains exact source SHA and branch; a complete seven-image release is not required. New compatibility gates and preproduction environments are outside this amendment.
 
+### Session 2026-10-23
+
+- Dashboard storage: retain telemetry across Pod replacement using dedicated persistent
+  storage and Resume mode. Ordinary setup/stop retain it; explicit reset or cluster
+  teardown deletes it. Existing ephemeral history need not migrate. Count retention
+  and resource limits remain; local PV capacity is not a hard filesystem quota.
+  See [storage decision and evidence](team/dashboard-persistence.md).
+- Interactive Argo access remains open until interruption or failure; Dashboard access
+  and setup/smoke retain finite deadlines. Admit namespaced Pods and ReplicaSets in
+  the local AppProject to inspect workload children while retaining Secret, wildcard
+  and cluster-resource exclusions. These permissions also authorize management of
+  the admitted kinds; they are not visibility-only. See [qualification](team/windows-local-setup.md).
+- The owner authorized temporary live Argo tracking of
+  `fix/cross-platform-local-kubernetes` for testing until merge. The committed default
+  remains main; restore it after merge. This does not introduce automatic branch
+  selection in setup or accept the feature.
+
 ## Direct component promotion amendment - 2026-10-22
 
 The owner approved direct component promotion to main after successful quality,
@@ -85,9 +102,9 @@ As a maintainer, I can validate changes safely and review a release update befor
 **Acceptance Scenarios**:
 
 1. **Given** an untrusted or ordinary pull request, including a fork, **When** validation runs, **Then** quality prerequisites pass before affected component images build for both target architectures without publication or exposure of publish credentials, and a final required summary reports the outcome even when no component is affected (AC-3.1).
-2. **Given** a change merged to main and separately authorized external execution, **When** release automation runs after quality prerequisites pass, **Then** affected components independently publish images for both target architectures and propose component-specific local immutable-reference updates with exact source SHA and branch; successful components proceed despite another component's failure, and reviewable updates require merge before adoption (AC-3.2).
+2. **Given** a change merged to main and separately authorized external execution, **When** release automation runs after quality prerequisites pass, **Then** affected components independently publish images for both target architectures and commit validated component-specific local immutable-reference updates directly to main with exact source SHA and branch; successful components proceed despite another component's failure (AC-3.2).
 3. **Given** a validated deployment update committed to main, **When** reconciliation runs, **Then** the actual published component releases become active and drift is corrected; deployment-reference changes alone do not select otherwise-current components for publication or recursively propose promotions. Outstanding unpublished build-input changes since a component's last successful publication still select that component on a later main merge, including a deployment-only merge (AC-3.3).
-4. **Given** a maintainer selects any repository branch and separately authorizes manual release execution, **When** the release workflow runs after quality prerequisites pass, **Then** all seven components independently publish for both target architectures and may propose component-specific local GitOps updates with exact source SHA and branch, requiring merge before adoption; ordinary non-main pushes do not trigger publication (AC-3.4).
+4. **Given** a maintainer selects any repository branch and separately authorizes manual release execution, **When** the release workflow runs after quality prerequisites pass, **Then** all seven components independently publish for both target architectures and may commit validated component-specific local GitOps updates directly to main with exact source SHA and branch; ordinary non-main pushes do not trigger publication (AC-3.4).
 5. **Given** component build inputs or unsuccessful prior component publication, **When** affected components are selected, **Then** selection includes transitive shared references, Dockerfiles, lockfiles, ignore rules, global and pipeline inputs relative to each component's successful publication baseline; uncertainty selects all, and a failed component remains eligible on later main runs (AC-3.5).
 6. **Given** one component fails and another succeeds, **When** failed jobs are rerun, **Then** successful results from the same run and source SHA are retained without requiring all seven images to succeed; missing required artifacts cause a clear failure directing a fresh run (AC-3.6).
 7. **Given** concurrent component promotions, **When** a successful publication commits a validated update, **Then** stale same-component updates are blocked or refreshed, unrelated component updates are preserved, and an identical deployed digest produces no change; an initial component update may leave other components explicitly unreleased without inventing image references or claiming complete-demo readiness (AC-3.7).
@@ -110,6 +127,7 @@ As a developer, I can inspect correlated success/failure diagnostics securely an
 4. **Given** an ordinary audited tool operation in any repository script or test helper, **When** it executes, **Then** both standard output and standard error remain visible during execution; machine-readable results remain capturable without corrupting their consumers (AC-4.4).
 5. **Given** a captured tool failure, **When** the script reports it, **Then** the developer receives the safe operation name, tool, duration, failure category and available exit status or termination signal, plus bounded safe tails from both output streams with truncation marked; sensitive operations provide safe diagnostic projections without exposing secrets, raw arguments, environment values or input payloads, automatically saving raw logs, or offering a privacy-bypassing debug mode (AC-4.5).
 6. **Given** script or test cleanup fails, **When** the result is reported, **Then** an otherwise successful operation fails; if a primary failure also occurred, it remains the primary diagnostic and cleanup failures are reported separately (AC-4.6).
+7. **Given** telemetry already ingested by Dashboard, **When** its Pod is replaced or ordinary setup/stop is performed, **Then** retained telemetry remains available through authenticated access; explicit application reset or cluster teardown removes it, and the documented storage allocation is not represented as a hard filesystem quota (AC-4.7).
 
 ### Edge Cases
 
@@ -120,7 +138,7 @@ As a developer, I can inspect correlated success/failure diagnostics securely an
 - Credentials, CA keys, dashboard login tokens and sensitive URLs must not leak through output, images, manifests, diagnostics or promotion artifacts.
 - A rollback must not claim to reverse database schema changes automatically.
 - Hosted-runner success cannot substitute for macOS networking, trust or VM-restart evidence.
-- Temporary diagnostic data may disappear after viewer restart; business data may disappear after explicit reset/cluster deletion.
+- Retained Dashboard telemetry survives Pod replacement; existing ephemeral history is not migrated. Explicit application reset or cluster deletion removes telemetry and business data. Local storage is not a backup or a hard byte quota.
 - A tool may fail to start, time out, terminate by signal, report only on standard output or standard error, or exceed the diagnostic output bound; each case retains actionable safe failure information.
 - A successful operation followed by failed cleanup is not successful overall; simultaneous primary and cleanup failures must not replace or obscure the primary cause.
 
@@ -142,7 +160,7 @@ As a developer, I can inspect correlated success/failure diagnostics securely an
 - **FR-012**: Publish affected components independently for both target architectures after main merges; manual invocation from any repository branch selects all seven components and permits validated component-specific local GitOps commits directly to main. Preserve exact source SHA and branch, immutable references and atomic non-force expected-main updates after candidate validation. Ordinary non-main pushes do not publish; no complete seven-image release is required (AC-3.2, AC-3.4).
 - **FR-013**: Automatically apply merged approved deployment changes and correct drift. Deployment-reference changes alone must not select otherwise-current components for publication or create recursive promotions; outstanding unpublished build-input changes remain eligible against each component's successful publication baseline even on a later deployment-only main merge (AC-3.3, AC-3.5).
 - **FR-014**: Expose only required application/login paths publicly within the local environment; keep databases, brokers, management, detailed health and identity administration internal or explicitly forwarded (AC-1.2, AC-4.2).
-- **FR-015**: Authenticate operational browser access and internal telemetry ingestion; bound temporary telemetry and inspect actual success/failure exports for privacy, correlation and safe metric cardinality (AC-4.1, AC-4.2).
+- **FR-015**: Authenticate operational browser access and internal telemetry ingestion; retain Dashboard telemetry across Pod replacement and ordinary setup/stop, with explicit reset/teardown destruction semantics. Apply documented retention/resource limits without claiming a local PV provides a hard byte quota; inspect actual success/failure exports for privacy, correlation and safe metric cardinality (AC-2.4, AC-4.1, AC-4.2, AC-4.7).
 - **FR-016**: Retain everyday unpushed development with fresh bootstrapped identity storage, separate scoped identity database credentials and preservation of the old identity volume until explicit deletion (AC-4.3).
 - **FR-017**: Provide separately invoked deployment verification and hosted ephemeral deployment checks while normal application tests remain independent of Kubernetes and AppHost; record local-only acceptance separately (AC-1.1–AC-4.3).
 - **FR-018**: Provide a quickstart covering prerequisites, explicit trust/DNS actions, setup/status/access, safe credential retrieval, initial release/promotion permissions, failure recovery, state semantics and destruction (AC-1.1, AC-2.2, AC-2.4, AC-3.2, AC-4.2).

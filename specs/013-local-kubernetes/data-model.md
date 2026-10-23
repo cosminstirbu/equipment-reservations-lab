@@ -3,16 +3,21 @@
 No new business entity or HTTP business contract is introduced.
 
 - CredentialBundle: schema version, generated secrets, CA material references; private
-local files 0600 under ignored 0700 directory. Created once; restored or explicitly
+local files 0600 under ignored 0700 directory on Unix, or owner-restricted NTFS ACLs
+on Windows as defined by the runtime contract. Created once; restored or explicitly
 reset when missing with existing state. Never serialized into Git/logs.
-- DurableEnvironment: cluster name/context, ownership marker, retained PostgreSQL and
-RabbitMQ volumes; four database/account identities. Running -> stopped -> running keeps
-data; explicit reset destroys application data; teardown destroys named cluster.
-- Release: exact source revision and one OCI index digest per application/bootstrap
-image. Both target architectures required. Proposed -> reviewed/merged -> reconciled.
-- Promotion: stable branch/PR identity, expected head revision and release source.
-Compare-and-swap prevents overwriting concurrent edits; deployment-only changes do not
-create another publication.
+- DurableEnvironment: cluster name/context, ownership marker, retained PostgreSQL,
+RabbitMQ and Dashboard volumes; four database/account identities. Dashboard Resume
+uses a stable application name and one writable database across Pod replacements.
+Running -> stopped -> running keeps data; explicit reset destroys application data;
+teardown destroys named cluster.
+- ComponentRelease: independent source revision/ref and verified OCI index digest per
+application/bootstrap component; both target architectures required. Missing components
+remain explicitly unreleased, without a fabricated complete release.
+- Promotion: selected component, captured expected target/proposal and exact fresh main
+parent. Candidate validation precedes an atomic non-force direct-main update; no
+promotion PR. Compare-and-swap preserves unrelated updates and rejects stale targets;
+identical deployed digests are a no-op. See [current design](team/direct-component-promotion-design.md).
 - VerificationRecord: environment, revision, command/action, exit status, outcome,
 evidence path. Pending is distinct from pass; secrets excluded.
 

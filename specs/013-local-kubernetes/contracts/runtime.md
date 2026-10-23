@@ -54,6 +54,24 @@ Image contract: application references are GHCR OCI index digests with linux/arm
 and linux/amd64 manifests. Source provenance belongs beside references. Missing genuine
 first release is an actionable prerequisite failure, never a placeholder working image.
 
+Dashboard storage uses one Resume writer with Recreate, stable application name
+`equipment-local`, and `/home/app/dashboard-data` on the retained `dashboard-data`
+claim bound locally to `equipment-dashboard`. Setup prepares the node-local root
+for UID/GID 1654; stop, rerun and Pod replacement retain it. Explicit reset removes
+all three application PVs and exact data paths; cluster teardown destroys them.
+The 1 GiB local PV allocation is not a hard filesystem quota. See
+[storage design and evidence](../team/dashboard-persistence.md).
+
+The AppProject admits namespaced Pods and ReplicaSets for workload-child inspection,
+alongside its existing workload kinds; Secrets, wildcard permissions and cluster
+resources remain excluded. Successful database/identity Sync hooks are deleted by
+HookSucceeded; their absence after success is expected. Broker bootstrap remains a
+RabbitMQ init container, not a separate Job.
+
+The live branch-tracking experiment is temporary operational state, recorded in the
+storage evidence above. The tracked Application and setup still select main; rerunning
+setup resets the override. Restore main after merging the branch.
+
 
 Broker definitions generation: `BrokerBootstrap` has a production executable entrypoint
 around existing `BrokerProvisioning.Build`. Credential configuration is private; output
