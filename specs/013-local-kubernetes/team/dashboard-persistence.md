@@ -89,3 +89,30 @@ history; successful bootstrap Sync-hook cleanup policy has not been changed.
 Current specification and remaining qualification work are reconciled in
 [FR-015/AC-4.7](../spec.md), [runtime contract](../contracts/runtime.md) and
 [tasks Phase 18](../tasks.md#phase-18-cross-platform-local-qualification-and-dashboard-retention).
+
+## Promotion fixture qualification repair
+
+PR #24 quality run 39919376421 reproduced two deterministic fixture failures in
+`scripts/direct-promotion.test.mjs` with MANIFEST_KUBECTL enabled: copied real release
+records contradicted null original targets, and a complete copied deployment returned
+released where the test required partial. The same two failures reproduced locally
+before repair, with six other cases passing. Earlier focused qualification omitted
+these enabled cases; no production promotion guard is being relaxed.
+
+Test design: retain the existing public promotion/candidate interfaces, real temporary
+Git repositories, real pinned Kustomize and production parsing/policy/candidate logic.
+Create an explicitly unreleased fixture from the public manifest structure: no release
+records, seven unresolved known image patches and unreleased bootstrap suffixes.
+Both tests own this baseline rather than importing the checkout's publication state.
+The in-process gateway replaces remote GitHub storage/CAS with actual local Git;
+candidate validation's HTTP sentinel ensures validation never mutates GitHub. Existing
+assertions retain independent promotion order, root-overlay preservation, partial-state
+classification and rejection of malformed patches. No application/database doubles
+or new solitary test are introduced. Applicable standards remain the testing design
+record, tooling privacy/cleanup and formatting guides.
+
+After repair, all eight direct-promotion tests passed with pinned MANIFEST_KUBECTL
+enabled and zero skipped cases, including both real Git promotion orders and the
+production candidate validation/rejection case. Format-check and lint passed,
+including a zero-warning/error solution build and suggestion-level style gate. This is local
+qualification; a new hosted PR result is still required after publication of the fix.

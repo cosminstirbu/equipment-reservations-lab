@@ -3,7 +3,6 @@ import test from 'node:test';
 import {
   readFileSync,
   mkdtempSync,
-  cpSync,
   rmSync,
   mkdirSync,
   writeFileSync,
@@ -59,6 +58,40 @@ const intent = (release) => ({
     names.map((name) => [name, { target: null, proposal: null }]),
   ),
 });
+
+function unreleasedPublicFiles() {
+  const directory = fileURLToPath(root);
+  const files = Object.fromEntries(
+    ['deploy/base', 'deploy/environments/local'].flatMap((prefix) =>
+      readdirSync(join(directory, prefix), {
+        recursive: true,
+        withFileTypes: true,
+      })
+        .filter((entry) => entry.isFile())
+        .map((entry) => {
+          const path = join(entry.parentPath, entry.name);
+          return [
+            path.slice(directory.length).replaceAll('\\', '/'),
+            readFileSync(path, 'utf8'),
+          ];
+        }),
+    ),
+  );
+  for (const path of Object.keys(files)) {
+    if (path.startsWith('deploy/environments/local/releases/'))
+      delete files[path];
+  }
+  for (const name of names)
+    files[`deploy/environments/local/images/${name}.yaml`] = imagePatch(name);
+  for (const job of ['database', 'identity']) {
+    const path = `deploy/environments/local/jobs/${job}/kustomization.yaml`;
+    files[path] = files[path].replace(
+      /^nameSuffix:.*$/m,
+      'nameSuffix: -unreleased',
+    );
+  }
+  return files;
+}
 
 test('independent promotions never edit a shared image file', () => {
   const ownership = new Set();
@@ -218,9 +251,10 @@ test(
     ]) {
       const directory = mkdtempSync(join(tmpdir(), 'direct-promotion-git-'));
       try {
-        cpSync(new URL('deploy', root), join(directory, 'deploy'), {
-          recursive: true,
-        });
+        for (const [path, text] of Object.entries(unreleasedPublicFiles())) {
+          mkdirSync(dirname(join(directory, path)), { recursive: true });
+          writeFileSync(join(directory, path), text);
+        }
         const git = (...args) =>
           execFileSync('git', args, {
             cwd: directory,
@@ -320,23 +354,7 @@ test(
   'production candidate validation renders exact public files and rejects invalid output before GitHub mutation',
   { skip: !process.env.MANIFEST_KUBECTL },
   async () => {
-    const directory = fileURLToPath(root);
-    const publicFiles = Object.fromEntries(
-      ['deploy/base', 'deploy/environments/local'].flatMap((prefix) =>
-        readdirSync(join(directory, prefix), {
-          recursive: true,
-          withFileTypes: true,
-        })
-          .filter((entry) => entry.isFile())
-          .map((entry) => {
-            const path = join(entry.parentPath, entry.name);
-            return [
-              path.slice(directory.length).replaceAll('\\', '/'),
-              readFileSync(path, 'utf8'),
-            ];
-          }),
-      ),
-    );
+    const publicFiles = unreleasedPublicFiles();
     const gateway = githubGateway({
       repository: 'example/equipment',
       component: 'inventory',
