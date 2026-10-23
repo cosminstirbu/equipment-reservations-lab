@@ -1,4 +1,4 @@
-﻿import assert from 'node:assert/strict';
+import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import {
   mkdtempSync,
@@ -56,6 +56,16 @@ function repository() {
     write(`src/${name}/Program.cs`);
   }
   write('src/Web/package.json', '{}');
+  write(
+    'package.json',
+    JSON.stringify({
+      name: 'selection-fixture',
+      private: true,
+      type: 'module',
+      scripts: { 'test:tooling': 'node --test scripts/original.test.mjs' },
+      devDependencies: { fixture: '1.0.0' },
+    }),
+  );
   const commit = () => {
     git('add', '.');
     git('commit', '-qm', 'fixture');
@@ -114,9 +124,13 @@ test('shared project changes rebuild transitive APIs and database bootstrap', ()
 test('shared build inputs and unknown paths rebuild conservatively while documentation does not', () => {
   for (const [path, expected] of [
     ['global.json', names],
+    ['package-lock.json', names],
     ['Directory.Build.props', names],
     ['.github/workflows/validate.yaml', names],
-    ['scripts/component-pipelines.mjs', names],
+    ['scripts/component-pipelines.mjs', []],
+    ['scripts/deployment-ci.mjs', names],
+    ['scripts/process.mjs', names],
+    ['scripts/unknown-build-step.mjs', names],
     ['mystery.input', names],
     ['deploy/images/web.Dockerfile', ['web']],
     [
@@ -140,6 +154,263 @@ test('shared build inputs and unknown paths rebuild conservatively while documen
     } finally {
       repo.close();
     }
+  }
+});
+
+test('audited deployment, quality and test tooling selects no PR or current-main images', () => {
+  const repo = repository();
+  try {
+    for (const path of [
+      'scripts/argocd-installation.mjs',
+      'scripts/local-kubernetes.mjs',
+      'scripts/quality.mjs',
+      'scripts/component-pipelines.mjs',
+      'scripts/argocd-installation.test.mjs',
+      'scripts/component-selection.test.mjs',
+    ])
+      repo.write(path, 'changed tooling');
+    const sourceRevision = repo.commit();
+    for (const event of ['pull_request', 'push']) {
+      const result = implementation.selectComponents({
+        root: repo.root,
+        event,
+        sourceRef: event === 'push' ? 'refs/heads/main' : 'refs/heads/tooling',
+        sourceRevision,
+        baseRevision: repo.base,
+        baselines: Object.fromEntries(names.map((name) => [name, repo.base])),
+      });
+      assert.deepEqual(result.selected, [], event);
+    }
+  } finally {
+    repo.close();
+  }
+});
+
+test('root quality-script-only changes select no PR or current-main images', () => {
+  const repo = repository();
+  try {
+    const metadata = JSON.parse(
+      readFileSync(join(repo.root, 'package.json'), 'utf8'),
+    );
+    metadata.scripts['test:tooling'] += ' scripts/argocd-installation.test.mjs';
+    repo.write('package.json', JSON.stringify(metadata));
+    const sourceRevision = repo.commit();
+    for (const event of ['pull_request', 'push']) {
+      const result = implementation.selectComponents({
+        root: repo.root,
+        event,
+        sourceRef: event === 'push' ? 'refs/heads/main' : 'refs/heads/tooling',
+        sourceRevision,
+        baseRevision: repo.base,
+        baselines: Object.fromEntries(names.map((name) => [name, repo.base])),
+      });
+      assert.deepEqual(result.selected, [], event);
+    }
+  } finally {
+    repo.close();
+  }
+});
+
+test('root dependency, hook, unknown metadata and invalid-package changes remain image inputs', () => {
+  const repo = repository();
+  try {
+    const original = JSON.parse(
+      readFileSync(join(repo.root, 'package.json'), 'utf8'),
+    );
+    for (const [label, mutate] of [
+      [
+        'dependency',
+        (value) => {
+          value.devDependencies.fixture = '2.0.0';
+        },
+      ],
+      [
+        'runtime dependency',
+        (value) => {
+          value.dependencies = { runtime: '1.0.0' };
+        },
+      ],
+      [
+        'install hook',
+        (value) => {
+          value.scripts.preinstall = 'node hook.mjs';
+        },
+      ],
+      [
+        'unknown script',
+        (value) => {
+          value.scripts['build:images'] = 'node builder.mjs';
+        },
+      ],
+      [
+        'module type',
+        (value) => {
+          value.type = 'commonjs';
+        },
+      ],
+      [
+        'unknown metadata',
+        (value) => {
+          value.customBuildInput = true;
+        },
+      ],
+      [
+        'invalid quality script',
+        (value) => {
+          value.scripts['test:tooling'] = [];
+        },
+      ],
+      [
+        'null scripts',
+        (value) => {
+          value.scripts = null;
+        },
+      ],
+      [
+        'array scripts',
+        (value) => {
+          value.scripts = [];
+        },
+      ],
+      [
+        'missing scripts',
+        (value) => {
+          delete value.scripts;
+        },
+      ],
+      ['malformed JSON', () => '{'],
+      ['array package', () => '[]'],
+    ]) {
+      const value = globalThis.structuredClone(original);
+      const replacement = mutate(value);
+      repo.write(
+        'package.json',
+        typeof replacement === 'string' ? replacement : JSON.stringify(value),
+      );
+      const sourceRevision = repo.commit();
+      for (const event of ['pull_request', 'push']) {
+        const result = implementation.selectComponents({
+          root: repo.root,
+          event,
+          sourceRef:
+            event === 'push' ? 'refs/heads/main' : 'refs/heads/tooling',
+          sourceRevision,
+          baseRevision: repo.base,
+          baselines: Object.fromEntries(names.map((name) => [name, repo.base])),
+        });
+        assert.deepEqual(result.selected, names, `${label}: ${event}`);
+      }
+    }
+  } finally {
+    repo.close();
+  }
+});
+
+test('quality metadata is proven against each component baseline and retains unpublished source', () => {
+  const repo = repository();
+  try {
+    const metadata = JSON.parse(
+      readFileSync(join(repo.root, 'package.json'), 'utf8'),
+    );
+    metadata.devDependencies.fixture = '2.0.0';
+    repo.write('package.json', JSON.stringify(metadata));
+    repo.write('src/Inventory/Program.cs', 'unpublished source');
+    const published = repo.commit();
+    metadata.scripts['test:tooling'] += ' scripts/new.test.mjs';
+    repo.write('package.json', JSON.stringify(metadata));
+    repo.write('scripts/component-pipelines.mjs', 'selector repair');
+    const sourceRevision = repo.commit();
+    const baselines = Object.fromEntries(
+      names.map((name) => [name, published]),
+    );
+    baselines.inventory = repo.base;
+    const selection = { root: repo.root, sourceRevision, baselines };
+    assert.deepEqual(
+      implementation.selectComponents({
+        ...selection,
+        event: 'pull_request',
+        sourceRef: 'refs/heads/tooling',
+        baseRevision: published,
+      }).selected,
+      [],
+    );
+    assert.deepEqual(
+      implementation.selectComponents({
+        ...selection,
+        event: 'push',
+        sourceRef: 'refs/heads/main',
+      }).selected,
+      ['inventory'],
+    );
+    delete baselines.web;
+    assert.deepEqual(
+      implementation.selectComponents({
+        ...selection,
+        event: 'push',
+        sourceRef: 'refs/heads/main',
+      }).selected,
+      ['inventory', 'web'],
+    );
+    assert.deepEqual(
+      implementation.selectComponents({
+        ...selection,
+        event: 'workflow_dispatch',
+        sourceRef: 'refs/heads/tooling',
+      }).selected,
+      names,
+    );
+  } finally {
+    repo.close();
+  }
+});
+
+test('missing package baselines and deleted or renamed package inputs never skip images', () => {
+  const repo = repository();
+  try {
+    const metadata = readFileSync(join(repo.root, 'package.json'), 'utf8');
+    repo.git('rm', 'package.json');
+    const missing = repo.commit();
+    repo.write('package.json', metadata);
+    const sourceRevision = repo.commit();
+    assert.deepEqual(
+      implementation.selectComponents({
+        root: repo.root,
+        event: 'push',
+        sourceRef: 'refs/heads/main',
+        sourceRevision,
+        baselines: Object.fromEntries(names.map((name) => [name, missing])),
+      }).selected,
+      names,
+    );
+    repo.git('rm', 'package.json');
+    const deleted = repo.commit();
+    assert.deepEqual(
+      implementation.selectComponents({
+        root: repo.root,
+        event: 'pull_request',
+        sourceRef: 'refs/heads/tooling',
+        sourceRevision: deleted,
+        baseRevision: repo.base,
+      }).selected,
+      names,
+    );
+    repo.write('package.json', metadata);
+    const restored = repo.commit();
+    repo.write('docs/readme.md', 'retained docs');
+    repo.commit();
+    repo.git('mv', 'package.json', 'docs/package.json');
+    assert.deepEqual(
+      implementation.selectComponents({
+        root: repo.root,
+        event: 'pull_request',
+        sourceRef: 'refs/heads/tooling',
+        sourceRevision: repo.commit(),
+        baseRevision: restored,
+      }).selected,
+      names,
+    );
+  } finally {
+    repo.close();
   }
 });
 

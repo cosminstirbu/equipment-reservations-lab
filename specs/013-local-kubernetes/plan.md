@@ -655,3 +655,13 @@ Current task allocation after integration with backend follow-up work: remote Ar
 installation T096–T101; retained broader-feature convergence T102–T105 in
 [tasks.md](tasks.md). Existing backend T092–T095 and all historical evidence remain
 unchanged. This is identifier reconciliation only; no gate or acceptance status changes.
+
+## Image selection tooling-scope repair
+
+The owner requested that Argo deployment/quality/test tooling changes not rebuild
+application images. [The targeted design and test record](team/image-selection-tooling.md)
+limits exclusions to audited non-image scripts and proven quality-script-only root
+package.json changes; image builders/dependencies/workflows and unknown inputs stay
+conservative. Main compares each publication baseline and retains earlier unpublished
+source work. Full quality and manual dispatch behavior remain unchanged (FR-022,
+SC-011); this repair does not establish broader feature acceptance.

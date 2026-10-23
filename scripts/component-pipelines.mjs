@@ -1,4 +1,5 @@
 import { posix, resolve } from 'node:path';
+import { isDeepStrictEqual } from 'node:util';
 import { appendFileSync, readFileSync, writeFileSync } from 'node:fs';
 import { pathToFileURL } from 'node:url';
 import { Buffer } from 'node:buffer';
@@ -29,6 +30,21 @@ const projects = {
   'broker-bootstrap': 'BrokerBootstrap',
 };
 const sha = /^[a-f0-9]{40}$/;
+const qualityScriptNames = new Set([
+  'format',
+  'format-check',
+  'lint',
+  'check',
+  'check:openapi',
+  'test:tooling',
+  'test:deployment',
+]);
+const nonImageScripts = new Set([
+  'scripts/argocd-installation.mjs',
+  'scripts/component-pipelines.mjs',
+  'scripts/local-kubernetes.mjs',
+  'scripts/quality.mjs',
+]);
 
 export function createEvidenceGateway({
   repository,
@@ -632,8 +648,40 @@ function projectInputs(root, revision, component) {
   return [...visited].map((project) => `${posix.dirname(project)}/`);
 }
 
+function qualityScriptsOnly(root, base, revision) {
+  const metadata = (ref) => {
+    const value = JSON.parse(git(root, ['show', `${ref}:package.json`]));
+    if (
+      !value ||
+      typeof value !== 'object' ||
+      Array.isArray(value) ||
+      !value.scripts ||
+      typeof value.scripts !== 'object' ||
+      Array.isArray(value.scripts)
+    )
+      throw new OperationalFailure('Uncertain root package metadata');
+
+    const scripts = { ...value.scripts };
+    for (const name of qualityScriptNames) {
+      if (Object.hasOwn(scripts, name) && typeof scripts[name] !== 'string')
+        throw new OperationalFailure('Uncertain quality script metadata');
+      delete scripts[name];
+    }
+
+    return { ...value, scripts };
+  };
+
+  try {
+    return isDeepStrictEqual(metadata(base), metadata(revision));
+  } catch {
+    return false;
+  }
+}
+
 function affects(path, component, inputs, knownInputs) {
   if (inputs.some((input) => path.startsWith(input))) return true;
+  if (nonImageScripts.has(path) || /^scripts\/[^/]+\.test\.mjs$/.test(path))
+    return false;
   if (
     /^(docs\/|specs\/|\.specify\/|\.agents\/|\.codex\/)|(^|\/)(README|CHANGELOG|LICENSE)(\.[^/]*)?$/i.test(
       path,
@@ -696,6 +744,7 @@ export function selectComponents({
   const selected = [];
   const reasons = {};
   const candidateInputs = {};
+  const nonImagePackages = new Map();
   const all = (reason) => ({
     selected: [...componentNames],
     reasons: Object.fromEntries(componentNames.map((name) => [name, reason])),
@@ -734,9 +783,20 @@ export function selectComponents({
       }
       const inputs = [...baselineInputs, ...candidateInputs[name]];
       if (
-        paths.some((path) =>
-          affects(path, name, inputs, [...knownInputs, ...baselineInputs]),
-        )
+        paths.some((path) => {
+          if (path === 'package.json') {
+            if (!nonImagePackages.has(base))
+              nonImagePackages.set(
+                base,
+                qualityScriptsOnly(root, base, sourceRevision),
+              );
+            if (nonImagePackages.get(base)) return false;
+          }
+          return affects(path, name, inputs, [
+            ...knownInputs,
+            ...baselineInputs,
+          ]);
+        })
       ) {
         selected.push(name);
         reasons[name] = 'source';
