@@ -1,0 +1,22 @@
+{
+  "base_revision": "3161f5df917369330a4c8330334bb6209687de6b",
+  "branch": "explore/013-argocd-kustomize",
+  "snapshot": "remote-kustomize-source-03",
+  "source_sha256": {
+    "deploy/argocd/kustomization.yaml": "4203fdb280fc4b2a9bde38e0f2706a81a8ac1aa9637c1f6105b24eeb7ccd4ea8",
+    "deploy/argocd/source.json": "9ca9081ecad07bbb4658c1b5046c489aeee484d12067c934d2c4307c9351b75e",
+    "deploy/argocd/resources.yaml": "47a4062b19569db64b26677f1e8fb94bc8ee4e4874c4e3ce642496841eff6c13",
+    "deploy/argocd/local.yaml": "8f585e75cb5f23fd64630e411d585bb99882a53fc56fa25974c29970a846d0cf",
+    "deploy/argocd/README.md": "5d9d4bf0b135923f13ecc8100cb8147736fffc38bc0d847242743f8eeaef4ae2",
+    "scripts/argocd-installation.mjs": "b315e5ef439a0d1f911392470929eaf73f821271da77a87af23d2e63713d712d",
+    "scripts/argocd-installation.test.mjs": "7253da1f627942d62c6ef492d032e1e34ef4ce3e5a79867e42939b877e7d11ee",
+    "scripts/local-kubernetes.mjs": "f0d5741ee249248beb684ee6e43f198e4f6a3a47e20a758fac8fb1cf0ead937c",
+    "scripts/local-kubernetes.test.mjs": "240e0a32644705eea1511b08fffffa3dea6b43a9c41992004a3219869b63510b",
+    "scripts/quality.mjs": "85be528eaf727d4fbb662a6aeec98c2207bb45ed6e0e855f95e791f3a28058f9",
+    "scripts/quality.test.mjs": "74447dc96d07b6dd0bf46b94b98d1625b1ec556b2386294108824642f2cfb127",
+    "package.json": "aaf313599a640bd6e9c1d65a92f5c58f2f4c0ab3dcd3cf853e8fe68a3452bb6d"
+  },
+  "removed": [
+    "deploy/argocd/install.yaml"
+  ]
+}

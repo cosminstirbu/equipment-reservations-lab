@@ -257,3 +257,15 @@ filter may omit it. This does not prove Argo browser access. Required evidence: 
 certificate IP-positive/wrong-IP-negative verification, process-boundary Secret contract,
 and eventual actual pinned Argo endpoint/browser trust/authentication. No certificate
 was generated, trust installed or real local setup performed by this research.
+
+## Remote Kustomize decision (2026-10-23)
+
+Decision: upstream v3.5.5 commit a5038b0e2bbac1715754380ae0084df8e3d5b48c,
+raw manifest SHA256 90dc9094bf4c5964afd9c0e35d735e1c2fcbbda4f8e36799c092d9864ed65f50;
+fetch once, verify, stage ephemeral local overlay, render and apply exact verified
+content. Rationale: remove copied upstream files while retaining existing patches,
+image digests and lifecycle; Kustomize remote references alone do not check SHA256.
+Alternatives considered: bare remote apply (no explicit byte integrity), Helm (owner
+superseded), operator (extra lifecycle/controller), persistent cache (unneeded complexity).
+The [design and primary sources](team/remote-kustomize-design.md) record source proof,
+trust boundaries, budgets and verification. No version upgrade or migration support.

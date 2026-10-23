@@ -1,4 +1,5 @@
 import { spawn } from 'node:child_process';
+import { renderArgoInstallation } from './argocd-installation.mjs';
 import {
   executeProcess,
   processFailure,
@@ -294,6 +295,7 @@ export function buildPrivateResources({
 export function createLifecycle({
   root = repository,
   run = processRun,
+  renderArgo,
   lookupHost = lookup,
   probePort = probeHostPort,
   connectPort = connectHostPort,
@@ -305,13 +307,29 @@ export function createLifecycle({
   const state = join(root, '.local/kubernetes');
   const bundlePath = join(state, 'credentials.json');
   let deadline = Infinity;
+  const renderInstallation =
+    renderArgo ??
+    (() =>
+      renderArgoInstallation({
+        root,
+        run: call,
+        createTimeoutSignal: (milliseconds) =>
+          globalThis.AbortSignal.timeout(
+            Math.min(milliseconds, remainingBudget()),
+          ),
+      }));
 
-  function call(command, args, options = {}) {
+  function remainingBudget() {
     const remaining = deadline - Date.now();
     if (remaining <= 0)
       throw new OperationalFailure(
         'Setup exceeded its 15 minute budget; inspect status before retrying.',
       );
+    return remaining;
+  }
+
+  function call(command, args, options = {}) {
+    const remaining = remainingBudget();
     let operation = 'local private provider operation';
     let policy = 'private-capture';
     if (command === 'kind' && ['create', 'delete'].includes(args[0])) {
@@ -805,6 +823,7 @@ export function createLifecycle({
           'Cannot resolve exact reviewed main revision; refusing setup.',
         );
       const revision = match[1];
+      const argoInstallation = await renderInstallation();
       const bundle = credentials(exists);
       if (exists) suspend();
       if (!exists) {
@@ -868,13 +887,16 @@ export function createLifecycle({
       kubectl(['apply', '-f', join(root, 'deploy/platform/storage.yaml')]);
       provision(bundle);
       kubectl(['apply', '-k', join(root, 'deploy/platform')]);
-      kubectl([
-        'apply',
-        '--server-side',
-        '--field-manager=equipment-local-platform',
-        '-k',
-        join(root, 'deploy/argocd'),
-      ]);
+      kubectl(
+        [
+          'apply',
+          '--server-side',
+          '--field-manager=equipment-local-platform',
+          '-f',
+          '-',
+        ],
+        { input: argoInstallation },
+      );
       kubectl([
         'wait',
         '--for=condition=Established',

@@ -551,3 +551,20 @@ metric-instrument inspection remains pending despite the bounded Aspire evidence
 Aspire results do not substitute for Kubernetes acceptance. Azure artifacts/provisioning/
 runtime validation remain outside this feature; no Azure action was performed or
 authorized.
+
+## Verified remote Argo CD bootstrap
+
+Setup obtains the pinned upstream Argo installation over HTTPS and checks its SHA256
+before any setup mutation. Network access is required; unavailable or invalid content
+fails safely without replacing a working installation. Use the supported verified
+renderer/setup workflow documented in deploy/argocd/README.md; bare kubectl -k does
+not enforce the reviewed checksum. No full upstream manifest is maintained in Git.
+
+For this amendment's local validation follow the bounded Argo-only procedure and
+source-preserving test harness in [the design](team/remote-kustomize-design.md).
+Capture retained state before replacement, then run candidate setup/rerun, stop/resume,
+trusted authenticated Argo access and reconciliation checks. Do not use reset or
+teardown. Preserve current live Application source and private state; record exact
+candidate/fixture revision and any default-main adoption limitation. Runtime evidence
+and independent verdicts belong in team/remote-kustomize-verification.md. This guide
+is not evidence that the pending full-feature or new amendment gates passed.
