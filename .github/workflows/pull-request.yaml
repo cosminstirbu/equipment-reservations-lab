@@ -1,0 +1,129 @@
+name: PR validation
+on:
+  pull_request:
+permissions:
+  contents: read
+jobs:
+  scope:
+    name: Classify validation
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    permissions:
+      contents: read
+      actions: read
+    outputs:
+      mode: ${{ steps.quality_scope.outputs.mode }}
+      reason: ${{ steps.quality_scope.outputs.reason }}
+      paths: ${{ steps.quality_scope.outputs.paths }}
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444
+        with:
+          node-version: 24.15.0
+          cache: npm
+      - id: quality_scope
+        name: Classify required quality
+        env:
+          BASE_REVISION: ${{ github.event.pull_request.base.sha }}
+          GH_TOKEN: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' && github.token || '' }}
+        run: node scripts/manifest-quality.mjs select --output "$RUNNER_TEMP/quality-scope.json"
+  quality:
+    name: quality
+    needs: [scope]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    permissions:
+      contents: read
+      actions: read
+    outputs:
+      mode: ${{ needs.scope.outputs.mode }}
+      reason: ${{ needs.scope.outputs.reason }}
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444
+        with:
+          node-version: 24.15.0
+          cache: npm
+      - run: npm ci
+      - uses: actions/setup-dotnet@26b0ec14cb23fa6904739307f278c14f94c95bf1
+        if: needs.scope.outputs.mode == 'full'
+        with:
+          global-json-file: global.json
+      - run: npm --prefix src/Web ci
+        if: needs.scope.outputs.mode == 'full'
+      - name: Validate committed release and bootstrap identities
+        if: needs.scope.outputs.mode == 'full'
+        run: node scripts/deployment-validation.mjs committed
+      - name: Install pinned promotion validation tool
+        if: needs.scope.outputs.mode == 'full'
+        shell: bash
+        run: |
+          mkdir -p "$RUNNER_TEMP/manifest-tools"
+          curl --fail --silent --show-error --location --connect-timeout 5 --max-time 15 https://dl.k8s.io/release/v1.35.8/bin/linux/amd64/kubectl -o "$RUNNER_TEMP/manifest-tools/kubectl"
+          echo "874d5e72dbb819f43cff16bcd1e4f8bac5b7f2361fe1e55049b0a6c676fb0cbf  $RUNNER_TEMP/manifest-tools/kubectl" | sha256sum --check --strict
+          chmod 0755 "$RUNNER_TEMP/manifest-tools/kubectl"
+      - run: npm run check
+        if: needs.scope.outputs.mode == 'full'
+        env:
+          DOCKER_HOST: unix:///var/run/docker.sock
+          TESTCONTAINERS_RYUK_DISABLED: 'false'
+          MANIFEST_KUBECTL: ${{ runner.temp }}/manifest-tools/kubectl
+      - run: node --test scripts/direct-promotion.test.mjs scripts/deployment-validation.test.mjs scripts/promote-images.test.mjs scripts/deployment-ci.test.mjs scripts/local-platform.test.mjs scripts/local-kubernetes.test.mjs scripts/deployment-smoke.test.mjs scripts/argo-ordering.test.mjs
+        if: needs.scope.outputs.mode == 'full'
+        env:
+          MANIFEST_KUBECTL: ${{ runner.temp }}/manifest-tools/kubectl
+      - name: Full application quality completed
+        if: needs.scope.outputs.mode == 'full'
+        run: echo 'Full application quality completed'
+      - name: Install pinned static manifest tool
+        if: needs.scope.outputs.mode == 'manifest'
+        shell: bash
+        run: |
+          mkdir -p "$RUNNER_TEMP/manifest-tools"
+          curl --fail --silent --show-error --location --connect-timeout 5 --max-time 15 https://dl.k8s.io/release/v1.35.8/bin/linux/amd64/kubectl -o "$RUNNER_TEMP/manifest-tools/kubectl"
+          echo "874d5e72dbb819f43cff16bcd1e4f8bac5b7f2361fe1e55049b0a6c676fb0cbf  $RUNNER_TEMP/manifest-tools/kubectl" | sha256sum --check --strict
+          chmod 0755 "$RUNNER_TEMP/manifest-tools/kubectl"
+      - name: Validate scoped static manifests
+        if: needs.scope.outputs.mode == 'manifest'
+        shell: bash
+        env:
+          QUALITY_MODE: ${{ needs.scope.outputs.mode }}
+          QUALITY_REASON: ${{ needs.scope.outputs.reason }}
+          QUALITY_PATHS: ${{ needs.scope.outputs.paths }}
+        run: |
+          node -e 'const fs = require("node:fs"); fs.writeFileSync(process.env.RUNNER_TEMP + "/quality-scope.json", JSON.stringify({mode: process.env.QUALITY_MODE, reason: process.env.QUALITY_REASON, paths: JSON.parse(process.env.QUALITY_PATHS)}));'
+          node scripts/manifest-quality.mjs validate --selection "$RUNNER_TEMP/quality-scope.json" --kubectl "$RUNNER_TEMP/manifest-tools/kubectl"
+  deployment:
+    name: Kubernetes verification
+    needs: [scope]
+    if: needs.scope.outputs.mode == 'full'
+    permissions:
+      contents: read
+    uses: ./.github/workflows/kubernetes-verification.yaml
+  summary:
+    name: summary
+    if: always()
+    needs: [quality, deployment]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+      - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444
+        with:
+          node-version: 24.15.0
+      - run: npm ci
+      - name: Required validation outcomes
+        env:
+          PIPELINE_NEEDS: ${{ toJSON(needs) }}
+        run: node scripts/deployment-ci.mjs summary

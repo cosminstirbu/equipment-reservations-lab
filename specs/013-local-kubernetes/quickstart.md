@@ -145,10 +145,15 @@ macOS trust. Do not use TLS-verification bypasses.
 ## First release and GitHub permissions
 
 The component-pipeline implementation is undergoing final integration and review;
-see [the design](team/component-pipelines-design.md). Quality runs once before
-parallel component work. PRs build affected components for both architectures without
-publication; main publishes affected components relative to their own successful main
-baselines; manual repository-branch runs select all seven. Each successful component
+see [the component design](team/component-pipelines-design.md) and
+[workflow split](plan.md#pr-validation-and-main-release-split-2026-10-23).
+**PR validation** runs quality and **Kubernetes verification** concurrently after
+classification; the latter builds and exercises all seven disposable AMD64 images.
+PRs do not separately build multi-architecture images or publish. **Main release**
+requires both validations before rebuilding/publishing affected components for
+AMD64/ARM64 relative to their own successful main baselines; manual repository-branch
+runs select all seven and require full quality/Kubernetes verification. Each successful
+component
 independently validates and commits its immutable image patch and provenance directly
 to main, including manual repository-branch runs. No generated promotion PR is needed.
 The image patches are `deploy/environments/local/images/NAME.yaml`; root references
@@ -165,17 +170,19 @@ and actual pinned Kustomize rendering plus existing structural/security policies
 Eligibility is restricted to the local overlay, its two bootstrap wrappers and the
 seven known component record and image-patch paths; other manifests and any source/script/workflow/
 build-input or uncertain comparison use full quality. Main additionally requires a
-trusted successful full-quality ancestor, so a later manifest merge cannot bypass an
-earlier failed source check. No proof means full quality; manual runs always use full
-quality. The required summary identifies the mode. Static success establishes neither
+trusted ancestor with successful full quality and Kubernetes verification, so a later
+manifest merge cannot bypass an earlier failed source/runtime check. Historical
+quality-only runs do not qualify. No proof means full validation; manual runs always
+use full quality and Kubernetes verification. The required summary identifies the mode.
+Static success establishes neither
 application behavior nor complete Kubernetes admission/runtime readiness. See
 [the current gate design](team/manifest-quality-design.md), pending implementation/review.
 
 The lightweight gate performs no application/image build. A manifest-only PR also
-selects no downstream component builds. On main, previously full-quality-validated
-but unpublished component inputs may still build/publish downstream; a manifest merge
-does not erase that backlog. Source that has not passed full quality forces the full
-gate first.
+runs no downstream component builds or Kubernetes verification. On main, previously
+validated but unpublished component inputs may still build/publish downstream; a
+manifest merge does not erase that backlog. Source that has not passed both full
+validation jobs forces the full gate first.
 
 Records live at `deploy/environments/local/releases/NAME.json`. A first promotion may contain
 only one real record: missing components remain explicitly unreleased, and setup fails
@@ -184,7 +191,7 @@ No new preproduction or compatibility gate is introduced. Live runs, commits/pus
 and full-feature human acceptance remain separately authorized.
 
 Before setup, the repository owner separately authorizes first publication and promotion.
-For a manual run, select **Component pipelines** in Actions and choose the reviewed repository
+For a manual run, select **Main release** in Actions and choose the reviewed repository
 branch. Manual dispatch publishes even without application changes; tags and PR/fork
 events cannot publish. Component builds run concurrently; only promotion mutations share
 a queue, with `queue: max` and `cancel-in-progress: false`. Up to 100 promotions may wait;

@@ -1,5 +1,10 @@
 # Independent component pipelines design
 
+Current execution topology is amended by the owner-approved
+[PR validation/main release split](../plan.md#pr-validation-and-main-release-split-2026-10-23).
+That amendment supersedes this document's earlier PR multi-architecture build topology,
+classifier placement and quality-only release/baseline gates; other contracts remain.
+
 Current amendment: [direct component promotion](direct-component-promotion-design.md)
 supersedes this historical design's generated PR/branch mutation and shared-image-file
 instructions. Retain original preparation/review evidence at its original scope.

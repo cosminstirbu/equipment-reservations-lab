@@ -1,22 +1,22 @@
-name: Component pipelines
+name: Main release
 on:
-  pull_request:
   push:
     branches: [main]
   workflow_dispatch:
 permissions:
   contents: read
 jobs:
-  quality:
-    name: quality
+  scope:
+    name: Classify validation
     runs-on: ubuntu-24.04
-    timeout-minutes: 30
+    timeout-minutes: 5
     permissions:
       contents: read
       actions: read
     outputs:
       mode: ${{ steps.quality_scope.outputs.mode }}
       reason: ${{ steps.quality_scope.outputs.reason }}
+      paths: ${{ steps.quality_scope.outputs.paths }}
     steps:
       - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
         with:
@@ -33,18 +33,39 @@ jobs:
           BASE_REVISION: ${{ github.event.pull_request.base.sha }}
           GH_TOKEN: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' && github.token || '' }}
         run: node scripts/manifest-quality.mjs select --output "$RUNNER_TEMP/quality-scope.json"
+  quality:
+    name: quality
+    needs: [scope]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    permissions:
+      contents: read
+      actions: read
+    outputs:
+      mode: ${{ needs.scope.outputs.mode }}
+      reason: ${{ needs.scope.outputs.reason }}
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444
+        with:
+          node-version: 24.15.0
+          cache: npm
       - run: npm ci
       - uses: actions/setup-dotnet@26b0ec14cb23fa6904739307f278c14f94c95bf1
-        if: steps.quality_scope.outputs.mode == 'full'
+        if: needs.scope.outputs.mode == 'full'
         with:
           global-json-file: global.json
       - run: npm --prefix src/Web ci
-        if: steps.quality_scope.outputs.mode == 'full'
+        if: needs.scope.outputs.mode == 'full'
       - name: Validate committed release and bootstrap identities
-        if: steps.quality_scope.outputs.mode == 'full'
+        if: needs.scope.outputs.mode == 'full'
         run: node scripts/deployment-validation.mjs committed
       - name: Install pinned promotion validation tool
-        if: steps.quality_scope.outputs.mode == 'full'
+        if: needs.scope.outputs.mode == 'full'
         shell: bash
         run: |
           mkdir -p "$RUNNER_TEMP/manifest-tools"
@@ -52,20 +73,20 @@ jobs:
           echo "874d5e72dbb819f43cff16bcd1e4f8bac5b7f2361fe1e55049b0a6c676fb0cbf  $RUNNER_TEMP/manifest-tools/kubectl" | sha256sum --check --strict
           chmod 0755 "$RUNNER_TEMP/manifest-tools/kubectl"
       - run: npm run check
-        if: steps.quality_scope.outputs.mode == 'full'
+        if: needs.scope.outputs.mode == 'full'
         env:
           DOCKER_HOST: unix:///var/run/docker.sock
           TESTCONTAINERS_RYUK_DISABLED: 'false'
           MANIFEST_KUBECTL: ${{ runner.temp }}/manifest-tools/kubectl
       - run: node --test scripts/direct-promotion.test.mjs scripts/deployment-validation.test.mjs scripts/promote-images.test.mjs scripts/deployment-ci.test.mjs scripts/local-platform.test.mjs scripts/local-kubernetes.test.mjs scripts/deployment-smoke.test.mjs scripts/argo-ordering.test.mjs
-        if: steps.quality_scope.outputs.mode == 'full'
+        if: needs.scope.outputs.mode == 'full'
         env:
           MANIFEST_KUBECTL: ${{ runner.temp }}/manifest-tools/kubectl
       - name: Full application quality completed
-        if: steps.quality_scope.outputs.mode == 'full'
+        if: needs.scope.outputs.mode == 'full'
         run: echo 'Full application quality completed'
       - name: Install pinned static manifest tool
-        if: steps.quality_scope.outputs.mode == 'manifest'
+        if: needs.scope.outputs.mode == 'manifest'
         shell: bash
         run: |
           mkdir -p "$RUNNER_TEMP/manifest-tools"
@@ -73,12 +94,26 @@ jobs:
           echo "874d5e72dbb819f43cff16bcd1e4f8bac5b7f2361fe1e55049b0a6c676fb0cbf  $RUNNER_TEMP/manifest-tools/kubectl" | sha256sum --check --strict
           chmod 0755 "$RUNNER_TEMP/manifest-tools/kubectl"
       - name: Validate scoped static manifests
-        if: steps.quality_scope.outputs.mode == 'manifest'
+        if: needs.scope.outputs.mode == 'manifest'
         shell: bash
-        run: node scripts/manifest-quality.mjs validate --selection "$RUNNER_TEMP/quality-scope.json" --kubectl "$RUNNER_TEMP/manifest-tools/kubectl"
+        env:
+          QUALITY_MODE: ${{ needs.scope.outputs.mode }}
+          QUALITY_REASON: ${{ needs.scope.outputs.reason }}
+          QUALITY_PATHS: ${{ needs.scope.outputs.paths }}
+        run: |
+          node -e 'const fs = require("node:fs"); fs.writeFileSync(process.env.RUNNER_TEMP + "/quality-scope.json", JSON.stringify({mode: process.env.QUALITY_MODE, reason: process.env.QUALITY_REASON, paths: JSON.parse(process.env.QUALITY_PATHS)}));'
+          node scripts/manifest-quality.mjs validate --selection "$RUNNER_TEMP/quality-scope.json" --kubectl "$RUNNER_TEMP/manifest-tools/kubectl"
+  deployment:
+    name: Kubernetes verification
+    needs: [scope]
+    if: needs.scope.outputs.mode == 'full'
+    permissions:
+      contents: read
+    uses: ./.github/workflows/kubernetes-verification.yaml
   select:
     name: Select components
-    needs: [quality]
+    needs: [quality, deployment]
+    if: ${{ !cancelled() && needs.quality.result == 'success' && ((needs.quality.outputs.mode == 'full' && needs.deployment.result == 'success') || (needs.quality.outputs.mode == 'manifest' && needs.deployment.result == 'skipped')) }}
     runs-on: ubuntu-24.04
     timeout-minutes: 10
     permissions:
@@ -120,127 +155,64 @@ jobs:
           path: ${{ runner.temp }}/run-intent.json
           if-no-files-found: error
           retention-days: 30
-  pr_inventory:
-    needs: [quality, select]
-    if: github.event_name == 'pull_request' && needs.select.outputs.inventory == 'true'
-    permissions:
-      contents: read
-    uses: ./.github/workflows/component-build.yaml
-    with:
-      component: inventory
-      publish: false
   component_inventory:
     name: Component inventory
     needs: [quality, select]
-    if: github.event_name != 'pull_request' && needs.select.outputs.inventory == 'true'
+    if: ${{ !cancelled() && needs.quality.result == 'success' && needs.select.result == 'success' && needs.select.outputs.inventory == 'true' }}
     permissions:
       contents: write
       packages: write
       actions: read
     uses: ./.github/workflows/component-inventory.yaml
-  pr_reservations:
-    needs: [quality, select]
-    if: github.event_name == 'pull_request' && needs.select.outputs.reservations == 'true'
-    permissions:
-      contents: read
-    uses: ./.github/workflows/component-build.yaml
-    with:
-      component: reservations
-      publish: false
   component_reservations:
     name: Component reservations
     needs: [quality, select]
-    if: github.event_name != 'pull_request' && needs.select.outputs.reservations == 'true'
+    if: ${{ !cancelled() && needs.quality.result == 'success' && needs.select.result == 'success' && needs.select.outputs.reservations == 'true' }}
     permissions:
       contents: write
       packages: write
       actions: read
     uses: ./.github/workflows/component-reservations.yaml
-  pr_notifications:
-    needs: [quality, select]
-    if: github.event_name == 'pull_request' && needs.select.outputs.notifications == 'true'
-    permissions:
-      contents: read
-    uses: ./.github/workflows/component-build.yaml
-    with:
-      component: notifications
-      publish: false
   component_notifications:
     name: Component notifications
     needs: [quality, select]
-    if: github.event_name != 'pull_request' && needs.select.outputs.notifications == 'true'
+    if: ${{ !cancelled() && needs.quality.result == 'success' && needs.select.result == 'success' && needs.select.outputs.notifications == 'true' }}
     permissions:
       contents: write
       packages: write
       actions: read
     uses: ./.github/workflows/component-notifications.yaml
-  pr_web:
-    needs: [quality, select]
-    if: github.event_name == 'pull_request' && needs.select.outputs.web == 'true'
-    permissions:
-      contents: read
-    uses: ./.github/workflows/component-build.yaml
-    with:
-      component: web
-      publish: false
   component_web:
     name: Component web
     needs: [quality, select]
-    if: github.event_name != 'pull_request' && needs.select.outputs.web == 'true'
+    if: ${{ !cancelled() && needs.quality.result == 'success' && needs.select.result == 'success' && needs.select.outputs.web == 'true' }}
     permissions:
       contents: write
       packages: write
       actions: read
     uses: ./.github/workflows/component-web.yaml
-  pr_database_bootstrap:
-    needs: [quality, select]
-    if: github.event_name == 'pull_request' && needs.select.outputs.database_bootstrap == 'true'
-    permissions:
-      contents: read
-    uses: ./.github/workflows/component-build.yaml
-    with:
-      component: database-bootstrap
-      publish: false
   component_database_bootstrap:
     name: Component database-bootstrap
     needs: [quality, select]
-    if: github.event_name != 'pull_request' && needs.select.outputs.database_bootstrap == 'true'
+    if: ${{ !cancelled() && needs.quality.result == 'success' && needs.select.result == 'success' && needs.select.outputs.database_bootstrap == 'true' }}
     permissions:
       contents: write
       packages: write
       actions: read
     uses: ./.github/workflows/component-database-bootstrap.yaml
-  pr_identity_bootstrap:
-    needs: [quality, select]
-    if: github.event_name == 'pull_request' && needs.select.outputs.identity_bootstrap == 'true'
-    permissions:
-      contents: read
-    uses: ./.github/workflows/component-build.yaml
-    with:
-      component: identity-bootstrap
-      publish: false
   component_identity_bootstrap:
     name: Component identity-bootstrap
     needs: [quality, select]
-    if: github.event_name != 'pull_request' && needs.select.outputs.identity_bootstrap == 'true'
+    if: ${{ !cancelled() && needs.quality.result == 'success' && needs.select.result == 'success' && needs.select.outputs.identity_bootstrap == 'true' }}
     permissions:
       contents: write
       packages: write
       actions: read
     uses: ./.github/workflows/component-identity-bootstrap.yaml
-  pr_broker_bootstrap:
-    needs: [quality, select]
-    if: github.event_name == 'pull_request' && needs.select.outputs.broker_bootstrap == 'true'
-    permissions:
-      contents: read
-    uses: ./.github/workflows/component-build.yaml
-    with:
-      component: broker-bootstrap
-      publish: false
   component_broker_bootstrap:
     name: Component broker-bootstrap
     needs: [quality, select]
-    if: github.event_name != 'pull_request' && needs.select.outputs.broker_bootstrap == 'true'
+    if: ${{ !cancelled() && needs.quality.result == 'success' && needs.select.result == 'success' && needs.select.outputs.broker_bootstrap == 'true' }}
     permissions:
       contents: write
       packages: write
@@ -251,20 +223,14 @@ jobs:
     needs:
       [
         quality,
+        deployment,
         select,
-        pr_inventory,
         component_inventory,
-        pr_reservations,
         component_reservations,
-        pr_notifications,
         component_notifications,
-        pr_web,
         component_web,
-        pr_database_bootstrap,
         component_database_bootstrap,
-        pr_identity_bootstrap,
         component_identity_bootstrap,
-        pr_broker_bootstrap,
         component_broker_bootstrap,
       ]
     runs-on: ubuntu-24.04
@@ -292,54 +258,3 @@ jobs:
         shell: bash
         run: |
           printf 'Required quality mode: %s (%s)\n' "${QUALITY_MODE:-unavailable}" "${QUALITY_REASON:-unavailable}" | tee -a "$GITHUB_STEP_SUMMARY"
-  deployment:
-    # Temporarily disabled for local exploratory testing; see EX-013-002.
-    if: ${{ false }}
-    runs-on: ubuntu-24.04
-    timeout-minutes: 60
-    steps:
-      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
-        with:
-          persist-credentials: false
-      - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444
-        with:
-          node-version: 24.15.0
-      - uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f
-      - run: npm ci
-      - name: Validate committed release and bootstrap identities
-        run: node scripts/deployment-validation.mjs committed
-      - name: Install checksum-verified deployment tools
-        shell: bash
-        run: |
-          mkdir -p "$RUNNER_TEMP/equipment-tools"
-          curl --fail --silent --show-error --location --connect-timeout 5 --max-time 15 https://github.com/kubernetes-sigs/kind/releases/download/v0.33.0/kind-linux-amd64 -o "$RUNNER_TEMP/equipment-tools/kind"
-          echo "aee6151561422756b764a4ae28e7f44cda5af5a9eead3cc9985112b1de8d8e0d  $RUNNER_TEMP/equipment-tools/kind" | sha256sum --check --strict
-          curl --fail --silent --show-error --location --connect-timeout 5 --max-time 15 https://dl.k8s.io/release/v1.35.8/bin/linux/amd64/kubectl -o "$RUNNER_TEMP/equipment-tools/kubectl"
-          echo "874d5e72dbb819f43cff16bcd1e4f8bac5b7f2361fe1e55049b0a6c676fb0cbf  $RUNNER_TEMP/equipment-tools/kubectl" | sha256sum --check --strict
-          chmod 0755 "$RUNNER_TEMP/equipment-tools/kind" "$RUNNER_TEMP/equipment-tools/kubectl"
-          echo "$RUNNER_TEMP/equipment-tools" >> "$GITHUB_PATH"
-      - name: Deployment tool and fixture contract
-        run: npm run test:deployment -- scripts/deployment-ci-contract.test.mjs
-      - name: Real provider regressions (serialized before application kind)
-        run: npm run test:deployment -- scripts/deployment-broker-retention.test.mjs scripts/deployment-config-rollout.test.mjs scripts/deployment-database-bootstrap.test.mjs scripts/deployment-ingress.test.mjs scripts/deployment-routing.test.mjs
-        env:
-          CONTAINER_RUNTIME: docker
-      - name: Ephemeral isolated deployment (never publishes)
-        run: node scripts/deployment-ci.mjs
-      - name: Real deployed behavior
-        shell: bash
-        run: |
-          STATE_FILE="$EQUIPMENT_CI_STATE/smoke-state.json"
-          KUBECONFIG_FILE=$(node -p 'JSON.parse(require("node:fs").readFileSync(process.argv[1],"utf8")).kubeconfig' "$STATE_FILE")
-          kubectl --kubeconfig "$KUBECONFIG_FILE" --context kind-equipment-ci --namespace equipment port-forward --address 127.0.0.1 service/dashboard 18888:18888 18890:18890 > "$RUNNER_TEMP/equipment-forward.log" 2>&1 &
-          FORWARD_PID=$!
-          trap 'kill "$FORWARD_PID" 2>/dev/null || true' EXIT
-          for attempt in {1..30}; do
-            if curl --silent --max-time 1 --output /dev/null http://127.0.0.1:18888/; then break; fi
-            if ! kill -0 "$FORWARD_PID" 2>/dev/null; then exit 1; fi
-            sleep 1
-          done
-          node scripts/deployment-smoke.mjs --ci --state "$EQUIPMENT_CI_STATE"
-      - name: Remove disposable cluster
-        if: always()
-        run: kind delete cluster --name equipment-ci

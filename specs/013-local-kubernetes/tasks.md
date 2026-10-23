@@ -327,3 +327,8 @@ Preserve earlier task IDs, evidence and acceptance gates.
 ## Phase 21: Image selection tooling scope
 
 - [x] T106 Regress and repair non-image tooling classification in scripts/component-pipelines.mjs through real-Git/public selector tests; prove root package quality-script-only changes before skipping, preserve actual builder/dependency/workflow/unknown/manual and earlier unpublished-source selection, replay PR #25, and record required checks in team/image-selection-tooling.md (FR-022, SC-011).
+
+## Phase 22: PR validation and main release
+
+- [x] T107 Implement the owner-confirmed workflow split in pull-request.yaml and validate.yaml with shared Kubernetes verification, concurrent quality/runtime checks after classification, no separate PR component builds, fail-closed release/summary gates and joint quality/Kubernetes main ancestor proof. Preserve manual branch release and independent affected-component publication; run focused/full tooling, pinned Kustomize, formatting/lint and workflow syntax checks and record evidence in plan.md (FR-011, AC-3.1/AC-3.8/AC-3.9, SC-011/SC-013).
+- [ ] T108 Qualify the split through actual hosted PR execution, full and manifest-only scheduling, failed/cancelled validation gates and separately authorized main/manual release execution. Preserve existing deployment runtime failures and broader feature/reviewer/human acceptance obligations; local workflow/CLI tests do not establish GitHub scheduling or real deployment success (SC-007, SC-011, SC-013).

@@ -793,12 +793,15 @@ export function createEphemeralCluster({
 
 function pipelineSummary() {
   const outcomes = new Set(['success', 'failure', 'cancelled', 'skipped']);
+  const pullRequest = process.env.GITHUB_EVENT_NAME === 'pull_request';
   let needs = {};
   let selected = imageNames;
   let invalid = false;
   try {
     needs = JSON.parse(process.env.PIPELINE_NEEDS ?? '{}');
-    const requested = JSON.parse(process.env.SELECTED_COMPONENTS ?? 'null');
+    const requested = pullRequest
+      ? []
+      : JSON.parse(process.env.SELECTED_COMPONENTS ?? 'null');
     if (
       !Array.isArray(requested) ||
       requested.some((name) => !imageNames.includes(name)) ||
@@ -811,22 +814,26 @@ function pipelineSummary() {
   }
   const status = (key) =>
     outcomes.has(needs?.[key]?.result) ? needs[key].result : 'missing';
+  const mode = needs.quality?.outputs?.mode;
+  const deploymentPassed =
+    (mode === 'full' && status('deployment') === 'success') ||
+    (mode === 'manifest' && status('deployment') === 'skipped');
   const lines = [
     `quality: ${status('quality')}`,
-    `selection: ${status('select')}`,
+    `validation mode: ${mode === 'full' || mode === 'manifest' ? mode : 'missing'}`,
+    `deployment: ${status('deployment')}`,
   ];
-  let failed =
-    invalid ||
-    status('quality') !== 'success' ||
-    status('select') !== 'success';
-  const lane =
-    process.env.GITHUB_EVENT_NAME === 'pull_request' ? 'pr' : 'component';
-  for (const name of imageNames) {
+  let failed = invalid || status('quality') !== 'success' || !deploymentPassed;
+  if (!pullRequest) {
+    lines.push(`selection: ${status('select')}`);
+    failed ||= status('select') !== 'success';
+  }
+  for (const name of pullRequest ? [] : imageNames) {
     if (!selected.includes(name)) {
       lines.push(`${name}: not selected`);
       continue;
     }
-    const result = status(`${lane}_${name.replaceAll('-', '_')}`);
+    const result = status(`component_${name.replaceAll('-', '_')}`);
     lines.push(`${name}: ${result}`);
     if (result !== 'success') failed = true;
   }
@@ -835,7 +842,7 @@ function pipelineSummary() {
     appendFileSync(process.env.GITHUB_STEP_SUMMARY, lines.join('\n') + '\n');
   if (failed)
     throw new OperationalFailure(
-      'Required component work failed, was canceled, or is missing; rerun failed jobs or start a fresh run if retained evidence expired.',
+      'Required validation or component work failed, was canceled, or is missing; rerun failed jobs or start a fresh run if retained evidence expired.',
     );
 }
 

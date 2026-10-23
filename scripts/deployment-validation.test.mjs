@@ -220,7 +220,10 @@ test('prerequisite quality retains committed deployment validation and pinned to
   );
   assert.equal(validate.permissions.contents, 'read');
   assert.equal(validate.on.pull_request_target, undefined);
-  const installation = validate.jobs.deployment.steps.find(
+  const kubernetes = parsers.Yaml.parse(
+    readFileSync('.github/workflows/kubernetes-verification.yaml', 'utf8'),
+  ).data;
+  const installation = kubernetes.jobs.verify.steps.find(
     (step) => step.name === 'Install checksum-verified deployment tools',
   );
   assert.match(
