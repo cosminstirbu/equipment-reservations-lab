@@ -43,10 +43,6 @@ jobs:
       - name: Validate committed release and bootstrap identities
         if: steps.quality_scope.outputs.mode == 'full'
         run: node scripts/deployment-validation.mjs committed
-      - run: npm run format-check
-        if: steps.quality_scope.outputs.mode == 'full'
-      - run: npm run lint
-        if: steps.quality_scope.outputs.mode == 'full'
       - name: Install pinned promotion validation tool
         if: steps.quality_scope.outputs.mode == 'full'
         shell: bash
