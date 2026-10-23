@@ -1,15 +1,15 @@
 {
   "component": "database-bootstrap",
-  "digest": "sha256:9679b87c8c447dbc9416f024bd5ba143f0aee43a28073c4c9f734b3a20aa3e27",
+  "digest": "sha256:da094edb77b4412944b905e3fa54ad9d69ff84afc0a6a23133adcdfdc9799280",
   "image": "ghcr.io/cosminstirbu/equipment-reservations-lab-database-bootstrap",
   "repository": {
     "id": 1426639177,
     "name": "cosminstirbu/equipment-reservations-lab"
   },
   "runAttempt": 1,
-  "runId": 39953694178,
+  "runId": 39973588180,
   "schemaVersion": 1,
   "sourceRef": "refs/heads/main",
-  "sourceRevision": "e4241855698a27ebdd36bc5f0623f4e3ace10f75",
+  "sourceRevision": "2f3a1b6c6ecccdcb94a6d1e2edf40501edeccff2",
   "workflow": ".github/workflows/validate.yaml"
 }
