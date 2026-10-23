@@ -1,5 +1,22 @@
 # Windows local setup qualification
 
+## Interactive Argo access amendment — 2026-10-23
+
+The owner requested that `access argocd` remain open until manually interrupted.
+Only that interactive loopback forward has no overall process deadline. Ownership,
+authentication, fixed endpoints and individual Kubernetes API request timeouts stay
+intact; setup/smoke and the Dashboard forward retain their finite budgets.
+
+Regression design: exercise the public lifecycle `execute` boundary with the existing
+external provider double, asserting the Argo forward's zero (disabled) process timer
+and truthful Ctrl+C guidance. Retain the Dashboard timer assertion. Verify that exact
+selected timer with a real Node child through the production process executor; no
+cluster or credential double replaces application-owned lifetime policy.
+
+The regression failed with the former 180000ms timer, then both access tests passed
+with Argo's timer disabled and Dashboard's timer retained. The selected zero timer
+also passed through the production executor to a real child process successfully.
+
 Owner request (2026-10-22): run the existing kind/Argo setup on Windows while
 preserving macOS behavior. The owner also approved an explicit experimental
 8 GiB Windows trial; the normal 11000 MiB minimum remains unchanged. This does

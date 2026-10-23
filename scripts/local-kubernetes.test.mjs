@@ -19,6 +19,7 @@ import test, { after } from 'node:test';
 import { EventEmitter } from 'node:events';
 import { PassThrough } from 'node:stream';
 import { createLifecycle } from './local-kubernetes.mjs';
+import { executeProcess } from './process.mjs';
 import {
   assertPrivatePath,
   createPrivateDirectory,
@@ -583,6 +584,34 @@ test('access only forwards approved interfaces to loopback and never prints toke
   assert.ok(forward.args.includes('--address=127.0.0.1'));
   assert.ok(forward.args.includes('18888:18888'));
   assert.equal(forward.settings.inherit, false);
+  assert.equal(forward.settings.timeout, 180000);
+});
+
+test('interactive Argo access runs until interrupted without an overall process timeout', async (t) => {
+  const f = fixture(t);
+  const bundle = f.app.credentials(false);
+  f.setCluster(true);
+  f.setMarker(bundle.owner);
+  await f.app.execute(['access', 'argocd']);
+  const forward = f.calls.find((entry) => entry.args.includes('port-forward'));
+  assert.ok(forward.args.includes('--address=127.0.0.1'));
+  assert.ok(forward.args.includes('18443:443'));
+  assert.equal(forward.settings.timeout, 0);
+  assert.match(f.output.join('\n'), /Ctrl\+C/);
+  assert.doesNotMatch(f.output.join('\n'), /180 seconds/);
+  assert.equal(
+    executeProcess(
+      process.execPath,
+      ['-e', "setTimeout(()=>process.stdout.write('forward finished'),100)"],
+      {
+        timeout: forward.settings.timeout,
+        tool: 'node',
+        operation: 'interactive forward lifetime regression',
+        output: 'public-capture',
+      },
+    ),
+    'forward finished',
+  );
 });
 
 test(

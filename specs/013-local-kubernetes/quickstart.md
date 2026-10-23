@@ -337,8 +337,9 @@ Sign in through Scalar's equipment-docs PKCE client and verify a permitted write
 forbidden operation. These actions change real demo data. Documentation remains disabled
 outside Development unless the deployment explicitly enables it.
 
-For diagnostic interfaces, run one command per terminal; each forward binds loopback
-and lasts at most 180 seconds:
+For diagnostic interfaces, run one command per terminal; each forward binds loopback.
+The Dashboard forward lasts at most 180 seconds. The interactive Argo forward stays
+open until Ctrl+C (or a connection/process failure); keep that terminal open:
 
 ```sh
 node scripts/local-kubernetes.mjs access dashboard
