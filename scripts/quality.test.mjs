@@ -228,7 +228,7 @@ syncBuiltinESMExports();
   }
 });
 
-test('authored YAML is discoverable while the checksum-locked upstream Argo manifest is excluded', () => {
+test('authored YAML and reviewed Argo source metadata are discoverable', () => {
   const directory = mkdtempSync(resolve(root, '.formatter-fixture-'));
   try {
     for (const extension of ['yaml', 'yml']) {
@@ -239,7 +239,10 @@ test('authored YAML is discoverable while the checksum-locked upstream Argo mani
         path.slice(root.length + 1).replaceAll('\\', '/'),
       );
     }
-    assert.equal(sourcePath('deploy/argocd/install.yaml'), null);
+    assert.equal(
+      sourcePath('deploy/argocd/source.json'),
+      'deploy/argocd/source.json',
+    );
     assert.equal(
       sourcePath('deploy/argocd/kustomization.yaml'),
       'deploy/argocd/kustomization.yaml',

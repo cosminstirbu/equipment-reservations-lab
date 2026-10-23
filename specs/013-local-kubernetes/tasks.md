@@ -289,3 +289,37 @@ approve the branch or claim all older pending checks passed.
 - [ ] T093 Qualify T092 with current full-concurrency backend checks and required formatting/lint, then obtain hosted Linux evidence after separately authorized publication. Local formatting/lint passed; the full Windows run passed Integration.Tests but failed four other cases (BTS-008), so full qualification remains failed. Track BTS-006/BTS-007 independently: reproduce the TransitionSchedule and telemetry/intentional-fault startup sensitivities at their real boundaries before repairs; preserve the previous audit's unresolved admission, cleanup, process and SLA findings. A passing focused class or a rerun does not close these findings or feature acceptance.
 - [x] T094 Regress BTS-008 fixture defects before repair: real PostgreSQL runtime-session readiness, bounded transient connection/authentication recovery, permanent rejection/cancellation/privacy, and safe HTTP-status reporting before DTO deserialization. Warm the actual runtime datasource and authenticate Keycloak administration before provisioning, without changing production request budgets or retrying bookings/rejected-user login. Verify focused database policy/provider cases, all 53 reservation-security cases and all 34 identity-bootstrap cases; record scope and limits in team/backend-test-stability-audit.md.
 - [ ] T095 Qualify T094 at normal nine-project backend concurrency, run required format/lint and inspect private-output/cleanup boundaries; record current results separately from earlier failed runs. Hosted Linux verification after separately authorized publication and broader BTS-001–BTS-007/feature acceptance obligations remain pending.
+
+## Phase 19: US2 — Verified remote Kustomize Argo CD installation
+
+[Requirements](team/remote-kustomize-requirements.md) and
+[design](team/remote-kustomize-design.md) define this owner-authorized amendment.
+Preserve all earlier IDs/status and pending feature gates. The owner subsequently authorized commit, rebase, push and PR creation; merge and release publication remain separate.
+
+- [x] T096 [US2] Obtain independent requirements/design quality and security preparation verdicts for spec.md, plan.md and team/remote-kustomize-design.md; analyze targeted tasks and freeze FR-025/FR-026 source, preflight, output, cleanup and live state boundaries before implementation (AC-2.5–AC-2.7).
+- [x] T097 [US2] Add intended-failing public renderer/CLI HTTP/process regressions in scripts/argocd-installation.test.mjs and extend scripts/local-kubernetes.test.mjs for verified exact-byte apply, immutable source/config validation, integrity/unavailable/timeout/oversize failure before mutation, privacy and cleanup; record red evidence in team/remote-kustomize-verification.md (FR-025, AC-2.5/AC-2.6).
+- [x] T098 [US2] Implement shared scripts/argocd-installation.mjs verified fetch-once temporary rendering and integrate setup preflight/exact stdin apply in scripts/local-kubernetes.mjs; replace deploy/argocd/install.yaml with immutable remote reference/checksum configuration, retain authored patches/digests, remove obsolete scripts/quality.mjs vendor exclusion and update scripts/quality.test.mjs and deploy/argocd/README.md (FR-025, AC-2.5/AC-2.6).
+- [x] T099 [US2] Run focused contracts, full tooling, required format-check/lint and actual pinned kubectl upstream/render comparison; inspect preserved TLS/AppProject/resource/digest/lifecycle rules and record exact command/environment/revision/results in team/remote-kustomize-verification.md; fix observed failures without waiving pending checks (AC-2.5/AC-2.6, SC-014).
+- [x] T100 [US2] Under coordinator-reviewed exact Argo-only inventory, capture private retained fixtures and locally replace Argo, run actual candidate setup/rerun and stop/resume with current source preserved, verify trusted authenticated access, healthy reconciliation and database/broker/Dashboard/credential retention; document any isolated fixture mapping and evidence limits in team/remote-kustomize-verification.md (FR-026, AC-2.7, SC-014).
+- [x] T101 [US2] Obtain current-snapshot independent quality/security verdicts, coordinator convergence and consistent amendment metadata in team/; leave explicit human acceptance and all earlier unavailable full-feature checks pending until satisfied (FR-025/FR-026, SC-014).
+
+Dependencies: T096 → T097 intended red → T098 → T099/T100 → T101. Static and live
+qualification may run independently only on frozen candidate source and disjoint exact
+resources; each must use current evidence. Implementation ownership includes helper,
+lifecycle, quality exclusions/tests and Argo docs/config; coordinator owns live actions
+and team verification metadata. No whole-file regeneration or reset of older tasks.
+Independent US2 criterion: approved source integrity fails safely and actual retained
+local demo survives replacement/rerun/stop-resume with healthy authenticated Argo.
+
+## Phase 20: Convergence
+
+Assessment after the remote-Kustomize implement batch: FR-025/FR-026 have no
+remaining implementation gap and local SC-014 evidence passed. The following are
+retained broader-feature gaps, already represented by earlier pending tasks/audit
+findings; these trace tasks do not authorize unrelated edits in the Argo batch.
+Preserve earlier task IDs, evidence and acceptance gates.
+
+- [ ] T102 Complete retained T089 by selecting a genuinely available deployed-smoke reservation interval in scripts/deployment-smoke.mjs and regressing an existing booking covering the attempted window; preserve genuine write/cancellation/telemetry assertions and recorded reservations, per FR-002, AC-1.2 and SC-007 (partial, HIGH).
+- [ ] T103 Resolve retained T080/BTS-001 in tests/TestSupport/BrokerAccessFixture.cs: regress and establish bounded authenticated AMQP readiness after broker restart rather than management HTTP alone; preserve outage/denial tests and normal concurrency, per plan backend stability follow-up, engineering testing lifecycle guidance and SC-007 (partial, HIGH).
+- [ ] T104 Resolve retained BTS-003 cleanup gaps in tests/TestSupport/BookingRecoveryFixture.cs and tests/TestSupport/BookingScenario.cs with public failure-boundary regressions proving every owned resource is attempted after an earlier disposal failure and primary/cleanup failures remain diagnosable, per T047/T048/T052/T080 and engineering tooling cleanup requirements (partial, HIGH).
+- [ ] T105 Resolve retained BTS-004 owned-process gaps in tests/DatabaseBootstrap.Tests/DatabaseBootstrapTracingTests.cs and tests/TestSupport/SpectralValidation.cs: regress timeout/cancellation and bound child termination/reaping and post-kill waits without losing primary diagnostics, per T047/T048/T052/T080, engineering testing lifecycle guidance and tooling cleanup requirements (partial, HIGH).

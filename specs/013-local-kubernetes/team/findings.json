@@ -357,6 +357,18 @@
       "evidence": "manifest-quality-security-01.md; frozen manifest-quality-snapshot-01.json; real public validator accepted unrelated bare inventory container without resource bounds.",
       "remediation": "Test-first static-only rejection of unsupported nested workload forms; preserve runtime behavior and actual initial/partial/complete provider checks.",
       "closure_evidence": "Original security reviewer re-executed the public reproduction and closed MQ-S001 on snapshot02; manifest-quality-security-02.md, quality-02.md; seven intended reds then Linux63/63 zero skips."
+    },
+    {
+      "id": "RK-S001",
+      "category": "security",
+      "severity": "medium",
+      "blocking": true,
+      "owner": "architect_planner",
+      "status": "closed",
+      "description": "Disposable local qualification harness discarded actionable safe primary failure metadata and lacked explicit captured-state recovery.",
+      "evidence": "remote-kustomize-harness-security.md initial changes_requested verdict; no execution before repair.",
+      "remediation": "Preserve safeFailure/process/HTTP projections and add exact captured Argo baseline rollback with separate recovery failure handling.",
+      "closure_evidence": "Original security reviewer approved corrected harness and parser follow-up before coordinator preflight/execution; remote-kustomize-harness-security.md."
     }
   ]
 }

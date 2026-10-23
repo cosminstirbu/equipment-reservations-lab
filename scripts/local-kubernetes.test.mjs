@@ -18,6 +18,7 @@ import { join, dirname } from 'node:path';
 import test, { after } from 'node:test';
 import { EventEmitter } from 'node:events';
 import { PassThrough } from 'node:stream';
+import { createHash } from 'node:crypto';
 import { createLifecycle } from './local-kubernetes.mjs';
 import { executeProcess } from './process.mjs';
 import {
@@ -133,6 +134,7 @@ test(
     mkdirSync(scripts);
     for (const name of [
       'local-kubernetes.mjs',
+      'argocd-installation.mjs',
       'local-platform.mjs',
       'process.mjs',
       'deployment-validation.mjs',
@@ -257,8 +259,10 @@ function fixture(t, options = {}) {
       (args.includes('-pubkey') || args.includes('-pubout'))
     )
       return 'PUBLIC KEY';
-    if (command === 'git' && args.includes('ls-remote'))
+    if (command === 'git' && args.includes('ls-remote')) {
+      options.afterRef?.();
       return 'c'.repeat(40) + '\trefs/heads/main\n';
+    }
     if (command === 'kind' && args[0] === 'version') return 'kind v0.33.0';
     if (command === 'kubectl' && args[0] === 'version')
       return JSON.stringify({ clientVersion: { gitVersion: 'v1.35.8' } });
@@ -367,6 +371,12 @@ function fixture(t, options = {}) {
   const app = createLifecycle({
     root,
     run,
+    renderArgo: options.realRenderer
+      ? undefined
+      : async () => {
+          if (options.renderFailure) throw options.renderFailure;
+          return 'verified Argo installation bytes\n';
+        },
     platform: 'darwin',
     experimental8GiB: false,
     lookupHost: async () => {
@@ -421,6 +431,97 @@ function fixture(t, options = {}) {
     },
   };
 }
+
+test('setup applies exactly verified Argo installation bytes through stdin', async (t) => {
+  const f = fixture(t);
+  await releaseFixture(f.root);
+  await f.app.execute(['setup']);
+  const apply = f.calls.find(
+    (call) =>
+      call.command === 'kubectl' &&
+      call.args.includes('--field-manager=equipment-local-platform') &&
+      call.args.includes('-f'),
+  );
+  assert.ok(apply, 'verified Argo installation must use stdin apply');
+  assert.equal(apply.args.at(-1), '-');
+  assert.equal(apply.settings.input, 'verified Argo installation bytes\n');
+});
+
+test('real setup renderer shares the remaining 15-minute fetch and process budget', async (t) => {
+  let now = Date.now();
+  const f = fixture(t, {
+    realRenderer: true,
+    afterRef: () => {
+      now += 899500;
+    },
+  });
+  await releaseFixture(f.root);
+  const directory = join(f.root, 'deploy/argocd');
+  mkdirSync(directory, { recursive: true });
+  const url =
+    'https://raw.githubusercontent.com/argoproj/argo-cd/a5038b0e2bbac1715754380ae0084df8e3d5b48c/manifests/install.yaml';
+  const manifest =
+    'apiVersion: v1\nkind: ConfigMap\nmetadata:\n  name: fixture\n';
+  writeFileSync(
+    join(directory, 'source.json'),
+    JSON.stringify({
+      url,
+      sha256: createHash('sha256').update(manifest).digest('hex'),
+    }),
+  );
+  writeFileSync(
+    join(directory, 'kustomization.yaml'),
+    JSON.stringify({
+      apiVersion: 'kustomize.config.k8s.io/v1beta1',
+      kind: 'Kustomization',
+      namespace: 'argocd',
+      resources: [url],
+      patches: [{ path: 'resources.yaml' }],
+    }),
+  );
+  writeFileSync(join(directory, 'resources.yaml'), manifest);
+  t.mock.method(Date, 'now', () => now);
+  t.mock.method(
+    globalThis,
+    'fetch',
+    async () => new globalThis.Response(manifest),
+  );
+  const budgets = [];
+  const timeout = globalThis.AbortSignal.timeout.bind(globalThis.AbortSignal);
+  t.mock.method(globalThis.AbortSignal, 'timeout', (milliseconds) => {
+    budgets.push(milliseconds);
+    return timeout(milliseconds);
+  });
+  await f.app.execute(['setup']);
+  assert.deepEqual(budgets, [500]);
+  const render = f.calls.find(
+    (call) => call.command === 'kubectl' && call.args[0] === 'kustomize',
+  );
+  assert.equal(render.settings.timeout, 500);
+});
+
+test('unavailable or invalid Argo source fails setup before credentials or any provider mutation', async (t) => {
+  for (const message of [
+    'Argo upstream unavailable',
+    'Argo integrity mismatch',
+  ]) {
+    const f = fixture(t, { renderFailure: new Error(message) });
+    await releaseFixture(f.root);
+    await assert.rejects(f.app.execute(['setup']));
+    assert.equal(
+      existsSync(join(f.root, '.local/kubernetes/credentials.json')),
+      false,
+    );
+    assert.equal(
+      f.calls.some((call) =>
+        call.args.some((arg) =>
+          ['apply', 'patch', 'scale', 'create', 'delete', 'exec'].includes(arg),
+        ),
+      ),
+      false,
+    );
+  }
+});
 
 async function releaseFixture(root) {
   const { imageNames, jobNames, jobSuffix, wrapperPath } =
@@ -479,6 +580,26 @@ async function releaseFixture(root) {
     );
   return records;
 }
+
+test('upstream refusal retains existing credentials and never suspends or replaces the installed Argo controller', async (t) => {
+  const f = fixture(t, { renderFailure: new Error('Argo integrity mismatch') });
+  await releaseFixture(f.root);
+  const bundle = f.app.credentials(false);
+  f.setCluster(true);
+  f.setMarker(bundle.owner);
+  const path = join(f.root, '.local/kubernetes/credentials.json');
+  const before = readFileSync(path);
+  await assert.rejects(f.app.execute(['setup']));
+  assert.deepEqual(readFileSync(path), before);
+  assert.equal(
+    f.calls.some((call) =>
+      call.args.some((arg) =>
+        ['apply', 'patch', 'scale', 'create', 'delete', 'exec'].includes(arg),
+      ),
+    ),
+    false,
+  );
+});
 
 test('missing tool fails with actionable sanitized diagnostic and no mutations', async (t) => {
   const f = fixture(t, { fail: 'kind' });
@@ -1058,9 +1179,7 @@ test('setup sends the matching Argo server TLS Secret privately before Argo inst
     'tls.key': readFileSync(join(state, 'tls.key'), 'utf8'),
   });
   const installation = f.calls.findIndex(
-    (c) =>
-      c.args.includes('-k') &&
-      c.args.some((arg) => arg.replaceAll('\\', '/').endsWith('deploy/argocd')),
+    (c) => c.settings.input === 'verified Argo installation bytes\n',
   );
   assert.ok(installation > index);
   assert.equal(

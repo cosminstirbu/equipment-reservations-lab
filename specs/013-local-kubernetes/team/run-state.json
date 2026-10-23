@@ -707,5 +707,30 @@
                                    "quality_review":  "pass; manifest-quality-quality-02.md",
                                    "security_review":  "pass; manifest-quality-security-02.md; MQ-S001 closed by original reviewer",
                                    "convergence":  "tasks_appended T078; manifest-quality-convergence.md; T070/T052/T053 retained pending"
-                               }
+                               },
+  "remote_kustomize_batch": {
+  "authorization_date": "2026-10-23",
+  "branch": "explore/013-argocd-kustomize",
+  "baseline": "3161f5df917369330a4c8330334bb6209687de6b",
+  "status": "scoped_implementation_locally_verified_and_independently_reviewed_full_feature_pending",
+  "scope": "Final remote-Kustomize Argo CD installation; immutable upstream ref and integrity; local replacement of Argo only; preserve cluster/application data/credentials; no migration requirement",
+  "authorization": "Owner confirmed grill-me Q1-Q4; network required accepted; team implementation and local testing authorized. No commit/push/publication authorized.",
+  "preparation_round": 0,
+  "implementation_round": 1,
+  "repair_limit": 3,
+  "human_acceptance": null,
+  "preparation_quality": "pass; remote-kustomize-preparation-quality.md",
+  "preparation_security": "pass; remote-kustomize-preparation-security.md",
+  "tasks": "T096-T101",
+  "source_snapshot": "remote-kustomize-snapshot.json; remote-kustomize-source-03",
+  "verification": "remote-kustomize-verification.md; format-check/lint pass; tooling120pass2POSIXskips; focused50pass2platformskips; actual Argo replacement/rerun/stop-resume retained all fixtures",
+  "quality_review": "pass; remote-kustomize-quality.md",
+  "security_review": "pass; remote-kustomize-security.md; RK-S001 closed by original reviewer",
+  "convergence": "tasks_appended T102-T105 retained broader-feature gaps; no new remote-Kustomize implementation gap",
+  "completion_metadata": "T096-T101 complete scoped batch; spec full-feature in progress; prior gates preserved; human_acceptance null",
+  "publication_authorization": "Owner explicitly requested pull, commit, rebase against main, push and PR creation. This supersedes the initial no-commit/no-push boundary for those actions only; no merge or release publication authorized.",
+  "rebase_base": "8fc6a8f486b4cd20e1f3b32431d6e49c1e72cde5",
+  "task_id_mapping": "Original Argo T092-T097 -> current T096-T101; original convergence T098-T101 -> current T102-T105. Historical review/evidence IDs preserved verbatim; remote-kustomize-rebase.md.",
+  "post_rebase_verification": "remote-kustomize-rebase.md; reviewed source03 hashes preserved; format/lint pass; tooling120pass2POSIXskips; focused50pass2platformskips; main task IDs preserved and new IDs mapped"
+}
 }

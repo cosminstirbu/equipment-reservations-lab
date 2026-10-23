@@ -40,6 +40,17 @@
   remains main; restore it after merge. This does not introduce automatic branch
   selection in setup or accept the feature.
 
+- Remote Argo CD bootstrap: the owner selected remote Kustomize instead of Helm or
+  maintaining a copied upstream installation manifest. Deliver the final implementation
+  and local runtime evidence, preserving Argo CD v3.5.5, existing local patches,
+  image digests, security and lifecycle behavior. Network fetching is acceptable;
+  use an immutable upstream reference and verify integrity before installation.
+- Replacement authorization: only the existing Argo CD installation may be replaced
+  for this amendment; no migration support is required. Preserve the cluster and all
+  application databases, broker state, Dashboard history and application credentials.
+  Recreate Argo CD's reconciliation configuration as needed. This does not authorize
+  commits, pushes, remote publication or feature acceptance.
+
 ## Direct component promotion amendment - 2026-10-22
 
 The owner approved direct component promotion to main after successful quality,
@@ -90,6 +101,10 @@ As a developer, I can repeat setup, update or restart the demo without losing re
 2. **Given** durable state and missing local credential files, **When** setup runs, **Then** it stops with recovery instructions without generating replacements or changing existing credentials (AC-2.2).
 3. **Given** managed resources and durable state, **When** ordinary synchronization, drift correction or accidental application deletion occurs, **Then** storage is protected; documented intentional resource removal is distinguishable from deleting data (AC-2.3).
 4. **Given** an explicit destructive reset or cluster teardown request, **When** the documented command runs, **Then** reconciliation cannot recreate resources mid-operation, destruction is clearly scoped, and fresh setup succeeds afterward; stop, application reset and complete teardown have distinct documented effects (AC-2.4).
+
+5. **Given** the approved upstream installation and local configuration, **When** setup installs Argo CD and repeats, **Then** it uses verified immutable upstream content without a committed copy of the full upstream manifest, retains the selected controller version, image digests and security settings, and reconciliation and authenticated operational access work (AC-2.5).
+6. **Given** unavailable upstream content or an integrity mismatch, **When** setup attempts the installation, **Then** it fails within its recorded finite budget with actionable safe diagnostics before applying unverified installation content or replacing a working installation (AC-2.6).
+7. **Given** an existing local demo with recorded durable fixtures, **When** the authorized Argo CD replacement and subsequent setup, setup rerun and stop/resume checks run, **Then** reconciliation is restored and the cluster, application database and broker data, Dashboard history and application credentials remain intact; migration of the prior Argo CD installation is not required (AC-2.7).
 
 ### User Story 3 - Release reviewed immutable application versions (Priority: P2)
 
@@ -171,6 +186,9 @@ As a developer, I can inspect correlated success/failure diagnostics securely an
 - **FR-023**: Execute seven separate reusable component workflows in parallel after quality prerequisites. A component failure must not cancel or block unrelated component work. Failed-job reruns retain successful same-run, same-SHA results; missing required artifacts fail clearly with instructions for a fresh run (AC-3.2, AC-3.6).
 - **FR-024**: Scope promotion updates to dedicated per-component image/record files, validate candidates before atomic direct-to-main commits, reject stale same-component targets, preserve unrelated component updates and treat an identical deployed digest as a no-op. Permit initial partial publication/promotion records while unknown or unpublished components remain explicitly and safely unreleased; never fabricate references or claim complete-demo readiness from a partial release (AC-3.7).
 
+- **FR-025**: Obtain the approved Argo CD installation from verified immutable upstream content without maintaining a full copied upstream manifest. Preserve the approved controller version, image digests, local configuration, security and repeatable setup behavior. Reject unavailable or integrity-invalid upstream content within finite budgets before applying unverified content or replacing a working installation (AC-2.5, AC-2.6).
+- **FR-026**: Limit this amendment's authorized local replacement to Argo CD and restore its reconciliation configuration afterward. Preserve the existing cluster and all application database data, broker data, Dashboard history and application credentials; retain setup rerun, stop/resume and authenticated access behavior. Supporting migration of the prior Argo CD installation is outside scope (AC-2.7).
+
 ### Key Entities
 
 - **Local environment**: One disposable demo target with durable business/identity/messaging state, distinct application/platform ownership and explicit lifecycle operations.
@@ -197,6 +215,8 @@ As a developer, I can inspect correlated success/failure diagnostics securely an
 - **SC-011**: Verification covers fork pull requests, no affected components, transitive/shared build inputs, uncertain impact and an earlier component publication failure; results prove applicable quality precedes component work, affected architecture targets build without pull-request publication credentials, required summary always reports, and failed components remain selected until successfully published. Manifest-only eligibility and checks are separately established by SC-013 (AC-3.1, AC-3.5).
 - **SC-012**: Controlled independent component failures, same-run reruns, missing artifacts, concurrent/stale promotions and identical digests prove successful components proceed independently, source provenance is preserved, invalid result reuse fails clearly, unrelated proposals survive and unchanged digests produce no update (AC-3.6, AC-3.7).
 - **SC-013**: Verification proves eligible manifest-only pull requests and main merges run formatting and committed component/provenance/bootstrap plus static render/structure/policy validation with zero application build/test, runtime or image-build execution inside the lightweight quality gate; invalid manifest state fails. Manifest-only PRs select no downstream images; a main manifest-only push adds no build impact yet retains independent downstream retry of previously full-quality-validated unpublished components. Mixed changes, misleading branch names, unknown paths, unavailable/uncertain comparisons and earlier failed/unvalidated source quality select full validation. A failed source-quality run followed by a manifest-only main push cannot bypass full quality or permit publication based on that failure; manual runs always select full quality. Generated promotion artifacts satisfy committed formatting, with the generator fix verified by regression tests and source-change quality checks (AC-3.8, AC-3.9).
+
+- **SC-014**: One locally tested controller replacement, one setup rerun and one stop/resume exercise restore healthy reconciliation and authenticated access while every recorded application database, broker, Dashboard and credential fixture is retained. Verification additionally covers unavailable upstream content and integrity mismatch, with zero unverified installation content applied and no replacement of a working installation on either failure (AC-2.5–AC-2.7).
 
 ## Assumptions
 

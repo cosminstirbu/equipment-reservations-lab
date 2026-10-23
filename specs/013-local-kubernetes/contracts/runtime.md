@@ -195,3 +195,20 @@ hasMetrics establishes ingestion availability only: pinnedAPI has no metric data
 Detailed dimensions/cardinality/retention pressure and actual provider-outage failures
 remain explicit manual/runtime acceptance. See [the test design](../plan.md#t032-deployed-telemetry-verification-design)
 for exact pinned sources, public HTTP doubles and real Dashboard contract probe.
+
+## Argo installation source contract
+
+FR-025/FR-026 installation uses verified immutable v3.5.5 upstream bytes, existing
+local Kustomize configuration and digest overrides, without a committed full upstream
+manifest. Supported setup fetches and verifies once, renders temporary staged content,
+and applies that exact rendered artifact. Source unavailable or checksum-invalid fails
+within the [design budgets](../team/remote-kustomize-design.md) before any setup mutation.
+Direct kubectl remote rendering does not itself provide checksum enforcement. Temporary
+resources are owned and cleaned; raw provider errors/content are not diagnostics.
+
+Argo-only replacement preserves cluster/application namespaces, all retained state,
+application credentials and existing trusted TLS material. It suspends reconciliation
+and removes Application without cascading before controller replacement, then restores
+existing desired Application/AppProject state. It never implies reset/teardown or
+migration support. Local test harness may preserve the existing authorized source ref
+without changing product main defaults; qualification identifies that boundary.

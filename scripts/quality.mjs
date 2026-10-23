@@ -58,8 +58,6 @@ export function sourcePath(path) {
     throw error;
   }
   const name = relative(root, absolute);
-  // Preserve the reviewed upstream checksum; authored Argo overlays remain format targets.
-  if (absolute === resolve(root, 'deploy/argocd/install.yaml')) return null;
   if (
     isAbsolute(name) ||
     name.startsWith('..') ||

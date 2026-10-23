@@ -628,3 +628,30 @@ API response shape/authentication/filtering. That is provider API contract evide
 not application integration or real workflow/privacy acceptance. No ActivityListener,
 test-only production instrumentation or registration changes are needed. Capture real
 application/export results later under T035 and retain scope distinctions in quickstart.
+
+## Verified remote Argo CD installation amendment (2026-10-23)
+
+Owner selected final remote Kustomize implementation with local Argo-only replacement;
+network access is accepted. FR-025/FR-026, AC-2.5–AC-2.7 and SC-014 govern this scope.
+[Remote Kustomize design](team/remote-kustomize-design.md) owns immutable source/hash,
+fetch-once verified temporary staging, exact rendered-byte apply, failure/cleanup
+budgets, public/private output classification, test design and safe live qualification.
+Preserve v3.5.5, existing digests/patches/TLS/lifecycle/application state; remove the
+full vendored manifest and its obsolete formatting exclusion. No Helm/cache/operator,
+new product branch option, migration requirement or policy exception.
+
+Applicable standards: constitution; formatting, testing, tooling, resilience and
+observability guides and required cross-references. Render/hash validation occurs
+before any setup mutation; failures cannot replace working Argo. Existing application
+CI lanes do not install Argo and retain their scope. Required evidence: intended red,
+HTTP/process contracts, actual upstream hash and pinned render parity, local replacement,
+setup rerun, stop/resume, authenticated trusted access, healthy reconciliation and
+private before/after state comparisons. Independent preparation/review/convergence and
+explicit human acceptance remain gates; existing pending tasks are preserved. Live
+qualification preserves the current Application source; any test-only source mapping
+and default-main evidence limitation must be explicit in the verification report.
+
+Current task allocation after integration with backend follow-up work: remote Argo
+installation T096–T101; retained broader-feature convergence T102–T105 in
+[tasks.md](tasks.md). Existing backend T092–T095 and all historical evidence remain
+unchanged. This is identifier reconciliation only; no gate or acceptance status changes.
