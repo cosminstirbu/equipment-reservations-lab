@@ -376,12 +376,18 @@ test('summary always depends on quality selection and all component outcomes', (
   );
 });
 
-function summary(selected, results, event = 'workflow_dispatch') {
+function summary(
+  selected,
+  results,
+  event = 'workflow_dispatch',
+  environment = process.env,
+) {
   return spawnSync(process.execPath, ['scripts/deployment-ci.mjs', 'summary'], {
     encoding: 'utf8',
     timeout: 10000,
     env: {
-      ...process.env,
+      ...environment,
+      GITHUB_STEP_SUMMARY: '',
       GITHUB_EVENT_NAME: event,
       SELECTED_COMPONENTS: JSON.stringify(selected),
       PIPELINE_NEEDS: JSON.stringify(results),
@@ -389,13 +395,23 @@ function summary(selected, results, event = 'workflow_dispatch') {
   });
 }
 
-test('required summary reports a healthy empty selection without inventing component work', () => {
-  const result = summary([], {
-    quality: { result: 'success', outputs: { mode: 'full' } },
-    deployment: { result: 'success' },
-    select: { result: 'success' },
-  });
+test('required summary reports a healthy empty selection without publishing test scenarios to the enclosing job', (t) => {
+  const directory = mkdtempSync(join(tmpdir(), 'component-summary-'));
+  t.after(() => rmSync(directory, { recursive: true, force: true }));
+  const jobSummary = join(directory, 'job-summary.md');
+  writeFileSync(jobSummary, 'Existing job summary\n');
+  const result = summary(
+    [],
+    {
+      quality: { result: 'success', outputs: { mode: 'full' } },
+      deployment: { result: 'success' },
+      select: { result: 'success' },
+    },
+    'workflow_dispatch',
+    { ...process.env, GITHUB_STEP_SUMMARY: jobSummary },
+  );
   assert.equal(result.status, 0, result.stderr);
+  assert.equal(readFileSync(jobSummary, 'utf8'), 'Existing job summary\n');
   for (const name of names)
     assert.match(result.stdout, new RegExp(`${name}: not selected`));
 });
