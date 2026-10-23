@@ -15,6 +15,38 @@ function wave(document) {
   );
 }
 
+test('Dashboard resumes telemetry on retained storage provisioned before its deployment', () => {
+  const deployment = resource('dashboard.yaml');
+  const pod = deployment.spec.template.spec;
+  const dashboard = pod.containers[0];
+  const environment = Object.fromEntries(
+    dashboard.env.map((entry) => [entry.name, entry.value]),
+  );
+  assert.equal(environment.Dashboard__Data__PersistenceMode, 'Resume');
+  assert.equal(
+    environment.ASPIRE_DASHBOARD_APPLICATION_NAME,
+    'equipment-local',
+  );
+  assert.equal(
+    environment.Dashboard__Data__Directory,
+    '/home/app/dashboard-data',
+  );
+  const mount = dashboard.volumeMounts.find(
+    (entry) => entry.mountPath === '/home/app',
+  );
+  const claimName = pod.volumes.find((entry) => entry.name === mount.name)
+    .persistentVolumeClaim.claimName;
+  const claim = resource(`${claimName}.yaml`);
+  assert.equal(claim.kind, 'PersistentVolumeClaim');
+  assert.ok(wave(claim) <= wave(deployment));
+  assert.match(
+    claim.metadata.annotations['argocd.argoproj.io/sync-options'],
+    /Prune=false,Delete=false/,
+  );
+  assert.equal(deployment.spec.replicas, 1);
+  assert.equal(deployment.spec.strategy.type, 'Recreate');
+});
+
 test('Argo creates dependency services before bootstrap Jobs and workload readiness', () => {
   const consumers = {
     postgres: ['jobs/database/job.yaml'],

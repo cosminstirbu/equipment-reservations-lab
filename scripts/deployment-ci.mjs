@@ -367,6 +367,17 @@ export function prepareCiFixture({
       '/var/local/equipment/postgres',
       '/var/local/equipment/rabbitmq',
     ]);
+  for (const operation of [
+    ['mkdir', '-p'],
+    ['chown', '1654:1654'],
+    ['chmod', '0700'],
+  ])
+    run('docker', [
+      'exec',
+      'equipment-ci-control-plane',
+      ...operation,
+      '/var/local/equipment/dashboard',
+    ]);
   const platform = ciResources(
     run('kubectl', ['kustomize', join(root, 'deploy/platform')]),
     release,

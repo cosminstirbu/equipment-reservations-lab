@@ -91,14 +91,16 @@ spec:
             - name: Dashboard__Frontend__MaxConsoleLogCount
               value: '10000'
             - name: Dashboard__Data__PersistenceMode
-              value: None
+              value: Resume
+            - name: ASPIRE_DASHBOARD_APPLICATION_NAME
+              value: equipment-local
             - name: Dashboard__Data__Directory
-              value: '/data'
+              value: '/home/app/dashboard-data'
             - name: Logging__LogLevel__Default
               value: Warning
           volumeMounts:
             - name: data
-              mountPath: '/data'
+              mountPath: '/home/app'
               readOnly: false
             - name: tmp
               mountPath: '/tmp'
@@ -117,8 +119,8 @@ spec:
             failureThreshold: 3
       volumes:
         - name: data
-          emptyDir:
-            sizeLimit: 128Mi
+          persistentVolumeClaim:
+            claimName: dashboard-data
         - name: tmp
           emptyDir:
             sizeLimit: 16Mi

@@ -240,8 +240,13 @@ forward. Suppress token-bearing startup URLs from captured output. Dashboard lim
 `Dashboard:TelemetryLimits:MaxTraceCount=10000`,
 `Dashboard:TelemetryLimits:MaxLogCount=10000`,
 `Dashboard:TelemetryLimits:MaxMetricsCount=1000` (per metric dimension),
-512MiB container cap; AlwaysOn demo sampling, bounded batch queues, temporary SQLite storage (`Dashboard:Data:PersistenceMode=None`) on an
-ephemeral emptyDir with 128MiB size limit; no persistent volume. Set
+512MiB container cap; AlwaysOn demo sampling, bounded batch queues, retained SQLite
+storage (`Dashboard:Data:PersistenceMode=Resume`) on a dedicated 1GiB local PV/PVC,
+mounted at `/home/app` with data directory `/home/app/dashboard-data` and stable
+application name `equipment-local`. One replica and Recreate preserve one-writer
+ownership. Retain on stop/Pod replacement; delete only on explicit reset/teardown.
+The local PV capacity is not a hard disk quota. This owner-approved 2026-10-23 repair
+supersedes temporary storage; see [design and verification](team/dashboard-persistence.md). Set
 `Dashboard:Frontend:MaxConsoleLogCount=10000`. No resource-service/AppHost controls promised. Inspect successful/failed SQL,
 identity, broker/bootstrap exports, exception fields, URLs, labels and auth leakage.
 

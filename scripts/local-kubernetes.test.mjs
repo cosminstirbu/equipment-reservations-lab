@@ -683,6 +683,7 @@ test('explicit reset deletes only application namespace, PVs and exact node path
     '--',
     '/var/local/equipment/postgres',
     '/var/local/equipment/rabbitmq',
+    '/var/local/equipment/dashboard',
   ]);
   assert.deepEqual(f.app.credentials(true), bundle);
 });
@@ -1096,6 +1097,22 @@ test('setup prepares retained volume roots for non-recursive group ownership', a
       (entry) =>
         entry.args.includes('2770') &&
         entry.args.includes('/var/local/equipment/rabbitmq'),
+    ),
+  );
+  assert.ok(
+    f.calls.some(
+      (entry) =>
+        entry.command === 'podman' &&
+        entry.args.includes('chown') &&
+        entry.args.includes('1654:1654') &&
+        entry.args.includes('/var/local/equipment/dashboard'),
+    ),
+  );
+  assert.ok(
+    modes.some(
+      (entry) =>
+        entry.args.includes('0700') &&
+        entry.args.includes('/var/local/equipment/dashboard'),
     ),
   );
 });

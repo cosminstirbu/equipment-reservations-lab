@@ -346,6 +346,12 @@ node scripts/local-kubernetes.mjs access dashboard
 node scripts/local-kubernetes.mjs access argocd
 ```
 
+Dashboard telemetry uses a dedicated retained local volume and resumes the same
+history after Pod replacement. It survives ordinary setup and stop, but explicit
+application reset or cluster teardown deletes it. Storage is local to the kind
+node, not a backup; the 1 GiB PV allocation is not a hard filesystem quota.
+See [Dashboard storage design and verification](team/dashboard-persistence.md).
+
 Dashboard opens at http://127.0.0.1:18888 and accepts the private `dashboardBrowser`
 value entered manually, never a token-bearing URL. Argo opens at
 https://127.0.0.1:18443 with username `admin`. Private setup supplies the owner-issued
@@ -467,7 +473,7 @@ node scripts/local-kubernetes.mjs reset --confirm-delete-data
 node scripts/local-kubernetes.mjs setup
 ```
 
-Reset first halts reconciliation, then deletes only the equipment namespace, its two
+Reset first halts reconciliation, then deletes only the equipment namespace, its three
 named PVs and exact application data directories inside equipment-local's node. It
 retains private credentials and the cluster/platform. Existing checkpoints should now
 fail because data was explicitly destroyed; record that expected result, archive it

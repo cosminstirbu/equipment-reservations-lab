@@ -1,6 +1,32 @@
 apiVersion: v1
 kind: PersistentVolume
 metadata:
+  name: equipment-dashboard
+  annotations:
+    argocd.argoproj.io/sync-options: Prune=false,Delete=false
+spec:
+  capacity:
+    storage: 1Gi
+  accessModes: [ReadWriteOnce]
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: equipment-retain
+  volumeMode: Filesystem
+  local:
+    path: /var/local/equipment/dashboard
+  claimRef:
+    namespace: equipment
+    name: dashboard-data
+  nodeAffinity:
+    required:
+      nodeSelectorTerms:
+        - matchExpressions:
+            - key: kubernetes.io/hostname
+              operator: In
+              values: [equipment-local-control-plane]
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
   name: equipment-postgres
   annotations:
     argocd.argoproj.io/sync-options: Prune=false,Delete=false
