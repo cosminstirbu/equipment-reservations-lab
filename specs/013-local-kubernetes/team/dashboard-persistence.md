@@ -56,8 +56,26 @@ an empty data volume and repeated kubelet tmp-limit evictions.
   passed. Format-check and lint passed, including zero-warning/zero-error solution
   build and suggestion-level style verification.
 
-The main-tracking live Argo application was not retargeted, suspended or overwritten.
-It still uses the old Dashboard until the branch is merged and updated platform
-storage is applied by setup. Existing ephemeral telemetry is not migrated. This
-verification establishes persistence and correct tmp placement, not sustained disk
-capacity, VM restart durability or macOS runtime acceptance.
+Initially the main-tracking Argo application was unchanged during isolated checks.
+The owner then authorized a temporary branch deployment on 2026-10-23. Commit
+`831031852ef4fb6ce613c971e3458da4fd4769e7` was pushed, Dashboard's retained root
+was prepared with UID/GID 1654 and mode 0700, and platform storage was applied.
+The live Application now tracks `fix/cross-platform-local-kubernetes`; its sync
+completed Succeeded, Healthy and Synced at that commit. The actual Dashboard PVC
+is Bound to `equipment-dashboard`. A synthetic span sent through authenticated OTLP
+survived deletion and replacement of the actual Dashboard Pod, verified through
+its authenticated public API; the replacement's tmp volume used 4 KiB. Temporary
+diagnostic forwards were removed. The tracked Application manifest remains on
+`main`: existing setup resets that live branch override, and after merge it should
+be deliberately restored to main and refreshed.
+
+The deployed end-to-end smoke stopped at `Documentation reservation write` with
+HTTP 409. Read-only aggregate database inspection found one existing confirmed
+reservation covering the entire randomized one-to-two-days-ahead smoke window
+(longest confirmed interval: 1500 minutes). The create endpoint's matching error
+is `booking_conflict`. No reservation was cancelled or changed to make smoke pass;
+the complete end-to-end result remains failed due to this fixture assumption.
+
+Existing ephemeral telemetry was not migrated. This verification establishes
+persistence and correct tmp placement, not sustained disk capacity, VM restart
+durability or macOS runtime acceptance.
