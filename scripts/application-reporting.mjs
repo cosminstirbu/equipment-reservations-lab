@@ -28,10 +28,12 @@ const builder = new XMLBuilder({
   format: true,
   suppressBooleanAttributes: false,
 });
+
 function array(value) {
   if (value === undefined) return [];
   return Array.isArray(value) ? value : [value];
 }
+
 const failureNote =
   'Test failed. Inspect the live quality job log for diagnostic details; private assertion/output payloads are not published.';
 
@@ -323,7 +325,7 @@ function coverageReport(root, path, suite) {
       });
       if (lines.length)
         classes.push({
-          '@_name': filename,
+          '@_name': filename.replace(/\.(?:cs|ts)$/, '').replaceAll('/', '.'),
           '@_filename': filename,
           methods: '',
           lines: { line: lines },

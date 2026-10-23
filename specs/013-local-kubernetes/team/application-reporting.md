@@ -66,3 +66,13 @@ as a failed application run, not waived or claimed green. That run also exposed
 projection incompatibilities subsequently repaired and covered by focused checks.
 Hosted qualification remains required for the final combined collectors, readonly
 Test Reporter summaries, artifact contents and main release execution.
+
+Hosted PR run 39963560857 passed all jobs: 596 backend tests and 64 frontend
+tests passed, Test Reporter wrote both summaries with readonly permissions,
+ReportGenerator produced both HTML/Markdown/Cobertura reports, collection status
+was complete, and real Kubernetes verification passed. Artifact inspection exposed
+ReportGenerator interpreting slash-shaped class names as nested types and merging
+unrelated files; canonical dotted source names correct that collision. Re-rendering
+the same nine assessed backend inputs produces 57 distinct source entries rather
+than three collided classes. The correction requires a fresh hosted run before merge.
+Final local format-check and lint/build pass (zero build warnings/errors).

@@ -336,5 +336,5 @@ Preserve earlier task IDs, evidence and acceptance gates.
 
 ## Phase 23: Application test and coverage reports
 
-- [ ] T109 Add intended-red report privacy/completeness and failure-propagation regressions, implement explicit reporting mode, native MTP/Vitest collectors, assessed JUnit/Cobertura projection and readonly Test Reporter/ReportGenerator summaries/artifacts; update documentation and run local checks (FR-027, SC-015).
+- [x] T109 Add intended-red report privacy/completeness and failure-propagation regressions, implement explicit reporting mode, native MTP/Vitest collectors, assessed JUnit/Cobertura projection and readonly Test Reporter/ReportGenerator summaries/artifacts; update documentation and run local checks (FR-027, SC-015).
 - [ ] T110 Under owner authorization create branch, commit/push and PR; inspect hosted application results, separate coverage reports/artifacts and final quality/release gating. Record actual checks and any retained failures; do not claim broader Kubernetes feature acceptance (SC-007, SC-015).
