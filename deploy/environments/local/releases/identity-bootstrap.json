@@ -1,15 +1,15 @@
 {
   "component": "identity-bootstrap",
-  "digest": "sha256:f845e049f04fb3f0dd8eeb4a6a3bb51a81b8ac0800fddefaebeadc4912059cde",
+  "digest": "sha256:fb04c4074821a6bccf6f82beaa331f4b22ed195bc5e0eb84b6bbeaa6690db21d",
   "image": "ghcr.io/cosminstirbu/equipment-reservations-lab-identity-bootstrap",
   "repository": {
     "id": 1426639177,
     "name": "cosminstirbu/equipment-reservations-lab"
   },
   "runAttempt": 1,
-  "runId": 39935848752,
+  "runId": 39953694178,
   "schemaVersion": 1,
   "sourceRef": "refs/heads/main",
-  "sourceRevision": "c0a5e3e49121b9c26aa8570e953706c19e6dd312",
+  "sourceRevision": "e4241855698a27ebdd36bc5f0623f4e3ace10f75",
   "workflow": ".github/workflows/validate.yaml"
 }
