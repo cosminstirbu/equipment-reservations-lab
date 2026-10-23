@@ -674,3 +674,19 @@ tooling, frontend and backend checks. Manifest-only quality and deployment remai
 unchanged. This behavior-preserving configuration cleanup requires workflow diff
 inspection and the formatting guide's format-check/lint gates; no new test behavior
 or test changes are needed. Feature approval and existing pending gates remain pending.
+
+PR #26 hosted run 39945632044 exposed a stale shell-lane assertion requiring the
+removed standalone commands. Correct the existing assertion to reject redundant
+format/lint steps while retaining its combined-check assertion. Test design: retain
+the real workflow YAML parser and Bash execution; existing node/npm command-recording
+doubles verify dispatch only, not application check behavior or provider fidelity.
+The observable contract is full-lane invocation of the combined gate without duplicate
+standalone checks. The hosted failure supplies red evidence; the shell test is Unix-only
+and Windows verification must report that skip. No broader tooling-test changes or
+feature acceptance are included.
+
+Verification on Windows: focused workflow suite 12 passed/1 skipped; full tooling
+suite 121 passed/6 skipped; format-check and diff whitespace checks passed. Initial
+concurrent lint observed the formatter test's temporary C# fixture; serialized lint
+after tooling completion passed, including a zero-warning/error build. Linux shell
+qualification remains for the next PR run.
