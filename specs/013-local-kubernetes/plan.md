@@ -690,3 +690,66 @@ suite 121 passed/6 skipped; format-check and diff whitespace checks passed. Init
 concurrent lint observed the formatter test's temporary C# fixture; serialized lint
 after tooling completion passed, including a zero-warning/error build. Linux shell
 qualification remains for the next PR run.
+
+## PR validation and main release split (2026-10-23)
+
+Owner confirmed: PR validation runs quality and ephemeral Kubernetes verification
+in parallel after shared scope classification, without separate component builds.
+Full Kubernetes verification builds all seven disposable AMD64 images. Main retains
+independent affected-component multi-architecture publication/promotion, gated on
+both validation outcomes. Manifest-only changes retain static validation and skip
+Kubernetes; manual branch dispatch retains full validation/all-component release.
+ARM64 build failures may first surface after merge; disposable smoke-tested images
+are distinct from subsequently rebuilt published images. Restore EX-013-002's job
+execution; earlier runtime failures and broader feature acceptance remain pending.
+
+Keep validate.yaml, quality job name/completion marker and trusted component result
+identities stable. Add pull-request.yaml and a shared Kubernetes verification reusable
+workflow; classify before quality/deployment so neither waits for the other's tests.
+Applicable standards: constitution, formatting, testing and tooling. Existing provider,
+timeout, private-output and cleanup behavior is retained without new dependencies.
+Public metadata/classification outputs contain only paths/mode/reason; existing
+operational commands keep their audited output handling and bounded budgets.
+
+Test design: adapt existing parsed-workflow checks for trigger/permission/gate
+contracts, not every step; keep existing real Bash dispatch tests scoped to dispatch.
+Exercise the actual summary CLI with success/failure/cancelled/skipped/missing results
+to prove fail-closed decisions and the manifest-only exception. YAML parsing and CLI
+logic stay real; supplied GitHub needs results are boundary fixtures, not evidence of
+GitHub scheduling. Preserve baseline/provenance tests. Required evidence: intended
+red, focused/full tooling, format/lint, workflow syntax validation where available,
+and author inspection. Hosted Actions and real Kubernetes execution remain separate
+qualification; no merge/publication or feature approval is implied.
+
+Main's manifest-only baseline now also requires the same run/attempt's successful
+`Kubernetes verification / Kubernetes verification` job. Historical quality-only or
+suspended-deployment runs cannot qualify; discovery conservatively falls back to full
+validation until a new qualifying ancestor exists. Component publication failures
+still do not invalidate successful quality/Kubernetes proof. Selection explicitly
+accepts only full+successful deployment or manifest+skipped deployment; component
+calls use explicit cancellation/success guards so intentional skipped ancestors do
+not suppress eligible publication backlog. No extra publication serialization is added.
+
+Local verification on Windows, Node 24.15.0:
+
+- Intended red: missing PR workflow; summary accepted failed deployment; ancestor
+  discovery accepted absent/failed Kubernetes proof. Each failed for the intended reason.
+- Focused workflow/manifest/deployment-validation suite: 83 passed, 4 platform/tool
+  skips before pinned kubectl was installed. Full tooling with checksum-verified
+  kubectl 1.35.8 subsequently passed 127 tests with 2 platform skips, including both
+  actual Kustomize tests. Unix shell-lane/POSIX signal checks remain for Linux.
+- Additional deployment CI/validation/promotion/smoke tooling suite: 126 passed,
+  1 POSIX-symlink skip, 1 failure in the existing kubeconfig mode assertion at
+  deployment-ci.test.mjs:630 (Windows reports 0666 rather than Unix 0600). Cluster
+  creation is unchanged; this result is not claimed as passing qualification.
+- format-check and lint passed; lint built with zero warnings/errors. actionlint
+  1.7.12 (official checksum-verified temporary tool, shellcheck/pyflakes disabled)
+  accepted all three changed workflows. Diff whitespace and matching shared job
+  definitions were checked. Documentation links, immutable checkouts, readonly PR
+  permissions, explicit skip/failure handling and unchanged release provenance were
+  inspected. No application sources or dependency lockfiles changed.
+
+Hosted scheduling, actual Kubernetes runtime/provider checks, main/manual release and
+revision-matched independent review/full-feature acceptance remain pending under T108
+and earlier tasks. This batch does not waive the Windows mode failure or prior runtime
+failures, and does not claim complete feature qualification.

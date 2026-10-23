@@ -27,18 +27,56 @@ const workflow = (name) =>
   parsers.Yaml.parse(readFileSync(`.github/workflows/${name}.yaml`, 'utf8'))
     .data;
 
+test('PR validation has no publication and main release waits for Kubernetes verification', () => {
+  const pr = workflow('pull-request');
+  const main = workflow('validate');
+  assert.ok(Object.hasOwn(pr.on, 'pull_request'));
+  assert.equal(pr.on.pull_request_target, undefined);
+  assert.equal(pr.on.push, undefined);
+  assert.equal(main.on.pull_request, undefined);
+  assert.deepEqual(pr.permissions, { contents: 'read' });
+  for (const parent of [pr, main]) {
+    assert.deepEqual(parent.jobs.quality.needs, ['scope']);
+    assert.deepEqual(parent.jobs.deployment.needs, ['scope']);
+    assert.equal(
+      parent.jobs.deployment.if,
+      "needs.scope.outputs.mode == 'full'",
+    );
+    assert.equal(
+      parent.jobs.deployment.uses,
+      './.github/workflows/kubernetes-verification.yaml',
+    );
+    assert.ok(parent.jobs.summary.needs.includes('deployment'));
+  }
+  assert.equal(
+    Object.keys(pr.jobs).some((name) => /^(pr_|component_)/.test(name)),
+    false,
+  );
+  assert.deepEqual(main.jobs.select.needs, ['quality', 'deployment']);
+  assert.match(main.jobs.select.if, /needs.deployment.result == 'success'/);
+  assert.match(main.jobs.select.if, /needs.quality.outputs.mode == 'manifest'/);
+  const kubernetes = workflow('kubernetes-verification');
+  assert.ok(Object.hasOwn(kubernetes.on, 'workflow_call'));
+  assert.deepEqual(kubernetes.permissions, { contents: 'read' });
+});
+
 test('required quality classifies before expensive setup and preserves an authenticated full-only marker', () => {
-  const quality = workflow('validate').jobs.quality;
+  const parent = workflow('validate');
+  const quality = parent.jobs.quality;
   const steps = quality.steps;
-  const classify = steps.findIndex((step) => step.id === 'quality_scope');
+  const scopeSteps = parent.jobs.scope.steps;
+  const classify = scopeSteps.findIndex((step) => step.id === 'quality_scope');
   assert.ok(classify > 0, 'quality classifier must exist after checkout');
   assert.equal(quality.name, 'quality');
   assert.deepEqual(quality.permissions, { contents: 'read', actions: 'read' });
   assert.equal(steps[0].with.ref, '${{ github.sha }}');
   assert.equal(steps[0].with['fetch-depth'], 0);
-  assert.match(steps[classify].run, /manifest-quality\.mjs select --output/);
-  assert.match(steps[classify].env.GH_TOKEN, /push/);
-  assert.match(steps[classify].env.GH_TOKEN, /refs\/heads\/main/);
+  assert.match(
+    scopeSteps[classify].run,
+    /manifest-quality\.mjs select --output/,
+  );
+  assert.match(scopeSteps[classify].env.GH_TOKEN, /push/);
+  assert.match(scopeSteps[classify].env.GH_TOKEN, /refs\/heads\/main/);
   for (const step of steps.filter(
     (step) =>
       step.uses?.includes('setup-dotnet') ||
@@ -46,8 +84,7 @@ test('required quality classifies before expensive setup and preserves an authen
         step.run ?? '',
       ),
   )) {
-    assert.ok(steps.indexOf(step) > classify);
-    assert.equal(step.if, "steps.quality_scope.outputs.mode == 'full'");
+    assert.equal(step.if, "needs.scope.outputs.mode == 'full'");
   }
   const marker = steps.findIndex(
     (step) => step.name === 'Full application quality completed',
@@ -55,12 +92,9 @@ test('required quality classifies before expensive setup and preserves an authen
   assert.ok(
     marker > steps.findIndex((step) => /node --test/.test(step.run ?? '')),
   );
-  assert.equal(steps[marker].if, "steps.quality_scope.outputs.mode == 'full'");
-  assert.equal(quality.outputs.mode, '${{ steps.quality_scope.outputs.mode }}');
-  assert.equal(
-    quality.outputs.reason,
-    '${{ steps.quality_scope.outputs.reason }}',
-  );
+  assert.equal(steps[marker].if, "needs.scope.outputs.mode == 'full'");
+  assert.equal(quality.outputs.mode, '${{ needs.scope.outputs.mode }}');
+  assert.equal(quality.outputs.reason, '${{ needs.scope.outputs.reason }}');
   const summary = workflow('validate').jobs.summary.steps;
   assert.ok(
     summary.some((step) =>
@@ -78,10 +112,7 @@ test(
       /manifest-quality\.mjs validate/.test(step.run ?? ''),
     );
     assert.ok(staticStep, 'manifest validation shell must exist');
-    assert.equal(
-      staticStep.if,
-      "steps.quality_scope.outputs.mode == 'manifest'",
-    );
+    assert.equal(staticStep.if, "needs.scope.outputs.mode == 'manifest'");
     const directory = mkdtempSync(join(tmpdir(), 'quality-shell-'));
     t.after(() => rmSync(directory, { recursive: true, force: true }));
     const log = join(directory, 'calls');
@@ -118,7 +149,7 @@ test(
     const fullScript = steps
       .filter(
         (step) =>
-          step.if === "steps.quality_scope.outputs.mode == 'full'" &&
+          step.if === "needs.scope.outputs.mode == 'full'" &&
           step.run &&
           step.name !== 'Install pinned promotion validation tool',
       )
@@ -164,7 +195,7 @@ test(
       (step) => step.name === 'Install pinned static manifest tool',
     );
     assert.ok(install);
-    assert.equal(install.if, "steps.quality_scope.outputs.mode == 'manifest'");
+    assert.equal(install.if, "needs.scope.outputs.mode == 'manifest'");
     assert.match(install.run, /v1\.35\.8/);
     assert.match(
       install.run,
@@ -175,37 +206,22 @@ test(
   },
 );
 
-test('quality gates fourteen independent static component workflow calls with readonly PR lanes', () => {
+test('main release keeps seven independently gated component publications', () => {
   const parent = workflow('validate');
-  const calls = Object.entries(parent.jobs).filter(([, job]) => job.uses);
-  assert.equal(
-    calls.length,
-    14,
-    'seven readonly PR calls and seven trusted component pipelines are required',
+  const calls = Object.entries(parent.jobs).filter(
+    ([, job]) => job.uses && job.uses.includes('component-'),
   );
+  assert.equal(calls.length, 7);
   assert.deepEqual(parent.on.push.branches, ['main']);
-  assert.ok(Object.hasOwn(parent.on, 'pull_request'));
   assert.ok(Object.hasOwn(parent.on, 'workflow_dispatch'));
   assert.equal(parent.on.pull_request_target, undefined);
-  assert.equal(
-    parent.concurrency,
-    undefined,
-    'image builds must not share release-wide serialization',
-  );
-  assert.deepEqual(parent.jobs.select.needs, ['quality']);
+  assert.equal(parent.concurrency, undefined);
   for (const name of names) {
-    const pr = parent.jobs[`pr_${id(name)}`];
     const trusted = parent.jobs[`component_${id(name)}`];
-    assert.equal(pr.uses, './.github/workflows/component-build.yaml');
-    assert.deepEqual(pr.permissions, { contents: 'read' });
-    assert.equal(pr.with.component, name);
-    assert.equal(pr.with.publish, false);
-    assert.equal(pr.secrets, undefined);
-    assert.match(pr.if, /pull_request/);
-    assert.deepEqual(pr.needs, ['quality', 'select']);
     assert.equal(trusted.uses, `./.github/workflows/component-${name}.yaml`);
     assert.deepEqual(trusted.needs, ['quality', 'select']);
-    assert.match(trusted.if, /pull_request/);
+    assert.match(trusted.if, /!cancelled\(\)/);
+    assert.match(trusted.if, /needs.select.result == 'success'/);
     assert.equal(trusted.secrets, undefined);
     assert.deepEqual(trusted.permissions, {
       contents: 'write',
@@ -346,8 +362,9 @@ test('summary always depends on quality selection and all component outcomes', (
     new Set(parent.jobs.summary.needs),
     new Set([
       'quality',
+      'deployment',
       'select',
-      ...names.flatMap((name) => [`pr_${id(name)}`, `component_${id(name)}`]),
+      ...names.map((name) => `component_${id(name)}`),
     ]),
   );
   assert.ok(
@@ -372,7 +389,8 @@ function summary(selected, results, event = 'workflow_dispatch') {
 
 test('required summary reports a healthy empty selection without inventing component work', () => {
   const result = summary([], {
-    quality: { result: 'success' },
+    quality: { result: 'success', outputs: { mode: 'full' } },
+    deployment: { result: 'success' },
     select: { result: 'success' },
   });
   assert.equal(result.status, 0, result.stderr);
@@ -383,7 +401,8 @@ test('required summary reports a healthy empty selection without inventing compo
 test('selected canceled or missing components fail visibly while unrelated successes remain reported', () => {
   for (const outcome of ['cancelled', 'failure', 'skipped', undefined]) {
     const results = {
-      quality: { result: 'success' },
+      quality: { result: 'success', outputs: { mode: 'full' } },
+      deployment: { result: 'success' },
       select: { result: 'success' },
       component_inventory: { result: 'success' },
     };
@@ -401,6 +420,36 @@ test('summary reports failed quality and missing selection instead of a successf
   assert.equal(result.status, 1);
   assert.match(result.stdout, /quality: failure/);
   assert.match(result.stdout, /selection: missing/);
+});
+
+test('validation summary requires deployed success except for proven manifest-only runs', () => {
+  for (const event of ['pull_request', 'push', 'workflow_dispatch']) {
+    for (const mode of ['full', 'manifest', undefined]) {
+      for (const outcome of [
+        'success',
+        'failure',
+        'cancelled',
+        'skipped',
+        undefined,
+      ]) {
+        const results = {
+          quality: { result: 'success', outputs: { mode } },
+          select: { result: 'success' },
+        };
+        if (outcome) results.deployment = { result: outcome };
+        const result = summary([], results, event);
+        const accepted =
+          mode === 'full'
+            ? outcome === 'success'
+            : mode === 'manifest' && outcome === 'skipped';
+        assert.equal(
+          result.status,
+          accepted ? 0 : 1,
+          `${event}/${mode}/${outcome}: ${result.stderr}`,
+        );
+      }
+    }
+  }
 });
 
 test('reusable build Bash runs readonly PR validation and trusted single-component publication', (t) => {

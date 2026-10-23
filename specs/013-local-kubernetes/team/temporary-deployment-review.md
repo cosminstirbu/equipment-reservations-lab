@@ -1,5 +1,12 @@
 # Temporary deployment-job suspension
 
+2026-10-23 restoration: the owner authorized re-enabling Kubernetes verification for
+PR validation and main release, with the manifest-only exception described in the
+[workflow split](../plan.md#pr-validation-and-main-release-split-2026-10-23).
+EX-013-002 no longer disables execution in this implementation. The historical
+reviews below apply to the suspension revision, not the restored workflow; earlier
+failures and broader acceptance remain pending.
+
 Owner request2026-10-20: temporarily disable only the deployment job, retain quality,
 and re-enable deployment after exploratory testing. Exception `EX-013-002` records
 the narrow scope. This configuration-only change retains the full job definition;

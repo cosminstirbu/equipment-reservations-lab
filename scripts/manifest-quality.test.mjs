@@ -135,6 +135,13 @@ function qualityProof(revision) {
         },
       ],
     },
+    deployment: {
+      run_id: 71,
+      run_attempt: 1,
+      name: 'Kubernetes verification / Kubernetes verification',
+      status: 'completed',
+      conclusion: 'success',
+    },
   };
 }
 
@@ -143,7 +150,10 @@ function proofGateway(proof) {
     api: async (path) =>
       path.startsWith('/actions/workflows/')
         ? { workflow_runs: [proof.run], total_count: 1 }
-        : { jobs: [proof.job], total_count: 1 },
+        : {
+            jobs: [proof.job, proof.deployment].filter(Boolean),
+            total_count: proof.deployment ? 2 : 1,
+          },
   };
 }
 
@@ -218,7 +228,7 @@ test('main CLI selection uses bounded authenticated full-quality proof and priva
         JSON.stringify(
           url.includes('/workflows/')
             ? { workflow_runs: [proof.run], total_count: 1 }
-            : { jobs: [proof.job], total_count: 1 },
+            : { jobs: [proof.job, proof.deployment], total_count: 2 },
         ),
       );
     };
@@ -488,6 +498,11 @@ test('static success forged quality proof and nonancestor history never advance 
       (p) => (p.job.steps = []),
       (p) => (p.job.steps[0].conclusion = 'skipped'),
       (p) => p.job.steps.push({ ...p.job.steps[0] }),
+      (p) => (p.deployment = undefined),
+      (p) => (p.deployment.conclusion = 'failure'),
+      (p) => (p.deployment.conclusion = 'skipped'),
+      (p) => (p.deployment.run_attempt = 2),
+      (p) => (p.deployment.run_id = 72),
     ]) {
       const invalid = globalThis.structuredClone(proof);
       mutate(invalid);

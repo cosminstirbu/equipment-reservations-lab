@@ -1,5 +1,10 @@
 # Manifest-only change quality design
 
+Current execution topology is amended by the owner-approved
+[PR validation/main release split](../plan.md#pr-validation-and-main-release-split-2026-10-23).
+That amendment supersedes this document's earlier PR multi-architecture build topology,
+classifier placement and quality-only release/baseline gates; other contracts remain.
+
 Date: 2026-10-22. Inspected baseline: `9f5e592ab89faa299740ae693a6de3af8fcac942`.
 Current requirements: FR-011, AC-3.8/AC-3.9 and SC-013; retain FR-012 publication
 behavior and all earlier pending feature gates. Preparation quality and security

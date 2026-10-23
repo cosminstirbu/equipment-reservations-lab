@@ -166,6 +166,19 @@ export async function discoverFullQualityBaseline({
           markers[0].conclusion !== 'success'
         )
           continue;
+        const deployment = jobs.jobs.filter(
+          (candidate) =>
+            candidate.name ===
+            'Kubernetes verification / Kubernetes verification',
+        );
+        if (
+          deployment.length !== 1 ||
+          deployment[0].run_id !== run.id ||
+          deployment[0].run_attempt !== run.run_attempt ||
+          deployment[0].status !== 'completed' ||
+          deployment[0].conclusion !== 'success'
+        )
+          continue;
         try {
           git(root, [
             'merge-base',
