@@ -665,3 +665,12 @@ package.json changes; image builders/dependencies/workflows and unknown inputs s
 conservative. Main compares each publication baseline and retains earlier unpublished
 source work. Full quality and manual dispatch behavior remain unchanged (FR-022,
 SC-011); this repair does not establish broader feature acceptance.
+
+## Quality job deduplication (2026-10-23)
+
+Owner requested removal of the full-quality job's standalone format-check and lint
+steps. Keep `npm run check` unchanged: it already verifies formatting and lint before
+tooling, frontend and backend checks. Manifest-only quality and deployment remain
+unchanged. This behavior-preserving configuration cleanup requires workflow diff
+inspection and the formatting guide's format-check/lint gates; no new test behavior
+or test changes are needed. Feature approval and existing pending gates remain pending.
