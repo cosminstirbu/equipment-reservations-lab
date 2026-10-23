@@ -8,4 +8,4 @@ spec:
     spec:
       containers:
         - name: database-bootstrap
-          image: ghcr.io/cosminstirbu/equipment-reservations-lab-database-bootstrap@sha256:808f26134bebfdfa69fe3fecf82677fda2d4a52c37e1b82c24fa6310687636cb
+          image: ghcr.io/cosminstirbu/equipment-reservations-lab-database-bootstrap@sha256:4fda5a8148731e2adf2cfd19ec4fddb3288c9bbeecc6c809ca02d5fbe2ed2616
