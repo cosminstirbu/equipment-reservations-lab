@@ -136,8 +136,7 @@ test(
     assert.equal(full.status, 0, full.stderr);
     const fullCalls = readFileSync(log, 'utf8');
     assert.match(fullCalls, /npm --prefix src\/Web ci/);
-    assert.match(fullCalls, /npm run format-check/);
-    assert.match(fullCalls, /npm run lint/);
+    assert.doesNotMatch(fullCalls, /npm run (format-check|lint)/);
     assert.match(fullCalls, /npm run check/);
     assert.match(fullCalls, /node --test/);
     assert.match(full.stdout, /Full application quality completed/);
