@@ -1,10 +1,10 @@
-import { createHash, randomBytes } from 'node:crypto';
+import { createHash, randomBytes, randomInt } from 'node:crypto';
 import { readFileSync, existsSync, writeFileSync } from 'node:fs';
 import { resolve, join } from 'node:path';
 import { pathToFileURL, URLSearchParams } from 'node:url';
 import { setTimeout as delay } from 'node:timers/promises';
 import { verifyDeployedTelemetry } from './deployment-diagnostics.mjs';
-import { OperationalFailure, safeFailure } from './process.mjs';
+import { OperationalFailure, safeFailure, cleanupAll } from './process.mjs';
 import { assertPrivatePath } from './local-platform.mjs';
 
 const services = ['inventory', 'reservations', 'notifications'];
@@ -421,13 +421,7 @@ export async function authenticateCodeFlow({
   return result.access_token;
 }
 
-export async function runDeployedSmoke({
-  applicationOrigin = 'https://app.equipment.test',
-  authority = 'https://identity.equipment.test/realms/equipment',
-  credentials,
-  dashboardOrigin,
-  otlpOrigin,
-}) {
+async function deployedSession({ applicationOrigin, authority, credentials }) {
   const traceIds = Object.fromEntries(
     ['book', 'cancel', 'invalid'].map((kind) => [
       kind,
@@ -435,14 +429,6 @@ export async function runDeployedSmoke({
     ]),
   );
   const acquiredTokens = [];
-  await verifyDeploymentSurface({ applicationOrigin, authority });
-  const discovery = await expect(
-    await request(`${authority}/.well-known/openid-configuration`),
-    [200],
-    'Identity discovery',
-  ).json();
-  if (discovery.issuer !== authority)
-    throw new OperationalFailure('Identity discovery issuer mismatch.');
   const alice = await authenticateCodeFlow({
     authority,
     applicationOrigin,
@@ -462,6 +448,63 @@ export async function runDeployedSmoke({
     password: credentials.manager,
   });
   acquiredTokens.push(alice, bob, manager);
+  const headers = (token, kind) => ({
+    authorization: `Bearer ${token}`,
+    origin: applicationOrigin,
+    'content-type': 'application/json',
+    'sec-fetch-site': 'same-origin',
+    ...(kind
+      ? {
+          traceparent: `00-${traceIds[kind]}-${randomBytes(8).toString('hex')}-01`,
+        }
+      : {}),
+  });
+
+  return {
+    applicationOrigin,
+    authority,
+    credentials,
+    traceIds,
+    acquiredTokens,
+    alice,
+    bob,
+    manager,
+    headers,
+  };
+}
+
+async function reservationBody({ applicationOrigin, alice, headers }) {
+  const equipment = await expect(
+    await request(`${applicationOrigin}/api/equipment`, {
+      headers: headers(alice),
+    }),
+    [200],
+    'Equipment',
+  ).json();
+  const item = equipment.find((entry) => entry.operational);
+  if (!item)
+    throw new OperationalFailure(
+      'No operational equipment available for smoke.',
+    );
+  const start = Date.now() + 86400000 + randomInt(1, 525600) * 60000;
+  const body = JSON.stringify({
+    equipmentId: item.id,
+    startAt: new Date(start).toISOString(),
+    endAt: new Date(start + 60000).toISOString(),
+  });
+  return body;
+}
+
+export async function verifyDeployedIdentity(options) {
+  const { applicationOrigin, authority, credentials, acquiredTokens } =
+    await deployedSession(options);
+  const discovery = await expect(
+    await request(`${authority}/.well-known/openid-configuration`),
+    [200],
+    'Identity discovery',
+  ).json();
+  if (discovery.issuer !== authority)
+    throw new OperationalFailure('Identity discovery issuer mismatch.');
   for (const service of services) {
     const callback = `${applicationOrigin}/services/${service}/oauth/callback`;
     expect(await request(callback), [200], 'Documentation callback');
@@ -483,35 +526,13 @@ export async function runDeployedSmoke({
       'Documentation authenticated request',
     );
   }
-  const headers = (token, kind) => ({
-    authorization: `Bearer ${token}`,
-    origin: applicationOrigin,
-    'content-type': 'application/json',
-    'sec-fetch-site': 'same-origin',
-    ...(kind
-      ? {
-          traceparent: `00-${traceIds[kind]}-${randomBytes(8).toString('hex')}-01`,
-        }
-      : {}),
-  });
-  const equipment = await expect(
-    await request(`${applicationOrigin}/api/equipment`, {
-      headers: headers(alice),
-    }),
-    [200],
-    'Equipment',
-  ).json();
-  const item = equipment.find((entry) => entry.operational);
-  if (!item)
-    throw new OperationalFailure(
-      'No operational equipment available for smoke.',
-    );
-  const start = Date.now() + 86400000 + Math.floor(Math.random() * 86400000);
-  const body = JSON.stringify({
-    equipmentId: item.id,
-    startAt: new Date(start).toISOString(),
-    endAt: new Date(start + 60000).toISOString(),
-  });
+  return acquiredTokens;
+}
+
+export async function verifyDeployedAuthorization(options) {
+  const session = await deployedSession(options);
+  const { applicationOrigin, alice, manager, headers } = session;
+  const body = await reservationBody(session);
   expect(
     await request(`${applicationOrigin}/api/reservations`, {
       method: 'POST',
@@ -530,76 +551,156 @@ export async function runDeployedSmoke({
     [403],
     'Origin denial',
   );
-  const created = await expect(
-    await request(
-      `${applicationOrigin}/services/reservations/api/reservations`,
-      { method: 'POST', headers: headers(alice, 'book'), body },
-    ),
-    [201],
-    'Documentation reservation write',
-  ).json();
-  const id = created.id;
-  expect(
-    await request(`${applicationOrigin}/api/reservations/${id}`, {
-      headers: headers(bob),
-    }),
-    [404],
-    'Ownership denial',
-  );
-  await observeNotifications({
-    applicationOrigin,
-    token: alice,
+}
+
+export async function verifyDeployedLifecycle(options) {
+  const session = await deployedSession(options);
+  const { applicationOrigin, alice, bob, headers } = session;
+  const body = await reservationBody(session);
+  let id;
+  let cancelled = false;
+  let primary;
+  try {
+    const created = await expect(
+      await request(
+        `${applicationOrigin}/services/reservations/api/reservations`,
+        { method: 'POST', headers: headers(alice, 'book'), body },
+      ),
+      [201],
+      'Documentation reservation write',
+    ).json();
+    id = created.id;
+    expect(
+      await request(`${applicationOrigin}/api/reservations/${id}`, {
+        headers: headers(bob),
+      }),
+      [404],
+      'Ownership denial',
+    );
+    await observeNotifications({
+      applicationOrigin,
+      token: alice,
+      reservationId: id,
+      expectedTypes: ['ReservationConfirmed'],
+    });
+    expect(
+      await request(`${applicationOrigin}/api/reservations/${id}/cancel`, {
+        method: 'POST',
+        headers: headers(alice, 'cancel'),
+        body: 'null',
+      }),
+      [200],
+      'Reservation cancellation',
+    );
+    cancelled = true;
+    await observeNotifications({
+      applicationOrigin,
+      token: alice,
+      reservationId: id,
+      expectedTypes: ['ReservationConfirmed', 'ReservationCancelled'],
+    });
+    // A second read after a bounded quiet period catches late duplicate delivery effects.
+    await delay(1000);
+    await observeNotifications({
+      applicationOrigin,
+      token: alice,
+      reservationId: id,
+      expectedTypes: ['ReservationConfirmed', 'ReservationCancelled'],
+    });
+    expect(
+      await request(`${applicationOrigin}/api/reservations/not-a-guid`, {
+        headers: headers(alice, 'invalid'),
+      }),
+      [400],
+      'Controlled reservation validation failure',
+    );
+  } catch (error) {
+    primary = error;
+  } finally {
+    await cleanupAll(
+      [
+        {
+          operation: 'cancel owned deployed-test reservation',
+          run: async () => {
+            if (!id || cancelled) return;
+            expect(
+              await request(
+                `${applicationOrigin}/api/reservations/${id}/cancel`,
+                {
+                  method: 'POST',
+                  headers: headers(alice),
+                  body: 'null',
+                },
+              ),
+              [200],
+              'Owned reservation cleanup',
+            );
+          },
+        },
+      ],
+      { primary },
+    );
+  }
+  return {
     reservationId: id,
-    expectedTypes: ['ReservationConfirmed'],
-  });
-  expect(
-    await request(`${applicationOrigin}/api/reservations/${id}/cancel`, {
-      method: 'POST',
-      headers: headers(alice, 'cancel'),
-      body: 'null',
-    }),
-    [200],
-    'Reservation cancellation',
-  );
-  await observeNotifications({
-    applicationOrigin,
-    token: alice,
-    reservationId: id,
-    expectedTypes: ['ReservationConfirmed', 'ReservationCancelled'],
-  });
-  // A second read after a bounded quiet period catches late duplicate delivery effects.
-  await delay(1000);
-  await observeNotifications({
-    applicationOrigin,
-    token: alice,
-    reservationId: id,
-    expectedTypes: ['ReservationConfirmed', 'ReservationCancelled'],
-  });
-  expect(
-    await request(`${applicationOrigin}/api/reservations/not-a-guid`, {
-      headers: headers(alice, 'invalid'),
-    }),
-    [400],
-    'Controlled reservation validation failure',
-  );
-  if (!dashboardOrigin || !otlpOrigin)
+    traceIds: session.traceIds,
+    acquiredTokens: session.acquiredTokens,
+  };
+}
+
+export async function verifyDeployedDiagnostics(options) {
+  if (!options.dashboardOrigin || !options.otlpOrigin)
     throw new OperationalFailure(
       'Explicit private dashboard/OTLP probe endpoints required.',
     );
   await verifyDiagnosticAuthentication({
-    dashboardOrigin,
-    otlpOrigin,
-    dashboardApiKey: credentials.dashboardApi,
-    dashboardOtlpKey: credentials.dashboardOtlp,
+    dashboardOrigin: options.dashboardOrigin,
+    otlpOrigin: options.otlpOrigin,
+    dashboardApiKey: options.credentials.dashboardApi,
+    dashboardOtlpKey: options.credentials.dashboardOtlp,
   });
+}
+
+async function verifyLifecycleTelemetry(
+  options,
+  result,
+  additionalTokens = [],
+) {
+  if (!options.dashboardOrigin || !options.otlpOrigin)
+    throw new OperationalFailure(
+      'Explicit private dashboard/OTLP probe endpoints required.',
+    );
   await verifyDeployedTelemetry({
-    dashboardOrigin,
-    apiKey: credentials.dashboardApi,
-    traceIds,
-    privateValues: [...Object.values(credentials), ...acquiredTokens],
+    dashboardOrigin: options.dashboardOrigin,
+    apiKey: options.credentials.dashboardApi,
+    traceIds: result.traceIds,
+    privateValues: [
+      ...Object.values(options.credentials),
+      ...result.acquiredTokens,
+      ...additionalTokens,
+    ],
   });
+}
+
+export async function verifyDeployedTelemetryScenario(options) {
+  const result = await verifyDeployedLifecycle(options);
+  await verifyLifecycleTelemetry(options, result);
+}
+
+export async function runDeployedSmoke({
+  applicationOrigin = 'https://app.equipment.test',
+  authority = 'https://identity.equipment.test/realms/equipment',
+  ...settings
+}) {
+  const options = { applicationOrigin, authority, ...settings };
+  await verifyDeploymentSurface(options);
+  const tokens = await verifyDeployedIdentity(options);
+  await verifyDeployedAuthorization(options);
+  const result = await verifyDeployedLifecycle(options);
+  await verifyDeployedDiagnostics(options);
+  await verifyLifecycleTelemetry(options, result, tokens);
   return {
-    reservationId: id,
+    reservationId: result.reservationId,
     checks: [
       'documents',
       'pkce',

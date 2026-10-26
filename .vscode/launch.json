@@ -1,0 +1,20 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Deployed application tests",
+      "type": "node",
+      "request": "launch",
+      "runtimeArgs": [
+        "--test",
+        "--test-concurrency=1",
+        "--env-file-if-exists=${workspaceFolder}/.local/kubernetes/deployed-tests.env"
+      ],
+      "program": "${workspaceFolder}/tests/DeployedApplication/deployed.test.mjs",
+      "cwd": "${workspaceFolder}",
+      "console": "integratedTerminal",
+      "autoAttachChildProcesses": true,
+      "skipFiles": ["<node_internals>/**"]
+    }
+  ]
+}

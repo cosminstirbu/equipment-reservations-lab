@@ -161,7 +161,7 @@ test(
     const preload = join(directory, 'provider.mjs');
     writeFileSync(
       preload,
-      `if(process.argv[1]?.endsWith('/deployment-smoke.mjs')){process.stdout.write('safe smoke stdout progress\\n');process.stderr.write('Smoke persistence verification failed. Identity login page failed (HTTP 503).\\n');process.exit(23);}`,
+      `if(process.argv[1]?.endsWith('/deployment-smoke.mjs')||process.argv[1]?.endsWith('/deployed-tests.mjs')){process.stdout.write('safe smoke stdout progress\\n');process.stderr.write('Smoke persistence verification failed. Identity login page failed (HTTP 503).\\n');process.exit(23);}`,
     );
     const result = spawnSync(
       process.execPath,
@@ -960,7 +960,7 @@ test('smoke uses private state and CA before child startup with owned loopback d
   });
   const smoke = f.calls.find((c) => c.command === process.execPath);
   assert.deepEqual(smoke.args, [
-    join(f.root, 'scripts/deployment-smoke.mjs'),
+    join(f.root, 'scripts/deployed-tests.mjs'),
     '--state',
     directory,
   ]);
@@ -1076,7 +1076,7 @@ test('the real process adapter supplies the CA environment to Node before its fi
     `import{readFileSync}from'node:fs';import{join}from'node:path';import childProcess from'node:child_process';import{syncBuiltinESMExports}from'node:module';const original=childProcess.execFileSync;childProcess.execFileSync=(command,...args)=>{if(command==='kind')return'equipment-local\\n';if(command==='kubectl')return JSON.parse(readFileSync(join(process.cwd(),'.local/kubernetes/credentials.json'),'utf8')).owner;return original(command,...args);};syncBuiltinESMExports();`,
   );
   writeFileSync(
-    join(f.root, 'scripts/deployment-smoke.mjs'),
+    join(f.root, 'scripts/deployed-tests.mjs'),
     'import {writeFileSync} from "node:fs";writeFileSync("child-observation.json",JSON.stringify({ca:process.env.NODE_EXTRA_CA_CERTS,args:process.argv.slice(2)}));',
   );
   const moduleUrl = pathToFileURL(

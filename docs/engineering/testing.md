@@ -206,6 +206,104 @@ Do not combine backend and frontend percentages into one metric. See the
 Sources: [Microsoft Testing Platform coverage options and package compatibility](https://learn.microsoft.com/en-us/dotnet/core/testing/microsoft-testing-platform-code-coverage),
 [Microsoft Code Coverage configuration](https://github.com/microsoft/codecoverage/blob/main/docs/configuration.md).
 
+## Tests against a deployed application
+
+`tests/DeployedApplication/deployed.test.mjs` contains six independently runnable
+Node.js `node:test` cases: public surface; seeded identity/documentation login;
+role/origin authorization; reservation ownership/cancellation/notifications;
+diagnostic authentication; and correlated telemetry/privacy. These are live
+application acceptance tests. The similarly named `scripts/deployment-smoke.test.mjs`
+checks helper behavior and does not establish deployed application success.
+
+The deployment already exists. Tests perform HTTP operations only; they do not
+build images, deploy/restart workloads, create clusters or establish port-forwards.
+Use a dedicated development/test deployment with bootstrapped employee/approver
+accounts and operational equipment. Equipment has no public create API. Cases reuse
+that catalog, choose fresh future reservation intervals and record server-assigned
+IDs. They cancel owned active reservations in cleanup, including after failure,
+without resetting the database or deleting audit/notification history. Unexpected
+booking conflicts fail; no mutation retries hide them. Each case owns its logins and
+business prerequisites, including the telemetry case's own booking/cancellation.
+Cases run serially because they share seeded accounts and equipment, while backend
+application tests retain their normal parallelism.
+
+### CLI and configuration
+
+With host routing, CA trust, private state and diagnostic forwards ready:
+
+```powershell
+npm.cmd run test:deployed
+npm.cmd run test:deployed -- --test-name-pattern "^Public application"
+npm.cmd run test:deployed -- --reports
+```
+
+Use `npm` instead of `npm.cmd` on Unix. `--state DIRECTORY` or
+`EQUIPMENT_TEST_STATE` selects private state; otherwise the runner uses
+`EQUIPMENT_CI_STATE` or `.local/kubernetes`. The existing owner-restricted
+`smoke-state.json` supplies `applicationOrigin`, `authority`, `dashboardOrigin`,
+`otlpOrigin`, `credentialsFile` and optional `caFile`. The referenced owner-restricted
+credentials file supplies `alice`, `bob`, `manager`, `dashboardApi` and
+`dashboardOtlp`. Use the bootstrap-generated files, not credentials in source or
+command arguments. The CLI configures the CA before starting the test process.
+Endpoint overrides `EQUIPMENT_DASHBOARD_ORIGIN`/`EQUIPMENT_OTLP_ORIGIN` remain available.
+Missing/invalid prerequisites fail named cases rather than silently skipping them;
+a failed case does not suppress subsequent independent cases. Each case has a
+three-minute deadline and HTTP requests retain five-second transport deadlines.
+
+For the existing local development deployment, `node scripts/local-kubernetes.mjs smoke`
+prepares state/trust and owns only the temporary diagnostic forwards around the new
+suite. It does not set up a missing deployment. The `--capture-persistence` and
+`--verify-persistence` variants retain the separate cross-run lifecycle procedure in
+[the Kubernetes quickstart](../../specs/013-local-kubernetes/quickstart.md).
+
+### VS Code Run and Debug
+
+Install the recommended `connor4312.nodejs-testing` extension. Workspace discovery
+includes only `tests/DeployedApplication`, with one test file at a time. Refresh the
+Testing view after installation; run/debug an individual named case from that view.
+The **Deployed application tests** launch configuration runs/debugs the whole suite.
+Neither path prepares infrastructure or diagnostic forwards.
+
+Before an IDE run, configure startup environment in the ignored local file
+`.local/kubernetes/deployed-tests.env`, for example (use actual absolute paths):
+
+```dotenv
+EQUIPMENT_TEST_STATE="C:/Repos/equipment-reservations-lab/.local/kubernetes"
+NODE_EXTRA_CA_CERTS="C:/Repos/equipment-reservations-lab/.local/kubernetes/ca.crt"
+```
+
+Both the adapter and launch configuration pass this file to Node before tests start.
+Keep it inside the existing private state directory; do not commit state or secrets.
+Use equivalent paths on Unix. `NODE_EXTRA_CA_CERTS` must exist at process startup;
+setting it in a test hook is too late. Keep diagnostic forwards running separately
+while using IDE Run/Debug. Direct Node CLI execution can use the same env file and
+`node --test --test-concurrency=1 tests/DeployedApplication/deployed.test.mjs`.
+
+### Workflow results without coverage
+
+The Kubernetes verification job runs `npm run test:deployed -- --reports --ci`
+after deployment and connection preparation. The CI mode requires its explicit
+disposable context. Ordinary `npm run check`, frontend/backend tests and
+`test:deployment` provider/tooling discovery do not run this live suite.
+
+A dedicated native event reporter writes assessed JUnit directly, without retaining
+raw JUnit/log payloads. Published results contain only source-declared names,
+outcomes, numeric durations and fixed failure notes. Live logs retain assessed
+operation/status diagnostics; unknown exceptions and HTTP payloads are suppressed.
+Missing expected cases become explicit failed results, and report completeness gates
+the runner. Filtered CLI reporting expects only the selected cases. Report outputs
+are cleared before a new reporting run.
+
+Test Reporter publishes a separate **Deployed application tests** job summary even
+after test failure, using readonly permissions. The sole uploaded file is
+`test-results/deployed/results.xml`, in the **deployed-application-test-results**
+artifact retained for 14 days. Missing results fail reporting. There is no coverage
+collection, coverage artifact, PR comment or external reporting service. Cluster
+cleanup remains owned by the workflow, outside the tests.
+
+Design/evidence: [deployed application tests](../../specs/013-local-kubernetes/team/deployed-application-tests.md).
+Adapter configuration: [official node:test VS Code extension documentation](https://github.com/connor4312/nodejs-testing).
+
 ## Backend parallelism is the default
 
 Backend tests must be designed to run concurrently within the same test project,
