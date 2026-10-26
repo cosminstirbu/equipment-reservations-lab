@@ -3,4 +3,4 @@ apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 resources:
   - '../../../../base/jobs/identity'
-nameSuffix: -efabd06dc1bcd316
+nameSuffix: -afa5faabd7776cb4

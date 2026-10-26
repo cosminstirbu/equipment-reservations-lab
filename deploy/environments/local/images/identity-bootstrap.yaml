@@ -8,4 +8,4 @@ spec:
     spec:
       containers:
         - name: identity-bootstrap
-          image: ghcr.io/cosminstirbu/equipment-reservations-lab-identity-bootstrap@sha256:a7ee0f607515bdf176a28dc1f42b2a9f2ae523c6d72902b0f7dc8f94b2f6912d
+          image: ghcr.io/cosminstirbu/equipment-reservations-lab-identity-bootstrap@sha256:e61bd01f29be5277c9e31f2cae8aa50a4bfb52a37c48ec7ea1bd00cce8a106a0
