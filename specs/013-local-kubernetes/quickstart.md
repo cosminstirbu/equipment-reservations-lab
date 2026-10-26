@@ -414,7 +414,7 @@ available after the lifecycle command has prepared `smoke-state.json`:
 
 ```sh
 NODE_EXTRA_CA_CERTS="$PWD/.local/kubernetes/ca.crt" \
-  node scripts/deployment-smoke.mjs --state "$PWD/.local/kubernetes" --verify-persistence
+  node scripts/deployed-persistence.mjs --state "$PWD/.local/kubernetes" --verify-persistence
 ```
 
 Do not delete a checkpoint merely to turn a failed comparison into a pass. Capture a

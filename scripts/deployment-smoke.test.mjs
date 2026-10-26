@@ -12,12 +12,17 @@ import {
   verifyDeploymentSurface,
   observeNotifications,
   verifyDiagnosticAuthentication,
-} from './deployment-smoke.mjs';
+} from '../tests/DeployedApplication/scenarios.mjs';
 
-test('smoke CLI reports safe prerequisite phase without echoing private paths', () => {
+test('persistence CLI reports safe prerequisite phase without echoing private paths', () => {
   const result = spawnSync(
     process.execPath,
-    ['scripts/deployment-smoke.mjs', '--state', 'missing-PRIVATE_STATE_MARKER'],
+    [
+      'scripts/deployed-persistence.mjs',
+      '--state',
+      'missing-PRIVATE_STATE_MARKER',
+      '--verify-persistence',
+    ],
     { encoding: 'utf8', timeout: 10000 },
   );
   assert.equal(result.status, 1);
@@ -229,7 +234,8 @@ test('dashboard navigation is followed to a safe login, never mistaken for authe
 });
 
 test('code login retains PKCE, exact callback/state and never uses password grant', async (t) => {
-  const { authenticateCodeFlow } = await import('./deployment-smoke.mjs');
+  const { authenticateCodeFlow } =
+    await import('../tests/DeployedApplication/scenarios.mjs');
   let challenge;
   let state;
   let callback;
@@ -306,7 +312,7 @@ test('diagnostic checks prove supplied API and OTLP credentials are usable', asy
 
 test('persistence probe preserves reservation ownership and exact notification effects', async (t) => {
   const { capturePersistenceCheckpoint, verifyPersistenceCheckpoint } =
-    await import('./deployment-smoke.mjs');
+    await import('../tests/DeployedApplication/scenarios.mjs');
   const reservation = {
     id: 'r1',
     userKey: 'subject-original',
@@ -367,7 +373,8 @@ test('persistence checkpoint is created privately without replacing an earlier r
   const { mkdtempSync, readFileSync, rmSync } = await import('node:fs');
   const { tmpdir } = await import('node:os');
   const { join } = await import('node:path');
-  const { savePersistenceCheckpoint } = await import('./deployment-smoke.mjs');
+  const { savePersistenceCheckpoint } =
+    await import('../tests/DeployedApplication/scenarios.mjs');
   const directory = mkdtempSync(join(tmpdir(), 'equipment-checkpoint-'));
   t.after(() => rmSync(directory, { recursive: true, force: true }));
   createPrivateDirectory(directory);
@@ -386,7 +393,8 @@ test('persistence checkpoint is created privately without replacing an earlier r
 });
 
 test('deployed lifecycle cancels its owned reservation after an HTTP assertion fails', async (t) => {
-  const { verifyDeployedLifecycle } = await import('./deployment-smoke.mjs');
+  const { verifyDeployedLifecycle } =
+    await import('../tests/DeployedApplication/scenarios.mjs');
   let callback;
   let state;
   let cancelled = false;
@@ -440,4 +448,25 @@ test('deployed lifecycle cancels its owned reservation after an HTTP assertion f
     },
   );
   assert.equal(cancelled, true);
+});
+
+test('persistence CLI requires exactly one operation before reading private configuration', () => {
+  for (const flags of [[], ['--capture-persistence', '--verify-persistence']]) {
+    const result = spawnSync(
+      process.execPath,
+      [
+        'scripts/deployed-persistence.mjs',
+        '--state',
+        'PRIVATE_UNUSED_STATE',
+        ...flags,
+      ],
+      { encoding: 'utf8', timeout: 10000 },
+    );
+    assert.equal(result.status, 1);
+    assert.match(result.stderr, /Choose exactly one persistence operation/);
+    assert.doesNotMatch(
+      result.stdout + result.stderr,
+      /PRIVATE_UNUSED_STATE|ENOENT/,
+    );
+  }
 });

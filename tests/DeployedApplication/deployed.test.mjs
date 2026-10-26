@@ -6,7 +6,7 @@ import {
   verifyDeployedLifecycle,
   verifyDeployedDiagnostics,
   verifyDeployedTelemetryScenario,
-} from '../../scripts/deployment-smoke.mjs';
+} from './scenarios.mjs';
 import { deployedConfiguration } from '../../scripts/deployed-test-config.mjs';
 import { safeFailure } from '../../scripts/process.mjs';
 

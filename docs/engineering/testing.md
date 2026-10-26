@@ -212,7 +212,9 @@ Sources: [Microsoft Testing Platform coverage options and package compatibility]
 Node.js `node:test` cases: public surface; seeded identity/documentation login;
 role/origin authorization; reservation ownership/cancellation/notifications;
 diagnostic authentication; and correlated telemetry/privacy. These are live
-application acceptance tests. The similarly named `scripts/deployment-smoke.test.mjs`
+application acceptance tests. Shared HTTP checks live beside them in `scenarios.mjs`.
+The `scripts/deployed-persistence.mjs` CLI owns cross-run persistence capture and
+verification. `scripts/deployment-smoke.test.mjs`
 checks helper behavior and does not establish deployed application success.
 
 The deployment already exists. Tests perform HTTP operations only; they do not
