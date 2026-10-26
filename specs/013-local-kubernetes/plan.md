@@ -153,7 +153,8 @@ not silently accepted. Concrete version/digest lock must precede dependent image
 Feature artifacts: plan.md, research.md, data-model.md, contracts/runtime.md,
 quickstart.md, tasks.md, team/ (coordinator owned).
 Source: deploy/base, deploy/environments/local, deploy/platform, deploy/argocd;
-scripts/local-kubernetes.mjs, scripts/deployment-smoke.mjs, scripts/promote-images.mjs;
+scripts/local-kubernetes.mjs, scripts/deployed-persistence.mjs, scripts/promote-images.mjs;
+tests/DeployedApplication/scenarios.mjs and deployed.test.mjs;
 .github/workflows; container build definitions; focused existing src/tests portability seams.
 No Azure directory or second local environment.
 

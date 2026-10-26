@@ -75,3 +75,26 @@ post-failure publication, exact artifact scope, source-backed result identities,
 no coverage/native raw-output retention, explicit discovery separation, finite process
 budgets and preservation of persistence flags. These checks do not establish IDE UI
 execution, hosted summary/artifact publication or repair the retained live failures.
+
+## Scenario ownership cleanup (2026-10-26)
+
+Owner requested removing the misleading deployment-smoke.mjs name. Move shared HTTP
+and persistence scenario helpers to tests/DeployedApplication/scenarios.mjs; extract
+the state/checkpoint CLI into scripts/deployed-persistence.mjs. Ordinary CLI/IDE/CI
+cases continue through deployed.test.mjs; persistence capture/verification callers
+use the dedicated CLI. Preserve checkpoint format, HTTP assertions, privacy and
+cleanup. Current guide/quickstart/plan/task references follow the new paths; historical
+snapshot hashes/evidence retain their original paths.
+
+The move retains existing behavior tests. One CLI-boundary behavior changes: the
+new persistence CLI requires exactly one capture/verification mode before reading
+private configuration. Extend the existing real-child-process test file; no doubles,
+no network or infrastructure dependency for argument rejection. The new regression
+failed with the generic prerequisite message before the mode guard, then passed.
+The shared helper/runner suite passes 15 tests after the split. This evidence does
+not establish persistence across a real restart, which remains a separate procedure.
+
+Post-split local verification: 15 helper/runner tests pass; six selected local
+smoke/persistence/CA-wrapper tests pass with one existing POSIX-only skip.
+Format-check and lint/build pass with zero build warnings/errors. No active caller,
+current engineering guide or quickstart references the removed module path.

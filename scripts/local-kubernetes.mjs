@@ -984,7 +984,7 @@ export function createLifecycle({
             join(
               root,
               flag
-                ? 'scripts/deployment-smoke.mjs'
+                ? 'scripts/deployed-persistence.mjs'
                 : 'scripts/deployed-tests.mjs',
             ),
             '--state',

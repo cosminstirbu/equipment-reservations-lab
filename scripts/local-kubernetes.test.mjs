@@ -161,7 +161,7 @@ test(
     const preload = join(directory, 'provider.mjs');
     writeFileSync(
       preload,
-      `if(process.argv[1]?.endsWith('/deployment-smoke.mjs')||process.argv[1]?.endsWith('/deployed-tests.mjs')){process.stdout.write('safe smoke stdout progress\\n');process.stderr.write('Smoke persistence verification failed. Identity login page failed (HTTP 503).\\n');process.exit(23);}`,
+      `if(process.argv[1]?.endsWith('/deployed-persistence.mjs')||process.argv[1]?.endsWith('/deployed-tests.mjs')){process.stdout.write('safe smoke stdout progress\\n');process.stderr.write('Smoke persistence verification failed. Identity login page failed (HTTP 503).\\n');process.exit(23);}`,
     );
     const result = spawnSync(
       process.execPath,
