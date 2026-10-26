@@ -8,4 +8,4 @@ spec:
     spec:
       containers:
         - name: notifications
-          image: ghcr.io/cosminstirbu/equipment-reservations-lab-notifications@sha256:82ef193f9511af77e6bc4b43e808ace38f7bde504c2352c1b419a6191ade1903
+          image: ghcr.io/cosminstirbu/equipment-reservations-lab-notifications@sha256:14943f08a6d1e8543759704bcfb58354fa6031c0576462f6b7258fec5bf82e1a
