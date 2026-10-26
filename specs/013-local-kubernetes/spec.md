@@ -223,6 +223,12 @@ As a developer, I can inspect correlated success/failure diagnostics securely an
   owner-approved application reporting amendment; missing expected reports or failed
   generation fails quality, while coverage percentages remain informational (SC-015).
 
+- **FR-028**: Provide independently runnable deployed application acceptance cases
+  through Node CLI and VS Code, against preexisting bootstrapped infrastructure.
+  Keep mutation prerequisites owned per case, clean up active reservations, retain
+  audit history, run serially by default and publish separate privacy-assessed test
+  results without coverage. Preserve separate persistence lifecycle verification.
+
 ### Key Entities
 
 - **Local environment**: One disposable demo target with durable business/identity/messaging state, distinct application/platform ownership and explicit lifecycle operations.
@@ -258,6 +264,12 @@ As a developer, I can inspect correlated success/failure diagnostics securely an
   observable, and missing/malformed reports fail. Controlled private markers in raw
   output/attachments are absent from published results. Local default checks and
   manifest-only behavior remain unchanged; coverage percentages do not gate quality.
+
+- **SC-016**: Each deployed scenario can run alone or with the serial suite; missing
+  prerequisites and failed/missing results fail visibly. Kubernetes verification
+  publishes named-case summaries and downloadable test-only results after failures.
+  Normal application/provider checks do not discover the live suite. IDE behavior
+  and real deployed success require corresponding runtime evidence.
 
 ## Assumptions
 

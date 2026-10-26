@@ -981,13 +981,18 @@ export function createLifecycle({
         call(
           process.execPath,
           [
-            join(root, 'scripts/deployment-smoke.mjs'),
+            join(
+              root,
+              flag
+                ? 'scripts/deployment-smoke.mjs'
+                : 'scripts/deployed-tests.mjs',
+            ),
             '--state',
             state,
             ...(flag ? [flag] : []),
           ],
           {
-            timeout: 600000,
+            timeout: flag ? 600000 : 1200000,
             output: 'stream',
             operation: 'local smoke verification',
             env: {

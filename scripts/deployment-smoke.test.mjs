@@ -384,3 +384,60 @@ test('persistence checkpoint is created privately without replacing an earlier r
   );
   assert.deepEqual(JSON.parse(readFileSync(path, 'utf8')), checkpoint);
 });
+
+test('deployed lifecycle cancels its owned reservation after an HTTP assertion fails', async (t) => {
+  const { verifyDeployedLifecycle } = await import('./deployment-smoke.mjs');
+  let callback;
+  let state;
+  let cancelled = false;
+  const origin = await provider(t, (request, response) => {
+    const url = new URL(request.url, 'http://fixture');
+    if (url.pathname.endsWith('/auth')) {
+      callback = url.searchParams.get('redirect_uri');
+      state = url.searchParams.get('state');
+      response.end('<form action="/login"></form>');
+    } else if (url.pathname === '/login') {
+      response.writeHead(302, {
+        location: `${callback}?code=fixture&state=${state}`,
+      });
+      response.end();
+    } else {
+      response.setHeader('content-type', 'application/json');
+      if (url.pathname.endsWith('/token'))
+        response.end(
+          JSON.stringify({ access_token: 'PRIVATE_LIFECYCLE_TOKEN' }),
+        );
+      else if (url.pathname === '/api/equipment')
+        response.end(JSON.stringify([{ id: 'camera-001', operational: true }]));
+      else if (
+        request.method === 'POST' &&
+        url.pathname === '/services/reservations/api/reservations'
+      ) {
+        response.statusCode = 201;
+        response.end(
+          JSON.stringify({ id: '00000000-0000-4000-8000-000000000001' }),
+        );
+      } else if (url.pathname.endsWith('/cancel')) {
+        cancelled = true;
+        response.end('{}');
+      } else {
+        // Deliberately expose another user's reservation: the HTTP assertion must fail.
+        response.statusCode = 200;
+        response.end(JSON.stringify({ private: 'PRIVATE_LIFECYCLE_PAYLOAD' }));
+      }
+    }
+  });
+  await assert.rejects(
+    verifyDeployedLifecycle({
+      applicationOrigin: origin,
+      authority: origin,
+      credentials: { alice: 'fixture', bob: 'fixture', manager: 'fixture' },
+    }),
+    (error) => {
+      assert.match(error.message, /Ownership denial failed \(HTTP 200\)/);
+      assert.doesNotMatch(error.message, /PRIVATE_LIFECYCLE/);
+      return true;
+    },
+  );
+  assert.equal(cancelled, true);
+});

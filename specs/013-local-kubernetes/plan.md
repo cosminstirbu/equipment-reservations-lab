@@ -763,3 +763,12 @@ Full PR/main quality opts into reporting explicitly; normal local checks and
 manifest-only gates remain unchanged. Preserve the joint validation/release gates
 and existing quality completion marker. This amendment adds no coverage threshold,
 privileged reporting workflow or feature acceptance.
+
+
+## First-class deployed application tests (2026-10-23)
+
+Owner-confirmed decisions, standards/output assessment and test design are recorded
+in [deployed application tests](team/deployed-application-tests.md). Replace the
+ordinary deployed smoke invocation with six independent Node cases, preserve separate
+persistence commands, add CLI/IDE entry points and readonly test-only CI reporting.
+No infrastructure provisioning or coverage is added to the test suite.

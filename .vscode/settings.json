@@ -17,5 +17,19 @@
     "*.targets": "xml",
     "*.slnx": "xml"
   },
-  "eslint.workingDirectories": [{ "directory": "." }]
+  "eslint.workingDirectories": [
+    {
+      "directory": "."
+    }
+  ],
+  "nodejs-testing.include": ["tests/DeployedApplication"],
+  "nodejs-testing.concurrency": 1,
+  "nodejs-testing.extensions": [
+    {
+      "extensions": ["mjs"],
+      "parameters": [
+        "--env-file-if-exists=${workspaceFolder}/.local/kubernetes/deployed-tests.env"
+      ]
+    }
+  ]
 }
