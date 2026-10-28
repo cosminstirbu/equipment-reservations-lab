@@ -1031,3 +1031,24 @@ Test deadlines and assembly/class parallelism are unchanged; the job uses the
 original PR job's 30-minute bound. Reports stay in owner-only temporary scratch,
 are not uploaded and are removed on exit. Reuse the reviewed test metadata
 projection. No production fix, full PR rerun, merge or Azure action is authorized.
+
+Independent workflow-delta review against `603162b`: **pass**, no findings;
+command and nine-module concurrency/coverage match the backend reporting lane.
+Formatting, JSON syntax and `git diff --check` passed. Published diagnostic-only
+commit `1d9d0a763da1f4291ff5862f692cca8a1bcfe48a` to the dedicated branch.
+[Run 40694522611](https://github.com/cosminstirbu/equipment-reservations-lab/actions/runs/40694522611)
+built successfully, then reported 591 passing, five failing and zero skipped
+tests. The broker filesystem-failure case reproduced the missing workflow span:
+child exit 1, elapsed 13,646 ms, one trace receipt, no captured trace payload and
+HTTP 499; logs/metrics each completed HTTP 200 with captured records. This narrows
+the failure to trace request transfer/cancellation before capture, without proving
+the cancellation initiator or a causal fix. Four other failures are in OpenAPI
+validation; this workflow omitted the required npm dependency setup, so the run
+does not faithfully qualify the complete backend suite. No retry was performed.
+
+Owner authorized a bounded follow-up cancellation investigation from 13:25 UTC,
+limited to 20 active minutes and one diagnostic Linux run. Distinguish exporter
+request cancellation, process exit and collector body handling with fixed safe
+metadata; preserve behavior, test deadlines and parallelism. Correct the known
+npm prerequisite omission before that run. No production fix or automatic retry
+is authorized by this diagnostic batch.

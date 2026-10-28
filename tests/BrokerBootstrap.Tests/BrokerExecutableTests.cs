@@ -238,13 +238,20 @@ public sealed class BrokerExecutableTests
         var logs = new ConcurrentQueue<byte[]>();
         var metrics = new ConcurrentQueue<byte[]>();
         var receipts = new ConcurrentQueue<(string Signal, int Status)>();
+        var timeline = Stopwatch.StartNew();
+        long childExitAt = -1;
+        var events = new ConcurrentQueue<(string Signal, string Phase, long AtMs, long Bytes, int Status, bool Aborted)>();
         _ = collector.MapPost("/v1/{signal}", async (string signal, Microsoft.AspNetCore.Http.HttpRequest request) =>
         {
             string receiptSignal = signal is "traces" or "logs" or "metrics" ? signal : "unknown";
             receipts.Enqueue((receiptSignal, 0));
+            events.Enqueue((receiptSignal, "request_started", timeline.ElapsedMilliseconds, request.ContentLength ?? -1, 0, request.HttpContext.RequestAborted.IsCancellationRequested));
+            using CancellationTokenRegistration aborted = request.HttpContext.RequestAborted.Register(() =>
+                events.Enqueue((receiptSignal, "request_aborted", timeline.ElapsedMilliseconds, -1, 0, true)));
             request.HttpContext.Response.OnCompleted(() =>
             {
                 receipts.Enqueue((receiptSignal, request.HttpContext.Response.StatusCode));
+                events.Enqueue((receiptSignal, "response_completed", timeline.ElapsedMilliseconds, -1, request.HttpContext.Response.StatusCode, request.HttpContext.RequestAborted.IsCancellationRequested));
                 return Task.CompletedTask;
             });
 
@@ -254,7 +261,23 @@ public sealed class BrokerExecutableTests
             }
 
             using var bytes = new MemoryStream();
-            await request.Body.CopyToAsync(bytes, request.HttpContext.RequestAborted);
+            try
+            {
+                await request.Body.CopyToAsync(bytes, request.HttpContext.RequestAborted);
+            }
+            catch (Exception exception)
+            {
+                string phase = exception switch
+                {
+                    OperationCanceledException => "body_cancelled",
+                    IOException => "body_io_error",
+                    _ => "body_error"
+                };
+                events.Enqueue((receiptSignal, phase, timeline.ElapsedMilliseconds, bytes.Length, 0, request.HttpContext.RequestAborted.IsCancellationRequested));
+                throw;
+            }
+
+            events.Enqueue((receiptSignal, "body_complete", timeline.ElapsedMilliseconds, bytes.Length, 0, request.HttpContext.RequestAborted.IsCancellationRequested));
             switch (signal)
             {
                 case "traces":
@@ -277,8 +300,15 @@ public sealed class BrokerExecutableTests
         try
         {
             var execution = Stopwatch.StartNew();
-            (int code, string diagnostics) = await RunAsync(output, collectorEndpoint: endpoint, collectorKey: ExportKey);
+            (int code, string diagnostics) = await RunAsync(output, collectorEndpoint: endpoint, collectorKey: ExportKey,
+                onExited: () => Interlocked.Exchange(ref childExitAt, timeline.ElapsedMilliseconds));
             TestContext.Current.TestOutputHelper?.WriteLine($"broker_cli case={(fail ? "filesystem_failure" : "success")} exit={code} elapsed_ms={execution.ElapsedMilliseconds}");
+            TestContext.Current.TestOutputHelper?.WriteLine($"broker_timeline child_observed_exit_ms={Interlocked.Read(ref childExitAt)} snapshot_ms={timeline.ElapsedMilliseconds}");
+            foreach ((string signal, string phase, long atMs, long bodyBytes, int status, bool aborted) in events)
+            {
+                TestContext.Current.TestOutputHelper?.WriteLine($"broker_request signal={signal} phase={phase} elapsed_ms={atMs} bytes={bodyBytes} status={status} aborted={aborted}");
+            }
+
             foreach ((string signal, ConcurrentQueue<byte[]> payloads) in new[] { ("traces", traces), ("logs", logs), ("metrics", metrics) })
             {
                 int records = -1;
@@ -383,7 +413,7 @@ public sealed class BrokerExecutableTests
         Assert.DoesNotContain("password_hash", diagnostics, StringComparison.Ordinal);
     }
 
-    private static async Task<(int Code, string Diagnostics)> RunAsync(string output, bool invalid = false, string? collectorEndpoint = null, string? collectorKey = null)
+    private static async Task<(int Code, string Diagnostics)> RunAsync(string output, bool invalid = false, string? collectorEndpoint = null, string? collectorKey = null, Action? onExited = null)
     {
         var start = new ProcessStartInfo("dotnet") { RedirectStandardOutput = true, RedirectStandardError = true };
         start.ArgumentList.Add(typeof(BrokerProvisioning).Assembly.Location);
@@ -412,7 +442,13 @@ public sealed class BrokerExecutableTests
             start.Environment["OTEL_DOTNET_EXPERIMENTAL_OTLP_EMIT_EVENT_LOG_ATTRIBUTES"] = "true";
         }
 
-        using Process process = Process.Start(start)!;
+        using var process = new Process { StartInfo = start, EnableRaisingEvents = onExited is not null };
+        if (onExited is not null)
+        {
+            process.Exited += (_, _) => onExited();
+        }
+
+        _ = process.Start();
         Task<string> stdout = process.StandardOutput.ReadToEndAsync(TestContext.Current.CancellationToken);
         Task<string> stderr = process.StandardError.ReadToEndAsync(TestContext.Current.CancellationToken);
         try
