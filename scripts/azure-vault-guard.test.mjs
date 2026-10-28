@@ -14,6 +14,10 @@ import {
   validateVaultGuardEvidence,
 } from './azure-vault-guard.mjs';
 import * as guardApi from './azure-vault-guard.mjs';
+import {
+  delegationFixture,
+  sealDelegation,
+} from './azure-guard-test-fixture.mjs';
 
 // The native HTTP server replaces ARM/token issuance only. Serialization, bounded
 // transport, actual response inspection and guard bindings remain production code.
@@ -35,181 +39,6 @@ const hash = (value) =>
   createHash('sha256')
     .update(JSON.stringify(canonical(value)))
     .digest('hex');
-
-function delegationFixture() {
-  const guid = (n) => `abcdefab-0000-4000-8000-${String(n).padStart(12, '0')}`;
-  const scope = `/subscriptions/${uuid('2')}/resourceGroups/learning-workload`;
-  const actors = {
-    apply: guid(1),
-    destroy: guid(2),
-    backup: guid(3),
-    restore: guid(4),
-    reaper: guid(5),
-    plan: guid(6),
-  };
-  const base = Array.from({ length: 10 }, (_, i) => guid(100 + i));
-  const installer = guid(200),
-    network = guid(201),
-    permissions = guid(202);
-  const continuity = { backup: guid(203), restore: guid(204) };
-  const values = new Map([
-    ['join(", ", local.delegated_workload_role_ids)', base.join(', ')],
-    [
-      'azurerm_role_definition.workload_vault_network.role_definition_id',
-      network,
-    ],
-    [
-      'azurerm_role_definition.guard_inspection["permissions"].role_definition_id',
-      permissions,
-    ],
-    [
-      'data.azurerm_role_definition.delegated["cluster_installer"].role_definition_id',
-      installer,
-    ],
-    [
-      'azurerm_user_assigned_identity.github["apply"].principal_id',
-      actors.apply,
-    ],
-    [
-      'join(", ", [for actor in ["backup", "restore", "reaper"] : azurerm_user_assigned_identity.github[actor].principal_id])',
-      [actors.backup, actors.restore, actors.reaper].join(', '),
-    ],
-    [
-      'join(", ", [for actor in sort(tolist(local.guard_inspection_actors)) : azurerm_user_assigned_identity.github[actor].principal_id])',
-      Object.values(actors).sort().join(', '),
-    ],
-  ]);
-  const terraform = readFileSync(
-    new URL('../infra/azure/foundation/delegation.tf', import.meta.url),
-    'utf8',
-  );
-  const template = terraform
-    .split('resource "azurerm_role_assignment" "delegated_workload"')[1]
-    .match(/<<-CONDITION\r?\n([\s\S]+?)\r?\n\s*CONDITION/)[1];
-  const condition = template
-    .split(/\r?\n/)
-    .map((line) => {
-      if (
-        line.includes('[for actor, role in azurerm_role_definition.continuity')
-      ) {
-        const origin = line.includes('@Request') ? 'Request' : 'Resource';
-        return Object.entries(continuity)
-          .map(
-            ([actor, role]) =>
-              `OR (@${origin}[Microsoft.Authorization/roleAssignments:RoleDefinitionId] ForAnyOfAnyValues:GuidEquals {${role}} AND @${origin}[Microsoft.Authorization/roleAssignments:PrincipalId] ForAnyOfAnyValues:GuidEquals {${actors[actor]}})`,
-          )
-          .join('\n');
-      }
-      return line.replace(/\$\{([^{}]+)\}/g, (_, expression) => {
-        assert.ok(
-          values.has(expression),
-          'Terraform fixture expression must have an explicit synthetic substitution',
-        );
-        return values.get(expression);
-      });
-    })
-    .join('\n');
-  assert.ok(!condition.includes('${'));
-  const rule = (roleDefinitionIds, principalIds) => ({
-    roleDefinitionIds: [...roleDefinitionIds].sort(),
-    principalIds: principalIds === null ? null : [...principalIds].sort(),
-    principalType: 'ServicePrincipal',
-  });
-  const allowedRules = [
-    rule(base, null),
-    ...Object.entries(continuity).map(([actor, role]) =>
-      rule([role], [actors[actor]]),
-    ),
-    rule([network], [actors.backup, actors.restore, actors.reaper]),
-    rule([permissions], Object.values(actors)),
-    rule([installer], [actors.apply]),
-  ];
-  const roleDefinition = {
-    id: `/subscriptions/${uuid('2')}/providers/Microsoft.Authorization/roleDefinitions/${guid(300)}`,
-    name: 'Role Based Access Control Administrator',
-    roleType: 'BuiltInRole',
-    actions: [
-      'Microsoft.Authorization/roleAssignments/delete',
-      'Microsoft.Authorization/roleAssignments/write',
-    ],
-    notActions: [],
-    dataActions: [],
-    notDataActions: [],
-    assignableScopes: ['/'],
-  };
-  roleDefinition.sha256 = hash(roleDefinition);
-  const descriptor = {
-    version: 1,
-    scope,
-    roleDefinition,
-    assignments: Object.fromEntries(
-      ['apply', 'destroy'].map((actor, i) => [
-        actor,
-        {
-          id: `${scope}/providers/Microsoft.Authorization/roleAssignments/${guid(400 + i)}`,
-          scope,
-          principalId: actors[actor],
-          principalType: 'ServicePrincipal',
-          roleDefinitionId: roleDefinition.id,
-          conditionVersion: '2.0',
-          condition,
-        },
-      ]),
-    ),
-    allowedRules,
-  };
-  sealDelegation(descriptor);
-  return {
-    descriptor,
-    expectedDescriptor: globalThis.structuredClone(descriptor),
-    guid,
-    actors,
-    base,
-    installer,
-    network,
-    permissions,
-    continuity,
-  };
-}
-
-function sealDelegation(descriptor) {
-  const role = descriptor.roleDefinition;
-  role.sha256 = hash(
-    Object.fromEntries(
-      Object.entries(role).filter(([key]) => key !== 'sha256'),
-    ),
-  );
-  for (const assignment of Object.values(descriptor.assignments)) {
-    assignment.conditionSha256 = createHash('sha256')
-      .update(assignment.condition, 'utf8')
-      .digest('hex');
-    assignment.semanticSha256 = hash(
-      Object.fromEntries(
-        [
-          'id',
-          'scope',
-          'principalId',
-          'principalType',
-          'roleDefinitionId',
-          'conditionVersion',
-          'conditionSha256',
-        ].map((key) => [key, assignment[key]]),
-      ),
-    );
-  }
-  descriptor.semanticSha256 = hash({
-    version: descriptor.version,
-    scope: descriptor.scope,
-    roleDefinitionSha256: role.sha256,
-    assignmentsSemanticHashes: Object.fromEntries(
-      Object.entries(descriptor.assignments).map(([actor, assignment]) => [
-        actor,
-        assignment.semanticSha256,
-      ]),
-    ),
-    allowedRules: descriptor.allowedRules,
-  });
-}
 
 test('pure workload delegation validates independently expected complete source-shaped descriptors and every source rule', () => {
   const fixture = delegationFixture();
@@ -2209,5 +2038,49 @@ test('guard inspection rejects drift, exemptions and wrong-family bindings witho
         return true;
       });
     });
+  }
+});
+
+test('workload delegation transport validates structure without satisfying source authority', () => {
+  const { descriptor } = delegationFixture();
+  assert.deepEqual(
+    guardApi.validateWorkloadDelegationProjection(descriptor),
+    descriptor,
+  );
+  assert.throws(
+    () => guardApi.validateWorkloadDelegation(descriptor, {}),
+    /delegation/,
+  );
+  for (const mutate of [
+    (x) => {
+      x.extra = true;
+    },
+    (x) => {
+      x.version = 2;
+    },
+    (x) => {
+      x.assignments.apply.condition += ' unsupported';
+      sealDelegation(x);
+    },
+    (x) => {
+      x.assignments.apply.condition = x.assignments.apply.condition.replace(
+        'AND',
+        'OR',
+      );
+      sealDelegation(x);
+    },
+    (x) => {
+      x.assignments.apply.conditionSha256 = '0'.repeat(64);
+    },
+    (x) => {
+      x.semanticSha256 = '0'.repeat(64);
+    },
+  ]) {
+    const changed = globalThis.structuredClone(descriptor);
+    mutate(changed);
+    assert.throws(
+      () => guardApi.validateWorkloadDelegationProjection(changed),
+      /delegation/,
+    );
   }
 });

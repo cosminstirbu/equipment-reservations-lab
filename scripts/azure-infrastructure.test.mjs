@@ -6,7 +6,10 @@ import { join, resolve } from 'node:path';
 import test from 'node:test';
 import { createHash } from 'node:crypto';
 import { createServer as createTcpServer } from 'node:net';
-import { inspectionGuardFixture } from './azure-guard-test-fixture.mjs';
+import {
+  inspectionGuardFixture,
+  sealDelegation,
+} from './azure-guard-test-fixture.mjs';
 
 test('environment guard delta accepts only six exact actor bindings and a fixed generation locator', async () => {
   const { validateGuardGenerationOutput } =
@@ -741,6 +744,56 @@ test('guard output schema rejects unreviewed nested authority and malformed refe
     ),
   });
   assert.deepEqual(validateVaultGuardOutput(guard), guard);
+  for (const mutate of [
+    (x) => {
+      delete x.workload_delegation;
+    },
+    (x) => {
+      x.workload_delegation.extra = true;
+    },
+    (x) => {
+      x.workload_delegation.version = 2;
+    },
+    (x) => {
+      x.workload_delegation.assignments.apply.condition += ' ';
+    },
+    (x) => {
+      x.workload_delegation.assignments.apply.semanticSha256 = '0'.repeat(64);
+    },
+    (x) => {
+      x.workload_delegation.roleDefinition.actions.push('*');
+    },
+    (x) => {
+      x.workload_delegation.semanticSha256 = '0'.repeat(64);
+    },
+    (x) => {
+      const d = x.workload_delegation;
+      d.scope += '-foreign';
+      for (const assignment of Object.values(d.assignments)) {
+        assignment.scope = d.scope;
+        assignment.id = assignment.id.replace(workload, d.scope);
+      }
+      sealDelegation(d);
+    },
+    (x) => {
+      x.workload_delegation.assignments.apply.principalId =
+        x.producer_principal_ids.human;
+      sealDelegation(x.workload_delegation);
+    },
+    (x) => {
+      x.workload_delegation.assignments.destroy.principalId =
+        x.producer_principal_ids.human;
+      sealDelegation(x.workload_delegation);
+    },
+    (x) => {
+      x.workload_delegation.assignments.apply.condition += ' unsupported';
+      sealDelegation(x.workload_delegation);
+    },
+  ]) {
+    const changed = globalThis.structuredClone(guard);
+    mutate(changed);
+    assert.throws(() => validateVaultGuardOutput(changed), /guard output/);
+  }
   for (const key of ['recovery_network', 'workload_network']) {
     const original = guard.role_definitions[key];
     assert.deepEqual(original.actions, [

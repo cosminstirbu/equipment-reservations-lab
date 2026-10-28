@@ -1,12 +1,35 @@
 {
   "feature_directory": "specs/014-azure-aks-gitops",
   "status": "checkpoint_incomplete",
+  "milestone_checkpoint": {
+    "date": "2026-10-28",
+    "milestone": "M1",
+    "status": "m1_initial_foundation_preview_approved_implementation_pending",
+    "m0_owner_accepted": "2026-10-28",
+    "m1_owner_authorized": "2026-10-28",
+    "active_batch": "Round19 T089 transport integration passed author84/security11/quality82+1 focused checks and independent reviews. Foundation readiness next; M1 incomplete. Started09:16UTC,60active-minute checkpoint. Separately ownerauthorized operatorgroup created with verified currentuser-only membership; no roles.",
+    "record": "../milestones.md",
+    "source_revision": "b2b0064",
+    "owner_checkpoint_after_each_milestone": true,
+    "next_milestone_authorized": false,
+    "quota_requests": {
+      "owner_authorized": true,
+      "region": "westeurope",
+      "requested_limit_each": 12,
+      "provider_registration": "Microsoft.Quota Registered",
+      "regional": "Requested12; Compute usage2026-10-28T09:11Z effective limit24 used0; no additional increase submitted",
+      "dsv5_family": "Requested12; Compute usage2026-10-28T09:11Z effective limit12 used0; quota blocker cleared",
+      "resources_provisioned": false
+    },
+    "limits_preserved": "Historical preparation9 and implementation18 retained; owner approved implementation limit18->21 with M1 authorization. M2 remains unauthorized.",
+    "remaining": "Round19 schema batch independently passed. Owner approved exact localhuman initialfoundationpreview refinement and localcheckpointcommits; no pushmerge/provisioning. Implement and independently review narrow preview, retain main-only apply/hosted checks and nonpromotable artifacts. M1 incomplete;rounds20-21 available."
+  },
   "baseline_revision": "d1c7238345136340ddbf3a9454807cefffc43c32",
   "preparation_round": 9,
-  "implementation_round": 18,
+  "implementation_round": 19,
   "limits": {
     "preparation_repairs": 9,
-    "implementation_repairs": 18,
+    "implementation_repairs": 21,
     "no_progress_recurrences": 2
   },
   "required_checks": [

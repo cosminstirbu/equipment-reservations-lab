@@ -1,5 +1,8 @@
 import { validateGeneratorInput } from './azure-generator-input.mjs';
-import { createVaultGuardCanaryDescriptors } from './azure-vault-guard.mjs';
+import {
+  createVaultGuardCanaryDescriptors,
+  validateWorkloadDelegationProjection,
+} from './azure-vault-guard.mjs';
 import { isDeepStrictEqual } from 'node:util';
 import { readFileSync } from 'node:fs';
 import { createHash } from 'node:crypto';
@@ -575,6 +578,7 @@ export function validateVaultGuardOutput(value) {
     'inspection_bindings',
     'current_family_reference',
     'canary',
+    'workload_delegation',
     ...(Object.hasOwn(value, 'current_activation_reference')
       ? ['current_activation_reference']
       : []),
@@ -694,6 +698,19 @@ export function validateVaultGuardOutput(value) {
     )
   )
     invalid();
+
+  try {
+    validateWorkloadDelegationProjection(value.workload_delegation);
+  } catch {
+    invalid();
+  }
+  if (value.workload_delegation.scope !== value.scope_ids.workload) invalid();
+  for (const actor of ['apply', 'destroy'])
+    if (
+      value.workload_delegation.assignments[actor].principalId !==
+      principalIds[actor]
+    )
+      invalid();
 
   const canonical = (object) =>
     Array.isArray(object)

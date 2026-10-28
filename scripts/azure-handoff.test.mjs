@@ -231,6 +231,10 @@ test('operational composite excludes state/plan fields while validating context 
     environment.vault_guard_generation.current_activation_reference,
   );
   assert.equal(selected.vault_guard.inspection_bindings.length, 126);
+  assert.deepEqual(
+    selected.vault_guard.workload_delegation,
+    foundation.vault_guard.workload_delegation,
+  );
   assert.equal(selected.vault_guard_generation, undefined);
   for (const mutate of [
     (x) => {
@@ -269,6 +273,12 @@ test('operational composite excludes state/plan fields while validating context 
     },
     (x) => {
       x.vault_guard.inspection_bindings.pop();
+    },
+    (x) => {
+      delete x.vault_guard.workload_delegation;
+    },
+    (x) => {
+      x.vault_guard.workload_delegation.assignments.apply.condition += ' ';
     },
     (x) => {
       x.github_principal_ids.restore = x.github_principal_ids.backup;

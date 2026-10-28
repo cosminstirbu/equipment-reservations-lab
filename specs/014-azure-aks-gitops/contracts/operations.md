@@ -1970,3 +1970,25 @@ supports the narrow endpoint/role resolution. Owners: TF nested descriptor only;
 helper query/audit; primary strict existing vault_guard publication/cache; operations
 actual prepublication/preselection call and private point/lease binding.
 
+## Owner-approved initial local foundation preview
+
+Owner approved on 2026-10-28 a narrow exception to the remote-main source requirement
+for an initial local-human foundation plan. Require exact independently reviewed clean
+commit at entry and subsequent revision assertions; operation plan, stage
+foundation-bootstrap, audit stage create, no network gate, no family evidence, and
+verified local/uncreated backend authority. Hosted execution, remote maintenance,
+environment plans, audit bind/enable and all mutation paths are excluded.
+
+Retain pinned tools/providers with automatic registration disabled, private local
+artifacts/output, state/input association and resolved-plan scanning. The preview
+may contact providers and write sensitive local files, but must not publish remote
+plans, take remote operation leases or mutate cloud resources. Apply retains
+unconditional remote-main enforcement and rejects preview artifacts even if their
+commit later reaches main; require a new qualifying plan/review. Preserve the
+unfinished G3 barrier and all pending provider/security gates. Reuse existing
+revision/backend contracts; no new trust framework is authorized.
+
+Implementation and scoped verification are tracked in the
+[M1 execution ledger](../milestones.md#m1-execution-ledger). Local checkpoint commits
+are approved; push/merge and provisioning remain separate decisions.
+

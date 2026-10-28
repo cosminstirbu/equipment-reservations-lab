@@ -416,6 +416,17 @@ function pureDelegation(action) {
   }
 }
 
+// Transport consistency does not establish reviewed-source provenance or authority.
+export function validateWorkloadDelegationProjection(descriptor) {
+  return pureDelegation(() => {
+    const { rules, asts } = delegationDescriptor(descriptor);
+    const ast = expectedDelegationAst(rules);
+    if (Object.values(asts).some((actual) => !equal(actual, ast)))
+      delegationFailure();
+    return descriptor;
+  });
+}
+
 export function validateWorkloadDelegation(descriptor, options) {
   return pureDelegation(() => {
     delegationKeys(options, ['expectedDescriptor']);

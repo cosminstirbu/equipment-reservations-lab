@@ -12,6 +12,12 @@ stated boundary, never live Azure acceptance. Only actual success checks a task.
 
 ## Phase 1: Setup
 
+Execution now follows the owner-approved [milestone checkpoints](milestones.md).
+Task IDs and historical evidence are preserved; shared tasks are delivered in
+slices and remain unchecked until all their requirements have evidence. Use current
+verification profiles when planning new changes; any change to an explicit existing
+task acceptance requirement must be identified and agreed before dependent work.
+
 - [X] T001 Record pinned Terraform 1.17.0, TFLint 0.65.0/AzureRM rules 0.33.0, Trivy 0.76.1, kubectl 1.35.8, providers, official artifact checksums/platforms and immutable security-policy digest in infra/azure/tools.lock.json; use existing private .cache downloads only after verification.
 - [X] T002 [P] Add safe nonfunctional configuration examples and source/output ignore paths in infra/azure/examples/environment.json and .gitignore; actual IDs/CIDRs/ACME decisions remain validated private inputs, never usable sample defaults.
 - [X] T003 [P] Record CLI/process/provider test design, source-output classifications and exact planned red commands in specs/014-azure-aks-gitops/team/implementation-evidence.md, preserving reviewed plan hashes and existing test-boundary contracts.

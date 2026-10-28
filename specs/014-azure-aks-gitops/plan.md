@@ -5,6 +5,10 @@
 Input: [approved decisions](decisions.md), baseline `d1c7238345136340ddbf3a9454807cefffc43c32`.
 Preparation draft; independent design reviews/tasks remain pending.
 
+Current delivery sequencing and owner checkpoints are recorded in
+[milestones.md](milestones.md). Historical preparation reviews remain evidence for
+their stated scope; current source integration and live acceptance are pending.
+
 ## Summary
 
 Use two shared Linux AKS system nodes, Free control plane, Terraform Azure
