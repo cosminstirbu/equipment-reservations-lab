@@ -601,3 +601,36 @@ real Windows repeat-setup regression and affected privacy cases; obtain independ
 delta reviews. Then local checkpoint and one actual preview retry. No Terraform
 policy, ACL broadening, timeout change, cloud mutation, push or merge is proposed.
 Owner approval is required before this additional repair; no implementation yet.
+
+Owner authorized the final bounded Windows attempt on 2026-10-28 after clarifying
+verification profiles and stopping criteria. Round 24 implements only the proven
+private-directory repeat defect, then one preview retry; no automatic round 25.
+Overall closure checkpoint: 45 active minutes from 10:40 UTC, with a different
+Linux execution proposal if Windows remains blocked. M1 is not complete merely
+because source repairs or a preview pass. No apply, publication or security waiver.
+
+Verification profile: this helper enforces file access controls, so its focused
+real-Windows regression begins failing before the fix. No universal test-first rule
+is applied to unrelated wrappers/output/declarations. Existing owner/allowlist/link
+tests are reused; only helper/module test files are owned by the coder.
+
+Round 24 frozen against `a937780`: `local-platform.mjs` and its existing test file,
+six production lines. Existing regular/non-symlink, owner and full-control/allowlist
+checks must pass before reusing the directory; otherwise existing preparation and
+final verification remain. Unix behavior and Windows ACL policy are unchanged.
+RED reproduced second-call failure (one failed, zero skipped, 1.783 s). All five
+helper tests then passed, zero failed/skipped, 6.037 s, including real Windows
+repeat/broad-grant/inherited/link coverage. Scoped formatting/ESLint/whitespace
+checks passed. No coder cloud/provider calls; independent review pending.
+
+Round 24 independent verdicts (verbatim):
+
+> Quality: pass for round 24’s frozen two-file delta on a937780. No findings.
+
+> Security: pass — scoped round-24 Windows private-directory reuse. No new findings.
+
+Quality passed two targeted tests, zero failed/skipped, 6.465 s, plus scoped
+formatting/ESLint/whitespace checks. Security passed all five helper tests, zero
+failed/skipped, 6.380 s. Both confirmed unchanged privacy validation and Unix
+behavior, with no new TOCTOU guarantee claimed. No reviewer edits. One final actual
+Windows preview retry follows a local commit; no automatic further repair.
