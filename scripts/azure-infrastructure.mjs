@@ -1336,6 +1336,7 @@ async function main() {
       '--recovery-key-expiration-date': 'recoveryKeyExpirationDate',
       '--bootstrap-operator-object-id': 'bootstrapOperatorObjectId',
       '--network-gate-ready': 'networkGateReady',
+      '--initial-foundation-preview': 'initialFoundationPreview',
       '--oidc-expiration-date': 'oidcExpirationDate',
       '--rotate': 'rotate',
       '--confirm-environment': 'confirmation',
@@ -1362,6 +1363,19 @@ async function main() {
       'Private configuration required: preflight|validate-config|plan|apply|foundation-gate --config PATH.',
     );
   const stage = options.stage ?? 'environment';
+  if (
+    options.initialFoundationPreview &&
+    (!['true', 'false'].includes(options.initialFoundationPreview) ||
+      (options.initialFoundationPreview === 'true' &&
+        (command !== 'plan' ||
+          stage !== 'foundation-bootstrap' ||
+          options.bootstrapLocator ||
+          options.foundationOutputs ||
+          options.environmentOutputs)))
+  )
+    fail(
+      'Initial foundation preview requires an explicit boolean and a local initial foundation plan.',
+    );
   const config = loadAzureConfig(options.config, { stage });
   if (command === 'validate-config')
     console.log('Private configuration valid.');
@@ -1545,6 +1559,7 @@ async function main() {
               })()
             : undefined),
         networkGateReady: options.networkGateReady === 'true',
+        initialFoundationPreview: options.initialFoundationPreview === 'true',
       });
     } else result = await preflight(config, { stage, foundation });
     console.log(JSON.stringify(result));

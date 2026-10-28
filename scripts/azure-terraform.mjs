@@ -339,11 +339,10 @@ export async function executeGuardQualification({
 }
 
 export async function executeInfrastructure(command, settings) {
-  const { config, foundation, stage = 'environment', revision } = settings;
+  const { config, foundation, stage = 'environment' } = settings;
   if (!['plan', 'apply'].includes(command))
     fail('Unsupported infrastructure execution phase.');
-  assertPhaseRevision(config, revision);
-  await verifyTrustedMainRevision(config, revision);
+  await verifyInfrastructureRevision(command, settings);
   await preflight(config, { stage, foundation, operation: command });
   const execute = async (signal, verifyAccess, operation) => {
     const context = await createTerraformContext({
@@ -355,7 +354,9 @@ export async function executeInfrastructure(command, settings) {
     });
     if (command === 'plan')
       return {
-        phase: 'plan-reviewed-required',
+        phase: settings.initialFoundationPreview
+          ? 'foundation-preview-not-for-apply'
+          : 'plan-reviewed-required',
         ...(await planDeployment(context)),
       };
     if (!settings.reviewPath)
@@ -547,7 +548,15 @@ export function foundationBackendMode({
   local,
   localAuthority,
   accountExists,
+  initialFoundationPreview = false,
 }) {
+  if (
+    initialFoundationPreview &&
+    (marker || remote || local || accountExists !== false)
+  )
+    fail(
+      'Initial foundation preview requires verified local/uncreated authority.',
+    );
   if (marker) {
     if (
       marker.version !== 1 ||
@@ -572,7 +581,12 @@ export function foundationBackendMode({
   return 'local';
 }
 
-async function foundationAuthority(config, directory, token) {
+async function foundationAuthority(
+  config,
+  directory,
+  token,
+  initialFoundationPreview = false,
+) {
   const backendHash = hash(JSON.stringify(config.foundationBackend));
   const markerPath = join(directory, 'remote-authority.json');
   const localPath = join(directory, 'foundation', 'terraform.tfstate');
@@ -616,6 +630,7 @@ async function foundationAuthority(config, directory, token) {
     local,
     localAuthority,
     accountExists,
+    initialFoundationPreview,
   });
   if (mode === 'local' && !localAuthority)
     writeFileSync(
@@ -730,8 +745,30 @@ export async function createTerraformContext({
   generationHandlePath,
   environment: deployedEnvironment,
   operation,
+  initialFoundationPreview = false,
 }) {
   assertSourceRevision(revision);
+  if (typeof initialFoundationPreview !== 'boolean')
+    fail('Initial foundation preview flag must be an explicit boolean.');
+  const revisionSettings = {
+    config,
+    foundation,
+    stage,
+    auditStage,
+    networkGateReady,
+    command,
+    familyHandlePath,
+    generationHandlePath,
+    locatorHash,
+    bootstrapOperatorObjectId,
+    initialFoundationPreview,
+    environment: deployedEnvironment,
+  };
+  if (initialFoundationPreview)
+    await verifyInfrastructureRevision(command, {
+      ...revisionSettings,
+      revision,
+    });
   const directory = resolve(
     repository,
     '.local/azure',
@@ -744,7 +781,12 @@ export async function createTerraformContext({
   const token = azureTokenProvider(config);
   const authority =
     stage === 'foundation-bootstrap'
-      ? await foundationAuthority(config, directory, token)
+      ? await foundationAuthority(
+          config,
+          directory,
+          token,
+          initialFoundationPreview,
+        )
       : undefined;
   if (stage === 'foundation-bootstrap') {
     if (
@@ -1039,6 +1081,7 @@ export async function createTerraformContext({
   return {
     directory,
     revision,
+    initialFoundationPreview,
     requalify,
     guard,
     validatePlan:
@@ -1054,6 +1097,7 @@ export async function createTerraformContext({
     inputHash: configurationHash({
       variables,
       locatorHash: locatorHash ?? null,
+      initialFoundationPreview,
     }),
     policyHash: hash(
       controlledTerraformCli +
@@ -1073,8 +1117,12 @@ export async function createTerraformContext({
           .join('\n'),
     ),
     assertRevision: async (revision) => {
-      assertSourceRevision(revision);
-      await verifyTrustedMainRevision(config, revision);
+      await verifyInfrastructureRevision(command, {
+        ...revisionSettings,
+        revision,
+      });
+      if (initialFoundationPreview)
+        await foundationAuthority(config, directory, token, true);
     },
     run,
     planArguments: [`-var-file=${variablesPath}`],
@@ -1303,6 +1351,11 @@ export async function planDeployment(context) {
   createPrivateDirectory(directory);
   await context.assertRevision(context.revision);
   const state = validateState(await context.state());
+  if (
+    context.initialFoundationPreview &&
+    (state.lineage !== 'uncreated' || state.serial !== 0)
+  )
+    fail('Initial foundation preview requires uncreated state.');
   const planPath = join(directory, 'saved.tfplan');
   const jsonPath = join(directory, 'saved.tfplan.json');
   let primary;
@@ -1332,6 +1385,9 @@ export async function planDeployment(context) {
       fail('Terraform state changed while preparing review.');
     const review = {
       version: 1,
+      ...(context.initialFoundationPreview
+        ? { initialFoundationPreview: true }
+        : {}),
       revision: context.revision,
       inputHash: context.inputHash,
       policyHash: context.policyHash,
@@ -1376,6 +1432,13 @@ export async function planDeployment(context) {
 }
 
 export async function applyDeployment(context, review) {
+  if (
+    context.initialFoundationPreview ||
+    Object.hasOwn(review, 'initialFoundationPreview')
+  )
+    fail(
+      'Initial foundation preview cannot be applied; a new qualifying plan/review is required.',
+    );
   await context.assertRevision(context.revision);
   const state = validateState(await context.state());
   const path = join(resolve(context.directory), 'saved.tfplan');
@@ -1526,6 +1589,69 @@ export function assertPhaseRevision(config, revision, options) {
   if (!/^[a-f0-9]{40}$/.test(config.gitRevision ?? ''))
     fail('Recorded generation infrastructure anchor is invalid.');
   assertSourceRevision(revision, options);
+}
+
+export async function verifyInfrastructureRevision(
+  command,
+  settings,
+  {
+    root = repository,
+    request = globalThis.fetch,
+    run = runAzure,
+    environment = process.env,
+  } = {},
+) {
+  const { config, revision, initialFoundationPreview = false } = settings;
+  assertPhaseRevision(config, revision, { root });
+  if (typeof initialFoundationPreview !== 'boolean')
+    fail('Initial foundation preview flag must be an explicit boolean.');
+  if (!initialFoundationPreview)
+    return verifyTrustedMainRevision(config, revision, { request });
+
+  if (
+    command !== 'plan' ||
+    settings.stage !== 'foundation-bootstrap' ||
+    ![undefined, 'create'].includes(settings.auditStage) ||
+    ![undefined, false].includes(settings.networkGateReady) ||
+    [
+      'familyHandlePath',
+      'generationHandlePath',
+      'bootstrapLocator',
+      'locatorHash',
+      'foundation',
+      'environment',
+    ].some((key) => settings[key] !== undefined) ||
+    Object.entries(environment).some(
+      ([key, value]) =>
+        value &&
+        /^(CI|GITHUB_ACTIONS|GITHUB_RUN_ID|GITHUB_WORKFLOW|GITHUB_SHA|ACTIONS_ID_TOKEN_REQUEST_URL|ACTIONS_ID_TOKEN_REQUEST_TOKEN|ARM_.*|AZURE_CLIENT_.*|AZURE_FEDERATED_TOKEN_FILE)$/.test(
+          key.toUpperCase(),
+        ),
+    )
+  )
+    fail(
+      'Initial foundation preview is restricted to local-human initial create plans.',
+    );
+
+  const account = run(['account', 'show']);
+  if (
+    account?.user?.type !== 'user' ||
+    account.id !== config.subscriptionId ||
+    account.tenantId !== config.tenantId
+  )
+    fail(
+      'Initial foundation preview requires an unambiguous current human identity.',
+    );
+  const human = run(['ad', 'signed-in-user', 'show']);
+  if (
+    !/^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/i.test(
+      human?.id ?? '',
+    ) ||
+    human.id !== settings.bootstrapOperatorObjectId
+  )
+    fail(
+      'Initial foundation preview requires the actual reviewed human bootstrap identity.',
+    );
 }
 
 export async function verifyTrustedMainRevision(

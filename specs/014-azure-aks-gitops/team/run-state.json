@@ -4,10 +4,10 @@
   "milestone_checkpoint": {
     "date": "2026-10-28",
     "milestone": "M1",
-    "status": "m1_initial_foundation_preview_approved_implementation_pending",
+    "status": "m1_preview_source_quality_security_pass_actual_preview_pending",
     "m0_owner_accepted": "2026-10-28",
     "m1_owner_authorized": "2026-10-28",
-    "active_batch": "Round19 T089 transport integration passed author84/security11/quality82+1 focused checks and independent reviews. Foundation readiness next; M1 incomplete. Started09:16UTC,60active-minute checkpoint. Separately ownerauthorized operatorgroup created with verified currentuser-only membership; no roles.",
+    "active_batch": "Round20 initialfoundationpreview passed author31/security3/quality4 focused checks and bothreviews; actualprivatepreview next. Started09:16UTC,60active-minute checkpoint. Operatorgroup currentuser-only, privateconfig validated+ACLrestricted; no roles/firewalls/provisioning.",
     "record": "../milestones.md",
     "source_revision": "b2b0064",
     "owner_checkpoint_after_each_milestone": true,
@@ -26,7 +26,7 @@
   },
   "baseline_revision": "d1c7238345136340ddbf3a9454807cefffc43c32",
   "preparation_round": 9,
-  "implementation_round": 19,
+  "implementation_round": 20,
   "limits": {
     "preparation_repairs": 9,
     "implementation_repairs": 21,

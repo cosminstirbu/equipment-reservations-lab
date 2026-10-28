@@ -588,8 +588,11 @@ test('foundation maintenance requires permanent admitted runner and unchanged AC
 });
 
 test('real Git phase revisions advance through runtime and app commits while the generation anchor stays fixed', async () => {
-  const { assertPhaseRevision, verifyTrustedMainRevision } =
-    await import('./azure-terraform.mjs');
+  const {
+    assertPhaseRevision,
+    verifyTrustedMainRevision,
+    verifyInfrastructureRevision,
+  } = await import('./azure-terraform.mjs');
   const { spawnSync } = await import('node:child_process');
   const { mkdirSync } = await import('node:fs');
   const directory = mkdtempSync(join(tmpdir(), 'azure-phase-revision-'));
@@ -620,8 +623,128 @@ test('real Git phase revisions advance through runtime and app commits while the
       'initial infra',
     );
     const anchor = git('rev-parse', 'HEAD');
-    const config = { gitRevision: anchor, githubRepository: 'owner/project' };
+    const config = {
+      gitRevision: anchor,
+      githubRepository: 'owner/project',
+      subscriptionId: '22222222-2222-4222-8222-222222222222',
+      tenantId: '33333333-3333-4333-8333-333333333333',
+    };
     assertPhaseRevision(config, anchor, { root: directory });
+    // Real Git cleanliness stays in the boundary; only CLI identity and GitHub
+    // responses are doubled. Backend eligibility is covered by its existing API.
+    const preview = {
+      config,
+      revision: anchor,
+      initialFoundationPreview: true,
+      stage: 'foundation-bootstrap',
+      auditStage: 'create',
+      networkGateReady: false,
+      bootstrapOperatorObjectId: '11111111-1111-4111-8111-111111111111',
+    };
+    const options = {
+      root: directory,
+      environment: {},
+      run: (args) =>
+        args[0] === 'account'
+          ? {
+              user: { type: 'user' },
+              id: config.subscriptionId,
+              tenantId: config.tenantId,
+            }
+          : { id: preview.bootstrapOperatorObjectId },
+      request: async () => ({
+        ok: true,
+        json: async () => ({ sha: '0'.repeat(40) }),
+      }),
+    };
+    await verifyInfrastructureRevision('plan', preview, options);
+    for (const change of [
+      { initialFoundationPreview: 'true' },
+      { initialFoundationPreview: null },
+      { stage: 'environment' },
+      { auditStage: 'bind' },
+      { auditStage: 'enable' },
+      { networkGateReady: true },
+      { networkGateReady: null },
+      { auditStage: null },
+      { familyHandlePath: 'family.json' },
+      { familyHandlePath: '' },
+      { generationHandlePath: 'generation.json' },
+      { bootstrapLocator: 'locator.json' },
+      { foundation: {} },
+      { environment: {} },
+    ])
+      await assert.rejects(
+        () =>
+          verifyInfrastructureRevision(
+            'plan',
+            { ...preview, ...change },
+            options,
+          ),
+        /preview/i,
+      );
+    await assert.rejects(
+      () => verifyInfrastructureRevision('apply', preview, options),
+      /preview/i,
+    );
+    await assert.rejects(
+      () =>
+        verifyInfrastructureRevision(
+          'plan',
+          { ...preview, initialFoundationPreview: false },
+          options,
+        ),
+      /reviewed main/i,
+    );
+    for (const environment of [
+      { CI: 'true' },
+      { GITHUB_ACTIONS: 'true' },
+      { GITHUB_RUN_ID: '123' },
+      { ACTIONS_ID_TOKEN_REQUEST_URL: 'private' },
+      { ARM_CLIENT_SECRET: 'private' },
+      { AZURE_CLIENT_ID: 'private' },
+    ])
+      await assert.rejects(
+        () =>
+          verifyInfrastructureRevision('plan', preview, {
+            ...options,
+            environment,
+          }),
+        /preview/i,
+      );
+    for (const run of [
+      () => ({}),
+      () => ({ user: { type: 'servicePrincipal' } }),
+      (args) =>
+        args[0] === 'account'
+          ? {
+              user: { type: 'user' },
+              id: config.subscriptionId,
+              tenantId: config.tenantId,
+            }
+          : { id: 'foreign' },
+    ])
+      await assert.rejects(
+        () =>
+          verifyInfrastructureRevision('plan', preview, { ...options, run }),
+        /human|preview/i,
+      );
+    await assert.rejects(
+      () =>
+        verifyInfrastructureRevision(
+          'plan',
+          { ...preview, revision: '0'.repeat(40) },
+          options,
+        ),
+      /revision/i,
+    );
+    writeFileSync(join(directory, 'deploy', 'initial.json'), 'dirty');
+    await assert.rejects(
+      () => verifyInfrastructureRevision('plan', preview, options),
+      /revision/i,
+    );
+    writeFileSync(join(directory, 'deploy', 'initial.json'), '{}');
+
     writeFileSync(join(directory, 'deploy', 'runtime.json'), '{}');
     git('add', '.');
     git(
@@ -681,4 +804,78 @@ test('real Git phase revisions advance through runtime and app commits while the
   } finally {
     rmSync(directory, { recursive: true, force: true });
   }
+});
+
+test('initial foundation preview requires uncreated backend and cannot become an apply review', async (t) => {
+  const { foundationBackendMode, planDeployment, applyDeployment } =
+    await import('./azure-terraform.mjs');
+  const backend = {
+    initialFoundationPreview: true,
+    backendHash: 'backend',
+    accountExists: false,
+  };
+  assert.equal(foundationBackendMode(backend), 'local');
+  for (const change of [
+    { local: { lineage: 'local', serial: 0 } },
+    { accountExists: true },
+    { remote: { lineage: 'remote', serial: 0 } },
+    {
+      marker: {
+        version: 1,
+        backendHash: 'backend',
+        lineage: 'remote',
+        serial: 0,
+      },
+      remote: { lineage: 'remote', serial: 0 },
+    },
+  ])
+    assert.throws(
+      () => foundationBackendMode({ ...backend, ...change }),
+      /preview/i,
+    );
+  const directory = mkdtempSync(join(tmpdir(), 'azure-preview-'));
+  t.after(() => rmSync(directory, { recursive: true, force: true }));
+  const calls = [];
+  const context = {
+    directory,
+    initialFoundationPreview: true,
+    revision: 'a'.repeat(40),
+    inputHash: 'b'.repeat(64),
+    policyHash: 'c'.repeat(64),
+    assertRevision: async () => {},
+    state: async () => ({ lineage: 'uncreated', serial: 0 }),
+    run: async (args) => {
+      calls.push(args[0]);
+      if (args[0] === 'plan')
+        writeFileSync(
+          args.find((arg) => arg.startsWith('-out=')).slice(5),
+          'PRIVATE_PREVIEW',
+        );
+      return JSON.stringify({ format_version: '1.2', resource_changes: [] });
+    },
+    scan: async () => {},
+    persist: async () => {},
+  };
+  const review = await planDeployment(context);
+  assert.equal(review.initialFoundationPreview, true);
+  await assert.rejects(() => applyDeployment(context, review), /preview/i);
+  await assert.rejects(
+    () =>
+      applyDeployment({ ...context, initialFoundationPreview: false }, review),
+    /preview/i,
+  );
+  assert.equal(calls.includes('apply'), false);
+  const createdDirectory = mkdtempSync(
+    join(tmpdir(), 'azure-preview-created-'),
+  );
+  t.after(() => rmSync(createdDirectory, { recursive: true, force: true }));
+  await assert.rejects(
+    () =>
+      planDeployment({
+        ...context,
+        directory: createdDirectory,
+        state: async () => ({ lineage: 'created', serial: 0 }),
+      }),
+    /preview/i,
+  );
 });

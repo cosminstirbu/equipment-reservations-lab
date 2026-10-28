@@ -501,6 +501,39 @@ test('public preflight rejects missing configuration before provider access', ()
   assert.match(result.stderr, /configuration/i);
 });
 
+test('public initial foundation preview rejects unknown flags and excluded commands before configuration or provider access', () => {
+  for (const args of [
+    [
+      'plan',
+      '--stage',
+      'foundation-bootstrap',
+      '--initial-foundation-preview',
+      'unknown',
+    ],
+    [
+      'apply',
+      '--stage',
+      'foundation-bootstrap',
+      '--initial-foundation-preview',
+      'true',
+    ],
+    ['plan', '--stage', 'environment', '--initial-foundation-preview', 'true'],
+    [
+      'plan',
+      '--stage',
+      'foundation-bootstrap',
+      '--initial-foundation-preview',
+      'true',
+      '--bootstrap-locator',
+      'unused.json',
+    ],
+  ]) {
+    const result = invoke(...args, '--config', 'unused-private-config.json');
+    assert.equal(result.status, 1);
+    assert.match(result.stderr, /initial foundation preview/i);
+  }
+});
+
 test('public guard qualification dispatch rejects missing purpose and projection before provider access', async (t) => {
   const { createPrivateDirectory } = await import('./local-platform.mjs');
   const directory = mkdtempSync(join(tmpdir(), 'azure-guard-cli-'));

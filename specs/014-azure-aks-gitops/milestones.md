@@ -390,3 +390,46 @@ Owner approved this exact source-policy refinement and local checkpoint commits
 provision or treat preview evidence as deployment acceptance. A later reviewed-source
 publication/apply decision remains separate. Existing M1 authorization does not waive
 the current main-only contract. No preparation budget has been reset or extended.
+
+Approved refinement execution: prior independently reviewed transport batch and M0/M1
+records committed locally as `5f684cf`; nothing pushed or merged. Round 20 starts
+with focused revision/backend-preview regressions before implementation. Private
+draft configuration now binds verified account/tenant/operator group/current IPv4,
+AKS 1.35.8, supplied tax and initial null recovery-key version. Naming is deterministic
+and generation is 20261028a. Proposed key expiry is 2027-10-28T00:00:00Z for preview
+review only; no key is created. A repository ACL check initially failed; the two
+private input files were restricted to the current owner, preserving values, and
+both checks now pass. Neither private contents nor identifiers are committed.
+
+Read-only initial naming checks: proposed foundation resource group does not exist;
+the proposed deterministic state-storage name is available. No existing resource is
+adopted or created. Availability may change before any later apply.
+
+Round 20 implemented and frozen against `5f684cf`: four files,
+`azure-terraform.mjs`/test and `azure-infrastructure.mjs`/test. Explicit preview flag,
+local human/account verification, narrow eligibility, entry/context revision and
+backend rechecks, preview artifact marker/input association and apply rejection.
+No hosted/main apply or G3 barrier relaxation.
+
+Author evidence: intended RED (missing revision API and existing-state rejection),
+two failures, 596.7 ms. Affected two suites passed 31/31, zero skipped, 12.645 s;
+final focused preview/revision/CLI cases passed 3/3, zero skipped, 5.706 s. Scoped
+four-file format-check, ESLint and whitespace checks passed. Existing local Terraform
+source-staging test ran; this is not Azure provider/native cluster qualification.
+
+Security verdict (verbatim):
+
+> pass — scoped round-20 initial foundation preview. No new findings.
+
+Independent focused revision/preview tests passed 3/3, zero failed/skipped, 5.989 s.
+Reviewer confirmed excluded mutation paths, provider registration disabled,
+non-promotable preview and unchanged ordinary/main/apply/G3 constraints. Source
+approval does not establish actual preview success or provisioning permission.
+
+Quality verdict (verbatim):
+
+> pass for round 20’s frozen four-file diff on 5f684cf. No findings.
+
+Independent focused preview/revision/G3 tests passed 4/4, zero failed/skipped;
+four-file format-check, scoped ESLint and whitespace checks passed. No reviewer edits.
+Both source verdicts cover the exact reviewed delta; native/live M1 gates remain open.
