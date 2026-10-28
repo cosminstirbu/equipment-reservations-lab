@@ -300,9 +300,9 @@ run "bootstrap_human_and_operator_enrollment" {
       alltrue([for application in azuread_application.operator : application.sign_in_audience == "AzureADMyOrg" &&
       contains([for role in application.app_role : role.value], "Equipment.Operator")]) &&
       alltrue([for principal in azuread_service_principal.operator : principal.app_role_assignment_required]) &&
-      alltrue([for assignment in azuread_app_role_assignment.operator : assignment.principal_object_id == var.config.operatorGroupObjectId])
+      alltrue([for assignment in azuread_app_role_assignment.operator : assignment.principal_object_id == var.bootstrap_operator_object_id])
     )
-    error_message = "Operator apps require tenant-scoped explicit group/app-role assignment."
+    error_message = "Operator apps require tenant-scoped explicit human app-role assignment."
   }
 }
 

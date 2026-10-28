@@ -12,8 +12,8 @@ preview has independent quality/security assessment. **M1 is not complete:** no
 retained foundation has been applied and live state/access/audit qualification is
 pending. No automatic further Windows repair is planned.
 
-Before apply: resolve Entra group-assignment licensing (direct-user app assignment
-recommended for this single-operator lab), obtain explicit source-publication
+Before apply: complete the owner-approved direct-user app assignment refinement,
+obtain explicit source-publication
 authorization and required Linux checks, then review a fresh main-qualified plan.
 The local preview cannot be promoted into apply. No push/merge/apply is authorized.
 
@@ -717,3 +717,28 @@ app assignment; direct assignment removal is required. Any additional operator n
 explicit enrollment. Apply declaration verification profile (implement then pinned
 native checks/appropriate IAM delta review), not universal test-first. Actual app
 login and denial verification stays in M2. Do not implement before owner approval.
+
+Owner approved this exact direct-assignment refinement on 2026-10-28. Implement-first
+declarative change now frozen: operator app principal expression and existing native
+assertion only. Existing tenant/role/assignment-required/IP and Azure/AKS group are
+retained. Runbook/plan/model/task links now distinguish direct app enrollment/removal
+from group membership. No premium purchase, publication or apply is authorized.
+
+Pinned foundation format, check (fmt/backend-free init/validate/TFLint/Trivy) and test
+passed; 33 mocked native contracts, zero skipped. Initial sandbox registry access
+failed; outside-sandbox run passed with no provider/lockfile change. This follows
+the declaration verification profile, with no test-first requirement or invented
+RED. Actual browser access/denials remain M2. Independent delta review pending.
+
+Direct-assignment independent verdicts (verbatim):
+
+> Quality: pass for the operator-assignment delta on 2613159 and the reviewed
+> documentation changes. No findings.
+
+> Security: pass — scoped direct operator-assignment source and documentation
+> delta. No new findings.
+
+Reviewers inspected exact two-principal change, unchanged tenant/role/assignment/
+group boundaries and enrollment/removal guidance; reused the passing 33 native
+contracts and pinned gates. No redundant tests or live calls. Fresh private-plan
+principal confirmation remains before the next owner checkpoint.

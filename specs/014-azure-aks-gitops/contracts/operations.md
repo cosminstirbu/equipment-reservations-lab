@@ -1992,3 +1992,20 @@ Implementation and scoped verification are tracked in the
 [M1 execution ledger](../milestones.md#m1-execution-ledger). Local checkpoint commits
 are approved; push/merge and provisioning remain separate decisions.
 
+## Owner-approved direct operator app assignments
+
+Owner approved on 2026-10-28 replacing the two Argo CD/Aspire operator app-role
+principals with the existing reviewed `bootstrap_operator_object_id`. This supersedes
+group-based app-assignment wording elsewhere in the historical design. Keep tenant-only
+apps, assignment required, the `Equipment.Operator` role, operator source restrictions,
+and the configured group used for Azure/AKS unchanged. No new premium license or
+automatic fallback is authorized.
+
+The current single operator receives individual app assignments. Additional people
+require explicit reviewed individual assignments. Removal must revoke direct app
+assignments and relevant Azure/AKS group membership; group removal alone does not
+revoke app access. Verify browser login/denial in M2 and manage administrator authority
+separately. Enroll/remove procedures are in the [runbook](../../../docs/azure-aks.md#operator-enrollment-and-removal).
+Declaration changes use native formatting/validation/contracts and IAM review;
+there is no test-first requirement for these resource declarations.
+

@@ -16,6 +16,22 @@ After Terraform creates the retained Azure DNS zone, enter its assigned nameserv
 
 Browser hosts are app.codingfunlab.com, identity.codingfunlab.com, argocd.codingfunlab.com and dashboard.codingfunlab.com. Argo/Dashboard require Entra assignment and operator source restrictions, independently of Keycloak. Data services, identity administration, historical backends and telemetry ingestion remain private. Use authenticated temporary localhost forwards for diagnostics.
 
+## Operator enrollment and removal
+
+Argo CD and Aspire Dashboard use direct `Equipment.Operator` app-role assignments
+to the reviewed bootstrap human. The operator group remains for Azure/AKS access;
+adding a member does not enroll that person in the two operator apps. This avoids
+the premium license prerequisite of group-based application assignment. The
+[approved contract](../specs/014-azure-aks-gitops/contracts/operations.md#owner-approved-direct-operator-app-assignments)
+owns the access model.
+
+Additional operators require explicit reviewed individual app-role assignments and
+the appropriate Azure/AKS group membership. Remove both app assignments and group
+membership when removing an operator; group removal alone leaves direct app access.
+Verify denial using a fresh browser session after revoking applicable sessions.
+Manage tenant/subscription administrator roles separately. Keep the protected
+emergency-access procedure available and verify login/removal behavior during M2.
+
 ## GitHub trust setup
 
 Retained federation environment names are azure-plan, azure-apply, azure-destroy, azure-lifecycle, azure-safety-stop, azure-admission-reaper, azure-backup, azure-restore and azure-images. Configure each environment's identity, branch restrictions and approvals consistently with the Terraform subjects before running workflows. Apply/destroy/restore require approval; unattended safety-stop and reaper must not wait on an approval gate. This single-owner repository cannot claim independent two-person approval. Do not enable prevent-self-review if no eligible independent reviewer exists.

@@ -45,7 +45,7 @@ resource "azuread_app_role_assignment" "operator" {
   for_each = local.operator_redirects
 
   app_role_id         = uuidv5("dns", "${var.config.domain}/${var.config.environment}/${each.key}/operator")
-  principal_object_id = var.config.operatorGroupObjectId
+  principal_object_id = var.bootstrap_operator_object_id
   resource_object_id  = azuread_service_principal.operator[each.key].object_id
 }
 
