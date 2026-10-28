@@ -468,3 +468,34 @@ production callers (none needs percent-encoded arguments), unchanged Unix/privat
 capture and retained argument allowlist. No reviewer edits. Source repair is accepted
 within scope; actual preview remains to be retried. Implementation limit 21/21 is
 now exhausted; another source repair requires a changed-strategy budget decision.
+
+Round 21 committed locally as `b77ed18`. Actual preview from that clean reviewed
+source passed the repaired account read, then failed on an Azure read timeout
+(30.029 s; total 36.105 s), before Terraform planning. A single diagnostic rerun
+through existing `preflight` run injection exposed fixed safe labels only: account,
+AKS versions, VM SKU enumeration. The last phase timed out at 30.010 s (total
+32.865 s). This identifies the broad `az vm list-skus --location ... --all`
+preflight call as the blocker. No timeout increase, unchecked SKU substitution,
+provider mutation or source diagnostic instrumentation was made.
+
+**Checkpoint: needs_intervention; M1 incomplete.** No saved foundation plan exists.
+Three authorized repair rounds (19–21) are used. Source fixes passed their reviews;
+the actual source-to-private-plan path remains blocked by SKU discovery. Native
+Linux, actual foundation/audit and later milestones are still pending.
+
+Proposed changed strategy, not implemented: replace broad CLI SKU enumeration in
+T007's preflight with a bounded regional ARM resourceSkus read using the existing
+private token/request boundary. The same regional query succeeded during M0 in
+5.480 s. Select exact D4s_v5, validate scope/region/schema and complete pagination,
+and continue rejecting missing/restricted/ambiguous/incomplete results. Preserve
+current time budgets, subscription binding, private output, quota/cost/permission
+checks and all preview/apply gates. No fallback to the earlier observation as a
+caller-supplied ready flag. Reuse existing provider-contract tests; add focused
+faithful response/pagination negatives only for changed owned behavior.
+
+Request one additional implementation repair round (21 → 22), maximum 20 active
+minutes before reporting a result/intervention, with independent delta reviews and
+one unchanged real-preview retry after a local checkpoint commit. This is a concrete
+API strategy change, not more samples of the stalled CLI call. No provisioning,
+push/merge, permission expansion or timeout inflation is requested. Owner approval
+is required by the existing bounded-execution protocol before dependent repair.

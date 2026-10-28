@@ -4,10 +4,10 @@
   "milestone_checkpoint": {
     "date": "2026-10-28",
     "milestone": "M1",
-    "status": "m1_round21_quality_security_pass_actual_preview_retry_pending",
+    "status": "needs_intervention_m1_sku_preflight_timeout_limit21_exhausted",
     "m0_owner_accepted": "2026-10-28",
     "m1_owner_authorized": "2026-10-28",
-    "active_batch": "Round20 initialfoundationpreview passed author31/security3/quality4 focused checks and bothreviews; actualprivatepreview next. Started09:16UTC,60active-minute checkpoint. Operatorgroup currentuser-only, privateconfig validated+ACLrestricted; no roles/firewalls/provisioning.",
+    "active_batch": "Rounds19-21 sourcebatches passed independentreviews, locally committed5f684cf/ff87a21/b77ed18. Actualpreview now fails broadCLI VM SKU enumeration30s; diagnostic fixedlabelsconfirmed. No savedplan or provisioning. Limit21exhausted; proposed boundedARMqueryrepair requires owner21->22 extension.",
     "record": "../milestones.md",
     "source_revision": "b2b0064",
     "owner_checkpoint_after_each_milestone": true,
@@ -22,7 +22,7 @@
       "resources_provisioned": false
     },
     "limits_preserved": "Historical preparation9 and implementation18 retained; owner approved implementation limit18->21 with M1 authorization. M2 remains unauthorized.",
-    "remaining": "Round20 independently passed and committed ff87a21. Actualpreview failed firstCLIread exit2 in680ms beforeplanning/mutation. Remaininground21 scoped WindowsCLI invocation causaldiagnosis; preserve previewidentitychecks/mainapplybarrier. M1 incomplete, no pushmerge/provisioning."
+    "remaining": "Approve or decline one20active-minute repairround21->22 to replace broadCLI SKU discovery with boundedARM regional query already proven M0; preserve complete response validation/timeouts/guards, obtain independentdelta reviews and retry actualpreview once. No source repair until approval. M1 incomplete; no savedplan/pushmerge/provisioning."
   },
   "baseline_revision": "d1c7238345136340ddbf3a9454807cefffc43c32",
   "preparation_round": 9,
