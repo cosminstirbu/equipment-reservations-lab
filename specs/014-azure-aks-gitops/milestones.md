@@ -15,7 +15,11 @@ pending. No automatic further Windows repair is planned.
 Direct-user app assignment is now implemented, independently reviewed and verified
 in a fresh actual preview. Before apply: obtain explicit source-publication
 authorization and required Linux checks, then review a fresh main-qualified plan.
-The local preview cannot be promoted into apply. No push/merge/apply is authorized.
+The local preview cannot be promoted into apply. Merge/apply remain unauthorized.
+
+Publication update: owner authorized branch push and draft PR. [PR 30](https://github.com/cosminstirbu/equipment-reservations-lab/pull/30)
+is open at `267309f`. Both source CI runs failed during setup; required validation
+did not run. Merge/apply remain unauthorized. See the source CI checkpoint below.
 
 ## Outcomes and gates
 
@@ -769,3 +773,33 @@ existing source-only Linux checks. Merge and apply remain unauthorized. Publicat
 check found zero tracked private artifacts and zero committed matches for actual
 private account/contact/operator-IP input values. GitHub CLI authentication succeeds
 outside the sandbox; no existing open PR was found for this head branch.
+
+## Source CI checkpoint
+
+Feature branch pushed and draft PR 30 created under explicit owner authorization.
+Checked head: `267309f69eb73af93db30d8319a38ed5b5365e22`. No merge, apply or source
+repair occurred during publication/monitoring.
+
+- [PR validation 40679360066](https://github.com/cosminstirbu/equipment-reservations-lab/actions/runs/40679360066)
+  failed classification: ERR_MODULE_NOT_FOUND for @stoplight/spectral-parsers.
+  Source inspection confirms classification imports that dependency before npm ci;
+  setup-node's download cache does not install node_modules. Quality/Kubernetes
+  checks were skipped; downstream summary failure is consequential.
+- [Azure source checks 40679360084](https://github.com/cosminstirbu/equipment-reservations-lab/actions/runs/40679360084)
+  failed infra:tools verified tar extraction (exit 2, 23 ms). Available safe logs
+  do not prove the extraction cause. The preparation code uses tar for all archives;
+  verify Linux ZIP-format compatibility as the next bounded diagnostic. Infrastructure
+  checks/contracts/operational tests were skipped, not passed.
+
+Draft body now names both blocking results. No reruns, cancellation, diagnostic
+logging changes or automatic repairs were made. The CI evidence is recorded locally
+without another status-only push that would retrigger validation.
+
+Proposed next scope, not authorized: one bounded Linux CI setup batch, maximum
+30 active minutes and two validation runs, to install dependencies before the
+classifier and diagnose/correct format-aware verified extraction. Preserve pinned
+archive/executable checksums, policy integrity and contents-only PR permissions;
+no timeout inflation, ignored failures, Azure identity, merge or apply. Use the
+implementation-first declaration/thin-wrapper profile, then actual clean-runner
+checks; add only useful focused contracts. Report a pass or a concrete strategy
+decision at that limit, without automatic extensions.
