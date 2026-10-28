@@ -577,3 +577,27 @@ formatting/ESLint/whitespace checks. Security passed the focused boundary regres
 1/1, zero skipped, 161 ms. Both inspected strict syntax/range handling, unchanged
 numeric evaluator/thresholds and copied response rows. No reviewer edits. Actual
 preview remains pending.
+
+Round 23 committed locally as `e1a54a9`. The single actual preview retry passed
+quota validation and progressed into private workspace setup, then failed Windows
+ACL preparation (exit 1, 736 ms; total 36.653 s). No saved plan or resource creation.
+Read-only checks confirmed the existing workspace directories are regular,
+current-user-owned and pass the repository's 0700-equivalent ACL checker; no state
+or remote-authority marker was present.
+
+A disposable empty-directory reproducer isolated the actual helper defect: first
+`createPrivateDirectory(parent)` succeeds, second call fails ACL rewriting (558 ms).
+The same privacy assertion succeeds on already-prepared real directories. The
+probe touched no real state/configuration and its empty directories were removed.
+This is a repeat-setup defect in the shared Windows helper, not insufficient Azure
+quota or permission, and not evidence that broader file access is acceptable.
+
+**Checkpoint: needs_intervention; implementation 23/23 exhausted, M1 incomplete.**
+Proposed round 24 (maximum 15 active minutes): make private-directory setup idempotent
+by verifying and reusing an already-valid private directory before attempting an ACL
+rewrite. Preserve regular-directory/symlink, owner and access checks, and verified
+preparation/failure for invalid permissions. Extend existing helper tests with a
+real Windows repeat-setup regression and affected privacy cases; obtain independent
+delta reviews. Then local checkpoint and one actual preview retry. No Terraform
+policy, ACL broadening, timeout change, cloud mutation, push or merge is proposed.
+Owner approval is required before this additional repair; no implementation yet.
