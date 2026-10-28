@@ -803,3 +803,45 @@ no timeout inflation, ignored failures, Azure identity, merge or apply. Use the
 implementation-first declaration/thin-wrapper profile, then actual clean-runner
 checks; add only useful focused contracts. Report a pass or a concrete strategy
 decision at that limit, without automatic extensions.
+
+Owner approved the CI scope-and-setup batch on 2026-10-28. Started 11:32 UTC;
+30 active minutes, at most two workflow runs total. One reviewed candidate push
+will trigger the two existing PR/source workflows; no reruns/manual qualification
+dispatch are assumed. Two disjoint coders own workflow routing and archive extraction;
+coordinator owns documentation. Implement-first declaration/thin-wrapper profiles,
+focused checks and independent delta reviews precede publication.
+
+Scope of the lane split is Azure infrastructure qualification. Existing application,
+backend/frontend and feature-013 local deployment checks remain intact. Expensive
+Azure native/provider scenarios move to a fixed manual read-only lane with capacity
+limits; they remain required when affected and before dependent deployment acceptance.
+Source-only success must not claim provider/feature acceptance. No policy exceptions,
+permission expansion, skipped-failure pass, merge or apply are authorized.
+
+CI batch frozen against `354c538`: three existing workflow definitions, one new
+manual provider definition, existing workflow contracts and archive preparation.
+Classifiers install npm dependencies first. Three source lanes share the same fixed
+12-file tooling suite; pinned Terraform/manifest gates remain. Application/local-013
+and publication gates are preserved, so this mixed CI candidate still selects full
+application checks. No classifier allowlist was broadened.
+
+Linux ZIP extraction now uses unzip; other archives retain tar. All four pinned
+Linux ZIPs passed archive and executable checksum smoke checks with Git-for-Windows
+unzip. This establishes argument/archive compatibility, not target Linux success.
+Existing quality tests passed 13/13, scoped formatting/ESLint/whitespace passed.
+Workflow tests passed 9/9; component/workflow checks passed 25 with one existing
+platform-specific skip. No new tests were written first for these declarations/
+thin wrappers; existing contracts were updated after implementation as relevant.
+
+Independent verdicts (verbatim):
+
+> Quality: pass for the frozen CI/workflow and extraction delta on 354c538,
+> including the new manual workflow. No findings.
+
+> Security: pass — scoped CI/profile and Linux ZIP extraction delta against
+> 354c538. No new findings.
+
+Both independently passed nine workflow contracts and inspected preserved permissions,
+checksum/private-output boundaries and pending manual qualification. No reviewer
+edits, native fixtures or workflow runs. Publish one candidate for the two authorized
+automatic source workflow runs; stop at the agreed budget/result checkpoint.

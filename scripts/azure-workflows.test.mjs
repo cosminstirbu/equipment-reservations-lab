@@ -90,9 +90,7 @@ test('required PR quality executes the infrastructure lane without application b
     ),
   );
   assert.ok(
-    steps.some((step) =>
-      step.run?.includes('node --test scripts/azure-*.test.mjs'),
-    ),
+    steps.some((step) => step.run?.includes('scripts/azure-quality.test.mjs')),
   );
   assert.ok(
     steps.some((step) =>
@@ -252,42 +250,74 @@ test('Q-CI014-001 full mixed runs preserve application checks and execute every 
   }
 });
 
-test('hosted Azure provider contracts require native Podman, pinned kind and .NET before executing without provider skips', () => {
+test('manual native provider qualification is read-only and serializes expensive fixtures independently of PR source gates', () => {
+  const manual = workflow('azure-provider-qualification');
+  assert.deepEqual(Object.keys(manual.on), ['workflow_dispatch']);
+  assert.deepEqual(manual.permissions, { contents: 'read' });
+  assert.deepEqual(manual.jobs.providers.permissions, { contents: 'read' });
+  assert.equal(manual.concurrency['cancel-in-progress'], false);
+  const steps = manual.jobs.providers.steps;
+  const contracts = steps.findIndex(
+    (step) => step.name === 'Azure tooling and provider contracts',
+  );
+  const setup = steps.findIndex(
+    (step) => step.name === 'Prepare native Azure provider runtime',
+  );
+  assert.ok(setup >= 0 && setup < contracts);
+  assert.match(steps[setup].run, /sudo apt-get install --yes podman/);
+  assert.match(
+    steps[setup].run,
+    /exec sudo --non-interactive \/usr\/bin\/podman/,
+  );
+  assert.ok(
+    steps
+      .slice(0, contracts)
+      .some((step) => step.uses?.startsWith('actions/setup-dotnet@')),
+  );
+  assert.equal(
+    steps[contracts].run,
+    'node --test --test-concurrency=1 scripts/azure-*.test.mjs scripts/manifest-quality.test.mjs',
+  );
+  assert.equal(steps[contracts].env.AZURE_PROVIDER_CONTRACTS, '1');
+  assert.equal(steps[contracts].env.CONTAINER_RUNTIME, 'podman');
+  assert.equal(
+    steps[contracts].env.KIND,
+    '${{ github.workspace }}/.cache/azure-toolchain/kind/kind',
+  );
+  assert.equal(steps[0].with['persist-credentials'], false);
+  for (const step of steps.filter((step) => step.uses))
+    assert.match(step.uses, /@[a-f0-9]{40}$/);
+  for (const name of ['pull-request', 'validate', 'azure-infrastructure']) {
+    const definition = workflow(name);
+    const source = (definition.jobs.quality ?? definition.jobs.source).steps;
+    assert.equal(
+      source.some(
+        (step) =>
+          step.env?.AZURE_PROVIDER_CONTRACTS ||
+          step.run?.includes('sudo apt-get install --yes podman'),
+      ),
+      false,
+    );
+    assert.ok(
+      source.some(
+        (step) =>
+          step.run ===
+          'node --test scripts/azure-quality.test.mjs scripts/azure-infrastructure.test.mjs scripts/azure-terraform.test.mjs scripts/azure-provisioning.test.mjs scripts/azure-audit.test.mjs scripts/azure-handoff.test.mjs scripts/azure-vault-guard.test.mjs scripts/azure-guard-activation.test.mjs scripts/azure-operations.test.mjs scripts/azure-recovery.test.mjs scripts/azure-workflows.test.mjs scripts/manifest-quality.test.mjs',
+      ),
+    );
+  }
+});
+
+test('PR and main classifiers install root parser dependencies before classification while full application setup remains gated', () => {
   for (const name of ['pull-request', 'validate']) {
-    const steps = workflow(name).jobs.quality.steps;
-    const contracts = steps.findIndex(
-      (step) => step.name === 'Azure tooling and provider contracts',
+    const definition = workflow(name);
+    const scope = definition.jobs.scope.steps;
+    const install = scope.findIndex((step) => step.run === 'npm ci');
+    const classify = scope.findIndex((step) => step.id === 'quality_scope');
+    assert.ok(install >= 0 && classify > install);
+    const setup = definition.jobs.quality.steps.find((step) =>
+      step.uses?.startsWith('actions/setup-dotnet@'),
     );
-    const setup = steps.findIndex(
-      (step) => step.name === 'Prepare native Azure provider runtime',
-    );
-    assert.ok(
-      setup >= 0 && setup < contracts,
-      `${name}: native runtime before contracts`,
-    );
-    assert.equal(
-      steps[setup].if,
-      "needs.scope.outputs.mode == 'infrastructure' || needs.scope.outputs.mode == 'full'",
-    );
-    assert.match(steps[setup].run, /sudo apt-get install --yes podman/);
-    assert.match(
-      steps[setup].run,
-      /exec sudo --non-interactive \/usr\/bin\/podman/,
-    );
-    assert.ok(
-      steps
-        .slice(0, contracts)
-        .some(
-          (step) =>
-            step.uses?.startsWith('actions/setup-dotnet@') &&
-            step.if === steps[setup].if,
-        ),
-    );
-    assert.equal(steps[contracts].env.AZURE_PROVIDER_CONTRACTS, '1');
-    assert.equal(steps[contracts].env.CONTAINER_RUNTIME, 'podman');
-    assert.equal(
-      steps[contracts].env.KIND,
-      '${{ github.workspace }}/.cache/azure-toolchain/kind/kind',
-    );
+    assert.equal(setup.if, "needs.scope.outputs.mode == 'full'");
   }
 });

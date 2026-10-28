@@ -25,6 +25,7 @@ jobs:
         with:
           node-version: 24.15.0
           cache: npm
+      - run: npm ci
       - id: quality_scope
         name: Classify required quality
         env:
@@ -70,29 +71,12 @@ jobs:
         if: needs.scope.outputs.mode == 'infrastructure' || needs.scope.outputs.mode == 'full'
         run: node node_modules/eslint/bin/eslint.js scripts/azure-*.mjs --max-warnings 0
       - uses: actions/setup-dotnet@26b0ec14cb23fa6904739307f278c14f94c95bf1
-        if: needs.scope.outputs.mode == 'infrastructure' || needs.scope.outputs.mode == 'full'
+        if: needs.scope.outputs.mode == 'full'
         with:
           global-json-file: global.json
-      - name: Prepare native Azure provider runtime
+      - name: Focused Azure source contracts
         if: needs.scope.outputs.mode == 'infrastructure' || needs.scope.outputs.mode == 'full'
-        shell: bash
-        run: |
-          set -euo pipefail
-          sudo apt-get update --quiet
-          sudo apt-get install --yes podman
-          mkdir -p "$RUNNER_TEMP/azure-provider-bin"
-          printf '%s\n' '#!/usr/bin/env bash' 'exec sudo --non-interactive /usr/bin/podman "$@"' > "$RUNNER_TEMP/azure-provider-bin/podman"
-          chmod 0755 "$RUNNER_TEMP/azure-provider-bin/podman"
-          "$RUNNER_TEMP/azure-provider-bin/podman" info >/dev/null
-          echo "$RUNNER_TEMP/azure-provider-bin" >> "$GITHUB_PATH"
-      - name: Azure tooling and provider contracts
-        if: needs.scope.outputs.mode == 'infrastructure' || needs.scope.outputs.mode == 'full'
-        run: node --test scripts/azure-*.test.mjs scripts/manifest-quality.test.mjs
-        env:
-          KUBECTL: ${{ github.workspace }}/.cache/azure-toolchain/kubectl/kubectl
-          KIND: ${{ github.workspace }}/.cache/azure-toolchain/kind/kind
-          CONTAINER_RUNTIME: podman
-          AZURE_PROVIDER_CONTRACTS: '1'
+        run: node --test scripts/azure-quality.test.mjs scripts/azure-infrastructure.test.mjs scripts/azure-terraform.test.mjs scripts/azure-provisioning.test.mjs scripts/azure-audit.test.mjs scripts/azure-handoff.test.mjs scripts/azure-vault-guard.test.mjs scripts/azure-guard-activation.test.mjs scripts/azure-operations.test.mjs scripts/azure-recovery.test.mjs scripts/azure-workflows.test.mjs scripts/manifest-quality.test.mjs
       - name: Validate authored and synthetic Azure manifests
         if: needs.scope.outputs.mode == 'infrastructure' || needs.scope.outputs.mode == 'full'
         run: node scripts/manifest-quality.mjs azure

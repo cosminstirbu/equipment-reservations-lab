@@ -9,6 +9,23 @@ Current delivery sequencing and owner checkpoints are recorded in
 [milestones.md](milestones.md). Historical preparation reviews remain evidence for
 their stated scope; current source integration and live acceptance are pending.
 
+## Azure CI verification profile
+
+Owner approved the source/manual lane split on 2026-10-28. PR and main source lanes
+retain pinned Terraform formatting/validation/lint/security, mocked native Terraform
+contracts, manifest checks and a fixed fast suite covering tooling and high-risk
+helpers. Dependency installation precedes classification. The workflow definitions
+own the exact commands; do not infer native-provider success from a source-only pass.
+
+The dispatch-only Azure native provider qualification workflow owns the complete
+Azure/Kubernetes provider suite on Linux, serialized by test file for runner capacity.
+Deliberate concurrency inside tests is retained. Run affected qualification before
+dependent deployment/milestone acceptance; record its exact revision and outcome.
+This lane has no Azure identity or cloud provisioning. Its new dispatch definition
+is not available until published on the default branch and remains unexecuted here.
+Existing application/backend/frontend/local-feature-013 and publication checks stay
+in place. No acceptance requirement or security exception is waived by rescheduling.
+
 ## Summary
 
 Use two shared Linux AKS system nodes, Free control plane, Terraform Azure

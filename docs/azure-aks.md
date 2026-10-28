@@ -85,4 +85,16 @@ The protected recovery configuration file has exactly `{ "version": 1, "brokerMo
 
 ## Verification and acceptance
 
+Azure PR/source checks run deterministic Terraform gates, mocked native contracts,
+manifest checks and a fixed fast tooling suite. These checks do not provision Azure
+or establish native-provider acceptance. The exact suites are in the source workflows.
+
+Use the manual **Azure native provider qualification** workflow for the full local
+provider/Kubernetes suite on the Linux runner. It has read-only repository permissions,
+no Azure identity and one test file at a time; internal concurrency tests remain intact.
+Run affected scenarios before accepting dependent deployment work. The workflow must
+be available on the default branch before GitHub dispatch is possible. Keep it pending
+until its revision-specific run actually passes; source-only green checks cannot
+substitute for it. Existing application and local Kubernetes checks remain unchanged.
+
 Use the [feature rehearsal](../specs/014-azure-aks-gitops/quickstart.md) and [operations contract](../specs/014-azure-aks-gitops/contracts/operations.md). Required acceptance includes trusted four-host HTTPS, positive/negative operator access, deployed journeys, private dependency denial, secret rotation, pod replacement, stop/start persistence, correlated bounded history, private-plan approval denial and complete recovery rehearsal. Each result must identify the tested revision and distinguish local fixtures from actual Azure/GitHub/browser evidence. Independent reviews, convergence and explicit owner acceptance remain completion gates.

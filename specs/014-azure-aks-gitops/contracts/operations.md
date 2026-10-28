@@ -2009,3 +2009,14 @@ separately. Enroll/remove procedures are in the [runbook](../../../docs/azure-ak
 Declaration changes use native formatting/validation/contracts and IAM review;
 there is no test-first requirement for these resource declarations.
 
+## Owner-approved Azure CI lane split
+
+Approved on 2026-10-28: source PR/main checks keep deterministic Terraform gates,
+mocked native contracts, manifest validation and fixed fast helper tests. Full Azure
+native/provider fixtures run in a separate manual, read-only Linux workflow with
+file concurrency one; explicit test-internal concurrency remains. No Azure identity,
+apply, token-bearing output, or weaker scanner/qualification policy is introduced.
+The exact commands live in workflow definitions. Provider qualification remains
+mandatory when affected and before dependent deployment acceptance; no source-only
+result marks that gate passed. Existing app/local-Kubernetes/publication gates stay.
+

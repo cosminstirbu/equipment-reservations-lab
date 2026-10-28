@@ -29,5 +29,5 @@ jobs:
       - run: npm run infra:tools
       - run: npm run infra:check
       - run: npm run infra:test
-      - name: Public operational and workflow contracts
-        run: node --test scripts/azure-infrastructure.test.mjs scripts/azure-operations.test.mjs scripts/azure-recovery.test.mjs scripts/azure-workflows.test.mjs
+      - name: Focused Azure source contracts
+        run: node --test scripts/azure-quality.test.mjs scripts/azure-infrastructure.test.mjs scripts/azure-terraform.test.mjs scripts/azure-provisioning.test.mjs scripts/azure-audit.test.mjs scripts/azure-handoff.test.mjs scripts/azure-vault-guard.test.mjs scripts/azure-guard-activation.test.mjs scripts/azure-operations.test.mjs scripts/azure-recovery.test.mjs scripts/azure-workflows.test.mjs scripts/manifest-quality.test.mjs

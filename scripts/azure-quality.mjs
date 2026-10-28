@@ -207,12 +207,18 @@ export async function prepareTools(context = qualityContext()) {
       ? resolve(context.toolsDirectory, pin.extractDirectory)
       : dirname(destination);
     mkdirSync(extractDirectory, { recursive: true });
+    const linuxZip =
+      context.platform === 'linux-x64' && archive.endsWith('.zip');
+    let extractor = process.platform === 'win32' ? 'tar.exe' : 'tar';
+    if (linuxZip) extractor = 'unzip';
     executeProcess(
-      process.platform === 'win32' ? 'tar.exe' : 'tar',
-      ['-xf', archive, '-C', extractDirectory],
+      extractor,
+      linuxZip
+        ? ['-o', archive, '-d', extractDirectory]
+        : ['-xf', archive, '-C', extractDirectory],
       {
         operation: 'Verified tool extraction',
-        tool: 'tar',
+        tool: linuxZip ? 'unzip' : 'tar',
         output: 'private-capture',
         timeout: 120000,
       },
