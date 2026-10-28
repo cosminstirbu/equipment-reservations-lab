@@ -531,3 +531,24 @@ formatting/ESLint/whitespace checks. Security passed the focused complete/pagina
 SKU regression 1/1, zero skipped, 165 ms, inspecting token/header privacy, forbidden
 redirects and same-origin/subscription/path/API/filter checks before every request.
 No reviewer edits. Actual provider/preview qualification remains pending.
+
+Round 22 committed locally as `7796bb8`. The single authorized actual preview
+retry progressed past regional SKU discovery, then failed quota validation in
+16.827 s, before Terraform planning. Read-only inspection of the two relevant CLI
+quota rows confirmed regional limit/currentValue `"24"`/`"0"` and Dsv5-family
+`"12"`/`"0"`: all four values are strings. The numeric-only evaluator rejects the
+provider boundary shape despite sufficient actual quota. No validation was bypassed,
+plan generated, timeout changed or resource created. Unchanged retail BOM read also
+passed independently (13 entries, 723 ms).
+
+**Checkpoint: needs_intervention; limit 22/22 exhausted, M1 incomplete.** Concrete
+next proposal: normalize only canonical nonnegative safe-integer decimal strings
+for CLI quota limit/currentValue at the response boundary, retaining the evaluator's
+numeric contract and all existing quota thresholds/denials. Reject missing, negative,
+fractional, whitespace/noncanonical, overflow or unrelated coercible input. Preserve
+existing numeric responses. Focused faithful CLI-shape and invalid-value tests plus
+independent delta review are sufficient; no new fixture framework or provider-loop
+investigation is proposed. Request one additional repair round (22 → 23), maximum
+15 active minutes, and one post-review/local-commit preview retry. No source work
+on that proposal occurs before owner approval; no broader authority or provisioning
+is requested.
