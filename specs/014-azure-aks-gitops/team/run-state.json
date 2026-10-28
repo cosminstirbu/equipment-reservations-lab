@@ -4,7 +4,7 @@
   "milestone_checkpoint": {
     "date": "2026-10-28",
     "milestone": "M1",
-    "status": "m1_backend_trace_cancellation_timeline_authorized",
+    "status": "m1_current_candidate_pr_validation_authorized",
     "source_ci": {
       "pr": "https://github.com/cosminstirbu/equipment-reservations-lab/pull/30",
       "head": "5b0977a8fa84faed133992a82708ecd972d825ee",
@@ -16,7 +16,7 @@
     },
     "m0_owner_accepted": "2026-10-28",
     "m1_owner_authorized": "2026-10-28",
-    "active_batch": "Owner authorized a bounded cancellation investigation from 13:25 UTC: 20 active minutes and one Linux diagnostic run. Add fixed parent-observed request/body/abort/child-exit timing metadata and correct npm setup. Preserve production behavior, deadlines and parallelism. No production fix; PR branch remote unchanged; M1 foundation not applied.",
+    "active_batch": "Owner authorized publishing the current reviewed candidate to draft PR 30 for one normal validation cycle. Reuse passing backend diagnostic 40697275177 at 79e3e42 and scoped reviews; prior trace cancellation remains unresolved. No merge or Azure apply; M1 foundation not applied.",
     "record": "../milestones.md",
     "source_revision": "5b0977a8fa84faed133992a82708ecd972d825ee",
     "owner_checkpoint_after_each_milestone": true,
@@ -31,7 +31,7 @@
       "resources_provisioned": false
     },
     "limits_preserved": "Historical preparation9 and implementation18 retained; owner approved implementation limit18->21 with M1 authorization. M2 remains unauthorized.",
-    "remaining": "Review and run the authorized cancellation timeline diagnostic once; distinguish exporter cancellation, collector failure and process-exit hypotheses subject to scheduling limitations. Infrastructure CI passes; KeyVault registration, a main-qualified plan and actual foundation/audit qualification remain pending. No merge or apply."
+    "remaining": "Publish and observe one full PR validation cycle for the current candidate. Retain prior trace cancellation as unresolved. KeyVault registration, a main-qualified plan, manual Azure qualification and actual foundation/audit qualification remain pending. No merge or apply."
   },
   "baseline_revision": "d1c7238345136340ddbf3a9454807cefffc43c32",
   "preparation_round": 9,

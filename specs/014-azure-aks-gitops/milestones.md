@@ -1052,3 +1052,27 @@ request cancellation, process exit and collector body handling with fixed safe
 metadata; preserve behavior, test deadlines and parallelism. Correct the known
 npm prerequisite omission before that run. No production fix or automatic retry
 is authorized by this diagnostic batch.
+
+Frozen timeline/prerequisite delta independently reviewed: **pass**, no findings.
+Warnings-as-errors build, scoped test/workflow formatting and whitespace checks
+passed. Diagnostic commit `79e3e42b56174ccb71ef8a35aa74c3ed0fb317b9` was published
+only to the dedicated diagnostic branch. Run 40697275177 performs the single
+authorized execution. Timeline values are parent observations; exit callbacks
+may lag actual exit and snapshots may omit later callbacks. No definitive causal
+ordering or production fix can be inferred from those observations alone.
+
+[Run 40697275177](https://github.com/cosminstirbu/equipment-reservations-lab/actions/runs/40697275177)
+completed successfully at `79e3e42`: 596 passing backend tests, zero failures and
+zero skips, duration 5m 07.700s. npm setup and solution build passed. This is
+positive evidence for the current backend concurrency/coverage context; it does
+not establish a causal correction of the earlier intermittent trace cancellation.
+No broker timeline lines appeared in the successful solution-run log, so no
+request/exit ordering is claimed. The single authorized run is consumed; stop
+this diagnostic batch without further reruns. Full PR validation at this revision,
+manual Azure qualification and actual M1 foundation work remain pending.
+
+Owner authorized publishing the current reviewed diagnostic candidate to the
+existing draft feature PR and one normal PR validation cycle. Reuse the scoped
+diagnostic reviews and passing backend result at `79e3e42`; retain the earlier
+trace cancellation as unresolved. No merge, Azure apply or additional diagnostic
+rerun is authorized by this checkpoint.
