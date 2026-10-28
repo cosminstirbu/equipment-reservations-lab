@@ -12,8 +12,8 @@ preview has independent quality/security assessment. **M1 is not complete:** no
 retained foundation has been applied and live state/access/audit qualification is
 pending. No automatic further Windows repair is planned.
 
-Before apply: complete the owner-approved direct-user app assignment refinement,
-obtain explicit source-publication
+Direct-user app assignment is now implemented, independently reviewed and verified
+in a fresh actual preview. Before apply: obtain explicit source-publication
 authorization and required Linux checks, then review a fresh main-qualified plan.
 The local preview cannot be promoted into apply. No push/merge/apply is authorized.
 
@@ -742,3 +742,24 @@ Reviewers inspected exact two-principal change, unchanged tenant/role/assignment
 group boundaries and enrollment/removal guidance; reused the passing 33 native
 contracts and pinned gates. No redundant tests or live calls. Fresh private-plan
 principal confirmation remains before the next owner checkpoint.
+
+Direct-assignment change committed locally as `048c6e9`. Fresh private preview
+succeeded in 43.550 s: still 270 creates, 10 data reads, zero updates/deletes.
+Pinned private plan inspection confirmed exactly two app-role assignments, both to
+the reviewed bootstrap user, neither to the operator group. Security independently
+confirmed plan/review revision/hash binding and those exact principals; unchanged
+earlier plan assessment remains applicable. Security verdict (verbatim):
+
+> pass — resolved operator-assignment delta only.
+
+No license, live app assignment, firewall or cloud resource was changed. The approved
+licensing prerequisite is resolved in source/planned configuration; actual M2 login
+and removal evidence remain pending. This is not M1 acceptance or apply permission.
+
+Next publication proposal: push only branch `014-azure-aks-gitops` and open a draft
+PR against main so existing read-only PR/source Linux checks can run. The PR remains
+explicitly work in progress; no merge or apply. Do not dispatch the main release
+workflow for this purpose. Before publishing, confirm private input/plan/state paths
+remain ignored/untracked. Publication and external PR creation require explicit
+owner authorization; neither has occurred. Source must later qualify on main and
+receive a fresh exact plan/review before any apply decision.
