@@ -1201,6 +1201,11 @@ test('preflight uses complete bounded regional ARM SKU discovery and rejects uns
   const { preflight } = await import('./azure-infrastructure.mjs');
   const config = validConfig();
   const data = capabilities(config);
+  data.usage = data.usage.map((entry) => ({
+    ...entry,
+    limit: entry.name.value === 'cores' ? '24' : '12',
+    currentValue: '0',
+  }));
   const sku = { ...data.skus[0], resourceType: 'virtualMachines' };
   const start = new URL(
     `https://management.azure.com/subscriptions/${config.subscriptionId}/providers/Microsoft.Compute/skus`,
@@ -1266,6 +1271,45 @@ test('preflight uses complete bounded regional ARM SKU discovery and rejects uns
   assert.equal(result.capabilities.nodes, 2);
   assert.deepEqual(requests, [start.href, next.href]);
   assert.equal(calls.includes('vm list-skus'), false);
+  assert.equal(data.usage[0].limit, '12');
+  const { evaluateCapabilities } = await import('./azure-infrastructure.mjs');
+  assert.throws(() => evaluateCapabilities(config, data), /quota/i);
+  const validUsage = data.usage;
+  const skuResponse = async () => ({
+    ok: true,
+    status: 200,
+    json: async () => ({ value: [sku] }),
+  });
+  for (const value of [
+    '-1',
+    '1.5',
+    ' 12',
+    '12\n',
+    '-0',
+    '012',
+    '+12',
+    '1e2',
+    '9007199254740992',
+    '',
+    null,
+    undefined,
+    true,
+    {},
+    -1,
+    1.5,
+    Number.MAX_SAFE_INTEGER + 1,
+  ]) {
+    data.usage = [{ ...validUsage[0], limit: value }, validUsage[1]];
+    await assert.rejects(() => invokePreflight(skuResponse), /quota/i);
+  }
+  data.usage = [{ ...validUsage[0], currentValue: undefined }, validUsage[1]];
+  await assert.rejects(() => invokePreflight(skuResponse), /quota/i);
+  data.usage = [{ ...validUsage[0], limit: '7' }, validUsage[1]];
+  await assert.rejects(() => invokePreflight(skuResponse), /quota/i);
+  data.usage = capabilities(config).usage;
+  assert.equal((await invokePreflight(skuResponse)).capabilities.nodes, 2);
+  data.usage = validUsage;
+
   for (const body of [
     { value: [] },
     { value: [sku, sku] },

@@ -552,3 +552,28 @@ investigation is proposed. Request one additional repair round (22 → 23), maxi
 15 active minutes, and one post-review/local-commit preview retry. No source work
 on that proposal occurs before owner approval; no broader authority or provisioning
 is requested.
+
+Owner approved round 23 on 2026-10-28: strict CLI quota normalization only,
+15-active-minute checkpoint, independent delta review and one actual preview retry
+after a local commit. No threshold, permission, timeout or other gate change.
+
+Round 23 frozen against `64b5183`: infrastructure module/test only, 17 production
+lines. CLI quota rows are copied and limit/currentValue normalized only from canonical
+nonnegative safe-integer strings; valid numeric counts retained. Pure evaluator and
+eight-core threshold unchanged. Public preflight tests retain actual evaluator/cost
+logic and reuse faithful CLI/HTTP boundaries. RED reproduced the observed string
+counts being rejected (one failure, zero skipped, 172.98 ms). Four focused tests
+passed, zero failed/skipped, 192.24 ms; scoped formatting/ESLint/whitespace checks
+passed. No provider/native calls by coder. Independent delta review pending.
+
+Round 23 independent verdicts (verbatim):
+
+> Quality: pass for round 23’s frozen two-file delta on 64b5183. No findings.
+
+> Security: pass — scoped round-23 quota normalization. No new findings.
+
+Quality passed four focused tests, zero failed/skipped, 159 ms, and scoped
+formatting/ESLint/whitespace checks. Security passed the focused boundary regression
+1/1, zero skipped, 161 ms. Both inspected strict syntax/range handling, unchanged
+numeric evaluator/thresholds and copied response rows. No reviewer edits. Actual
+preview remains pending.

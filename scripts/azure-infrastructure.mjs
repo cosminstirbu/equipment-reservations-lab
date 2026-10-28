@@ -1194,6 +1194,23 @@ export async function preflight(
           ])
         : undefined,
   };
+  const quotaCount = (value) => {
+    const count =
+      typeof value === 'string' &&
+      value.trim() === value &&
+      /^(0|[1-9][0-9]*)$/.test(value)
+        ? Number(value)
+        : value;
+    if (!Number.isSafeInteger(count) || count < 0 || Object.is(count, -0))
+      fail('Azure quota response count is invalid.');
+    return count;
+  };
+  if (!Array.isArray(data.usage)) fail('Azure quota response is invalid.');
+  data.usage = data.usage.map((entry) => ({
+    ...entry,
+    limit: quotaCount(entry?.limit),
+    currentValue: quotaCount(entry?.currentValue),
+  }));
   data.permissions = data.permissions.value;
   const capabilities = evaluateCapabilities(config, data, { stage, operation });
   const cost = calculateCost(
