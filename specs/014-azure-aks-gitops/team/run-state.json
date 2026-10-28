@@ -4,21 +4,21 @@
   "milestone_checkpoint": {
     "date": "2026-10-28",
     "milestone": "M1",
-    "status": "m1_fixture_workflow_correctness_reviewed_ready_one_validation_pair",
+    "status": "needs_intervention_source_ci_pass_single_backend_broker_trace_test_failed",
     "source_ci": {
       "pr": "https://github.com/cosminstirbu/equipment-reservations-lab/pull/30",
-      "head": "7d54eff5ae8cd5ad9831323555a6d129fdf6935a",
-      "pr_validation": "40684625248 FAILURE; classifier/local013KubePASS",
-      "azure_source": "40684625235 FAILURE; tools/TFsource/nativecontractsPASS; focused189pass2fail3skip (2planfixture filemodes)",
-      "extra_workflow_validation": "40684616072 azure-images file issue,0jobs; servermessageunknown; sourcejob-levelrunnercontextinvalid",
+      "head": "5b0977a8fa84faed133992a82708ecd972d825ee",
+      "pr_validation": "40687461290 FAILURE: tooling150pass1skip,frontend64PASS,backend595pass1fail0skip; local013KubePASS",
+      "azure_source": "40687460924 SUCCESS:191pass0fail3skip; TFsource/nativecontracts/manifestsPASS",
+      "extra_workflow_validation": "No azure-images validation failure observed at5b0977a; actualpublication untested",
       "reruns_or_manual_dispatch": false,
       "published_fix": "Downloads-directory separation7d54eff validated by targetLinux successful toolpreparation"
     },
     "m0_owner_accepted": "2026-10-28",
     "m1_owner_authorized": "2026-10-28",
-    "active_batch": "Approved additionalvalidationpair completed7d54eff: installer/TFgatesPASS, 2fixturemodefailures+imageworkflowcontext issue remain. No furthercodechange/rerun/dispatch. Earlier actualfoundationpreviewpassed; noapply/auditacceptance.",
+    "active_batch": "Approved correctnessbatch/validationpair completed5b0977a. Azure source/tooling/frontend/local013PASS; onebackendBrokerExecutableTests exportedtrace assertionfailed. No furthercode/rerun/dispatch; M1foundationnotapplied.",
     "record": "../milestones.md",
-    "source_revision": "7d54eff5ae8cd5ad9831323555a6d129fdf6935a",
+    "source_revision": "5b0977a8fa84faed133992a82708ecd972d825ee",
     "owner_checkpoint_after_each_milestone": true,
     "next_milestone_authorized": false,
     "quota_requests": {
@@ -31,7 +31,7 @@
       "resources_provisioned": false
     },
     "limits_preserved": "Historical preparation9 and implementation18 retained; owner approved implementation limit18->21 with M1 authorization. M2 remains unauthorized.",
-    "remaining": "Ownerapproved15active-minute fixture0600/imageworkflowstep-context batch +onecandidatevalidationpair. Implementfirst/scopedchecks/independentreview, preserveproductionprivacy andpublishguards. No newinstaller/Windowsrepair ormerge/apply; M1actualfoundationaudit pending."
+    "remaining": "Infra/sourceCI nowPASS. Oneexistingbackendbrokertrace testblocksPR; causeunknown,newboundedapplicationdiagnosis needsownerdecision. KeyVaultproviderNotRegistered(readonly),mainqualifiedfreshplan/keyexpiry/actualfoundationaudit pending. No merge/apply orfurtherrepairs/reruns authorized."
   },
   "baseline_revision": "d1c7238345136340ddbf3a9454807cefffc43c32",
   "preparation_round": 9,
@@ -881,10 +881,10 @@
     }
   },
   "intervention": {
-    "status": "automatic_approval_review_unavailable",
-    "reason": "Approved restart command was rejected before process creation because automatic approval review hit a usage limit. No VM stop/start or verification run occurred."
+    "status": "needs_intervention_single_backend_broker_trace_test",
+    "reason": "Source CI5b0977a passes; fullPRquality has one broker executable exported-trace assertion failure. Cause unproven; no blind rerun/repair. Historical approvedPodmanrestart was never executed; its original record is preserved under controlled_runtime_restart."
   },
-  "handoff_limits": "Incomplete feature checkpoint, not acceptance. Reviewed producer/pure-validator subsets pass their recorded gates; cache/source-authority/G3/activation integration and live Azure/hosted acceptance remain pending. Native gate remains failed. Approved VM restart was not executed. No Azure provisioning or GitHub publication.",
+  "handoff_limits": "Incomplete feature/M1, not acceptance. Privatefoundationpreview and scopedsource reviews pass. DraftPR30 published at5b0977a; Azure sourceCI/tooling/frontend/local013Kube pass, onebackendtrace testblocksPR. Source-authority/G3/activation and livefoundation/audit/hosted/recovery remainpending; manualAzureproviderqualification unexecuted. ApprovedPodmanrestart neverexecuted. No Azure infrastructure apply/provisioning.",
   "deferred_diagnostic_risks": [
     {
       "id": "native_https_body_deadline",

@@ -18,9 +18,9 @@ authorization and required Linux checks, then review a fresh main-qualified plan
 The local preview cannot be promoted into apply. Merge/apply remain unauthorized.
 
 Publication update: owner authorized branch push and draft PR. [PR 30](https://github.com/cosminstirbu/equipment-reservations-lab/pull/30)
-is now at `7d54eff`. Installer, Terraform checks, classification and existing local
-Kubernetes verification pass. Two source-test fixture modes and an image-workflow
-context issue block CI. Merge/apply remain unauthorized. See the latest validation result.
+is now at `5b0977a`. Azure source checks, tooling/frontend checks and existing local
+Kubernetes verification pass. One backend broker-telemetry test blocks full PR
+quality. Merge/apply remain unauthorized. See the latest validation result.
 
 ## Outcomes and gates
 
@@ -943,3 +943,36 @@ Quality independently passed four focused tests, zero skipped, 9.497 s and scope
 checks. Security reused that evidence and inspected fixed-path quoting, order and
 unchanged private-file/publication controls. One candidate validation pair follows;
 no Azure publication, manual qualification or apply is authorized.
+
+## Correctness validation result: 5b0977a
+
+Published one reviewed candidate `5b0977a8fa84faed133992a82708ecd972d825ee` for the
+authorized validation pair. No repair, rerun, manual dispatch, merge or apply followed.
+
+- [Azure source 40687460924](https://github.com/cosminstirbu/equipment-reservations-lab/actions/runs/40687460924)
+  **passed**: 194 tests, 191 passed, zero failed, three intentional skips. Tool
+  preparation, Terraform source gates/native contracts and manifests passed.
+- [PR 40687461290](https://github.com/cosminstirbu/equipment-reservations-lab/actions/runs/40687461290)
+  **failed** full quality. Tooling passed 150 with one skip; frontend passed 64.
+  Backend ran 596 tests: 595 passed, one failed, zero skipped. The case is
+  BrokerBootstrap.Tests.BrokerExecutableTests.CliExportsCorrelatedPrivateWorkflowBeforeExitForSuccessAndFilesystemFailure(fail:False);
+  Assert.Single found no matching exported item. Cause is not established; do not
+  label it flaky, unrelated or fixed without evidence. Report/summary failures are
+  consequential, not additional application defects.
+- Existing local-013 Kubernetes verification passed, including isolated deployment,
+  real deployed behavior and cleanup. This does not establish manual Azure provider
+  qualification. No new azure-images workflow-file failure was observed at this head;
+  actual image publication remains untested.
+
+**Checkpoint:** infrastructure/tooling blockers are resolved on Linux. Stop this
+batch at the agreed validation allowance. One existing backend observability test
+remains blocking; any diagnosis/repair is a separate bounded application task, not
+another installer round. Existing failing test supplies the feedback loop; no new
+test framework or blind rerun is proposed. No further source changes were made.
+
+Read-only pre-apply provider inspection: Storage, ManagedIdentity, Network,
+ContainerService, ContainerRegistry, OperationalInsights, PolicyInsights and
+microsoft.insights are registered; Microsoft.KeyVault is NotRegistered. The Insights
+entry uses lower-case namespace spelling and was confirmed directly. No registration
+was changed. Register KeyVault before eventual approved apply; all actual foundation,
+state/access/audit and main-qualified-plan gates remain pending. M1 is incomplete.
