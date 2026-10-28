@@ -39,17 +39,16 @@ test('explicit Azure mode gates every local promotion on dual publication with m
   assert.match(publish.if, /refs\/heads\/main/);
   assert.match(publish.if, /AZURE_IMAGES_ENABLED/);
   assert.equal(publish.environment, 'azure-images');
-  assert.equal(
-    publish.env.DOCKER_CONFIG,
-    '${{ runner.temp }}/docker-azure-images',
+  assert.equal(publish.env, undefined);
+  const initialize = publish.steps.findIndex(
+    (step) => step.name === 'Initialize private publication paths',
   );
-  assert.equal(
-    publish.env.AZURE_CONFIG_PATH,
-    '${{ runner.temp }}/azure-config.json',
-  );
-  assert.equal(
-    publish.env.AZURE_OUTPUTS_PATH,
-    '${{ runner.temp }}/azure-outputs.json',
+  assert.ok(
+    initialize >= 0 &&
+      initialize <
+        publish.steps.findIndex(
+          (step) => step.name === 'Write restricted operation lease inputs',
+        ),
   );
   assert.equal(publish.permissions['id-token'], 'write');
   assert.equal(publish.permissions['pull-requests'], 'write');
@@ -83,6 +82,9 @@ test('image workflow materializes private lease inputs and always cleans only it
   const directory = mkdtempSync(join(tmpdir(), 'image-workflow-private-'));
   t.after(() => rmSync(directory, { recursive: true, force: true }));
   const steps = workflow('azure-images').jobs.publish.steps;
+  const initialize = steps.find(
+    (step) => step.name === 'Initialize private publication paths',
+  );
   const write = steps.find(
     (step) => step.name === 'Write restricted operation lease inputs',
   );
@@ -104,6 +106,14 @@ test('image workflow materializes private lease inputs and always cleans only it
   });
   assert.equal(failed.status, 1);
   assert.match(failed.stderr, /Missing private publication inputs/);
+  const environmentPath = join(directory, 'github-env');
+  const initialized = run(initialize.run, { GITHUB_ENV: environmentPath });
+  assert.equal(initialized.status, 0, initialized.stderr);
+  assert.deepEqual(readFileSync(environmentPath, 'utf8').trim().split('\n'), [
+    `DOCKER_CONFIG=${directory}/docker-azure-images`,
+    `AZURE_CONFIG_PATH=${directory}/azure-config.json`,
+    `AZURE_OUTPUTS_PATH=${directory}/azure-outputs.json`,
+  ]);
   const success = run(write.run, {
     AZURE_CONFIG_JSON: 'PRIVATE_CONFIG_MARKER',
     AZURE_OUTPUTS_JSON: 'PRIVATE_OUTPUT_MARKER',

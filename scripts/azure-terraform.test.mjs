@@ -168,6 +168,7 @@ test('saved plan binds inputs, tool policy, state and reviewed revision before e
         writeFileSync(
           args.find((arg) => arg.startsWith('-out=')).slice(5),
           'PRIVATE_PLAN',
+          { mode: 0o600 },
         );
       if (args[0] === 'show')
         return JSON.stringify({
@@ -850,6 +851,7 @@ test('initial foundation preview requires uncreated backend and cannot become an
         writeFileSync(
           args.find((arg) => arg.startsWith('-out=')).slice(5),
           'PRIVATE_PREVIEW',
+          { mode: 0o600 },
         );
       return JSON.stringify({ format_version: '1.2', resource_changes: [] });
     },

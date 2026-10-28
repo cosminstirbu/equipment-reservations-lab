@@ -4,7 +4,7 @@
   "milestone_checkpoint": {
     "date": "2026-10-28",
     "milestone": "M1",
-    "status": "needs_intervention_ci_setup_pass_fixture_modes_and_workflow_context_blocking",
+    "status": "m1_fixture_workflow_correctness_reviewed_ready_one_validation_pair",
     "source_ci": {
       "pr": "https://github.com/cosminstirbu/equipment-reservations-lab/pull/30",
       "head": "7d54eff5ae8cd5ad9831323555a6d129fdf6935a",
@@ -31,7 +31,7 @@
       "resources_provisioned": false
     },
     "limits_preserved": "Historical preparation9 and implementation18 retained; owner approved implementation limit18->21 with M1 authorization. M2 remains unauthorized.",
-    "remaining": "InstallerresolvedtargetLinux. Need ownerboundedfixture0600/imageworkflowvalidcontext correctnessbatch+validation approval; preserveprivacy/publishguards, no newinstallerrepairs. Nativequalification/mainqualifiedplan/M1actualfoundationaudit remainpending; no merge/apply."
+    "remaining": "Ownerapproved15active-minute fixture0600/imageworkflowstep-context batch +onecandidatevalidationpair. Implementfirst/scopedchecks/independentreview, preserveproductionprivacy andpublishguards. No newinstaller/Windowsrepair ormerge/apply; M1actualfoundationaudit pending."
   },
   "baseline_revision": "d1c7238345136340ddbf3a9454807cefffc43c32",
   "preparation_round": 9,

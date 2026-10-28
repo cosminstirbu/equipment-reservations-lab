@@ -14,10 +14,6 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 30
     environment: azure-images
-    env:
-      DOCKER_CONFIG: ${{ runner.temp }}/docker-azure-images
-      AZURE_CONFIG_PATH: ${{ runner.temp }}/azure-config.json
-      AZURE_OUTPUTS_PATH: ${{ runner.temp }}/azure-outputs.json
     permissions:
       contents: write
       actions: read
@@ -37,6 +33,10 @@ jobs:
         with:
           node-version: 24.15.0
       - run: npm ci
+      - name: Initialize private publication paths
+        shell: bash
+        run: |
+          printf '%s\n' "DOCKER_CONFIG=$RUNNER_TEMP/docker-azure-images" "AZURE_CONFIG_PATH=$RUNNER_TEMP/azure-config.json" "AZURE_OUTPUTS_PATH=$RUNNER_TEMP/azure-outputs.json" >> "$GITHUB_ENV"
       - name: Write restricted operation lease inputs
         env:
           AZURE_CONFIG_JSON: ${{ secrets.AZURE_CONFIG_JSON }}

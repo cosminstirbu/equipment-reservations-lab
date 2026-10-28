@@ -918,3 +918,28 @@ enablement/approval/OIDC guards, cleanup and privacy checks. Implement first and
 update relevant existing contracts; no universal test-first or new framework.
 New source work/publication requires an owner decision. No automatic repair or
 further validation attempt has started; M1 remains incomplete.
+
+Owner approved the bounded correctness batch on 2026-10-28: 15 active minutes of
+source work and one candidate validation pair. Scope is only the two fake saved-plan
+file modes and valid step-context initialization of the image workflow's fixed
+private paths, plus relevant existing contract adjustments. Implement first, scoped
+checks and independent review; no new test framework/test-first phase, production
+privacy relaxation, publication-guard change, installer repair, merge or apply.
+
+Correctness delta frozen against `7ad06d8`: two synthetic plan files now explicitly
+use 0600. Image workflow paths initialize through a valid early Bash/GITHUB_ENV
+step; existing materialization/cleanup and all publication conditions/identity gates
+remain unchanged. Existing assertions were updated after implementation; no new
+test framework or invented RED phase. Four focused checks passed, zero skipped,
+7.615 s, plus scoped formatting/ESLint/whitespace checks.
+
+Independent verdicts (verbatim):
+
+> Quality: pass for the frozen three-file delta on 7ad06d8. No findings.
+
+> Security: pass — scoped three-file correctness delta against 7ad06d8. No new findings.
+
+Quality independently passed four focused tests, zero skipped, 9.497 s and scoped
+checks. Security reused that evidence and inspected fixed-path quoting, order and
+unchanged private-file/publication controls. One candidate validation pair follows;
+no Azure publication, manual qualification or apply is authorized.
