@@ -433,3 +433,38 @@ Quality verdict (verbatim):
 Independent focused preview/revision/G3 tests passed 4/4, zero failed/skipped;
 four-file format-check, scoped ESLint and whitespace checks passed. No reviewer edits.
 Both source verdicts cover the exact reviewed delta; native/live M1 gates remain open.
+
+Round 20 committed locally as `ff87a21`. Private configuration pinned to that exact
+clean source; validation and both private-file ACL checks passed. Actual approved
+`executeInfrastructure('plan', ...)` preview stopped at the first Azure account read:
+exit 2, 680 ms, total 1.883 s. No Terraform plan, operation lease, remote publication
+or resource mutation occurred. Direct Azure CLI reads previously succeeded, so the
+remaining round 21 is scoped to the exact Windows CLI-wrapper invocation. No retry
+with weaker identity checks or alternate credentials is authorized.
+
+Round 21 causal wrapper repair frozen against `ff87a21` (infrastructure module and
+its test only). Real Windows cmd → controlled az.cmd fixture reproduced literal
+quotes in the account/show argv (RED 1 failed, zero skipped, 313.5 ms), without
+authentication/network. This excludes account configuration or PATH selection as
+the cause of that corruption. One Windows verbatim-argument option fixes the quoting;
+Windows percent expansion is rejected rather than silently interpreted. Quoted
+spaces/URL ampersands and Unix behavior are retained.
+
+The same regression passed 1/1, zero skipped, 548 ms. Actual original authenticated
+`runAzure(['account','show'])` then passed outside the sandbox in 1.278 s; only safe
+enabled/user status was exposed. Scoped formatting/ESLint/whitespace checks passed.
+No Terraform, preview identity policy, authority barrier or cloud resource changed.
+Independent delta reviews are pending before the preview retry.
+
+Round 21 independent verdicts (verbatim):
+
+> Quality: pass for the frozen two-file round-21 delta against ff87a21. No findings.
+
+> Security: pass — scoped round-21 Windows argv repair. No new findings.
+
+Quality independently passed the real Windows argv regression 1/1, zero skipped,
+521 ms; security passed it 1/1, zero skipped, 560 ms. Reviewers inspected current
+production callers (none needs percent-encoded arguments), unchanged Unix/private
+capture and retained argument allowlist. No reviewer edits. Source repair is accepted
+within scope; actual preview remains to be retried. Implementation limit 21/21 is
+now exhausted; another source repair requires a changed-strategy budget decision.

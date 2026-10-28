@@ -306,7 +306,9 @@ export function runAzure(args, { timeout = 30000 } = {}) {
     !Array.isArray(args) ||
     args.some(
       (arg) =>
-        typeof arg !== 'string' || !/^[A-Za-z0-9_./:=,@?&%+$ -]+$/.test(arg),
+        typeof arg !== 'string' ||
+        !/^[A-Za-z0-9_./:=,@?&%+$ -]+$/.test(arg) ||
+        (process.platform === 'win32' && arg.includes('%')),
     )
   )
     fail('Azure operation arguments are invalid.');
@@ -325,6 +327,7 @@ export function runAzure(args, { timeout = 30000 } = {}) {
     tool: 'az',
     output: 'private-capture',
     timeout: Math.min(30000, Math.max(1, timeout)),
+    windowsVerbatimArguments: process.platform === 'win32',
   });
   try {
     return JSON.parse(raw);

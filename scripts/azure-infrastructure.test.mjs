@@ -1146,3 +1146,50 @@ test('public bootstrap rejects operational snapshot wrappers as raw Terraform in
     rmSync(directory, { recursive: true, force: true });
   }
 });
+
+// Real cmd.exe/az.cmd parsing stays in this boundary; the synthetic CLI emits
+// argv only, so no Azure credentials, configuration or network are involved.
+test(
+  'Windows Azure CLI preserves subcommands and quoted argument boundaries through actual cmd',
+  { skip: process.platform !== 'win32' },
+  async (t) => {
+    const { runAzure } = await import('./azure-infrastructure.mjs');
+    const directory = mkdtempSync(join(tmpdir(), 'azure argv-'));
+    t.after(() => rmSync(directory, { recursive: true, force: true }));
+    writeFileSync(
+      join(directory, 'az.cmd'),
+      `@"${process.execPath}" "%~dp0argv.mjs" %*\r\n`,
+    );
+    writeFileSync(
+      join(directory, 'argv.mjs'),
+      'process.stdout.write(JSON.stringify(process.argv.slice(2)));',
+    );
+    const previousPath = process.env.PATH;
+    process.env.PATH = `${directory};${previousPath}`;
+    try {
+      assert.throws(
+        () => runAzure(['account', 'show', '%SYNTHETIC_EXPANSION%']),
+        /arguments are invalid/,
+      );
+      for (const args of [
+        ['account', 'show'],
+        ['ad', 'group', 'show', '--group', 'synthetic group'],
+        [
+          'rest',
+          '--method',
+          'get',
+          '--url',
+          'https://example.invalid/path?one=1&two=2',
+        ],
+      ])
+        assert.deepEqual(runAzure(args), [
+          ...args,
+          '--output',
+          'json',
+          '--only-show-errors',
+        ]);
+    } finally {
+      process.env.PATH = previousPath;
+    }
+  },
+);
