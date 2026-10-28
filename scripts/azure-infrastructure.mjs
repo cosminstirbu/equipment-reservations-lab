@@ -1031,6 +1031,7 @@ export async function preflight(
   config,
   {
     run = runAzure,
+    request = globalThis.fetch,
     prices,
     stage = 'environment',
     foundation,
@@ -1054,6 +1055,104 @@ export async function preflight(
     return run(args, { timeout: Math.min(30000, deadline - Date.now()) });
   };
   const scope = `/subscriptions/${config.subscriptionId}${stage === 'environment' ? `/resourceGroups/${foundation.workload_resource_group_name}` : ''}`;
+  const regionalSkus = async () => {
+    const invalid = () =>
+      fail('Regional Azure SKU discovery is incomplete or invalid.');
+    const base = new URL(
+      `https://management.azure.com/subscriptions/${config.subscriptionId}/providers/Microsoft.Compute/skus`,
+    );
+    const filter = `location eq '${config.region}'`;
+    base.searchParams.set('api-version', '2021-07-01');
+    base.searchParams.set('$filter', filter);
+    const token = read([
+      'account',
+      'get-access-token',
+      '--resource',
+      'https://management.azure.com/',
+      '--subscription',
+      config.subscriptionId,
+    ]);
+    if (typeof token?.accessToken !== 'string' || !token.accessToken) invalid();
+    const seen = new Set();
+    const selected = [];
+    let next = base.href;
+    while (next !== undefined) {
+      let url;
+      try {
+        url = new URL(next);
+      } catch {
+        invalid();
+      }
+      if (
+        url.origin !== base.origin ||
+        url.pathname !== base.pathname ||
+        url.username ||
+        url.password ||
+        url.hash ||
+        url.searchParams.get('api-version') !== '2021-07-01' ||
+        url.searchParams.getAll('api-version').length !== 1 ||
+        url.searchParams.get('$filter') !== filter ||
+        url.searchParams.getAll('$filter').length !== 1 ||
+        seen.has(url.href) ||
+        seen.size >= 100 ||
+        Date.now() >= deadline
+      )
+        invalid();
+      seen.add(url.href);
+      let body;
+      try {
+        const response = await request(url, {
+          headers: { Authorization: `Bearer ${token.accessToken}` },
+          redirect: 'error',
+          signal: globalThis.AbortSignal.timeout(
+            Math.min(30000, deadline - Date.now()),
+          ),
+        });
+        if (!response.ok)
+          fail(
+            `Regional Azure SKU discovery failed; HTTP status ${response.status}.`,
+          );
+        body = await response.json();
+      } catch (error) {
+        if (error instanceof OperationalFailure) throw error;
+        fail(
+          'Regional Azure SKU discovery failed; private transport details suppressed.',
+        );
+      }
+      if (!body || !Array.isArray(body.value)) invalid();
+      for (const sku of body.value) {
+        if (
+          !sku ||
+          typeof sku.name !== 'string' ||
+          !sku.name ||
+          typeof sku.resourceType !== 'string' ||
+          !sku.resourceType ||
+          !Array.isArray(sku.locations) ||
+          !sku.locations.length ||
+          sku.locations.some(
+            (location) => typeof location !== 'string' || !location,
+          ) ||
+          !Array.isArray(sku.restrictions)
+        )
+          invalid();
+        if (
+          sku.resourceType === 'virtualMachines' &&
+          sku.name === config.nodeVmSize
+        ) {
+          if (!sku.locations.includes(config.region) || sku.restrictions.length)
+            invalid();
+          selected.push(sku);
+        }
+      }
+      if (body.nextLink === undefined || body.nextLink === null)
+        next = undefined;
+      else if (typeof body.nextLink === 'string' && body.nextLink)
+        next = body.nextLink;
+      else invalid();
+    }
+    if (selected.length !== 1 || Date.now() >= deadline) invalid();
+    return selected;
+  };
   const data = {
     account: read(['account', 'show']),
     versions: read([
@@ -1064,17 +1163,7 @@ export async function preflight(
       '--subscription',
       config.subscriptionId,
     ]),
-    skus: read([
-      'vm',
-      'list-skus',
-      '--location',
-      config.region,
-      '--resource-type',
-      'virtualMachines',
-      '--all',
-      '--subscription',
-      config.subscriptionId,
-    ]),
+    skus: await regionalSkus(),
     usage: read([
       'vm',
       'list-usage',

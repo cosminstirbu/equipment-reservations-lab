@@ -1193,3 +1193,123 @@ test(
     }
   },
 );
+
+// Public preflight keeps configuration, quota, permission and cost checks real.
+// Only CLI reads and ARM HTTP are doubled; resourceSkus follows the M0-reviewed
+// 2021-07-01 value/nextLink contract. No fixture claims actual SKU allocation.
+test('preflight uses complete bounded regional ARM SKU discovery and rejects unsafe or incomplete responses', async () => {
+  const { preflight } = await import('./azure-infrastructure.mjs');
+  const config = validConfig();
+  const data = capabilities(config);
+  const sku = { ...data.skus[0], resourceType: 'virtualMachines' };
+  const start = new URL(
+    `https://management.azure.com/subscriptions/${config.subscriptionId}/providers/Microsoft.Compute/skus`,
+  );
+  start.searchParams.set('api-version', '2021-07-01');
+  start.searchParams.set('$filter', `location eq '${config.region}'`);
+  const next = new URL(start);
+  next.searchParams.set('$skiptoken', 'synthetic');
+  const calls = [];
+  const run = (args, options) => {
+    calls.push(args.slice(0, 2).join(' '));
+    assert.ok(options.timeout > 0 && options.timeout <= 30000);
+    switch (args.slice(0, 2).join(' ')) {
+      case 'account show':
+        return data.account;
+      case 'account get-access-token':
+        return { accessToken: 'SYNTHETIC_PRIVATE_TOKEN' };
+      case 'aks get-versions':
+        return data.versions;
+      case 'vm list-usage':
+        return data.usage;
+      case 'ad group':
+        return data.operatorGroup;
+      case 'rest --method':
+        return args.at(-1).includes('graph.microsoft')
+          ? data.directoryRoles
+          : { value: data.permissions };
+      default:
+        assert.fail('Unexpected broad CLI SKU call');
+    }
+  };
+  const invokePreflight = (request) =>
+    preflight(config, {
+      stage: 'foundation-bootstrap',
+      run,
+      request,
+      prices: [
+        { id: 'synthetic', rate: 1, runningQuantity: 1, retainedQuantity: 1 },
+      ],
+    });
+  const requests = [];
+  const result = await invokePreflight(async (url, options) => {
+    requests.push(String(url));
+    assert.equal(
+      options.headers.Authorization,
+      'Bearer SYNTHETIC_PRIVATE_TOKEN',
+    );
+    assert.equal(options.redirect, 'error');
+    assert.equal(options.signal.aborted, false);
+    assert.equal(
+      new URL(url).searchParams.get('$filter'),
+      `location eq '${config.region}'`,
+    );
+    return {
+      ok: true,
+      status: 200,
+      json: async () =>
+        requests.length === 1
+          ? { value: [], nextLink: next.href }
+          : { value: [sku] },
+    };
+  });
+  assert.equal(result.capabilities.nodes, 2);
+  assert.deepEqual(requests, [start.href, next.href]);
+  assert.equal(calls.includes('vm list-skus'), false);
+  for (const body of [
+    { value: [] },
+    { value: [sku, sku] },
+    { value: [{ ...sku, restrictions: [{ type: 'Location' }] }] },
+    { value: [{ ...sku, locations: ['eastus'] }] },
+    { value: [{ ...sku, restrictions: null }] },
+    { value: [null] },
+    { value: 'invalid' },
+    { value: [sku], nextLink: 'https://foreign.invalid/page' },
+    {
+      value: [sku],
+      nextLink: start.href.replace(
+        config.subscriptionId,
+        'foreign-subscription',
+      ),
+    },
+    { value: [sku], nextLink: start.href },
+    { value: [sku], nextLink: 1 },
+  ])
+    await assert.rejects(
+      () =>
+        invokePreflight(async () => ({
+          ok: true,
+          status: 200,
+          json: async () => body,
+        })),
+      /SKU/i,
+    );
+  for (const request of [
+    async () => ({ ok: false, status: 403 }),
+    async () => {
+      throw new Error('SYNTHETIC_PRIVATE_TRANSPORT');
+    },
+    async () => ({
+      ok: true,
+      status: 200,
+      json: async () => {
+        throw new Error('SYNTHETIC_PRIVATE_PAYLOAD');
+      },
+    }),
+  ])
+    await assert.rejects(
+      () => invokePreflight(request),
+      (error) =>
+        /SKU/i.test(error.message) && !/SYNTHETIC_PRIVATE/.test(error.message),
+    );
+});

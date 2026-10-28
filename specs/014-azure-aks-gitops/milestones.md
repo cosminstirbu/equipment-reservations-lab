@@ -499,3 +499,35 @@ one unchanged real-preview retry after a local checkpoint commit. This is a conc
 API strategy change, not more samples of the stalled CLI call. No provisioning,
 push/merge, permission expansion or timeout inflation is requested. Owner approval
 is required by the existing bounded-execution protocol before dependent repair.
+
+Owner approved this exact round-22 strategy on 2026-10-28. Started 09:51 UTC;
+20-active-minute checkpoint, one actual-preview retry after independent review and
+local commit. Existing guides/reviews are reused; one coder owns the SKU read and
+focused contracts, two reviewers assess the frozen delta. No new cloud mutation,
+permission or timeout change is approved.
+
+Round 22 frozen: infrastructure module and focused tests only. New regional ARM
+discovery uses existing private CLI token acquisition and standard fetch, exact
+subscription/resourceSkus/API/filter pagination, complete response checks and exact
+single configured SKU selection. Existing total 120 s/per-request maximum 30 s
+budgets and quota/price/permission/preview/apply gates remain unchanged.
+
+Verification choice under current guides: targeted regression for the changed
+provider boundary, not a universal test-first requirement. Real preflight,
+configuration/capability/cost logic remain in the test; CLI and ARM are narrow external
+boundaries with faithful two-page response and failure fixtures. RED caught the old
+broad CLI call (one failure, zero skipped, 172.8 ms); four focused tests then passed,
+zero skipped, 170.4 ms. Scoped two-file format-check, ESLint and whitespace checks
+passed. No provider/native runs by coder. Independent delta reviews pending.
+
+Round 22 independent verdicts (verbatim):
+
+> Quality: pass for round 22’s frozen two-file delta on e933f80. No findings.
+
+> Security: pass — scoped round-22 regional SKU discovery delta. No new findings.
+
+Quality passed four focused tests, zero failed/skipped, 190 ms, plus scoped
+formatting/ESLint/whitespace checks. Security passed the focused complete/paginated
+SKU regression 1/1, zero skipped, 165 ms, inspecting token/header privacy, forbidden
+redirects and same-origin/subscription/path/API/filter checks before every request.
+No reviewer edits. Actual provider/preview qualification remains pending.
