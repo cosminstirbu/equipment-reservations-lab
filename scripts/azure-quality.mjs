@@ -153,6 +153,8 @@ export function verifiedSchemas(context = qualityContext()) {
 
 export async function prepareTools(context = qualityContext()) {
   mkdirSync(context.toolsDirectory, { recursive: true });
+  const downloadsDirectory = resolve(context.toolsDirectory, 'downloads');
+  mkdirSync(downloadsDirectory, { recursive: true });
   for (const name of [
     'terraform',
     'tflint',
@@ -171,7 +173,7 @@ export async function prepareTools(context = qualityContext()) {
     )
       continue;
     const archive = resolve(
-      context.toolsDirectory,
+      downloadsDirectory,
       new URL(pin.url).pathname.split('/').at(-1),
     );
     if (!existsSync(archive) || fileHash(archive) !== pin.archiveSha256) {

@@ -18,8 +18,9 @@ authorization and required Linux checks, then review a fresh main-qualified plan
 The local preview cannot be promoted into apply. Merge/apply remain unauthorized.
 
 Publication update: owner authorized branch push and draft PR. [PR 30](https://github.com/cosminstirbu/equipment-reservations-lab/pull/30)
-is open at `267309f`. Both source CI runs failed during setup; required validation
-did not run. Merge/apply remain unauthorized. See the source CI checkpoint below.
+is now at `2bfc064`. Classification and existing local Kubernetes verification pass;
+source/tooling validation remains blocked during setup. A reviewed local installer
+path fix is unpublished. Merge/apply remain unauthorized. See the CI batch result.
 
 ## Outcomes and gates
 
@@ -845,3 +846,44 @@ Both independently passed nine workflow contracts and inspected preserved permis
 checksum/private-output boundaries and pending manual qualification. No reviewer
 edits, native fixtures or workflow runs. Publish one candidate for the two authorized
 automatic source workflow runs; stop at the agreed budget/result checkpoint.
+
+## CI batch result
+
+Published reviewed candidate `2bfc06470d8f5e4ac8b2c6225484c1b0bc05177a` once,
+starting exactly the two authorized workflows. No reruns or manual dispatch occurred.
+
+- [PR 40682081449](https://github.com/cosminstirbu/equipment-reservations-lab/actions/runs/40682081449):
+  classification passed. Quality failed at tool preparation; downstream source/app
+  quality checks were not reached. Existing local-013 Kubernetes verification passed,
+  including actual isolated deployment and real deployed behavior. Summary failed
+  consequentially; the PR run is failure, not partial acceptance.
+- [Azure source 40682081385](https://github.com/cosminstirbu/equipment-reservations-lab/actions/runs/40682081385):
+  infra:tools failed with only the safe generic quality-operation message. Downstream
+  source checks/tests were skipped. Logs do not establish the new underlying cause.
+
+Within the original time budget, source inspection and a disposable filesystem
+probe confirmed a deterministic Linux path bug: downloaded archive `tools/kubectl`
+collides with the required executable parent `tools/kubectl/` (EEXIST). This is a
+confirmed source defect, not a proven attribution of the coarse CI error. The
+local-only three-line fix separates `tools/downloads/` from installed paths without
+changing URL basenames, checksums, private output, limits or verified-tool reuse.
+
+All 16 pinned platform path layouts passed filesystem smoke; existing quality tests
+passed 13/13, zero skipped. Scoped formatting/ESLint/whitespace checks passed. Delta
+quality/security verdicts (verbatim):
+
+> Quality: Local-only downloads-directory delta verdict PASS; no findings.
+
+> Security: pass — three-line download-directory delta against 2bfc064. No new findings.
+
+Quality independently checked all 16 paths (zero collisions), passed 13/13 quality
+tests in 14.409 s, and inspected whitespace. Security reused those checks and
+inspected unchanged integrity/privacy boundaries. Linux execution of the fix remains
+unqualified. It is committed locally, unpublished; no third workflow was triggered.
+
+**Checkpoint:** two-run allowance exhausted. The reviewed local fix is ready for
+one additional candidate validation attempt (the same two automatic workflows),
+requiring owner authorization before push. No further source changes are proposed
+in that attempt. If tool preparation still fails, stop installer repairs and
+present a materially different tool-setup strategy, rather than automatically
+extending the loop. Source-only/provider/full-feature/M1 gates remain honestly pending.

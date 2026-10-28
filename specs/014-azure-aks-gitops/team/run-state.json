@@ -4,19 +4,20 @@
   "milestone_checkpoint": {
     "date": "2026-10-28",
     "milestone": "M1",
-    "status": "m1_ci_scope_setup_reviewed_candidate_ready_two_workflow_runs_pending",
+    "status": "needs_intervention_ci_two_runs_used_reviewed_local_path_fix_unpublished",
     "source_ci": {
       "pr": "https://github.com/cosminstirbu/equipment-reservations-lab/pull/30",
-      "head": "267309f69eb73af93db30d8319a38ed5b5365e22",
-      "pr_validation": "40679360066 failedclassifier missing spectral-parsers; downstream checks skipped",
-      "azure_source": "40679360084 failedinfra-tools verifiedtar extraction exit2; validation/tests skipped",
-      "repairs_or_reruns": false
+      "head": "2bfc06470d8f5e4ac8b2c6225484c1b0bc05177a",
+      "pr_validation": "40682081449 FAILURE: classifierPASS, qualitytoolprepFAIL, local013Kube/deployedbehaviorPASS",
+      "azure_source": "40682081385 FAILURE generictoolprep; sourcevalidation/tests skipped; underlyingcause unproven",
+      "reruns_or_manual_dispatch": false,
+      "local_unpublished_fix": "Reviewed downloads-directory separation; existing13qualitytests and16pathsmoke pass; targetLinux pending"
     },
     "m0_owner_accepted": "2026-10-28",
     "m1_owner_authorized": "2026-10-28",
-    "active_batch": "Rounds19-21 sourcebatches passed independentreviews, locally committed5f684cf/ff87a21/b77ed18. Actualpreview now fails broadCLI VM SKU enumeration30s; diagnostic fixedlabelsconfirmed. No savedplan or provisioning. Limit21exhausted; proposed boundedARMqueryrepair requires owner21->22 extension.",
+    "active_batch": "Approved CI scope/setup batch stopped at2workflowruns: sourceprepfails, classifier/local013Kube pass. Local reviewed archivepathfix unpublished awaiting CI allowance. Earlier actual foundationpreview passed; no foundation apply/audit acceptance yet.",
     "record": "../milestones.md",
-    "source_revision": "b2b0064",
+    "source_revision": "2bfc06470d8f5e4ac8b2c6225484c1b0bc05177a",
     "owner_checkpoint_after_each_milestone": true,
     "next_milestone_authorized": false,
     "quota_requests": {
@@ -29,7 +30,7 @@
       "resources_provisioned": false
     },
     "limits_preserved": "Historical preparation9 and implementation18 retained; owner approved implementation limit18->21 with M1 authorization. M2 remains unauthorized.",
-    "remaining": "CI split/npmclassification/LinuxZIPfix independentlyreviewedpass; quality13/workflow9 contracts pass. Publishonecandidate for2automaticworkflowruns max, no reruns/manualdispatch. Mixedcandidate stillfullapp/local013 checks. Nativeprovider/manual qualificationpending; no merge/apply; M1actualfoundation/audit pending."
+    "remaining": "Twoauthorisedruns complete2bfc064, sourceprepstillFAIL butclassifier/local013KubePASS. Reviewedlocal3line downloadsdirfix removes confirmedkubectlpathcollision;13qualitytests+16pathsmokePASS, unpublished. Need owneradditionalcandidatevalidation(twoautomaticworkflows) beforepush; no more sourcechangesproposed. Nativequalification/M1actualfoundationaudit pending; no merge/apply."
   },
   "baseline_revision": "d1c7238345136340ddbf3a9454807cefffc43c32",
   "preparation_round": 9,
