@@ -18,9 +18,9 @@ authorization and required Linux checks, then review a fresh main-qualified plan
 The local preview cannot be promoted into apply. Merge/apply remain unauthorized.
 
 Publication update: owner authorized branch push and draft PR. [PR 30](https://github.com/cosminstirbu/equipment-reservations-lab/pull/30)
-is now at `2bfc064`. Classification and existing local Kubernetes verification pass;
-source/tooling validation remains blocked during setup. A reviewed local installer
-path fix is unpublished. Merge/apply remain unauthorized. See the CI batch result.
+is now at `7d54eff`. Installer, Terraform checks, classification and existing local
+Kubernetes verification pass. Two source-test fixture modes and an image-workflow
+context issue block CI. Merge/apply remain unauthorized. See the latest validation result.
 
 ## Outcomes and gates
 
@@ -887,3 +887,34 @@ requiring owner authorization before push. No further source changes are propose
 in that attempt. If tool preparation still fails, stop installer repairs and
 present a materially different tool-setup strategy, rather than automatically
 extending the loop. Source-only/provider/full-feature/M1 gates remain honestly pending.
+
+## Additional validation result: 7d54eff
+
+Owner approved one further validation pair. Published exact
+`7d54eff5ae8cd5ad9831323555a6d129fdf6935a`; no further source repair, rerun, manual
+dispatch, merge or apply occurred.
+
+- [PR 40684625248](https://github.com/cosminstirbu/equipment-reservations-lab/actions/runs/40684625248)
+  failed; classification and existing local-013 Kubernetes verification passed.
+- [Azure source 40684625235](https://github.com/cosminstirbu/equipment-reservations-lab/actions/runs/40684625235)
+  failed. Tool preparation, Terraform source gates and native Terraform contracts
+  passed on Linux. Focused suite: 194 total, 189 passed, two failed, three skipped.
+  Manual provider qualification remains pending.
+- Both failures are azure-terraform.test.mjs saved-plan association and preview
+  non-promotability cases. Their fake plan writers omit mode 0600; Linux rejects
+  those files through the existing production privacy check. Fix fixture fidelity,
+  not that check. No test assertion or production source was changed here.
+- GitHub also emitted [azure-images validation 40684616072](https://github.com/cosminstirbu/equipment-reservations-lab/actions/runs/40684616072),
+  a workflow-file failure with zero jobs, not a manually dispatched publication.
+  Exact server schema message is unavailable. Source contains three runner.temp
+  expressions in job env; [GitHub's context table](https://docs.github.com/en/actions/reference/workflows-and-actions/contexts)
+  excludes runner there and permits it in steps. This source problem is confirmed
+  independently; the exact server error was not recovered. queue:max is supported.
+
+Installer setup now works on target Linux; stop installer repairs. Proposed next
+bounded scope is only explicit private mode on the two fake plan files and fixed
+image-workflow path initialization in a valid runner/step context. Preserve main/
+enablement/approval/OIDC guards, cleanup and privacy checks. Implement first and
+update relevant existing contracts; no universal test-first or new framework.
+New source work/publication requires an owner decision. No automatic repair or
+further validation attempt has started; M1 remains incomplete.

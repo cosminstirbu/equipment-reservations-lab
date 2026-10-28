@@ -4,20 +4,21 @@
   "milestone_checkpoint": {
     "date": "2026-10-28",
     "milestone": "M1",
-    "status": "needs_intervention_ci_two_runs_used_reviewed_local_path_fix_unpublished",
+    "status": "needs_intervention_ci_setup_pass_fixture_modes_and_workflow_context_blocking",
     "source_ci": {
       "pr": "https://github.com/cosminstirbu/equipment-reservations-lab/pull/30",
-      "head": "2bfc06470d8f5e4ac8b2c6225484c1b0bc05177a",
-      "pr_validation": "40682081449 FAILURE: classifierPASS, qualitytoolprepFAIL, local013Kube/deployedbehaviorPASS",
-      "azure_source": "40682081385 FAILURE generictoolprep; sourcevalidation/tests skipped; underlyingcause unproven",
+      "head": "7d54eff5ae8cd5ad9831323555a6d129fdf6935a",
+      "pr_validation": "40684625248 FAILURE; classifier/local013KubePASS",
+      "azure_source": "40684625235 FAILURE; tools/TFsource/nativecontractsPASS; focused189pass2fail3skip (2planfixture filemodes)",
+      "extra_workflow_validation": "40684616072 azure-images file issue,0jobs; servermessageunknown; sourcejob-levelrunnercontextinvalid",
       "reruns_or_manual_dispatch": false,
-      "local_unpublished_fix": "Reviewed downloads-directory separation; existing13qualitytests and16pathsmoke pass; targetLinux pending"
+      "published_fix": "Downloads-directory separation7d54eff validated by targetLinux successful toolpreparation"
     },
     "m0_owner_accepted": "2026-10-28",
     "m1_owner_authorized": "2026-10-28",
-    "active_batch": "Approved CI scope/setup batch stopped at2workflowruns: sourceprepfails, classifier/local013Kube pass. Local reviewed archivepathfix unpublished awaiting CI allowance. Earlier actual foundationpreview passed; no foundation apply/audit acceptance yet.",
+    "active_batch": "Approved additionalvalidationpair completed7d54eff: installer/TFgatesPASS, 2fixturemodefailures+imageworkflowcontext issue remain. No furthercodechange/rerun/dispatch. Earlier actualfoundationpreviewpassed; noapply/auditacceptance.",
     "record": "../milestones.md",
-    "source_revision": "2bfc06470d8f5e4ac8b2c6225484c1b0bc05177a",
+    "source_revision": "7d54eff5ae8cd5ad9831323555a6d129fdf6935a",
     "owner_checkpoint_after_each_milestone": true,
     "next_milestone_authorized": false,
     "quota_requests": {
@@ -30,7 +31,7 @@
       "resources_provisioned": false
     },
     "limits_preserved": "Historical preparation9 and implementation18 retained; owner approved implementation limit18->21 with M1 authorization. M2 remains unauthorized.",
-    "remaining": "Twoauthorisedruns complete2bfc064, sourceprepstillFAIL butclassifier/local013KubePASS. Reviewedlocal3line downloadsdirfix removes confirmedkubectlpathcollision;13qualitytests+16pathsmokePASS, unpublished. Need owneradditionalcandidatevalidation(twoautomaticworkflows) beforepush; no more sourcechangesproposed. Nativequalification/M1actualfoundationaudit pending; no merge/apply."
+    "remaining": "InstallerresolvedtargetLinux. Need ownerboundedfixture0600/imageworkflowvalidcontext correctnessbatch+validation approval; preserveprivacy/publishguards, no newinstallerrepairs. Nativequalification/mainqualifiedplan/M1actualfoundationaudit remainpending; no merge/apply."
   },
   "baseline_revision": "d1c7238345136340ddbf3a9454807cefffc43c32",
   "preparation_round": 9,
