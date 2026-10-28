@@ -36,6 +36,20 @@
 
 **Scale/Scope**: [domain-specific, e.g., 10k users, 1M LOC, 50 screens or NEEDS CLARIFICATION]
 
+## Delivery and verification profile
+
+<!-- Keep this concise; link decisions/evidence instead of duplicating policy. -->
+
+- **Threat model and scope**: [Trusted identities, compromise assumptions, first usable outcome,
+  deferred requirements requiring owner agreement; justify custom machinery over platform controls.]
+- **Feasibility evidence**: [Quota/SKU, provider and identity capability checks; authorized spike
+  scope/cost/cleanup where needed before substantial implementation.]
+- **Milestones and budget**: [Usable deliverable, acceptance evidence and time/token/tool budget
+  per milestone; follow the team protocol's scope and bounded-execution rules.]
+- **Verification**: [Select artifact/risk profiles from docs/engineering/testing.md; name the
+  supported runner, expensive-fixture capacity, incremental checks and milestone gates.]
+- **Reviews**: [Initial design/security review, integrated milestone reviews and targeted deltas.]
+
 ## Constitution Check
 
 *GATE: Must pass before Phase 0 research. Re-check after Phase 1 design.*

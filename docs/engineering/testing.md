@@ -1,10 +1,64 @@
 # Testing
 
-Applies to client and backend changes. This guide implements the constitution's
-[test-first](../../.specify/memory/constitution.md#ii-test-first-development),
+Applies to application, tooling and infrastructure verification. This guide implements the constitution's
+[proportionate verification](../../.specify/memory/constitution.md#ii-proportionate-verification),
 [public-interface](../../.specify/memory/constitution.md#iii-public-interface-behavior-tests), and
 [test-feedback](../../.specify/memory/constitution.md#iv-useful-maintainable-test-feedback) principles
 through concrete test boundaries, provider setup, and review practices.
+
+## Verification profile
+
+Before implementation, select the applicable row and record the required evidence in
+the existing plan or task response. Mixed changes take the union of relevant checks.
+
+| Change | Development approach | Acceptance evidence |
+| --- | --- | --- |
+| Application behavior | Test-first | Behavior tests at the application boundary and applicable application gates |
+| Tooling output, including sensitive-output handling | No test-first requirement | After implementation, targeted automated tests only for sensitive-output paths; ordinary output needs inspection or a manual smoke check |
+| Custom authorization, credential, encryption, recovery or destructive logic | Test-first, including meaningful negative cases | Focused behavior tests, security review and actual provider checks where authority or recovery is claimed |
+| Terraform, Kubernetes and workflow declarations | Implementation may precede checks | Native formatting/validation, applicable lint/security checks, targeted contracts for nontrivial logic, and deployment verification |
+| Thin wrappers delegating to a tested shared runner | Implementation may precede checks | Argument/result mapping tests where useful and a smoke check; reuse the runner's lifecycle/privacy evidence |
+| Feasibility spike | Timeboxed exploration | Recorded hypothesis, result, cost/cleanup boundary and next decision; production checks follow before acceptance |
+| Provider/runtime failure | Bounded diagnosis | Reproducer and supported-runner qualification; add a regression when changing behavior owned by this repository |
+| Documentation or layout only | Review and applicable static checks | Links, consistency, readability and formatting; no invented behavior tests |
+
+Custom executable logic remains in its risk category when embedded in Terraform templates,
+scripts or test helpers. A declaration invoking dangerous operations still requires actual
+destructive-flow verification. Passing mock contracts does not establish live authorization.
+The tooling-output row governs output handling even when it filters sensitive content.
+Underlying authorization, credential-management, encryption, recovery and destructive logic
+remain in their own categories. The tooling guide owns the [output-test scope](tooling.md#cleanup-and-verification).
+
+Custom high-risk logic makes or enforces security decisions, manages credential/key
+lifecycles, or coordinates recovery/destructive decisions. Merely using an established
+credential client, referencing a secret or declaring a built-in role binding does not by
+itself put a change in that category.
+
+| Example | Classification |
+| --- | --- |
+| Assign an existing Azure built-in role to a workload identity in Terraform | Declaration: implement then run native checks and applicable IAM review/provider validation |
+| Implement an ABAC evaluator, custom credential/key lifecycle or restore/rollback decision logic | Custom high-risk logic: test-first with relevant negative cases |
+| Filter or redact sensitive CLI output | Tooling-output exception: targeted tests after implementation |
+
+## Infrastructure execution profile
+
+Infrastructure plans name the supported runner, incremental commands and milestone gates.
+Default to Linux CI for native Kubernetes/provider acceptance. Windows/macOS local runs
+provide feedback; requiring them as acceptance platforms must be an explicit plan decision.
+A local environment failure is reported as blocked/unavailable, never silently passed or
+used to bypass the designated runner's required gate.
+
+Run static checks and focused logic tests during editing. Run affected provider scenarios
+after relevant integration changes, and the declared complete infrastructure lane at milestone
+handoff. Reuse unchanged evidence; a documentation change does not require cluster creation.
+Follow the team protocol's [investigation budget](../agent-team/protocol.md#bounded-execution)
+when provider setup fails.
+
+Set a capacity budget for expensive fixtures. One cluster creation at a time is a valid
+default on a small runner. Reuse clusters for compatible scenarios where isolation is sound;
+keep incompatible cluster-wide policies separate. Backend test parallelism rules apply to
+backend suites, not automatically to infrastructure lanes. Preserve deliberate concurrency
+tests for locks, leases and other concurrent contracts; capacity limits must not weaken them.
 
 ## Choose the boundary
 
@@ -29,14 +83,15 @@ Before adding or changing tests, check the existing suite and extend or consolid
 that already cover the intended behavior. Record a concise design rationale in the existing
 plan or review record; for ordinary work, use the task response or a comment where the
 boundary choice is non-obvious. Group cases that share a behavior and boundary. The
-record must identify:
+record must identify the following once per cohesive behavior group; reference unchanged
+shared-fixture evidence rather than repeating it for each case:
 
 - The behavior and contractual outcome being verified, and the stable public entry point.
 - The real internal collaborators retained by the test.
 - Each double, the external responsibility it replaces, and the provider contract evidence
   establishing its fidelity. Classify the responsibility rather than assuming that a
   public interface is an external boundary.
-- For each solitary test, the specific reason isolation is necessary under Principle III.
+- For a group using solitary tests, the shared reason isolation is appropriate under Principle III.
   Deterministic parsing or validation algorithms can justify this boundary; public
   visibility, convenience, or an uncovered line alone cannot.
 - The observable result or contractual effect whose regression makes the test fail.
@@ -63,12 +118,12 @@ rewinds, private SQL text, or an incidental internal call sequence.
 
 ### Review evidence
 
-For each added or changed test, review the design record against the actual fixture and
-assertions. Verify that the double is faithful at the stated boundary, that claimed
-production collaborators remain real, and that failures occur at the stated resource.
-Check the reason for each solitary case and whether an internal refactor would require
-changing its behavioral expectations. Use the existing review process and preserve
-independent reviewer ownership where required.
+For each changed behavior group, review its shared design record against the fixtures and
+individual test assertions. Verify double fidelity, real claimed collaborators, failures at
+the stated resource, and the group's isolation rationale. Check whether internal refactoring
+would require changing behavior expectations. Add a case-specific rationale only when that
+case introduces a different boundary or assumption; separate per-test records are not required.
+Use the existing review process and preserve independent reviewer ownership where required.
 
 ## Database fixtures
 
@@ -82,8 +137,9 @@ Source: [Testcontainers for .NET](https://dotnet.testcontainers.org/).
 
 ## Keep tests useful
 
-For new behavior or a regression fix, retain the failing test command/result before
-implementation as evidence for Principle II. During refactoring, retain the relevant
+For categories requiring test-first, retain the intended failing command/result before
+implementation as evidence for Principle II. For other categories, record the selected
+profile and verification result. During refactoring, retain the relevant
 behavior expectations and rerun the affected tests.
 
 Control time and randomness at boundaries; avoid timing sleeps and shared mutable state.
@@ -506,7 +562,7 @@ a process handle alone does not terminate its child process.
 
 ### Verification and review evidence
 
-For a lifecycle repair, exercise the policy with controlled time/failures where useful,
+For a backend lifecycle repair, exercise the policy with controlled time/failures where useful,
 then run the actual affected provider startup/restart scenario and the complete suite
 at its normal concurrency. Helper tests do not establish real-provider readiness.
 Report unavailable prerequisites and platform-specific skips separately; Linux CI

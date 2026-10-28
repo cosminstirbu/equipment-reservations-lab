@@ -1,13 +1,3 @@
-<!--
-Sync Impact Report (temporary; remove before committing this amendment)
-Version change: 1.1.0 -> 1.1.1 (clarification of existing compliance obligations).
-Modified principles: none; Principles I–VI and feature acceptance gates are unchanged.
-Modified sections: Governance clarifies artifact ownership and reference-based enforcement.
-Related documents: AGENTS.md; engineering index and guides; team protocol.
-Approval: human owner requested alignment with the agreed documentation model on 2026-10-19.
-Impact: future work uses explicit discovery and review steps; historical feature evidence is preserved.
-Follow-up TODOs: none.
--->
 # Equipment Reservations Constitution
 
 ## Core Principles
@@ -26,21 +16,40 @@ behavior. Naming and structure MUST carry routine explanation.
 
 Reference: [Beck Design Rules](https://martinfowler.com/bliki/BeckDesignRules.html).
 
-### II. Test-First Development
+### II. Proportionate Verification
 
-New behavior and behavior changes MUST begin with an automated test that fails for the
-intended reason before implementation. Bug fixes MUST begin with a failing regression
-test. Developers MUST implement the behavior, obtain a passing test, and refactor while
-keeping relevant tests passing. Behavior-preserving refactoring MUST retain passing
-behavior tests; it does not require inventing a new behavior or a failing test.
+Verification MUST match the risk and artifact type. Application behavior and custom
+executable logic controlling authorization, credentials, encryption, recovery or destructive
+operations MUST begin with an automated test that fails for the intended reason. Fixes to
+that owned behavior MUST begin with a failing regression test. Implement the behavior,
+obtain a passing test, and refactor while retaining relevant behavior tests.
 
-Tests MUST provide frequent feedback during development and run without human intervention.
-Required tests MUST pass before a change is considered complete.
+Declarative infrastructure, deployment configuration and thin wrappers around established
+tools MAY be implemented before verification. Their applicable static checks, native
+contracts and deployment checks MUST pass before acceptance. Classification follows the
+behavior and risk, not the filename: custom permission or restore logic remains test-first
+when placed in infrastructure tooling. The testing guide owns the verification profiles.
+
+Tooling-output handling, including sensitive-output filtering, is exempt from test-first.
+Only sensitive-output paths require targeted automated output tests, added after implementation
+as defined in the tooling guide. This exception concerns output handling; the underlying
+authorization, credential-management, encryption, recovery or destructive behavior retains
+its verification category.
+
+Timeboxed infrastructure feasibility spikes MAY precede permanent tests. Record their
+scope, cost and cleanup boundaries; their results establish feasibility, not production
+acceptance. Provider or environment failures require a reproducer and qualification on
+the supported runner; they do not by themselves require permanent tests of vendor internals.
+
+Behavior-preserving refactoring MUST retain passing behavior tests. Tests MUST provide
+frequent feedback and run unattended. Required checks MUST pass before completion;
+unavailable checks remain pending.
 
 ### III. Public-Interface Behavior Tests
 
 The primary application tests MUST exercise behavior through stable public entry points,
-using real internal collaborators. External service interactions MUST primarily use narrow
+using real internal collaborators. Application and custom executable logic interacting
+with external services MUST primarily use narrow
 integration tests with faithful boundary doubles, verified through contract tests.
 This combines sociable application behavior tests with Fowler's narrow integration tests;
 these terms MUST NOT be treated as interchangeable.
@@ -50,8 +59,9 @@ behavior. The engineering standards define the provisioning tool. Testing approa
 including Redis, Kafka, or RabbitMQ, MUST be decided case by case during planning and
 recorded before implementing the affected integration.
 
-Solitary tests MAY be used only where the specific case requires them; the review MUST
-record the reason. They MUST exercise the class or component's public interface.
+Solitary tests MAY be used for deterministic parsing, policy evaluation and other focused
+algorithms, or where a specific case requires isolation. Record the boundary rationale
+once per cohesive test group. They MUST exercise the class or component's public interface.
 Production code MUST NOT expose private state or methods solely to enable tests.
 Assertions MUST concern observable results and contractual effects rather than internal
 class arrangements or incidental collaborator calls. Behavior-preserving internal
@@ -89,6 +99,10 @@ Telemetry MUST exclude credentials, tokens, request bodies, and personal data un
 human owner explicitly approves a specific exception. User and equipment identifiers MAY
 be used for correlation; this permission does not authorize additional personal data.
 High-cardinality identifiers MUST NOT be used as metric dimensions.
+
+Local engineering diagnostics follow the tooling guide's assessed output, private access
+and retention controls. This diagnostic path does not authorize credentials, keys, Secret
+payloads or personal data in logs, or an unclassified raw-output mode.
 
 ### VI. Bounded, Safe Resilience
 
@@ -180,4 +194,4 @@ Violations MUST be resolved or receive a recorded human-approved exception befor
 completion. References explain adopted principles; their future revisions MUST NOT
 automatically change this constitution.
 
-**Version**: 1.1.1 | **Ratified**: 2026-10-13 | **Last Amended**: 2026-10-19
+**Version**: 2.0.0 | **Ratified**: 2026-10-13 | **Last Amended**: 2026-10-28

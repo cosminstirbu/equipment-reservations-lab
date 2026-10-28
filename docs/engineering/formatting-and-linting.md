@@ -1,6 +1,6 @@
 # Formatting and static analysis
 
-Use the committed configuration as the shared source of style for developers and agents. Use Microsoft C# conventions, Angular conventions, and the configured Prettier layout. These rules were approved by the owner together with the formatting-tooling change. They apply to source, tests, and application/tooling configuration; generated output, lockfiles, Spec Kit agreements, and installed skills are excluded from automatic formatting.
+Use the committed configuration as the shared source of style for developers and agents. Use Microsoft C# conventions, Angular conventions, and the configured Prettier layout. The tool/layout conventions were approved with the formatting-tooling change. They apply to source, tests, and application/tooling configuration; generated output, lockfiles, Spec Kit agreements, and installed skills are excluded from automatic formatting.
 
 ## Tools and conventions
 
@@ -36,8 +36,9 @@ After the solution build and frontend checks, `check` runs `dotnet test --soluti
 
 ## Per-edit workflow
 
-After each source-file edit, format that exact file before reading, testing, or editing
-it again, then re-read it and inspect readability. Use the committed exclusions for
+At each logical edit boundary, format the owned changed files before testing or review,
+then re-read them and inspect readability. Several related edits may form one boundary;
+formatting is not required between every patch and inspection. Use the committed exclusions for
 generated files and lockfiles. After changing formatter configuration, format the owned
 source scope again.
 
@@ -47,7 +48,7 @@ npm run format -- src/Notifications/ReservationInbox.cs src/Web/src/app/booking/
 
 The trusted post-edit hook described below performs this layout step for supported edit
 tools. Shell writes and clients without a trusted working hook must invoke the command
-explicitly. Never format another worker's files or run a whole-repository formatter while
+explicitly at the logical edit boundary when needed. Never format another worker's files or run a whole-repository formatter while
 workers are writing;
 formatter commands serialize themselves.
 
@@ -59,11 +60,26 @@ dotnet format style EquipmentReservation.slnx --no-restore --severity info
 
 ## Required checks for handoff
 
-Run `npm run format-check` and `npm run lint` before handoff. For application changes,
-also run `npm run check` with the required Podman runtime. Use the existing scripts as
-the executable definitions of these checks; unavailable prerequisites leave the check
-pending. Documentation-only changes still require link, consistency, and readability
-review; the source formatter does not format Markdown.
+Choose checks by changed area; mixed changes take the union. Record commands, scope and
+results, including unavailable checks. Reuse passing evidence when its inputs and relevant
+tool/configuration versions are unchanged. The existing command implementations remain
+the definitions of what each command covers; this table does not add new CLI switches.
+This table governs author checks. Required CI jobs remain in force; changing their path
+selection or execution requires a separate implementation change.
+
+| Changed area | Handoff checks |
+| --- | --- |
+| Markdown only | Link, consistency and readability review plus `git diff --check`; no application build |
+| JavaScript tooling only | `npm run format-check -- <changed files>`, scoped `npx eslint <changed files> --max-warnings 0`, and relevant tooling tests |
+| Other scripts or configuration | Configured formatter/syntax/lint checks for that language and relevant behavior tests; no unrelated application build |
+| Terraform only | Pinned native format/validate/lint/security and relevant native contracts declared in the infrastructure plan; no unrelated .NET build |
+| Kubernetes/workflow configuration | Supported formatter, relevant schema/render/workflow checks, and provider acceptance at the declared infrastructure milestone |
+| Application source, dependencies, shared build/analyzer configuration | `npm run format-check`, `npm run lint` and applicable application checks; application changes require `npm run check` with Podman |
+| Formatter/linter or gate implementation | Its behavior tests and revalidation of the formats/areas it affects |
+
+The source formatter excludes Markdown. For configuration formats without a configured
+formatter, validate syntax and inspect layout explicitly. Infrastructure acceptance follows
+the testing guide's [execution profile](testing.md#infrastructure-execution-profile).
 
 Inspect readability and semantic analyzer fixes in addition to the automated results.
 For Minimal API changes, manually inspect compliance with the
