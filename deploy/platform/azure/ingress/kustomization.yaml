@@ -1,0 +1,83 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+  - traefik.yaml
+  - traefik-crds.yaml
+  - operator-rbac.json
+  - argocd-route.yaml
+commonAnnotations:
+  argocd.argoproj.io/sync-options: Prune=false,Delete=false
+  argocd.argoproj.io/sync-wave: '-60'
+patches:
+  - target:
+      kind: Service
+      name: traefik
+    patch: |-
+      - op: replace
+        path: /spec/type
+        value: LoadBalancer
+      - op: add
+        path: /spec/externalTrafficPolicy
+        value: Local
+      - op: remove
+        path: /spec/ports/0/nodePort
+      - op: remove
+        path: /spec/ports/1/nodePort
+  - target:
+      kind: Deployment
+      name: traefik
+    patch: |-
+      - op: replace
+        path: /spec/template/spec/containers/0/args
+        value:
+          - --entrypoints.web.address=:8000
+          - --entrypoints.web.http.redirections.entrypoint.to=websecure
+          - --entrypoints.web.http.redirections.entrypoint.scheme=https
+          - --entrypoints.websecure.address=:8443
+          - --entrypoints.websecure.asdefault=true
+          - --entrypoints.websecure.http.tls=true
+          - --entrypoints.ping.address=:9000
+          - --providers.kubernetesingress=true
+          - --providers.kubernetesingress.namespaces=equipment,argocd
+          - --providers.kubernetesingress.ingressclass=traefik
+          - --providers.kubernetesingress.allowexternalnameservices=false
+          - --providers.kubernetescrd=true
+          - --providers.kubernetescrd.namespaces=equipment,argocd
+          - --providers.kubernetescrd.allowcrossnamespace=false
+          - --providers.kubernetescrd.allowexternalnameservices=false
+          - --api.dashboard=false
+          - --ping=true
+          - --ping.entrypoint=ping
+          - --log.level=PANIC
+          - --accesslog=false
+      - op: add
+        path: /spec/template/spec/securityContext/seccompProfile
+        value:
+          type: RuntimeDefault
+  - target:
+      kind: Role
+      name: equipment-traefik
+    patch: |-
+      - op: add
+        path: /rules/-
+        value:
+          apiGroups: [traefik.io]
+          resources:
+            - ingressroutes
+            - ingressroutetcps
+            - ingressrouteudps
+            - middlewares
+            - middlewaretcps
+            - traefikservices
+            - tlsoptions
+            - tlsstores
+            - serverstransports
+            - serverstransporttcps
+          verbs: [get, list, watch]
+  - target:
+      kind: Deployment
+      name: traefik
+    patch: |-
+      - op: add
+        path: /spec/template/metadata/labels/app.kubernetes.io~1name
+        value: traefik

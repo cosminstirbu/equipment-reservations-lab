@@ -1,0 +1,1008 @@
+{
+  "feature_directory": "specs/014-azure-aks-gitops",
+  "status": "checkpoint_incomplete",
+  "baseline_revision": "d1c7238345136340ddbf3a9454807cefffc43c32",
+  "preparation_round": 9,
+  "implementation_round": 18,
+  "limits": {
+    "preparation_repairs": 9,
+    "implementation_repairs": 18,
+    "no_progress_recurrences": 2
+  },
+  "required_checks": [
+    {
+      "revision": "requirements snapshot 2026-10-26",
+      "command": "npm.cmd run format-check",
+      "exit_status": 0,
+      "result": "passed"
+    },
+    {
+      "revision": "requirements snapshot 2026-10-26",
+      "command": "npm.cmd run lint",
+      "exit_status": 0,
+      "result": "passed after elevated NuGet restore; build zero warnings/errors"
+    },
+    {
+      "revision": "terraform-dashboard-snapshot.json: foundationA97C9782D9BF433863A8A164570FBCC7D378FBBEB1CB5101D75CCC4EFC828189; environmentA638D8458A37FB6D973E48C6C2F8C5FA0182C5393108E3EC23311B84FB7DF7AA",
+      "command": "npm.cmd run infra:check",
+      "exit_status": 0,
+      "result": "passed; elevated provider-registry access; pinned fmt/validate/TFLint/Trivy; fourteen approved scopes"
+    },
+    {
+      "revision": "terraform-dashboard-snapshot.json: foundationA97C9782D9BF433863A8A164570FBCC7D378FBBEB1CB5101D75CCC4EFC828189; environmentA638D8458A37FB6D973E48C6C2F8C5FA0182C5393108E3EC23311B84FB7DF7AA",
+      "command": "npm.cmd run infra:test",
+      "exit_status": 0,
+      "result": "passed; elevated backend-free mocked native contracts:20 foundation+8 environment; no Azure resources"
+    },
+    {
+      "revision": "team/native-provider-snapshot.json; GitOps-owned frozen source",
+      "command": "AZURE_PROVIDER_CONTRACTS=1 verified kind/kubectl; seven-file node native provider suite",
+      "exit_status": 0,
+      "result": "37 passed; zero failures/skips;110.9s; elevated local Podman; no actual Azure acceptance"
+    },
+    {
+      "revision": "terraform-continuity-snapshot.json; foundationB128AA97B89D36327FFDBF6592A3AD749B507C9E8CC66EB7B2DF309BB738FA5A; environment511ADC5372D57E88C6661C56F9EF4F10FD6ECF92DB0E7C42BCE566652E5C81F5",
+      "command": "npm.cmd run infra:check",
+      "exit_status": 0,
+      "result": "passed pinned fmt/validate/TFLint/Trivy with fourteen approved scopes; elevated provider-registry access"
+    },
+    {
+      "revision": "terraform-continuity-snapshot.json; foundationB128AA97B89D36327FFDBF6592A3AD749B507C9E8CC66EB7B2DF309BB738FA5A; environment511ADC5372D57E88C6661C56F9EF4F10FD6ECF92DB0E7C42BCE566652E5C81F5",
+      "command": "npm.cmd run infra:test",
+      "exit_status": 0,
+      "result": "passed thirty mocked native contracts: twenty-one foundation and nine environment; elevated provider-registry access; no Azure resources"
+    },
+    {
+      "revision": "2026-10-26 round7 broker qualification; scoped final transport formatting separately recorded",
+      "command": "npm.cmd run format-check",
+      "exit_status": 0,
+      "result": "passed; final test-only listener assertions checked separately with exact-file formatter/Prettier"
+    },
+    {
+      "revision": "2026-10-26 round7 broker qualification; broker ECEEED6A / transport6E152DC2",
+      "command": "npm.cmd run lint",
+      "exit_status": 0,
+      "result": "passed elevated after sandbox NU1301 failure; solution build zero warnings/errors and analyzer/style gate passed"
+    },
+    {
+      "revision": "team/broker-acme-verification.json; frozen bounded source",
+      "command": "Required provider profile; broker transport/native RabbitMQ/native cert-manager-Pebble contracts",
+      "exit_status": 0,
+      "result": "Thirteen passed, zero failures/skips;126.0s; local Podman, exact cleanup; no actual Azure/Entra/production certificate acceptance."
+    },
+    {
+      "revision": "2026-10-26 T069 workflow4DF117FC / launchtests669D792C / workflowtests0CF3E619",
+      "command": "npm.cmd run format-check",
+      "exit_status": 0,
+      "result": "passed; author frozen workflow batch"
+    },
+    {
+      "revision": "2026-10-26 T069 workflow4DF117FC / launchtests669D792C / workflowtests0CF3E619; vaultguard4AA49442",
+      "command": "npm.cmd run lint",
+      "exit_status": 0,
+      "result": "passed elevated after preserving sandbox NuGet failure and fixing two no-undef structuredClone references; solution zero warnings/errors"
+    },
+    {
+      "revision": "2026-10-26 T075 stage1 F87A3760; finaltests8FB0706F scopedformatterPASS",
+      "command": "npm.cmd run format-check",
+      "exit_status": 1,
+      "result": "failed only on unrelated concurrently authored scripts/azure-qualification-data.test.mjs; no blanket formatting of another writer; whole-tree gate pending"
+    },
+    {
+      "revision": "2026-10-26 T075stage1F87A3760; finaltests8FB0706F scopedESLintPASS",
+      "command": "npm.cmd run lint",
+      "exit_status": 0,
+      "result": "passed elevated; solution zero warnings/errors; final scoped test qualification preserved separately"
+    },
+    {
+      "revision": "team/terraform-guard-snapshot.json; foundationCF954E8E / environment123C56A4",
+      "command": "npm.cmd run infra:check",
+      "exit_status": 0,
+      "result": "Passed pinned fmt/validate/TFLint/Trivy with approved scopes after sandbox initialization failure; retry with provider-registry access; no resources provisioned."
+    },
+    {
+      "revision": "team/terraform-guard-snapshot.json; foundationCF954E8E / environment123C56A4",
+      "command": "npm.cmd run infra:test",
+      "exit_status": 0,
+      "result": "39 mocked native contracts passed:25 foundation+14 environment; provider-registry access; no resources provisioned."
+    },
+    {
+      "revision": "azure-vault-guard.mjs6B598371 / test3306A086",
+      "command": "node --test scripts/azure-vault-guard.test.mjs",
+      "exit_status": 0,
+      "result": "29 passed, zero skipped; real HTTP boundary fixtures, not live Azure enforcement."
+    },
+    {
+      "revision": "team/terraform-inspection-snapshot.json; foundation2AC78EB8 / environmentDFFF2786",
+      "command": "npm.cmd run infra:check",
+      "exit_status": 0,
+      "result": "Passed pinned fmt/validate/TFLint/Trivy with existing approved scopes; provider-registry access; no resources provisioned."
+    },
+    {
+      "revision": "team/terraform-inspection-snapshot.json; foundation2AC78EB8 / environmentDFFF2786",
+      "command": "npm.cmd run infra:test",
+      "exit_status": 0,
+      "result": "43 mocked native contracts passed:28 foundation+15 environment; provider-registry access; no resources provisioned."
+    },
+    {
+      "revision": "canonical generator4361FF64/runtime09C48699 frozen subset",
+      "command": "node --test scripts/azure-generator-input.test.mjs scripts/azure-runtime.test.mjs scripts/azure-deployment.test.mjs",
+      "exit_status": 0,
+      "result": "28 passed, zero skipped; root independent run3.53seconds; expected missing-runtime negative diagnostic; no live Azure."
+    },
+    {
+      "revision": "bundle009DC16B/baseF7A63997 repair8",
+      "command": "Pinned kubectl checksum verified; KUBECTL=<verified path> node --test scripts/azure-recovery-bundle.test.mjs",
+      "exit_status": 0,
+      "result": "1 passed zero skipped;10.8seconds; root independent native subprocess/HTTP/TLS boundary, not actual Azure/controller acceptance."
+    },
+    {
+      "revision": "release verifierC9B9B4B/test8CEA0EB5 priorrepair9",
+      "command": "node --test scripts/azure-release-verification.test.mjs",
+      "exit_status": 0,
+      "result": "16 passed zero skipped47.7seconds; root independent localHTTP/process boundary; Q-REL014-001 still blocks this prior snapshot."
+    },
+    {
+      "revision": "Primary frozen checkpoint qualification-definition1A688360; implementation-evidence3F9432AF",
+      "command": "npm.cmd run format-check",
+      "exit_status": 0,
+      "result": "Passed; workspace-loading warning emitted, all matched Prettier files formatted."
+    },
+    {
+      "revision": "Primary frozen checkpoint qualification-definition1A688360; implementation-evidence3F9432AF",
+      "command": "npm.cmd run lint",
+      "exit_status": 0,
+      "result": "Passed with NuGet network retry after sandbox NU1301; solution build zero warnings/errors; JavaScript and .NET analyzer/style gates passed."
+    },
+    {
+      "revision": "Frozen combined Azure/manifest source with all native profiles",
+      "command": "AZURE_PROVIDER_CONTRACTS=1 KUBECTL/KIND/MANIFEST_KUBECTL verified; node --test scripts/azure-*.test.mjs scripts/manifest-quality.test.mjs",
+      "exit_status": 1,
+      "result": "258 cases:254 passed4 failed0 skipped228.37seconds. ACME+bundle kindstartup180s timeouts; admissioncleanupkindexit1; LokiHTTPSfixturefailure. Diagnosis pending; no flaky rerun treated as pass."
+    },
+    {
+      "revision": "Frozen batch7/T087 author-report hashes: qualification definition BA403D70; infrastructure EB95A4AE; guard 6C3D83A2; recovery 2B381121",
+      "command": "npm.cmd run format-check",
+      "exit_status": 0,
+      "result": "Passed all matched files; workspace loading warnings shown."
+    },
+    {
+      "revision": "Frozen batch7/T087 author-report hashes: qualification definition BA403D70; infrastructure EB95A4AE; guard 6C3D83A2; recovery 2B381121",
+      "command": "npm.cmd run lint",
+      "exit_status": 0,
+      "result": "Passed with NuGet network access when run alone; build had zero warnings/errors. Initial sandbox NU1301 and prior MSB3026 file-lock failures remain failed attempts."
+    },
+    {
+      "revision": "Repair12 native diagnostic checkpoint, team/native-diagnostics-checkpoint.json; source repairs10 closed",
+      "command": "npm.cmd run format-check",
+      "exit_status": 0,
+      "result": "Passed all matched files; workspace loading warnings only."
+    },
+    {
+      "revision": "Same repair12 frozen checkpoint",
+      "command": "npm.cmd run lint",
+      "exit_status": 0,
+      "result": "Passed with NuGet access, run alone before native reproduction; build zero warnings/errors."
+    },
+    {
+      "revision": "Repair13 frozen source, team/native-prerequisites-checkpoint13.json",
+      "command": "npm.cmd run format-check",
+      "exit_status": 0,
+      "result": "Passed all matched files; workspace loading warnings only."
+    },
+    {
+      "revision": "Same repair13 source snapshot",
+      "command": "npm.cmd run lint",
+      "exit_status": 0,
+      "result": "Passed with NuGet access, run alone before native reproduction; build zero warnings/errors."
+    },
+    {
+      "revision": "team/native-crd-checkpoint14.json; repair14 frozen source",
+      "command": "npm.cmd run format-check",
+      "exit_status": 0,
+      "result": "Passed; workspace-load warnings only."
+    },
+    {
+      "revision": "team/native-crd-checkpoint14.json; repair14 frozen source",
+      "command": "npm.cmd run lint",
+      "exit_status": 0,
+      "result": "Passed alone with NuGet access; solution build zero warnings/errors."
+    },
+    {
+      "revision": "team/native-https-checkpoint15.json; final repair15 source",
+      "command": "npm.cmd run format-check",
+      "exit_status": 0,
+      "result": "Passed; workspace-load warnings only."
+    },
+    {
+      "revision": "team/native-https-checkpoint15.json; final repair15 source",
+      "command": "npm.cmd run lint",
+      "exit_status": 0,
+      "result": "Passed sequentially with NuGet access; solution zero warnings/errors."
+    },
+    {
+      "revision": "Frozen T089 pure helper12CAD87C and initialproducer9EC8A8A7; oldproducer superseded by repair17",
+      "command": "npm.cmd run format-check",
+      "exit_status": 0,
+      "result": "Passed; scope excludesHCL formatted separately."
+    },
+    {
+      "revision": "Frozen T089 pure helper12CAD87C; HCL separately checked",
+      "command": "npm.cmd run lint",
+      "exit_status": 0,
+      "result": "Passed sequentially; solution zero warnings/errors."
+    },
+    {
+      "revision": "Initial T089 producer9EC8A8A7 before repair17",
+      "command": "npm.cmd run infra:check",
+      "exit_status": 0,
+      "result": "Pinned sourcequalityPASS; approved14scanner scopes unchanged. Does not close independentSEC-DELEGATION001."
+    },
+    {
+      "revision": "Initial T089 producer9EC8A8A7 before repair17",
+      "command": "npm.cmd run infra:test",
+      "exit_status": 0,
+      "result": "31foundation+16environment mockednativePASS. Independentsemanticfinding requires additionalnegativecontracts."
+    },
+    {
+      "revision": "team/delegation-checkpoint17.json; final producer repair17",
+      "command": "npm.cmd run infra:check",
+      "exit_status": 0,
+      "result": "Pinned Terraform fmt/validate/TFLint/Trivy PASS;14approved scanner scopes unchanged."
+    },
+    {
+      "revision": "team/delegation-checkpoint17.json; final producer repair17",
+      "command": "npm.cmd run infra:test",
+      "exit_status": 0,
+      "result": "33foundation+16environment backend-free mocked native contracts PASS, no skipped/errored contracts or Azure requests."
+    }
+  ],
+  "acceptance_evidence": [],
+  "quality_review": {
+    "verdict": "targeted_preparation_pass_implementation_pending",
+    "revision": "planDC3DECC24F8333C3A0EFF468BAD660AEC42DF219DDA28727C83D1CCDB2C5A6DF; tasks44A132EFEEED190FF66A620910C9B7B427516A4782E1BA385BBA6A65A91419FD; contractD6F373F5FAF80B5F657A72FA567B241D648248FF08F44058424D0672ADD3CBCF",
+    "report": "team/recurring-qualification-quality.md"
+  },
+  "security_review": {
+    "verdict": "targeted_preparation_pass_implementation_pending",
+    "revision": "planDC3DECC24F8333C3A0EFF468BAD660AEC42DF219DDA28727C83D1CCDB2C5A6DF; tasks44A132EFEEED190FF66A620910C9B7B427516A4782E1BA385BBA6A65A91419FD; contractD6F373F5FAF80B5F657A72FA567B241D648248FF08F44058424D0672ADD3CBCF",
+    "report": "team/recurring-qualification-security.md"
+  },
+  "convergence": {
+    "verdict": "pending",
+    "revision": null
+  },
+  "human_acceptance_required": true,
+  "human_acceptance": null,
+  "pending_decisions": [],
+  "budget": {
+    "monthly_gross_eur": 120,
+    "running_hours": 40,
+    "tax_rate": 0.21,
+    "owner_decision": "2026-10-26 explicit answer",
+    "current_estimate_net_eur": 97.94,
+    "current_estimate_gross_eur": 118.51
+  },
+  "approved_policy_exception_record": "team/proposed-policy-exceptions.md; original11+exact2Queue-rulefalsepositives+1workloadvaultlifecycle =14 scopes approved2026-10-26",
+  "audit_decision": "Actual protected Blob auditing required; SEC-D002 scoped native metadata processing approved; only two exact Queue-rule scanner false positives approved, no audit-gap waiver",
+  "implementation_repair_history": [
+    {
+      "round": 1,
+      "scope": "SEC-TF001 explicit reviewed principals",
+      "result": "Original reviewer closed source escalation; separate SEC-TF002 found",
+      "report": "team/terraform-security-repair-round1.md"
+    },
+    {
+      "round": 2,
+      "scope": "SEC-TF002 foundation human grant and environment SP-only grants",
+      "result": "Original reviewer closed source in team/terraform-audit-authority-security.md",
+      "revision": "foundation622A50948B24C096D2AB350F569484D67171D1237ECDBBAA9437D7540B1703D0; environment352DC029E7FF40CB29330742A2C6BBBB7A006D672EF7A1AE1FC71137E120ED92"
+    },
+    {
+      "round": 3,
+      "scope": "SEC-SRC001 and SEC-SRC002",
+      "report": "team/infrastructure-source-security-round1.md",
+      "result": "Original reviewer closed both findings at reviewed source hashes"
+    },
+    {
+      "round": 4,
+      "scope": "SEC-TF003 exact qualification challenge readers",
+      "result": "Original reviewer closed SEC-TF003 at foundation07F437F..."
+    },
+    {
+      "round": 5,
+      "scope": "Q-CI014-001/Q-CI014-002 and SEC-GO001/SEC-GO003",
+      "result": "Original quality/security reviewers closed source findings; SEC-GO002 retracted as context error, no repair.",
+      "reports": [
+        "team/ci-quality-repair.md",
+        "team/recovery-admission-security-repair.md"
+      ]
+    },
+    {
+      "round": 6,
+      "scope": "Q-BROKER014-001 and Q-BROKER014-002",
+      "result": "Original reviewer closed freshness; diagnostic finding remains open in three failure paths. Approved repair budget exhausted; no dependent repair authorized.",
+      "report": "team/broker-quality-round6.md"
+    },
+    {
+      "round": 7,
+      "scope": "Remaining Q-BROKER014-002 diagnostics",
+      "result": "Original reviewer closed all remaining diagnostic paths at exact frozen source; no live recovery acceptance implied.",
+      "report": "team/broker-quality-round7.md"
+    },
+    {
+      "round": 8,
+      "finding": "SEC-BUNDLE001",
+      "status": "closed_source",
+      "report": "team/recovery-bundle-security-repair.md",
+      "limits": "Trusted selected-point CLI assembly/live recovery pending."
+    },
+    {
+      "round": 9,
+      "limit": 9,
+      "finding": "Q-REL014-001",
+      "status": "closed_source_integration_live_pending",
+      "owner": "coder",
+      "scope": "Preserve safe operational evidence through release-verifier outer boundary, retaining privacy and cleanup evidence.",
+      "quality_report": "team/release-verification-quality-repair.md",
+      "security_report": "team/release-verification-security-repair.md"
+    },
+    {
+      "round": 10,
+      "limit": 12,
+      "status": "closed_source",
+      "findings": [
+        "SEC-CACHE001",
+        "Q-GUARD014-001"
+      ],
+      "scope": "Test-first exact network-role semantics/hash validation and historical pointer replacement after legitimate requalification; original independent reviewers validate closure.",
+      "reports": [
+        "team/primary-network-repair10-quality.md",
+        "team/primary-network-repair10-security.md",
+        "team/guard-pointer-repair10-quality.md",
+        "team/guard-pointer-repair10-security.md"
+      ]
+    },
+    {
+      "round": 11,
+      "limit": 12,
+      "status": "quality_changes_requested",
+      "scope": "Safe fixed native-fixture phase diagnostics and primary/cleanup preservation, before causal repair; no timeout/profile/parallelism changes.",
+      "quality_report": "team/native-diagnostics-repair11-quality.md",
+      "security_report": "team/native-diagnostics-repair11-security.md"
+    },
+    {
+      "round": 12,
+      "limit": 12,
+      "status": "source_closed_native_revalidation_failed",
+      "finding": "Q-NATIVE014-001",
+      "scope": "Preserve admission spawn/timeout ProcessFailure through outer cleanup boundary; actual process regression; no timeout/concurrency/profile changes.",
+      "quality_report": "team/native-diagnostics-repair12-quality.md",
+      "security_report": "team/native-diagnostics-repair12-security.md"
+    },
+    {
+      "round": 13,
+      "limit": 15,
+      "status": "diagnostic_source_closed_causal_signature_observed",
+      "scope": "Nine fixed prerequisite invocation labels and narrowly opt-in private kubectl failure categories, provider fidelity and real-process privacy/cleanup regressions before another concurrent run.",
+      "diagnostic_assessments": [
+        "team/native-prerequisites-proposal-quality.md",
+        "team/native-prerequisites-proposal-security.md"
+      ],
+      "quality_report": "team/native-prerequisites-repair13-quality.md",
+      "security_report": "team/native-prerequisites-repair13-security.md",
+      "snapshot": "team/native-prerequisites-checkpoint13.json"
+    }
+  ],
+  "repair_budget_note": "Owner extended preparation limit3 to6 and implementation limit6 to9. Four preparation and seven implementation repair rounds used; prior history preserved. New T075 stage1 implementation is a planned task batch, not a repair round; source/live acceptance pending.",
+  "repair_budget_extensions": [
+    {
+      "date": "2026-10-26",
+      "owner": "human environment owner",
+      "response": "Approve three more repair rounds",
+      "previous_limit": 3,
+      "new_limit": 6,
+      "scope": "Process budget only; no security risk exception or Azure spending approval."
+    },
+    {
+      "date": "2026-10-26",
+      "owner": "human environment owner",
+      "response": "Approve three more rounds in each loop",
+      "previous_preparation_limit": 3,
+      "new_preparation_limit": 6,
+      "previous_implementation_limit": 6,
+      "new_implementation_limit": 9,
+      "scope": "Process rounds only; no spending, broader permission or security exception approval."
+    }
+  ],
+  "active_repair_batch": {
+    "round": 7,
+    "status": "closed_source_by_original_reviewers",
+    "findings": [
+      "Q-BROKER014-002"
+    ],
+    "note": "Original quality closed Q-BROKER014-002 in broker-quality-round7.md; security scoped PASS broker-security-round7.md. Source ECEEED6A / tests6E152DC2; transport10/10PASS; source-only closure, historical RED unverified, live acceptance pending."
+  },
+  "active_preparation_repair": {
+    "round": 9,
+    "limit": 9,
+    "status": "authoritatively_integrated_source_unbuilt",
+    "scope": "Explicitexistingconditioneddelegationdescriptor/evaluator; honestcurrentrecoveryAppUIDbinding; exactrecoverywriterinspectioninterfaceusingexistingretainedRGreads.",
+    "proposals": [
+      {
+        "path": "team/delegation-descriptor-proposal.md",
+        "sha256": "8C23435CF9DE19C1F7E70F9A51668CD85B224F4A1026633791A6A89888C54445"
+      },
+      {
+        "path": "team/recurring-app-uid-clarification.md",
+        "sha256": "FE36A01C67B106878883C524DE8A1A95D2F92BFCB7813E1DEAED6D707B5498C6"
+      },
+      {
+        "path": "team/recovery-writer-inspection-proposal.md",
+        "sha256": "EC5C2C188FCC7EB96B88F0B0AAD3DB3A7BF48199F519B0184E212695FC57087A"
+      }
+    ],
+    "limits": "No new grants/livefixtures/spending/exception; noauthoritativeintegrationbeforebothreviews.",
+    "quality_report": "team/preparation-batch9-quality.md",
+    "security_report": "team/preparation-batch9-security.md",
+    "authoritative_hashes": {
+      "plan.md": "71E05C7AA0FB8C0813C9A6FBE189EBAE81BA5970344CC743D4AE5C3A8A75AE2A",
+      "contracts/operations.md": "7B7346E4444412DACC44DCBB00FFCA8CCFA34FD5845118FD2F0DA25951BAEAF7",
+      "tasks.md": "FDB76E72E90A5A17F30668BABA853EABC15ADB173C1274EDE3BDB30BA3879C93",
+      "data-model.md": "BF6E809472633D78A8C3241A2E1247584C7CCF3FE4CFE6A24337E171DF64CA3A"
+    },
+    "task_count": 91
+  },
+  "recovery_observation_credential_integration": {
+    "proposal_sha256": "8151D7D755948C51FE65F0DE19C9B5C5AF36969BC32F9B063150B47B7543E6D0",
+    "quality_report": "team/recovery-observation-credential-quality.md",
+    "security_report": "team/recovery-observation-credential-security.md",
+    "plan_sha256": "DBBABEE05C31902F95F5BDB8E465E2009C56652D2908B3DEE9560E1A673A5016",
+    "contract_sha256": "98AF1B77D0587241D90049F2C8DF96B288151858B8EC0413A9018B00820CB67F",
+    "tasks_sha256": "6A8F3795D0915D119FC727D60DEC3FF108275794E333D085981DC389F1590A5A",
+    "task_count": 72,
+    "status": "design_review_pass_authoritatively_integrated_source_implementation_pending"
+  },
+  "vault_admission_authority": {
+    "decision": "Candidate A approved with safeguards",
+    "owner": "human environment owner",
+    "date": "2026-10-26",
+    "response": "Approve Candidate A with these safeguards",
+    "proposal_sha256": "38A807E857AB00C6CD501AEE44C586A0E9F939D359C77E1FC656AA9AA61EB919",
+    "record": "team/vault-admission-authority-decision.md",
+    "status": "owner_approved_design_actual_enforcement_pending"
+  },
+  "qualification_workflow_batch": {
+    "status": "scoped_quality_security_pass",
+    "task": "T069 partial",
+    "evidence": "team/qualification-workflow-launch-evidence.md",
+    "evidence_sha256": "8284044B3D3185B1D818A1EFF2F80F0819507BD937E82577FA3B4CF1462CF2C2",
+    "tests": "12/12 PASS; actual configured-command preload intended RED preserved",
+    "limits": "No hosted execution, activation v2 integration or T075 implementation acceptance",
+    "quality_report": "team/qualification-workflow-launch-quality.md",
+    "security_report": "team/qualification-workflow-launch-security.md",
+    "coordinator_full_lint": "PASS exit0; recorded separately after reviewer handoff; vaultguard global correction15/15 local tests"
+  },
+  "setup_progress_review": {
+    "tasks": [
+      "T001",
+      "T002",
+      "T003"
+    ],
+    "status": "checked_bounded_artifacts_after_independent_review",
+    "report": "team/setup-task-progress-review.md",
+    "limits": "No cloud or full-feature acceptance"
+  },
+  "preparation_repair_history": [
+    {
+      "round": 3,
+      "status": "proposal_review_pass_authoritatively_integrated",
+      "findings": [
+        "Q-D014-004"
+      ],
+      "note": "Historical active preparation checkpoint preserved when round4 became active. Original reviewers closed exact proposal; source implementation pending at that checkpoint.",
+      "integration": {
+        "plan": "AFD29145D7722C900B7D4CB713B9EE6DFEB534773E6EAFDAA9C3308D909AA8D6",
+        "contract": "FFA2AA724C82C5A0E7F349ABA414843005CC5F43B64DB09694E8E9A10AA58D60",
+        "tasks": "A0D25AD21689CE87BDFA4186060EBC7D838A9528B18F7388E738F70F4AFFD9DA",
+        "task_count": 69
+      }
+    },
+    {
+      "round": 4,
+      "findings": [
+        "Q-D014-005"
+      ],
+      "status": "closed_design",
+      "note": "Historical original-reviewer closure preserved in findings.json; later source and acceptance gates remain separate."
+    },
+    {
+      "round": 5,
+      "findings": [
+        "Q-D014-006"
+      ],
+      "status": "closed_design",
+      "note": "Historical original-reviewer closure preserved in findings.json; later source and acceptance gates remain separate."
+    },
+    {
+      "finding": "Q-D014-007",
+      "round": 6,
+      "limit": 6,
+      "status": "closed_design_authoritatively_integrated",
+      "scope": "Clarify initial compliant creation versus post-create grant/activation saved-plan consumption; preserve prior rounds and approved limits.",
+      "integration": {
+        "proposal": "B23C1E3121D3373A7CB98E7BD9FE0A6EF5D0D601B87FAC37C52903B2CC041E26",
+        "acme_proposal": "59AF97F0F953104E33678BE6643DDE70345CA08367F850B1567C752B8A5197BA",
+        "plan": "28A3B4C2CCD1F67361DD4EA78C37B9EA3344EAB9A2AAFA0568C0ECE4BEC09B40",
+        "contract": "127BA0AD19721CC60AEC0F9C1C68D2F129C97AC789EA041475DC89C80F69276A",
+        "tasks": "8A98E01DB650A5F74F7FDAD9C642DA921A582FBF1F40BECC3261378CCABCA6B9",
+        "data_model": "1CEC25717D9C39E56A02D9811EFC3D6CCB994EF8AC448DEA645DE12321059001",
+        "task_count": 84
+      }
+    },
+    {
+      "round": 7,
+      "limit": 9,
+      "status": "preparation_pass_authoritatively_integrated",
+      "proposal": "team/preparation-batch7-integration-proposal.md",
+      "proposal_sha256": "B8B2E68ED1C1D34538B3193A7E187D17E3DF84DF738A1618FCFB22F484F2ED7D",
+      "quality_report": "team/preparation-batch7-quality.md",
+      "security_report": "team/preparation-batch7-security.md",
+      "scope": "G3 inspection/probes, actor-only observations, producer-owned evidence discovery and trusted selected-point v2 completion marker.",
+      "integration": {
+        "plan": "9B725B4881EE5A0F212B223138A44B692CEF26FA5E4C540AA2E351BA687F4591",
+        "contract": "557E22F7618067ADBA0B83BD988CEC842574CF02E1B70D139FC88E69624D1A2A",
+        "tasks": "7CF6DDF2A425F705B423DC07B4B7E735C2CC6D2F8A0692CC27B02E2AE9116F43",
+        "data_model": "D4313B2730A2DD962ADC6C641DF7059B059438FA48CD42D3FA6D351D7049F369",
+        "task_count": 87
+      }
+    },
+    {
+      "round": 8,
+      "limit": 9,
+      "status": "authoritatively_integrated",
+      "proposal": "team/batch7-canary-staging-proposal.md",
+      "sha256": "A7C8FE1F570A40180C0C21254D2B64FD73C3986786D80B4E502677884CF2700B",
+      "scope": "Resolve exact canary-object inspection-binding bootstrap order; no actual fixture/grant/spending approval.",
+      "quality_report": "team/batch7-canary-staging-quality.md",
+      "quality_verdict": "pass",
+      "security_report": "team/batch7-canary-staging-security.md",
+      "security_verdict": "pass",
+      "authoritative_hashes": {
+        "plan": "7A8DE9B48CE1EC562629B4F27FEFFD36D91641D9D177085D1FA4A9CDC4A3F29D",
+        "contract": "1B23AD8D8EC78EA79778009F23D779745A2C74E69AC67A48BB0D2DCA932F597E",
+        "tasks": "5800119828D61B267F32642C383A15B5F0CB1447299C02595DEE85CA37DE879C",
+        "model": "37B232D2A84EB877CEDE59BF0296FC5CF48174E1592AD2A123917EC52F29858D"
+      }
+    }
+  ],
+  "installation_state_stage1": {
+    "status": "scoped_quality_security_pass_integration_pending",
+    "task": "T075 partial",
+    "scope": "New narrow installation-state validator +real-generator public tests +author evidence only; no launcher/manifest/activation/T079 integration",
+    "owner": "coder",
+    "authority": "team/installation-classification-batch.md4A835789 original prepPASS",
+    "source_sha256": "F87A3760D61DDA5D4EF98DECA4CDBA686259E6CD8AFA70B6DF3DF8784F65FE8F",
+    "test_sha256": "8FB0706FE220552732E583225E04512E801ECB822954F2A596C41667B98ABD27",
+    "evidence_sha256": "4E5B9AA58258B05B4C031DC867E1D8F14943C810CCF501D05A4A588FF3D97E19",
+    "quality_report": "team/installation-state-stage1-quality.md",
+    "security_report": "team/installation-state-stage1-security.md",
+    "integration_note": "Concurrent T079 qualification-data/launcher and recovery-activation work overlaps next integration; preserve other writer. Independent current quality-gate task verification proceeds."
+  },
+  "terraform_inspection_checkpoint": {
+    "status": "bounded_source_quality_security_pass_live_pending",
+    "snapshot": "team/terraform-inspection-snapshot.json",
+    "security_report": "team/terraform-inspection-security.md",
+    "limits": "Actual Azure scope/ABAC/inherited authorization and complete helper/public operation integration remain pending.",
+    "quality_report": "team/terraform-inspection-quality.md",
+    "description_only_snapshot": "team/terraform-inspection-description-snapshot.json",
+    "description_only_review": "team/terraform-inspection-description-quality.md"
+  },
+  "canonical_generator_checkpoint": {
+    "status": "bounded_source_quality_security_pass_integration_pending",
+    "quality_report": "team/canonical-generator-quality.md",
+    "security_report": "team/canonical-generator-security.md",
+    "author_evidence": "team/gitops-implementation.md",
+    "limits": "Publisher/actor integration, public command composition, actual Azure/hosted qualification and full-feature acceptance pending."
+  },
+  "active_implementation_repair": {
+    "round": 18,
+    "limit": 18,
+    "status": "restart_not_executed_approval_review_unavailable",
+    "scope": "One owner-authorized local Podman VM restart preserving settings/data and prior container running state; then one unchanged four-fixture native command. No causal closure inferred from pass."
+  },
+  "g3_design_status": "preparation_pass_authoritatively_integrated_source_unbuilt",
+  "preparation_process_extension": {
+    "previous_limit": 6,
+    "new_limit": 9,
+    "owner_date": "2026-10-26",
+    "owner_answer": "Approve three more preparation rounds",
+    "scope": "Process only; no canary resources, broader permissions, policy exceptions or Azure spending authorized."
+  },
+  "decision_history": [
+    {
+      "id": "preparation_limit_6_to_9",
+      "status": "approved",
+      "scope": "Process-only extension for concrete G3 descriptor/denial design work; no canary/grant/spending approval.",
+      "proposal": "team/g3-descriptor-denial-proposal.md",
+      "proposal_sha256": "CDD6EF24EE5566B82F8B83070EE15A859B355C088DD1C01C744604F6DFB3BADE",
+      "owner_answer": "Approve three more preparation rounds",
+      "owner_date": "2026-10-26"
+    },
+    {
+      "id": "implementation_limit_9_to_12",
+      "status": "approved",
+      "proposal": "team/combined-provider-failure-diagnosis.md",
+      "scope": "Process only: three more implementation repair rounds. No spending, broader permissions, security exceptions, skipped tests or timeout inflation.",
+      "additional_concrete_finding": "SEC-CACHE001 exact producer network semantics/hash validation, full report team/primary-batch7-security.md; process-only extension remains pending, no source repair released.",
+      "additional_pointer_finding": "Q-GUARD014-001 (alias SEC-GUARD001): separate historical pointer integrity from current eligibility. Reports: guard-batch7-quality.md and guard-batch7-security.md. Repair held until process approval.",
+      "owner_answer": "Approve three more implementation repair rounds",
+      "owner_date": "2026-10-27"
+    },
+    {
+      "id": "implementation_limit_12_to_15",
+      "status": "approved",
+      "owner_answer": "Approve three more implementation repair rounds",
+      "owner_date": "2026-10-27",
+      "proposal": "team/native-prerequisites-followup-proposal.md",
+      "proposal_sha256": "A2F3F1E404F763E2F2318859FA6B580E038DD06BFE150B87BBED6070B06B65EF",
+      "scope": "Process only; no spending, broader permissions, security exceptions, skipped tests or timeout inflation."
+    },
+    {
+      "id": "implementation_limit_15_to_18",
+      "status": "approved",
+      "owner_answer": "Approve three more implementation repair rounds",
+      "owner_date": "2026-10-27",
+      "proposal": "team/native-later-failures-followup-proposal.md",
+      "scope": "Process only; no spending, broader permissions, security exceptions, skipped checks or timeout inflation."
+    },
+    {
+      "id": "controlled_local_podman_restart",
+      "status": "approved",
+      "owner_date": "2026-10-27",
+      "owner_answer": "Allow one controlled Podman VM restart",
+      "scope": "Interrupts one preexisting container. Preserve VM settings/container data, then one unchanged native verification command. No VM recreation, resizing, limit change or Azure action."
+    }
+  ],
+  "combined_native_gate": {
+    "status": "failed_under_diagnosis",
+    "command": "AZURE_PROVIDER_CONTRACTS=1 verified KUBECTL/KIND/MANIFEST_KUBECTL node --test scripts/azure-*.test.mjs scripts/manifest-quality.test.mjs",
+    "total": 258,
+    "passed": 254,
+    "failed": 4,
+    "skipped": 0,
+    "diagnosis": "Exact null-condition CRD wait defect reproduced and repaired14 with independent source closure. Latest ordinary concurrent run failed2/4 at later admission and issuer-seed sites; no provider cause established. Repair15 targets separate confirmed HTTPS lifecycle defect. Original full gate remains failed.",
+    "diagnosis_record": "team/combined-provider-failure-diagnosis.md",
+    "minimized_revalidation": {
+      "round": 14,
+      "status": "failed",
+      "snapshot": "team/native-crd-checkpoint14.json",
+      "total": 4,
+      "passed": 2,
+      "failed": 2,
+      "skipped": 0,
+      "duration_seconds": 138.366,
+      "report": "team/native-reproduction-repair14.md",
+      "failures": [
+        "admission native-admission unknown assertion projection",
+        "bundle issuer-seed kubectl exit1 duration12229ms"
+      ],
+      "note": "CRD establishment completed; later setup failures remain unclassified. Original full gate not rerun."
+    },
+    "reproduction_history": [
+      {
+        "round": 12,
+        "status": "failed",
+        "snapshot": "team/native-diagnostics-checkpoint.json",
+        "report": "team/native-reproduction-repair12.md",
+        "total": 4,
+        "passed": 3,
+        "failed": 1,
+        "skipped": 0,
+        "duration_seconds": 357.826,
+        "failure": {
+          "fixture": "recovery bundle",
+          "phase": "prerequisites-install",
+          "tool": "kubectl",
+          "category": "exit",
+          "status": 1,
+          "duration_ms": 1747
+        },
+        "cleanup": "Verified zero owned fixture candidates; preexisting container remains."
+      },
+      {
+        "round": 13,
+        "status": "failed",
+        "snapshot": "team/native-prerequisites-checkpoint13.json",
+        "total": 4,
+        "passed": 3,
+        "failed": 1,
+        "skipped": 0,
+        "duration_seconds": 243.596,
+        "failure": {
+          "fixture": "recovery bundle",
+          "phase": "prereq-clusterissuer-established",
+          "tool": "kubectl",
+          "status": 1,
+          "duration_ms": 518,
+          "providerCategory": "unclassified"
+        },
+        "note": "CRD apply completed before wait failed. No causal repair or full-gate pass."
+      }
+    ],
+    "instrumented_probe": {
+      "status": "completed",
+      "session_id": 8066,
+      "native_gate_evidence": false
+    },
+    "instrumented_probe_history": [
+      {
+        "profile": "Source-unchanged four-file run with bounded exact CRD-wait stderr observer",
+        "status": "passed_diagnostic_only",
+        "passed": 4,
+        "failed": 0,
+        "skipped": 0,
+        "duration_seconds": 248.455,
+        "observation": {
+          "wait_status": 0,
+          "nullConditionAccessor": false
+        },
+        "limits": "Failing CRD window did not occur; not causal closure or original-gate acceptance."
+      },
+      {
+        "profile": "One bounded repeat with additional fixed CRD-wait flags",
+        "status": "failed",
+        "passed": 2,
+        "failed": 2,
+        "skipped": 0,
+        "duration_seconds": 135.009,
+        "failures": [
+          {
+            "fixture": "ACME",
+            "phase": "kind-create",
+            "status": 1,
+            "duration_ms": 104753
+          },
+          {
+            "fixture": "admission",
+            "phase": "kind-create",
+            "status": 1,
+            "duration_ms": 104920
+          }
+        ],
+        "observation": {
+          "bundle_wait_status": 0,
+          "nullConditionAccessor": false
+        },
+        "limits": "Shifting failures; no raw provider output retained."
+      },
+      {
+        "profile": "Bounded pinned-source kind-create flags plus exact bundle CRD-wait signature",
+        "status": "failed",
+        "passed": 3,
+        "failed": 1,
+        "skipped": 0,
+        "duration_seconds": 227.882,
+        "observations": {
+          "all_three_kind_create_status": 0,
+          "kind_failure_flags": false,
+          "bundle_wait_status": 1,
+          "bundle_wait_duration_ms": 581,
+          "stderrOverflow": false,
+          "nullConditionAccessor": true
+        },
+        "source_unchanged_at_handoff": true,
+        "native_gate_evidence": false
+      }
+    ]
+  },
+  "batch7_source_release": {
+    "status": "all_authors_frozen_bounded_reviews_recorded",
+    "scope": "Terraform descriptors/inspection bindings; safe G3 helper/pointers; v2 selected recovery marker; exact optional Argo Application GET.",
+    "limits": "Implementation repair9/9 unchanged; native failure repairs held pending owner extension. No live grants/canaries/provisioning.",
+    "gitops": {
+      "status": "bounded_quality_security_pass_native_authorization_pending",
+      "evidence": "team/gitops-batch7-implementation.md",
+      "roles_sha256": "BC34EF067DAE4B6E4B2072727DDF870FFF3D058B23B6C093DB613A7D538FD8F3",
+      "test_sha256": "9BE20A532A86325EC55923D19254384526B6B9D8FEDBE498438B0D24971C96EF",
+      "test_result": "15passed0failed0skipped; author rendered contracts only; no actual native/hosted authorization",
+      "quality_report": "team/batch7-canary-staging-quality.md",
+      "security_report": "team/batch7-canary-staging-security.md"
+    },
+    "terraform": {
+      "status": "bounded_quality_security_pass_live_and_staging_pending",
+      "evidence": "team/terraform-batch7-implementation.md",
+      "evidence_sha256": "E0091E62B9F3C16EF06300E0886BE637DB92C1C6B58EF286F3B3F92993C6D268",
+      "author_checks": "30foundation+16environment native mocked Terraform contracts passed0skip; infra:check passed14approvedscanner scopes",
+      "limits": "No canaryfixtures or read-grant staging, no actual Azure qualification; globalchecks pending stableallauthorfreeze.",
+      "quality_report": "team/terraform-batch7-quality.md",
+      "security_report": "team/terraform-batch7-security.md"
+    },
+    "primary": {
+      "status": "repair10_quality_security_pass_integration_pending",
+      "evidence": "team/implementation-evidence.md",
+      "quality_report": "team/primary-batch7-quality.md",
+      "security_report": "team/primary-batch7-security.md",
+      "blocking_finding": "SEC-CACHE001",
+      "author_checks": "52focused+6launcherPASS0skip; scopedESLintpass",
+      "limits": "Doesnotcloseproducer-mismatchfinding/nativegate/positiveactivation."
+    },
+    "guard": {
+      "status": "repair10_quality_security_pass_composite_G3_pending",
+      "evidence": "team/guard-batch7-implementation.md",
+      "source_sha256": "6C3D83A2B09F8AB40206CC7B2BFF7CFB49CD84F872142716041AEE12B8B778BB",
+      "test_sha256": "557C636C375B4E93D03541BC73BF074986DC8D11CFEAD2CB4B289C500E9A3427",
+      "author_checks": "44PASS0skip scopedESLintPrettierpass",
+      "limits": "No completeactiveauthority/compositeG3/actualpositiveactivation claim.",
+      "quality_report": "team/guard-batch7-quality.md",
+      "security_report": "team/guard-batch7-security.md",
+      "blocking_finding": "Q-GUARD014-001 (securityaliasSEC-GUARD001)"
+    },
+    "recovery": {
+      "status": "bounded_quality_security_pass_production_trust_and_composition_pending",
+      "evidence": "team/operations-implementation.md, Batch 11",
+      "quality_report": "team/recovery-batch11-quality.md",
+      "security_report": "team/recovery-batch11-security.md",
+      "source_sha256": "2B3811211B746DEA3AEA79DA16F03026D25F29B696FFD08621555B261EFCC472",
+      "activation_sha256": "7DA180BBEC2D8BD82026CBB00617D213909BFCA410727FFC5EFDC6DCFD8020A9",
+      "checks": "19 focused tests passed with zero skips, run by author and independent security reviewer; no heavy provider proof."
+    }
+  },
+  "intervention": {
+    "status": "automatic_approval_review_unavailable",
+    "reason": "Approved restart command was rejected before process creation because automatic approval review hit a usage limit. No VM stop/start or verification run occurred."
+  },
+  "handoff_limits": "Incomplete feature checkpoint, not acceptance. Reviewed producer/pure-validator subsets pass their recorded gates; cache/source-authority/G3/activation integration and live Azure/hosted acceptance remain pending. Native gate remains failed. Approved VM restart was not executed. No Azure provisioning or GitHub publication.",
+  "deferred_diagnostic_risks": [
+    {
+      "id": "native_https_body_deadline",
+      "status": "closed_source_original_security_reviewer",
+      "evidence": "team/native-https-body-repair15-security.md; final root23/23PASS and frozen checkpoint15",
+      "scope": "Exact native HTTPS body-deadline/abort defect repaired. No attribution to separate setup failures or full-gate closure."
+    }
+  ],
+  "local_provider_diagnostic_observations": {
+    "inotify_instances": 524288,
+    "inotify_watches": 524288,
+    "rootless": false,
+    "host_architecture": "arm64",
+    "pinned_node_architecture": "arm64",
+    "cleanup_before_probe": "One preexisting container, zero owned fixture candidates; no VM/kernel changes."
+  },
+  "native_repair14": {
+    "status": "bounded_reviews_pass_native_failed",
+    "snapshot": "team/native-crd-checkpoint14.json",
+    "quality_report": "team/native-crd-readiness-repair14-quality.md",
+    "security_report": "team/native-crd-readiness-repair14-security.md",
+    "tests": "Author18/18 zero skips; actual pinned kubectl causal regression",
+    "result": {
+      "exit_status": 1,
+      "passed": 2,
+      "failed": 2,
+      "skipped": 0,
+      "duration_seconds": 138.366,
+      "report": "team/native-reproduction-repair14.md",
+      "failures": [
+        "admission native-admission unknown assertion projection",
+        "bundle issuer-seed kubectl exit1 duration12229ms"
+      ],
+      "cleanup": "One preexisting container; zero owned fixture candidates"
+    }
+  },
+  "native_repair15": {
+    "status": "bounded_quality_security_pass",
+    "snapshot": "team/native-https-checkpoint15.json",
+    "quality_report": "team/native-https-body-repair15-quality.md",
+    "security_report": "team/native-https-body-repair15-security.md",
+    "root_tests": {
+      "command": "node --test scripts/azure-native-fixture.test.mjs",
+      "exit_status": 0,
+      "passed": 23,
+      "failed": 0,
+      "skipped": 0,
+      "duration_seconds": 24.194
+    },
+    "limits": "Existing native failure preserved; no provider rerun for this unrelated lifecycle repair. No full-feature approval."
+  },
+  "native_observation16": {
+    "status": "failed_diagnostic_only",
+    "snapshot": "team/native-observation-checkpoint16.json",
+    "observer_proposal": "team/native-observer16-proposal.md",
+    "security_report": "team/native-observer16-security.md",
+    "preflight": "Four actual-process checks passed; six source hashes and39 assertion mappings matched.",
+    "native_gate_evidence": false,
+    "result": {
+      "passed": 1,
+      "failed": 3,
+      "skipped": 0,
+      "duration_seconds": 100.335,
+      "all_kind_status": 1,
+      "kind_duration_ms": [
+        99117,
+        99298,
+        98323
+      ],
+      "forciblyClosed": true,
+      "otherSignatureFlags": false,
+      "overflow": false,
+      "report": "team/native-observation16.md"
+    },
+    "cleanup": "One preexisting container; zero owned fixture candidates",
+    "oom_evidence": "Global vmstat oom_kill=0; recent10min fixed kernelOOM flags false. No OOM cause established.",
+    "targeted_kind_followup": {
+      "status": "failed_diagnostic_only",
+      "proposal": "team/native-observer16-kind-proposal.md",
+      "security_report": "team/native-observer16-kind-security.md",
+      "preflight": "Two actual-process flag/overflow checks passed; source and executable hashes matched.",
+      "native_gate_evidence": false,
+      "result": {
+        "passed": 2,
+        "failed": 2,
+        "skipped": 0,
+        "duration_seconds": 125.042,
+        "admissionKindDurationMs": 102259,
+        "bundleKindDurationMs": 100555,
+        "forciblyClosed": true,
+        "progress": [
+          "preparing-nodes",
+          "writing-configuration",
+          "starting-control-plane"
+        ],
+        "kindWrapperFlags": false,
+        "admissionCommandPresence": "podman-exec",
+        "bundleCommandPresence": "podman-inspect",
+        "overflow": false
+      }
+    },
+    "runtime_read_only": {
+      "idleTransportProbes": 24,
+      "passed": 24,
+      "failed": 0,
+      "maxDurationMs": 547,
+      "sshThrottleFlags": false,
+      "podmanServiceFailureFlags": false,
+      "hostFreeKiB": 1084588,
+      "runtimeCrashEvents": 0,
+      "cleanup": "One preexisting container; zero owned fixture candidates"
+    },
+    "restart_question": {
+      "status": "approved",
+      "scope": "One controlled local Podman VM restart, preserves settings/data but interrupts preexisting container. Then one unchanged native run; no causal closure inferred from pass.",
+      "owner_answer": "Allow one controlled Podman VM restart"
+    }
+  },
+  "offline_guard_delegation_batch": {
+    "status": "bounded_quality_security_pass_integration_pending",
+    "tasks": [
+      "T089 pure parser/equivalence/evaluator subset"
+    ],
+    "owner": "guard_batch7",
+    "scope": "Guard helper/test only; no provider audit, barrier removal, producer/cache/authority edits or source-path additions.",
+    "quality_report": "team/delegation-t089-quality.md",
+    "security_report": "team/delegation-t089-security.md",
+    "tests": "60focusedPASS0skip author; independentsecurity8purePASS0skip"
+  },
+  "offline_delegation_producer_batch": {
+    "status": "bounded_quality_security_pass_integration_pending",
+    "tasks": [
+      "T089 exact producer descriptor"
+    ],
+    "owner": "activation_batch7",
+    "scope": "Foundation delegation/vault_guard output/native mocked tests only; existing grants/conditions unchanged. JS/cache/sharedfixture migration held for coordinated later batch.",
+    "known_dependency": "New mandatory nested cache schema impacts shared azure-guard-test-fixture.mjs and consumers; publisher current ARM/source provenance audit unbuilt.",
+    "quality_report": "team/delegation-t089-quality.md",
+    "security_report": "team/delegation-t089-security.md",
+    "repair_quality_report": "team/delegation-producer-repair17-quality.md",
+    "repair_security_report": "team/delegation-producer-repair17-security.md",
+    "snapshot": "team/delegation-checkpoint17.json"
+  },
+  "controlled_runtime_restart": {
+    "owner_authorized": true,
+    "preflight_completed": true,
+    "runtime_mutated": false,
+    "verification_run_started": false,
+    "status": "not_executed",
+    "blocker": "Automatic approval review could not complete because of a usage limit; this was not a determination that the action was unsafe.",
+    "resume": "Refresh private VM/container preflight before execution; owner authorization remains recorded."
+  }
+}

@@ -12,8 +12,21 @@ jobs:
     with:
       component: reservations
       publish: true
-  promote:
+  azure:
     needs: [build]
+    if: vars.AZURE_IMAGES_ENABLED == 'true'
+    permissions:
+      contents: write
+      actions: read
+      packages: read
+      pull-requests: write
+      id-token: write
+    uses: ./.github/workflows/azure-images.yaml
+    with:
+      component: reservations
+  promote:
+    needs: [build, azure]
+    if: ${{ !cancelled() && needs.build.result == 'success' && (vars.AZURE_IMAGES_ENABLED != 'true' || (github.ref == 'refs/heads/main' && needs.azure.result == 'success')) }}
     runs-on: ubuntu-24.04
     timeout-minutes: 10
     permissions:

@@ -1,0 +1,27 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: argocd
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: '10'
+    argocd.argoproj.io/sync-options: Prune=false,Delete=false
+    traefik.ingress.kubernetes.io/router.entrypoints: websecure
+    traefik.ingress.kubernetes.io/router.tls: 'true'
+    traefik.ingress.kubernetes.io/router.middlewares: argocd-operator-source@kubernetescrd
+spec:
+  ingressClassName: traefik
+  tls:
+    - hosts: [argocd.codingfunlab.com]
+      secretName: argocd-public-tls
+  rules:
+    - host: argocd.codingfunlab.com
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: argocd-server
+                port:
+                  number: 80

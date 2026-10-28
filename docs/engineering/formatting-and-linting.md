@@ -58,6 +58,46 @@ Apply semantic .NET IDE fixes explicitly, then inspect the diff, format, and tes
 dotnet format style EquipmentReservation.slnx --no-restore --severity info
 ```
 
+## Terraform quality gates
+
+The owner approved Terraform formatting, validation, TFLint Azure rules and Trivy
+security checks for feature 014 on 2026-10-26. Tool versions, Windows/Linux artifact
+and executable checksums, provider versions and immutable policy inputs are pinned
+in `infra/azure/tools.lock.json`. Commit each root's provider lockfile; do not ignore
+or regenerate it silently during a read-only gate.
+The same lock pins kubectl and kubelogin for Entra AKS access; use their verified
+workspace executables rather than fetching an unpinned CLI or admin kubeconfig.
+
+Use `npm run infra:tools` to prepare verified tools and policy inputs, then
+`npm run infra:format` for explicit local Terraform formatting and
+`npm run infra:check` for the same checks locally and in workflows. The check command
+runs recursive `terraform fmt -check`, backend-free initialization and validation
+per root, TFLint with the committed AzureRM plugin configuration, and an offline
+Trivy scan against the pinned, integrity-verified policy content. Terraform formats
+its supported source/test extensions; Prettier does not format HCL. Format edited
+Terraform files with the pinned `terraform fmt` before rereading or testing them.
+Run `npm run infra:test` locally and in the required infrastructure CI lane as well.
+It uses the same controlled pinned Terraform execution, backend-free initialization
+and existing mocked native `.tftest.hcl` suites; private reports expose only safe
+pass counts. Failed, errored, skipped or missing native contracts block the gate.
+This command does not provision Azure resources.
+
+Every enabled security finding and scanner error blocks unless the human owner has
+approved an exact documented exception. Inline suppressions, mutable policy updates,
+missing tools, invalid policy cache and private diagnostic leakage cannot silently
+produce a passing result. Plan scans use actual resolved inputs and remain private.
+Source checks do not establish Azure deployment, restore or authorization acceptance.
+Follow [operational output classification](tooling.md) for provider and scanner data.
+Foundation source scanning supplies only the fixed synthetic expiry in
+`infra/azure/examples/source-scan.tfvars`, making an otherwise unknown variable
+visible to the scanner. This fixture has no environment configuration and cannot
+provision infrastructure; its date is not the actual key lifetime. Resolved plans
+must use the current private reviewed expiration input and enforce its policy.
+
+The two exact upstream YAML paths in `.prettierignore` retain vendor bytes for
+provenance verification; authored overlays and patches still receive formatting and
+validation. Their installation must verify the reviewed upstream hashes.
+
 ## Required checks for handoff
 
 Choose checks by changed area; mixed changes take the union. Record commands, scope and

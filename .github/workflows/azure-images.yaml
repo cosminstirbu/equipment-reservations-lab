@@ -1,0 +1,87 @@
+name: Azure verified component publication
+on:
+  workflow_call:
+    inputs:
+      component:
+        required: true
+        type: string
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  publish:
+    if: vars.AZURE_IMAGES_ENABLED == 'true' && github.ref == 'refs/heads/main' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    environment: azure-images
+    env:
+      DOCKER_CONFIG: ${{ runner.temp }}/docker-azure-images
+      AZURE_CONFIG_PATH: ${{ runner.temp }}/azure-config.json
+      AZURE_OUTPUTS_PATH: ${{ runner.temp }}/azure-outputs.json
+    permissions:
+      contents: write
+      actions: read
+      packages: read
+      pull-requests: write
+      id-token: write
+    concurrency:
+      group: azure-image-promotion
+      queue: max
+      cancel-in-progress: false
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+      - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444
+        with:
+          node-version: 24.15.0
+      - run: npm ci
+      - name: Write restricted operation lease inputs
+        env:
+          AZURE_CONFIG_JSON: ${{ secrets.AZURE_CONFIG_JSON }}
+          AZURE_OUTPUTS_JSON: ${{ secrets.AZURE_OUTPUTS_JSON }}
+        run: |
+          node --input-type=module -e "import {writeFileSync} from 'node:fs';import {join} from 'node:path';process.umask(0o077);for(const [name,value] of [['azure-config.json',process.env.AZURE_CONFIG_JSON],['azure-outputs.json',process.env.AZURE_OUTPUTS_JSON]]){if(!value)throw Error('Missing private publication inputs');writeFileSync(join(process.env.RUNNER_TEMP,name),value,{mode:0o600});}"
+      - uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f
+      - uses: azure/login@a641126d1b8aa4d1fa005f4f92df94a3a4c4c906
+        with:
+          client-id: ${{ vars.AZURE_IMAGES_CLIENT_ID }}
+          tenant-id: ${{ vars.AZURE_TENANT_ID }}
+          subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID }}
+      - name: Authenticate to the scoped destination registry
+        env:
+          ACR_LOGIN_SERVER: ${{ vars.ACR_LOGIN_SERVER }}
+        run: node scripts/promote-images.mjs registry-login "$ACR_LOGIN_SERVER"
+      - uses: docker/login-action@c94ce9fb468520275223c153574b00df6fe4bcc9
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ github.token }}
+      - name: Load source-proven original component publication
+        if: inputs.component != ''
+        env:
+          GH_TOKEN: ${{ github.token }}
+          COMPONENT: ${{ inputs.component }}
+        run: |
+          node scripts/component-pipelines.mjs load-intent --output "$RUNNER_TEMP/run-intent.json"
+          node scripts/component-pipelines.mjs load-result --component "$COMPONENT" --output "$RUNNER_TEMP/component-result.json"
+      - name: Copy and verify the same immutable content before proposing reviewed Azure references
+        if: inputs.component != ''
+        env:
+          GH_TOKEN: ${{ github.token }}
+          ACR_LOGIN_SERVER: ${{ vars.ACR_LOGIN_SERVER }}
+        run: node scripts/promote-images.mjs dual "$RUNNER_TEMP/component-result.json" "$RUNNER_TEMP/run-intent.json" "$ACR_LOGIN_SERVER" "$RUNNER_TEMP/dual-publication.json" --propose
+      - name: Repopulate recreated ACR from reviewed original GHCR digests without rebuilding
+        if: inputs.component == ''
+        env:
+          GH_TOKEN: ${{ github.token }}
+          ACR_LOGIN_SERVER: ${{ vars.ACR_LOGIN_SERVER }}
+        run: |
+          for component in inventory reservations notifications web database-bootstrap identity-bootstrap broker-bootstrap; do
+            node scripts/promote-images.mjs repopulate "$component" "$ACR_LOGIN_SERVER" "$RUNNER_TEMP/dual-publication.json" --propose
+          done
+      - name: Remove private inputs and registry credentials
+        if: always()
+        run: |
+          node --input-type=module -e "import {rmSync} from 'node:fs';import {join} from 'node:path';import {cleanupAllSync} from './scripts/process.mjs';cleanupAllSync(['azure-config.json','azure-outputs.json','docker-azure-images'].map(name=>({operation:'private image input cleanup',tool:'filesystem',run:()=>rmSync(join(process.env.RUNNER_TEMP,name),{recursive:name==='docker-azure-images',force:true})})));"

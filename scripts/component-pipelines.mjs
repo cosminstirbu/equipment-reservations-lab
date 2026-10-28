@@ -38,12 +38,38 @@ const qualityScriptNames = new Set([
   'check:openapi',
   'test:tooling',
   'test:deployment',
+  'infra:tools',
+  'infra:format',
+  'infra:check',
+  'infra:preflight',
+  'infra:plan',
+  'infra:apply',
+  'infra:bootstrap',
+  'infra:destroy',
+  'azure:start',
+  'azure:stop',
+  'azure:backup',
+  'azure:restore',
+  'test:azure',
 ]);
 const nonImageScripts = new Set([
   'scripts/argocd-installation.mjs',
   'scripts/component-pipelines.mjs',
   'scripts/local-kubernetes.mjs',
   'scripts/quality.mjs',
+  'scripts/azure-quality.mjs',
+  'scripts/azure-infrastructure.mjs',
+  'scripts/azure-operations.mjs',
+  'scripts/azure-recovery.mjs',
+  'scripts/azure-terraform.mjs',
+  'scripts/azure-runtime.mjs',
+  'scripts/azure-runtime-fixture.mjs',
+  'scripts/azure-provisioning.mjs',
+  '.github/workflows/azure-infrastructure.yaml',
+  '.github/workflows/azure-operations.yaml',
+  '.github/workflows/azure-destroy.yaml',
+  '.github/workflows/azure-recovery.yaml',
+  '.github/workflows/azure-images.yaml',
 ]);
 
 export function createEvidenceGateway({
@@ -366,11 +392,13 @@ with zipfile.ZipFile(io.BytesIO(b)) as z:
   }
 }
 
-export function validatePublicationEvidence(evidence, expected = {}) {
+export function validatePublicationRunEvidence(
+  record,
+  { run, job },
+  expected = {},
+) {
   try {
-    const { record, run, job, artifact, index } = evidence;
     validateComponentRelease(record);
-    verifyComponentIndex(record, () => index);
     const repository = expected.repository ?? record.repository;
     if (
       record.repository.id !== repository.id ||
@@ -406,6 +434,18 @@ export function validatePublicationEvidence(evidence, expected = {}) {
       )
     )
       throw new Error();
+    return record;
+  } catch {
+    throw new OperationalFailure('Invalid component publication run evidence');
+  }
+}
+
+export function validatePublicationEvidence(evidence, expected = {}) {
+  try {
+    const { record, run, job, artifact, index } = evidence;
+    validatePublicationRunEvidence(record, { run, job }, expected);
+    verifyComponentIndex(record, () => index);
+    const repository = expected.repository ?? record.repository;
     if (
       !Number.isSafeInteger(artifact.id) ||
       artifact.id <= 0 ||
@@ -680,6 +720,7 @@ function qualityScriptsOnly(root, base, revision) {
 
 function affects(path, component, inputs, knownInputs) {
   if (inputs.some((input) => path.startsWith(input))) return true;
+  if (path.startsWith('infra/azure/')) return false;
   if (nonImageScripts.has(path) || /^scripts\/[^/]+\.test\.mjs$/.test(path))
     return false;
   if (

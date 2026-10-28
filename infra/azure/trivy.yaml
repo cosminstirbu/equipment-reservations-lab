@@ -1,0 +1,12 @@
+misconfiguration:
+  scanners:
+    - terraform
+    - terraformplan-json
+    - terraformplan-snapshot
+severity:
+  - UNKNOWN
+  - LOW
+  - MEDIUM
+  - HIGH
+  - CRITICAL
+timeout: 5m

@@ -1,0 +1,47 @@
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: equipment
+  labels:
+    app.kubernetes.io/part-of: equipment
+    app.kubernetes.io/name: equipment
+  annotations:
+    argocd.argoproj.io/sync-wave: '10'
+    traefik.ingress.kubernetes.io/router.entrypoints: websecure
+    traefik.ingress.kubernetes.io/router.tls: 'true'
+spec:
+  ingressClassName: traefik
+  tls:
+    - hosts:
+        - app.codingfunlab.com
+        - identity.codingfunlab.com
+      secretName: equipment-tls
+  rules:
+    - host: app.codingfunlab.com
+      http:
+        paths:
+          - path: '/'
+            pathType: Prefix
+            backend:
+              service:
+                name: web
+                port:
+                  number: 8080
+    - host: identity.codingfunlab.com
+      http:
+        paths:
+          - path: '/realms/equipment/'
+            pathType: Prefix
+            backend:
+              service:
+                name: keycloak
+                port:
+                  number: 8080
+          - path: '/resources/'
+            pathType: Prefix
+            backend:
+              service:
+                name: keycloak
+                port:
+                  number: 8080

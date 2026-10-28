@@ -131,6 +131,8 @@ test('shared build inputs and unknown paths rebuild conservatively while documen
     ['scripts/deployment-ci.mjs', names],
     ['scripts/process.mjs', names],
     ['scripts/unknown-build-step.mjs', names],
+    ['scripts/azure-image-build.mjs', names],
+    ['infra/future-build.input', names],
     ['mystery.input', names],
     ['deploy/images/web.Dockerfile', ['web']],
     [
@@ -181,6 +183,73 @@ test('audited deployment, quality and test tooling selects no PR or current-main
       });
       assert.deepEqual(result.selected, [], event);
     }
+  } finally {
+    repo.close();
+  }
+});
+
+test('Azure-only infrastructure and operational configuration never rebuild images but mixed application changes do', () => {
+  const repo = repository();
+  try {
+    for (const path of [
+      'infra/azure/environment/main.tf',
+      'infra/azure/foundation/main.tf',
+      'infra/azure/tools.lock.json',
+      'scripts/azure-quality.mjs',
+      'scripts/azure-infrastructure.mjs',
+      'scripts/azure-operations.mjs',
+      'scripts/azure-recovery.mjs',
+      'scripts/azure-terraform.mjs',
+      'scripts/azure-runtime.mjs',
+      'scripts/azure-runtime-fixture.mjs',
+      'scripts/azure-provisioning.mjs',
+      '.github/workflows/azure-infrastructure.yaml',
+      '.github/workflows/azure-operations.yaml',
+      '.github/workflows/azure-destroy.yaml',
+      '.github/workflows/azure-recovery.yaml',
+      '.github/workflows/azure-images.yaml',
+      'deploy/environments/azure/images/inventory.yaml',
+      'deploy/platform/azure/configuration.yaml',
+    ])
+      repo.write(path, 'infrastructure configuration');
+    const metadata = JSON.parse(
+      readFileSync(join(repo.root, 'package.json'), 'utf8'),
+    );
+    metadata.scripts['infra:check'] = 'node scripts/azure-quality.mjs check';
+    metadata.scripts['azure:start'] = 'node scripts/azure-operations.mjs start';
+    metadata.scripts['test:azure'] =
+      'node --test scripts/azure-operations.test.mjs';
+    repo.write('package.json', JSON.stringify(metadata));
+    const infrastructure = repo.commit();
+    for (const event of ['pull_request', 'push']) {
+      const options = {
+        root: repo.root,
+        event,
+        sourceRef:
+          event === 'push' ? 'refs/heads/main' : 'refs/heads/infrastructure',
+        baseRevision: repo.base,
+        baselines: Object.fromEntries(names.map((name) => [name, repo.base])),
+      };
+      assert.deepEqual(
+        implementation.selectComponents({
+          ...options,
+          sourceRevision: infrastructure,
+        }).selected,
+        [],
+        event,
+      );
+    }
+    repo.write('src/Inventory/Program.cs', 'mixed application change');
+    assert.deepEqual(
+      implementation.selectComponents({
+        root: repo.root,
+        event: 'push',
+        sourceRef: 'refs/heads/main',
+        sourceRevision: repo.commit(),
+        baselines: Object.fromEntries(names.map((name) => [name, repo.base])),
+      }).selected,
+      ['inventory', 'database-bootstrap'],
+    );
   } finally {
     repo.close();
   }

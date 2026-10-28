@@ -1,0 +1,14 @@
+apiVersion: builtin
+kind: ConfigMapGenerator
+metadata:
+  name: equipment-broker
+behavior: replace
+files:
+  - rabbitmq.conf=broker/rabbitmq.conf
+options:
+  disableNameSuffixHash: true
+  labels:
+    app.kubernetes.io/part-of: equipment
+    app.kubernetes.io/name: equipment-broker
+  annotations:
+    argocd.argoproj.io/sync-wave: '-40'

@@ -1,0 +1,317 @@
+{
+  "version": 1,
+  "scope": "GitOps-owned native provider source and Azure manifests, captured after frozen-source root test; supporting operational imports outside this bounded snapshot remain independently reviewed separately.",
+  "files": [
+    {
+      "path": "deploy/argocd/azure/application/application.json",
+      "sha256": "7E8D9EE961B91C8393D9E878DE9226DD13A9084FF4F3AB3D01CAAF3A167B7242"
+    },
+    {
+      "path": "deploy/argocd/azure/application/kustomization.yaml",
+      "sha256": "309EDE42A7AF7792859DC8183EE3EFF0663B68C8D935C816917861ACC2B39E21"
+    },
+    {
+      "path": "deploy/argocd/azure/platform/application.json",
+      "sha256": "55F82826BFE9375694B40F2F8031FB2967B95559D1BFFA834FC47E7723331F93"
+    },
+    {
+      "path": "deploy/argocd/azure/platform/kustomization.yaml",
+      "sha256": "309EDE42A7AF7792859DC8183EE3EFF0663B68C8D935C816917861ACC2B39E21"
+    },
+    {
+      "path": "deploy/argocd/azure/projects/kustomization.yaml",
+      "sha256": "02D1A7D35B9E77D2578D5F9CF0B6B4E8106FB09F239199E6DE503AFE2EA491FA"
+    },
+    {
+      "path": "deploy/argocd/azure/projects/projects.yaml",
+      "sha256": "51922833FBD0C5ED6B6F1CF4D95978A70070125776B02D2B3987725861078305"
+    },
+    {
+      "path": "deploy/argocd/azure/recovery/application.json",
+      "sha256": "3A233F14CA8F9D6341538705E6C758CB912BFB5AAE26DC42D27CAFF331A19E2C"
+    },
+    {
+      "path": "deploy/argocd/azure/recovery/kustomization.yaml",
+      "sha256": "108577DFFF51F10EE2D58C6FD7D01D3CF459F00EF4CB47359BC85D96363416F7"
+    },
+    {
+      "path": "deploy/environments/azure/broker/rabbitmq.conf",
+      "sha256": "6B6024ACF7ACECCE2B4A9685424A06B3336C61ED999CECE77EE6F7DDDA878C05"
+    },
+    {
+      "path": "deploy/environments/azure/broker-configuration.yaml",
+      "sha256": "A5CF9506127BDC841E6100C260A4122CE5701D63CFFA45332671E5CEC83AF0DD"
+    },
+    {
+      "path": "deploy/environments/azure/broker-tls.yaml",
+      "sha256": "E6E24FCF06A8BF3C6DED696D4AB270EBFDE3A05E0F2429AC776A402432A178A8"
+    },
+    {
+      "path": "deploy/environments/azure/configuration.yaml",
+      "sha256": "241D6110F22FE0B9224E91B26F6C46CD2DE43E952D6764861A1DDB31E7600641"
+    },
+    {
+      "path": "deploy/environments/azure/dashboard-route.yaml",
+      "sha256": "5C0342BEFBF5CCB9D37AF41108326D2AB60B2D9C094BB0FBF6CAFA92004A5E43"
+    },
+    {
+      "path": "deploy/environments/azure/dashboard-tls.yaml",
+      "sha256": "25340CB4C709E4E7EDE9D13CD8E0C208B7F374C22D5F12CA0C7F96063D07F181"
+    },
+    {
+      "path": "deploy/environments/azure/ingress.yaml",
+      "sha256": "69F090FAD6B0CEA8D79432D85717A3FCEC09F0D74C0215D4245428327BB754C9"
+    },
+    {
+      "path": "deploy/environments/azure/jobs/database/kustomization.yaml",
+      "sha256": "1BE0180C907916DA2BF9CD6879EF36E2EA4E7BBD5E200811DC4C8DD865C9916F"
+    },
+    {
+      "path": "deploy/environments/azure/jobs/identity/kustomization.yaml",
+      "sha256": "D41F89FEB43ED1EFF480D30971C693C9B9436884E22FBD37541067EC43AEA7CE"
+    },
+    {
+      "path": "deploy/environments/azure/kustomization.yaml",
+      "sha256": "CC37587447AAF83FA263BFC6B67F26BF621D92B1478CAB2777EE5174B9BA2B87"
+    },
+    {
+      "path": "deploy/environments/azure/postgres-access.yaml",
+      "sha256": "0BFD12FB86815B030C409BF2E461C4F58C91BE75F988F124DE94120AD0E1DC62"
+    },
+    {
+      "path": "deploy/environments/azure/proxy-configuration.yaml",
+      "sha256": "CFC984D2AD735A519A821E0C57C595DE36DE50708D513710190E75F1DF75F802"
+    },
+    {
+      "path": "deploy/environments/azure/web-configuration.yaml",
+      "sha256": "9B938A4AC6EDE453D1891C6EE88C8C44AD35160ED7E9260BCB7B37F446005AF5"
+    },
+    {
+      "path": "deploy/platform/azure/certificates/controller/cert-manager.yaml",
+      "sha256": "C04A51295ADDA2B1A775146751F973E787190778C7F35180861D9678876E5C74"
+    },
+    {
+      "path": "deploy/platform/azure/certificates/controller/kustomization.yaml",
+      "sha256": "923677D619CC00131B2D573082FD7F49029ACF7B07BF751D350CCB34AE61F0CD"
+    },
+    {
+      "path": "deploy/platform/azure/certificates/issued.json",
+      "sha256": "81CEBC10865F482781D5C2B2AE2D221B8330F522CC3072D5C6FFB666A12F845D"
+    },
+    {
+      "path": "deploy/platform/azure/certificates/kustomization.yaml",
+      "sha256": "738BBC43FD4FD54BAA32184D2C6B508849C9D92D10605F8AFDA7A7A3BBA5B871"
+    },
+    {
+      "path": "deploy/platform/azure/ingress/argocd-route.yaml",
+      "sha256": "83A21BF921B6937CBE77221EFE1FA39423444B9AB7D2B2D0EED8D782DA781222"
+    },
+    {
+      "path": "deploy/platform/azure/ingress/kustomization.yaml",
+      "sha256": "9BC2F4C6060FA2432C74CFA61C8EEC47BFB8BE377CB262847C227A5FD0A3CE41"
+    },
+    {
+      "path": "deploy/platform/azure/ingress/operator-rbac.json",
+      "sha256": "74962BF41AA5C285FE1F17D7C8E87C3FF2D8789D6CBD37C0C25D985588617883"
+    },
+    {
+      "path": "deploy/platform/azure/ingress/traefik-crds.yaml",
+      "sha256": "ECBE44EA9B011CDA1B562716175B882D59CF6561FE6D3E5832DF7EE072687D17"
+    },
+    {
+      "path": "deploy/platform/azure/ingress/traefik.yaml",
+      "sha256": "264A13B038954340CE85D577340E2FCD207E2AFDF7CA7360CFBFA2ECFB41DF7B"
+    },
+    {
+      "path": "deploy/platform/azure/kustomization.yaml",
+      "sha256": "D96E2B1B2CBDC4BAEC96600922660182EC4C74F7BC06B5B232A0224D3CAEB28E"
+    },
+    {
+      "path": "deploy/platform/azure/namespaces.yaml",
+      "sha256": "B72CCE67506200062F67EB099FA0018BCCDD63B8186352F1D2B4C9BC87A33EA1"
+    },
+    {
+      "path": "deploy/platform/azure/network/controllers.json",
+      "sha256": "0A00AF1578FE89D1662804B00A21CB3B6F7DEB89FE03C61A1CA8AC4B2ACE0400"
+    },
+    {
+      "path": "deploy/platform/azure/network/kustomization.yaml",
+      "sha256": "AC03E5A88C5405B25AB34AD613D9B165EF87725CC87565412F35AA4C59216A11"
+    },
+    {
+      "path": "deploy/platform/azure/network/policies.yaml",
+      "sha256": "B4B0D60D340DAF194626E79E9E07BA035CC7D95F147D807E103E261C784E8F52"
+    },
+    {
+      "path": "deploy/platform/azure/recovery/clients.json",
+      "sha256": "1F364BEAAFF29E1DB3BDA35121B8E19F442A99738F3CFBB4F280C7AD91CF2D45"
+    },
+    {
+      "path": "deploy/platform/azure/recovery/database-bootstrap.json",
+      "sha256": "AA0074D89D028D9F3E8CFCDE252EA6A6622438D56B1DF1F711E56248C60091DE"
+    },
+    {
+      "path": "deploy/platform/azure/recovery/database-bootstrap.sql",
+      "sha256": "54F81A2EFE857D7A3BD2BEB5A515911968553230FEBC020D1784335FBADE1DD7"
+    },
+    {
+      "path": "deploy/platform/azure/recovery/kustomization.yaml",
+      "sha256": "0934B01D61ECE9E18FEEEDCCA6C0FADA9AE69449DA8DC83B529285FEDE07CD71"
+    },
+    {
+      "path": "deploy/platform/azure/recovery/monitor/kustomization.yaml",
+      "sha256": "3726F6B3749617DB2E56BFE5EE9DD22145845E521D3EAB35D356AD01937B7458"
+    },
+    {
+      "path": "deploy/platform/azure/recovery/monitor/network.json",
+      "sha256": "B9E0E1AB37691B232842CFE56D00CA5502CC1258A545500B02FAC07ED6710EA5"
+    },
+    {
+      "path": "deploy/platform/azure/recovery/monitor/nginx.conf",
+      "sha256": "027C06F05A09090A11D5D32B7B59B7CF6F8420C566B8124FB6BE94FB66E4351C"
+    },
+    {
+      "path": "deploy/platform/azure/recovery/monitor/pod.json",
+      "sha256": "E2FAEA4A5CFD4EC0485AF1C3CB82AE1135475EC26BED8C404F9472C31FDD665A"
+    },
+    {
+      "path": "deploy/platform/azure/recovery/network.json",
+      "sha256": "DC8599A37BE3F3D2A414D347C462D9590325FDFE2EB855D751F23E838D5AB40A"
+    },
+    {
+      "path": "deploy/platform/azure/recovery/pg_hba.conf",
+      "sha256": "946DB5982798705E964E85D0B3905EB126595F1D9718FE56376114FAD40AA0DB"
+    },
+    {
+      "path": "deploy/platform/azure/recovery-controls/admission.json",
+      "sha256": "037480D6263FCD6A92249388E51BFF937BE092BEF6531ADF6A7C6570ABC1F3AF"
+    },
+    {
+      "path": "deploy/platform/azure/recovery-controls/kustomization.yaml",
+      "sha256": "DC5CB998AB841287C1FE7BAF18D7493F70659AEDD7662F66DEB467FB7D170FBD"
+    },
+    {
+      "path": "deploy/platform/azure/recovery-controls/network.json",
+      "sha256": "85E1BB29FA9606BF744AC0719C1761EE933B3F39FD3C0B1CD41318C1E8ED6592"
+    },
+    {
+      "path": "deploy/platform/azure/recovery-controls/qualification.json",
+      "sha256": "73060B82A2D698FCCE92F6173910BAD046C7DDBFEDCAF8BDFD200CEE8077EA10"
+    },
+    {
+      "path": "deploy/platform/azure/recovery-controls/roles.json",
+      "sha256": "71D9830E46296190A1887B0F031C987F5159D3B1382A27B4F9835A4B6D405574"
+    },
+    {
+      "path": "deploy/platform/azure/schema-sources/argocd-crds.json",
+      "sha256": "9C1B842C3624F7E428DB452F4B8AD4AD6E745E8B0069B68E7D278EEDE285AD20"
+    },
+    {
+      "path": "deploy/platform/azure/schema-sources/secretproviderclass-crd.json",
+      "sha256": "942DB606F6BDFE15CBCCBD9BC4DEF26ACDD3ABE773FC224972917D0D223041A8"
+    },
+    {
+      "path": "deploy/platform/azure/schema-sources/sources.json",
+      "sha256": "FAAC1AC6CB3E87E8841B3B7574C8C482BA150F684B46396179DAD308ACC160FA"
+    },
+    {
+      "path": "deploy/platform/azure/storage/kustomization.yaml",
+      "sha256": "592604B08D1BA04E0D5E62C8C023DB790050AB8DEBD68537A2960E9ADA0D000D"
+    },
+    {
+      "path": "deploy/platform/azure/storage/storage.yaml",
+      "sha256": "90593ED50E1FD1F243EC48E78F679B8754FCA69DCB22B8F202C1BD42FFD1DA7C"
+    },
+    {
+      "path": "deploy/platform/azure/telemetry/collector.yaml",
+      "sha256": "AB9C227DB221F0A600158EA853C0F045BF69AF81D3594447B3DD2A406DBE0104"
+    },
+    {
+      "path": "deploy/platform/azure/telemetry/datasources.yaml",
+      "sha256": "3096F30840839B8FFF6AC1E6205DBBE55051D39B5E4962AD54FD072BF91A5655"
+    },
+    {
+      "path": "deploy/platform/azure/telemetry/kustomization.yaml",
+      "sha256": "686A89FE0F48AB943D75D0A46BD8B34AFAD4D90CFBE10E3EBB3694B32E7AC826"
+    },
+    {
+      "path": "deploy/platform/azure/telemetry/loki-proxy.conf",
+      "sha256": "F21C9175778AE3A9E6406859912FB4A270DF0C5B27B90F8BAF9A59F9E6739458"
+    },
+    {
+      "path": "deploy/platform/azure/telemetry/loki.yaml",
+      "sha256": "5D6D2B24705F52B3CE92A037866F150602F701881E41131FB342EEC0F4DE103A"
+    },
+    {
+      "path": "deploy/platform/azure/telemetry/network.json",
+      "sha256": "2A52DCFF218F4420C0180F8E31377B97061F43C8A223BF92C1E70DBEE9E8BA7E"
+    },
+    {
+      "path": "deploy/platform/azure/telemetry/prometheus-proxy.conf",
+      "sha256": "106FAC2AF6E99D1D7B8A899CEBBDD2884D91B74719A71F539CC0EC76C4C3EF8E"
+    },
+    {
+      "path": "deploy/platform/azure/telemetry/prometheus.yaml",
+      "sha256": "AAA7BA30A510C690A0A8FA95E3BB074D99047BC1355EF1EF08EBD5AF5E73E6C4"
+    },
+    {
+      "path": "deploy/platform/azure/telemetry/tempo-proxy.conf",
+      "sha256": "4B83CC6A318D495D0894E473D5E800DDC7748BEC04AF15214F5501941EC3F2DA"
+    },
+    {
+      "path": "deploy/platform/azure/telemetry/tempo.yaml",
+      "sha256": "2F749197E754422FD7D767845693F7BB40CC1B44D1DC4BCAFB86B3D8A15E8225"
+    },
+    {
+      "path": "deploy/platform/azure/telemetry/workloads.json",
+      "sha256": "AFA207861F248CAAE5BF0EAE6D4C7AC8D1051C1035703AAF3DFDB88B3FD36A50"
+    },
+    {
+      "path": "infra/azure/tools.lock.json",
+      "sha256": "03AFE39B3208694DE7AF6A35912F151B61D9C211968380BFCC1963341AE3DFA0"
+    },
+    {
+      "path": "scripts/azure-admission.test.mjs",
+      "sha256": "E978A80EC7558B64F3FD3C92AC78D518AB1350D4615C3DCCFC8CA556A9739AFA"
+    },
+    {
+      "path": "scripts/azure-broker.test.mjs",
+      "sha256": "75C726CDCF0C116F07A0AA1705F63D360E85DBD8BDD610B66AC1995DCB554F59"
+    },
+    {
+      "path": "scripts/azure-dashboard.test.mjs",
+      "sha256": "A36B97495A9301A4DFCD2A621CCCF5767253BFD2D5C8B1DA24CB65CF55A577C6"
+    },
+    {
+      "path": "scripts/azure-database.test.mjs",
+      "sha256": "2A98A7AC52A7B07C3D61B6882B4D205B125064ACAC3456FB9198ADC92C06D494"
+    },
+    {
+      "path": "scripts/azure-deployment.test.mjs",
+      "sha256": "2C410DAAB0424D9E91C731F31C934CB9A06E549AACCFBAA99250DB830D603608"
+    },
+    {
+      "path": "scripts/azure-observability.test.mjs",
+      "sha256": "B66CB2794D728E4C154DAD0E382AF236FDE9F9E09BCB6DB0E30782B78008ED80"
+    },
+    {
+      "path": "scripts/azure-runtime-fixture.mjs",
+      "sha256": "07A692912817601804F1C5D4563458D103D48C88324521AB03C18F7AE13F7814"
+    },
+    {
+      "path": "scripts/azure-runtime.mjs",
+      "sha256": "6245D2BAB41768156FE299A9B628380F9D314022C19EC8270F3163113C683086"
+    },
+    {
+      "path": "scripts/azure-runtime.test.mjs",
+      "sha256": "50D74C9F3D33C3C563310AD80F61F4F4FDE8F1D8C722339EA72D243FFD878FEB"
+    }
+  ],
+  "command": "AZURE_PROVIDER_CONTRACTS=1 KIND=<verified kind0.33.0> KUBECTL=<verified kubectl> node --test scripts/azure-runtime.test.mjs scripts/azure-deployment.test.mjs scripts/azure-observability.test.mjs scripts/azure-database.test.mjs scripts/azure-broker.test.mjs scripts/azure-dashboard.test.mjs scripts/azure-admission.test.mjs",
+  "environment": "Windows; elevated local Podman access; isolated owned kind cluster and containers",
+  "exit_status": 0,
+  "passed": 37,
+  "failed": 0,
+  "skipped": 0,
+  "duration_ms": 110931.4089
+}

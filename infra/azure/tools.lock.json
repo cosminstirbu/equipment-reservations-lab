@@ -1,0 +1,299 @@
+{
+  "version": 1,
+  "providers": {
+    "hashicorp/azurerm": "5.11.0",
+    "hashicorp/azuread": "3.10.0"
+  },
+  "tools": {
+    "kubeconform": {
+      "version": "0.8.0",
+      "platforms": {
+        "win32-x64": {
+          "path": "kubeconform/kubeconform.exe",
+          "executableSha256": "642bf8ea0d614a8c75d2bd012eb6042a90589ff846c69f04863afa446b30f2c1",
+          "url": "https://github.com/yannh/kubeconform/releases/download/v0.8.0/kubeconform-windows-amd64.zip",
+          "archiveSha256": "e3f56102bcf4f50b034a567e2482a1c5330799983ddd655952310211aef73d93"
+        },
+        "linux-x64": {
+          "path": "kubeconform/kubeconform",
+          "executableSha256": "457722b36e98d7bdbc91525e594951ef5d7ea3a29da2d13b9b28a2fb8a5097b7",
+          "url": "https://github.com/yannh/kubeconform/releases/download/v0.8.0/kubeconform-linux-amd64.tar.gz",
+          "archiveSha256": "9bc2bffbf71f261128533edaf912153948b7ff238f9a531ae6d34466ec287883"
+        }
+      }
+    },
+    "kubelogin": {
+      "version": "0.2.22",
+      "platforms": {
+        "win32-x64": {
+          "path": "kubelogin/bin/windows_amd64/kubelogin.exe",
+          "extractDirectory": "kubelogin",
+          "executableSha256": "421a3ac5f21803b2fe7a6a9e0f0023fe6c9e3e212f1724597dda7e4aad6e78af",
+          "url": "https://github.com/Azure/kubelogin/releases/download/v0.2.22/kubelogin-win-amd64.zip",
+          "archiveSha256": "62839abfdaddc35dc460bfe1d40f2c569c168b7aa090e2c831776e84f95402b9"
+        },
+        "linux-x64": {
+          "path": "kubelogin/bin/linux_amd64/kubelogin",
+          "extractDirectory": "kubelogin",
+          "executableSha256": "61c268b79f581d667600ba03c70442ceb089382b9632153e70c884e5283ab022",
+          "url": "https://github.com/Azure/kubelogin/releases/download/v0.2.22/kubelogin-linux-amd64.zip",
+          "archiveSha256": "716cbcb1880bca8f0e976b8917d06fcfe04de2c1e737eaaabbb26e2782330119"
+        }
+      }
+    },
+    "terraform": {
+      "version": "1.17.0",
+      "platforms": {
+        "win32-x64": {
+          "path": "terraform/terraform.exe",
+          "executableSha256": "ea648bfb3d3db4a331e66ecb4cddeb2c5c250e9dc3886fc49ba136de56fefa68",
+          "url": "https://releases.hashicorp.com/terraform/1.17.0/terraform_1.17.0_windows_amd64.zip",
+          "archiveSha256": "2948dd7f77dec0f562ec29000103e0441d915be5e5f1a02c1ce23681951cfb19"
+        },
+        "linux-x64": {
+          "path": "terraform/terraform",
+          "executableSha256": "664b66cc0bcd7ed28fd27569719ccaa8a40c230b8be45060ce4d65e2852e1bcc",
+          "url": "https://releases.hashicorp.com/terraform/1.17.0/terraform_1.17.0_linux_amd64.zip",
+          "archiveSha256": "c168cab7c637a8769fdb90089ddd19de701bc6ff8aca64dc2e2185fe46f59f67"
+        }
+      }
+    },
+    "tflint": {
+      "version": "0.65.0",
+      "platforms": {
+        "win32-x64": {
+          "path": "tflint/tflint.exe",
+          "executableSha256": "e3fac0d1c3c1690fbdfb42224c949fa8aeb9aa861e3508ed3eca1045e97791bb",
+          "url": "https://github.com/terraform-linters/tflint/releases/download/v0.65.0/tflint_windows_amd64.zip",
+          "archiveSha256": "292e760adf0e9c7e0f10ddeb0f6add67fd6d2c68b5449fdf766ff6ffddce465c"
+        },
+        "linux-x64": {
+          "path": "tflint/tflint",
+          "executableSha256": "2b481cac4ffb8de9a2eb076c508060df0be1ac516864dbc939d5406b663edd7d",
+          "url": "https://github.com/terraform-linters/tflint/releases/download/v0.65.0/tflint_linux_amd64.zip",
+          "archiveSha256": "d4c545ed2e29d6338604b586f34f544f380f70f243aa72f7b484713835eaec61"
+        }
+      }
+    },
+    "azurerm": {
+      "version": "0.33.0",
+      "platforms": {
+        "win32-x64": {
+          "path": "plugins/github.com/terraform-linters/tflint-ruleset-azurerm/0.33.0/tflint-ruleset-azurerm.exe",
+          "executableSha256": "586958b0cc3df98517e83079f90234edbe0d5f2f77e01020a259eb188e8f0019",
+          "url": "https://github.com/terraform-linters/tflint-ruleset-azurerm/releases/download/v0.33.0/tflint-ruleset-azurerm_windows_amd64.zip",
+          "archiveSha256": "367ead184ec4ea6cdf4c401607c03301a3824a514815def94d1b378aae357630"
+        },
+        "linux-x64": {
+          "path": "plugins/github.com/terraform-linters/tflint-ruleset-azurerm/0.33.0/tflint-ruleset-azurerm",
+          "executableSha256": "a71db870916e15c62523698f42fe4cd53db3eb7818362f64d966336bb8550474",
+          "url": "https://github.com/terraform-linters/tflint-ruleset-azurerm/releases/download/v0.33.0/tflint-ruleset-azurerm_linux_amd64.zip",
+          "archiveSha256": "cd372389bd9ef17096ed7a9fbd856c0122521df141301685e974b269322819a8"
+        }
+      }
+    },
+    "trivy": {
+      "version": "0.76.1",
+      "platforms": {
+        "win32-x64": {
+          "path": "trivy/trivy.exe",
+          "executableSha256": "94618922c9eb324d7099bf217b01504bfc1f87a0d46d6008cb24ec89b1d1a4bb",
+          "url": "https://github.com/aquasecurity/trivy/releases/download/v0.76.1/trivy_0.76.1_windows-64bit.zip",
+          "archiveSha256": "1051f49cb22d5284f43425f72aad9cda63ca12ceb92e7caa06903490c82dc9bf"
+        },
+        "linux-x64": {
+          "path": "trivy/trivy",
+          "executableSha256": "d1dfca6ae10a1ad4540bb94e64f0510077c47008920a9b554986b39dca573d83",
+          "url": "https://github.com/aquasecurity/trivy/releases/download/v0.76.1/trivy_0.76.1_Linux-64bit.tar.gz",
+          "archiveSha256": "c7cbe3137fb8a48a17574bede3dd6beb16742d1e9772929940fc90082c39d9c0"
+        }
+      }
+    },
+    "kubectl": {
+      "version": "1.35.8",
+      "platforms": {
+        "linux-x64": {
+          "path": "kubectl/kubectl",
+          "executableSha256": "874d5e72dbb819f43cff16bcd1e4f8bac5b7f2361fe1e55049b0a6c676fb0cbf",
+          "url": "https://dl.k8s.io/release/v1.35.8/bin/linux/amd64/kubectl",
+          "archiveSha256": "874d5e72dbb819f43cff16bcd1e4f8bac5b7f2361fe1e55049b0a6c676fb0cbf"
+        },
+        "win32-x64": {
+          "path": "kubectl/kubectl.exe",
+          "executableSha256": "f675d70224b42b84e0442e8d7644efbe440e4451a4b02bdc5d95823a96316ba8",
+          "url": "https://dl.k8s.io/release/v1.35.8/bin/windows/amd64/kubectl.exe",
+          "archiveSha256": "f675d70224b42b84e0442e8d7644efbe440e4451a4b02bdc5d95823a96316ba8"
+        }
+      }
+    },
+    "kind": {
+      "version": "0.33.0",
+      "platforms": {
+        "win32-x64": {
+          "path": "kind/kind.exe",
+          "executableSha256": "4b22adaa135368c5a465d56bbd8e520cbea87272a06ca00b6078e7b81515c9fc",
+          "url": "https://github.com/kubernetes-sigs/kind/releases/download/v0.33.0/kind-windows-amd64",
+          "archiveSha256": "4b22adaa135368c5a465d56bbd8e520cbea87272a06ca00b6078e7b81515c9fc"
+        },
+        "linux-x64": {
+          "path": "kind/kind",
+          "executableSha256": "aee6151561422756b764a4ae28e7f44cda5af5a9eead3cc9985112b1de8d8e0d",
+          "url": "https://github.com/kubernetes-sigs/kind/releases/download/v0.33.0/kind-linux-amd64",
+          "archiveSha256": "aee6151561422756b764a4ae28e7f44cda5af5a9eead3cc9985112b1de8d8e0d"
+        }
+      }
+    }
+  },
+  "policy": {
+    "repository": "mirror.gcr.io/aquasec/trivy-checks@sha256:b591e9190cff4aa4e385b1a25bccfd9ecf178d3c77fd194e1410b7ce7e1df058",
+    "digest": "sha256:b591e9190cff4aa4e385b1a25bccfd9ecf178d3c77fd194e1410b7ce7e1df058",
+    "contentSha256": "cf70b30a7e9b44e61c39e8d903e483bfb84595fe73fd12e689c3d6526c86a1cc"
+  },
+  "schemas": {
+    "directory": "kubernetes-schemas",
+    "version": "1.35.0",
+    "files": [
+      {
+        "sha256": "e0eaddebd677c08aa092b2da2264d86ac4fc34eed112b9fac2945b3f00c1e9b1",
+        "url": "https://raw.githubusercontent.com/yannh/kubernetes-json-schema/f7d855e49c34b039c9ef2196444910275e31e09e/v1.35.0-standalone-strict/configmap-v1.json",
+        "path": "configmap-v1.json"
+      },
+      {
+        "sha256": "324fae677b98d1a6d54340db0c334d053e8ffbafceb3f73326e41de2610d5843",
+        "url": "https://raw.githubusercontent.com/yannh/kubernetes-json-schema/f7d855e49c34b039c9ef2196444910275e31e09e/v1.35.0-standalone-strict/namespace-v1.json",
+        "path": "namespace-v1.json"
+      },
+      {
+        "sha256": "6136871ac0337f11a48da5231a2807407c7386967e3432f344141b902f6a538c",
+        "url": "https://raw.githubusercontent.com/yannh/kubernetes-json-schema/f7d855e49c34b039c9ef2196444910275e31e09e/v1.35.0-standalone-strict/persistentvolumeclaim-v1.json",
+        "path": "persistentvolumeclaim-v1.json"
+      },
+      {
+        "sha256": "8bf019854daed511e7c174896a898173fa65d88ec5937c687a37303d4cc9351b",
+        "url": "https://raw.githubusercontent.com/yannh/kubernetes-json-schema/f7d855e49c34b039c9ef2196444910275e31e09e/v1.35.0-standalone-strict/service-v1.json",
+        "path": "service-v1.json"
+      },
+      {
+        "sha256": "8193d6c3561475c6d3d5c44e1faedb1df53905373d904bc17015694326d659cf",
+        "url": "https://raw.githubusercontent.com/yannh/kubernetes-json-schema/f7d855e49c34b039c9ef2196444910275e31e09e/v1.35.0-standalone-strict/serviceaccount-v1.json",
+        "path": "serviceaccount-v1.json"
+      },
+      {
+        "sha256": "46dc7cc4bec2c9a62400491e2b8057635afbfa6838999c518f7bea5c621a989b",
+        "url": "https://raw.githubusercontent.com/yannh/kubernetes-json-schema/f7d855e49c34b039c9ef2196444910275e31e09e/v1.35.0-standalone-strict/deployment-apps-v1.json",
+        "path": "deployment-apps-v1.json"
+      },
+      {
+        "sha256": "514d04ed5540a4d6354bff1ace0bd5155c98c58bcd33a030d1500427387fa97f",
+        "url": "https://raw.githubusercontent.com/yannh/kubernetes-json-schema/f7d855e49c34b039c9ef2196444910275e31e09e/v1.35.0-standalone-strict/job-batch-v1.json",
+        "path": "job-batch-v1.json"
+      },
+      {
+        "sha256": "4e0f63ad84c2bf22565e489d1f4b885ddaa9f6bf7cff1ddd562553760afe4d79",
+        "url": "https://raw.githubusercontent.com/yannh/kubernetes-json-schema/f7d855e49c34b039c9ef2196444910275e31e09e/v1.35.0-standalone-strict/ingress-networking-v1.json",
+        "path": "ingress-networking-v1.json"
+      },
+      {
+        "sha256": "7a92c21dcb17add498b881563e66adfa23bc2ee75bd208c6d818adb9dd2aa31f",
+        "url": "https://raw.githubusercontent.com/yannh/kubernetes-json-schema/f7d855e49c34b039c9ef2196444910275e31e09e/v1.35.0-standalone-strict/ingressclass-networking-v1.json",
+        "path": "ingressclass-networking-v1.json"
+      },
+      {
+        "sha256": "f6324cc464f62228b0418f438d167208e4f86c7e3677ba30f608e79a8b26ba79",
+        "url": "https://raw.githubusercontent.com/yannh/kubernetes-json-schema/f7d855e49c34b039c9ef2196444910275e31e09e/v1.35.0-standalone-strict/networkpolicy-networking-v1.json",
+        "path": "networkpolicy-networking-v1.json"
+      },
+      {
+        "sha256": "9704bb88ec73ed37f8d565dbd2d2ee1e8ee61b5ec63c96a5a61926d6971ef3c9",
+        "url": "https://raw.githubusercontent.com/yannh/kubernetes-json-schema/f7d855e49c34b039c9ef2196444910275e31e09e/v1.35.0-standalone-strict/storageclass-storage-v1.json",
+        "path": "storageclass-storage-v1.json"
+      },
+      {
+        "sha256": "dfe8fb03b1642f985b57b12edd1727b6867c13ed4b6761ef81bdd51b1d236711",
+        "url": "https://raw.githubusercontent.com/yannh/kubernetes-json-schema/f7d855e49c34b039c9ef2196444910275e31e09e/v1.35.0-standalone-strict/role-rbac-v1.json",
+        "path": "role-rbac-v1.json"
+      },
+      {
+        "sha256": "87ab620d0adddcd2803b92357fce2854af752326df8c5408a7588aae98b3031d",
+        "url": "https://raw.githubusercontent.com/yannh/kubernetes-json-schema/f7d855e49c34b039c9ef2196444910275e31e09e/v1.35.0-standalone-strict/rolebinding-rbac-v1.json",
+        "path": "rolebinding-rbac-v1.json"
+      },
+      {
+        "sha256": "0777f91c4fa08bd3989b6db8c59dad0429a63dec8f59e883ff55c947a14d0d5f",
+        "url": "https://raw.githubusercontent.com/yannh/kubernetes-json-schema/f7d855e49c34b039c9ef2196444910275e31e09e/v1.35.0-standalone-strict/clusterrole-rbac-v1.json",
+        "path": "clusterrole-rbac-v1.json"
+      },
+      {
+        "sha256": "e2d0471b444cf7ea4fd69d7eba1b16e06215503bfbc650450c2b6ad9b40f863c",
+        "url": "https://raw.githubusercontent.com/yannh/kubernetes-json-schema/f7d855e49c34b039c9ef2196444910275e31e09e/v1.35.0-standalone-strict/clusterrolebinding-rbac-v1.json",
+        "path": "clusterrolebinding-rbac-v1.json"
+      },
+      {
+        "sha256": "816c8763e72d955cbe41d3ca45ef40877e82f6e12155a7229fb29c225f5812ba",
+        "url": "https://raw.githubusercontent.com/yannh/kubernetes-json-schema/f7d855e49c34b039c9ef2196444910275e31e09e/v1.35.0-standalone-strict/mutatingwebhookconfiguration-admissionregistration-v1.json",
+        "path": "mutatingwebhookconfiguration-admissionregistration-v1.json"
+      },
+      {
+        "sha256": "cc85149054a94bfee52315f4abbe4846023ae878b25a2cb79aa9b80dc2383479",
+        "url": "https://raw.githubusercontent.com/yannh/kubernetes-json-schema/f7d855e49c34b039c9ef2196444910275e31e09e/v1.35.0-standalone-strict/validatingwebhookconfiguration-admissionregistration-v1.json",
+        "path": "validatingwebhookconfiguration-admissionregistration-v1.json"
+      },
+      {
+        "sha256": "de761ccb06bd1d2c641fb57397f61b68e7ff53a384f0817ce40e5ded8cee86f3",
+        "url": "https://raw.githubusercontent.com/yannh/kubernetes-json-schema/f7d855e49c34b039c9ef2196444910275e31e09e/v1.35.0-standalone-strict/secret-v1.json",
+        "path": "secret-v1.json"
+      },
+      {
+        "sha256": "da78ed86dce07983c3e54c565def2c2e478fd458155ac7cd56cf671e88e16ee2",
+        "url": "https://raw.githubusercontent.com/yannh/kubernetes-json-schema/f7d855e49c34b039c9ef2196444910275e31e09e/v1.35.0-standalone-strict/statefulset-apps-v1.json",
+        "path": "statefulset-apps-v1.json"
+      },
+      {
+        "sha256": "d6adf88a0790ee7c51f240b01712aaafc897fd2212633aa76331c2a38c216789",
+        "url": "https://raw.githubusercontent.com/yannh/kubernetes-json-schema/f7d855e49c34b039c9ef2196444910275e31e09e/v1.35.0-standalone-strict/daemonset-apps-v1.json",
+        "path": "daemonset-apps-v1.json"
+      },
+      {
+        "sha256": "483500149ee52ce5753d75f5639101d985bb4f5e902cc05b1ba7627465d62446",
+        "path": "inputs/kubernetes-swagger.json",
+        "url": "https://raw.githubusercontent.com/kubernetes/kubernetes/66452049f3d692768c39c797b21b793dce80314e/api/openapi-spec/swagger.json"
+      },
+      {
+        "sha256": "5b25cc3fbd8dce30ac8d20adb0789ef9d51207b63ba6a2b68ad5f624fc8b7669",
+        "path": "inputs/secretproviderclass.yaml",
+        "url": "https://raw.githubusercontent.com/kubernetes-sigs/secrets-store-csi-driver/0e4ceeb734246e1de5267d8968023a3c8dcff39a/config/crd/bases/secrets-store.csi.x-k8s.io_secretproviderclasses.yaml"
+      },
+      {
+        "sha256": "90dc9094bf4c5964afd9c0e35d735e1c2fcbbda4f8e36799c092d9864ed65f50",
+        "path": "inputs/argocd-install.yaml",
+        "url": "https://raw.githubusercontent.com/argoproj/argo-cd/a5038b0e2bbac1715754380ae0084df8e3d5b48c/manifests/install.yaml"
+      },
+      {
+        "path": "validatingadmissionpolicy-admissionregistration-v1.json",
+        "url": "https://raw.githubusercontent.com/yannh/kubernetes-json-schema/f7d855e49c34b039c9ef2196444910275e31e09e/v1.35.0-standalone-strict/validatingadmissionpolicy-admissionregistration-v1.json",
+        "sha256": "4b8b5f0e0e383363ee248095abe0ba0fd8b79da64d755c68632cbec9617697d9"
+      },
+      {
+        "path": "validatingadmissionpolicybinding-admissionregistration-v1.json",
+        "url": "https://raw.githubusercontent.com/yannh/kubernetes-json-schema/f7d855e49c34b039c9ef2196444910275e31e09e/v1.35.0-standalone-strict/validatingadmissionpolicybinding-admissionregistration-v1.json",
+        "sha256": "a705eb1d0de6d38132435c8df35b33097456012b2cd7d92d685442386d1d5db5"
+      },
+      {
+        "path": "pod-v1.json",
+        "url": "https://raw.githubusercontent.com/yannh/kubernetes-json-schema/f7d855e49c34b039c9ef2196444910275e31e09e/v1.35.0-standalone-strict/pod-v1.json",
+        "sha256": "ab3eec94c85e6b166a62312ddb919fb747a53d1f5701a77befb17419361b52b0"
+      }
+    ],
+    "revision": "f7d855e49c34b039c9ef2196444910275e31e09e",
+    "vendoredFiles": [
+      {
+        "path": "deploy/platform/azure/ingress/traefik-crds.yaml",
+        "sha256": "ecbe44ea9b011cda1b562716175b882d59cf6561fe6d3e5832df7ee072687d17"
+      },
+      {
+        "path": "deploy/platform/azure/certificates/controller/cert-manager.yaml",
+        "sha256": "c04a51295adda2b1a775146751f973e787190778c7f35180861d9678876e5c74"
+      }
+    ]
+  }
+}

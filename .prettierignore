@@ -12,3 +12,6 @@
 .agents/**
 .specify/**
 specs/**
+# Verified upstream release bytes; provenance is checked before installation.
+deploy/platform/azure/certificates/controller/cert-manager.yaml
+deploy/platform/azure/ingress/traefik-crds.yaml

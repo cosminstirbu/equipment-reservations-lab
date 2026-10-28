@@ -1,0 +1,32 @@
+{
+  "version": 1,
+  "taxRate": null,
+  "environment": "learning",
+  "generation": "REPLACE",
+  "subscriptionId": "REPLACE_WITH_ACTUAL_SUBSCRIPTION_UUID",
+  "tenantId": "REPLACE_WITH_ACTUAL_TENANT_UUID",
+  "region": "westeurope",
+  "domain": "codingfunlab.com",
+  "operatorGroupObjectId": "REPLACE_WITH_ASSIGNED_OPERATOR_GROUP_UUID",
+  "operatorCidrs": ["REPLACE_WITH_YOUR_PUBLIC_IPV4_CIDR"],
+  "acmeEmail": "REPLACE_WITH_ACTUAL_CONTACT",
+  "acmeTermsAccepted": false,
+  "kubernetesVersion": "REPLACE_WITH_LIVE_SUPPORTED_PATCH",
+  "nodeVmSize": "Standard_D4s_v5",
+  "nodeCount": 2,
+  "githubRepository": "cosminstirbu/equipment-reservations-lab",
+  "gitRevision": "REPLACE_WITH_EXACT_REVIEWED_SHA",
+  "foundationBackend": {
+    "resourceGroupName": "REPLACE",
+    "storageAccountName": "REPLACE",
+    "containerName": "tfstate",
+    "key": "foundation.tfstate"
+  },
+  "environmentBackend": {
+    "resourceGroupName": "REPLACE",
+    "storageAccountName": "REPLACE",
+    "containerName": "environment-state",
+    "key": "environment.tfstate"
+  },
+  "recoveryKeyVersion": "REPLACE_WITH_RETAINED_KEY_VERSION"
+}

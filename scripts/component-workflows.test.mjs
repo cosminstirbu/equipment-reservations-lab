@@ -4,6 +4,7 @@ import {
   readFileSync,
   writeFileSync,
   mkdtempSync,
+  mkdirSync,
   rmSync,
 } from 'node:fs';
 import { tmpdir } from 'node:os';
@@ -26,6 +27,116 @@ const id = (name) => name.replaceAll('-', '_');
 const workflow = (name) =>
   parsers.Yaml.parse(readFileSync(`.github/workflows/${name}.yaml`, 'utf8'))
     .data;
+
+test('explicit Azure mode gates every local promotion on dual publication with main-only scoped OIDC', () => {
+  const azure = workflow('azure-images');
+  assert.deepEqual(azure.permissions, { contents: 'read' });
+  assert.ok(azure.on.workflow_call);
+  assert.ok(Object.hasOwn(azure.on, 'workflow_dispatch'));
+  assert.equal(azure.on.pull_request, undefined);
+  assert.equal(azure.on.pull_request_target, undefined);
+  const publish = azure.jobs.publish;
+  assert.match(publish.if, /refs\/heads\/main/);
+  assert.match(publish.if, /AZURE_IMAGES_ENABLED/);
+  assert.equal(publish.environment, 'azure-images');
+  assert.equal(
+    publish.env.DOCKER_CONFIG,
+    '${{ runner.temp }}/docker-azure-images',
+  );
+  assert.equal(
+    publish.env.AZURE_CONFIG_PATH,
+    '${{ runner.temp }}/azure-config.json',
+  );
+  assert.equal(
+    publish.env.AZURE_OUTPUTS_PATH,
+    '${{ runner.temp }}/azure-outputs.json',
+  );
+  assert.equal(publish.permissions['id-token'], 'write');
+  assert.equal(publish.permissions['pull-requests'], 'write');
+  assert.ok(
+    publish.steps.some((step) => step.run?.includes('promote-images.mjs dual')),
+  );
+  assert.ok(publish.steps.some((step) => step.run?.includes('load-result')));
+  assert.ok(
+    publish.steps.every(
+      (step) => !/deployment-ci\.mjs component/.test(step.run ?? ''),
+    ),
+  );
+  for (const step of publish.steps.filter((step) => step.uses))
+    assert.match(step.uses, /@[a-f0-9]{40}$/);
+  for (const name of names) {
+    const wrapper = workflow(`component-${name}`);
+    assert.deepEqual(wrapper.jobs.azure.needs, ['build']);
+    assert.equal(
+      wrapper.jobs.azure.uses,
+      './.github/workflows/azure-images.yaml',
+    );
+    assert.match(wrapper.jobs.azure.if, /AZURE_IMAGES_ENABLED/);
+    assert.deepEqual(wrapper.jobs.promote.needs, ['build', 'azure']);
+    assert.match(wrapper.jobs.promote.if, /needs.azure.result == 'success'/);
+    assert.match(wrapper.jobs.promote.if, /AZURE_IMAGES_ENABLED != 'true'/);
+    assert.match(wrapper.jobs.promote.if, /github.ref == 'refs\/heads\/main'/);
+  }
+});
+
+test('image workflow materializes private lease inputs and always cleans only its owned inputs and registry credentials', (t) => {
+  const directory = mkdtempSync(join(tmpdir(), 'image-workflow-private-'));
+  t.after(() => rmSync(directory, { recursive: true, force: true }));
+  const steps = workflow('azure-images').jobs.publish.steps;
+  const write = steps.find(
+    (step) => step.name === 'Write restricted operation lease inputs',
+  );
+  const cleanup = steps.find(
+    (step) => step.name === 'Remove private inputs and registry credentials',
+  );
+  assert.equal(cleanup.if, 'always()');
+  const bash =
+    process.platform === 'win32' ? 'C:/Program Files/Git/bin/bash.exe' : 'bash';
+  const run = (script, extra = {}) =>
+    spawnSync(bash, ['-e', '-o', 'pipefail', '-c', script], {
+      encoding: 'utf8',
+      timeout: 10000,
+      env: { ...process.env, RUNNER_TEMP: directory, ...extra },
+    });
+  const failed = run(write.run, {
+    AZURE_CONFIG_JSON: '',
+    AZURE_OUTPUTS_JSON: '',
+  });
+  assert.equal(failed.status, 1);
+  assert.match(failed.stderr, /Missing private publication inputs/);
+  const success = run(write.run, {
+    AZURE_CONFIG_JSON: 'PRIVATE_CONFIG_MARKER',
+    AZURE_OUTPUTS_JSON: 'PRIVATE_OUTPUT_MARKER',
+  });
+  assert.equal(success.status, 0, success.stderr);
+  assert.equal(
+    readFileSync(join(directory, 'azure-config.json'), 'utf8'),
+    'PRIVATE_CONFIG_MARKER',
+  );
+  assert.equal(
+    readFileSync(join(directory, 'azure-outputs.json'), 'utf8'),
+    'PRIVATE_OUTPUT_MARKER',
+  );
+  writeFileSync(join(directory, 'unrelated-input'), 'preserved');
+  mkdirSync(join(directory, 'docker-azure-images'));
+  writeFileSync(
+    join(directory, 'docker-azure-images', 'config.json'),
+    'PRIVATE_REGISTRY_CREDENTIAL',
+  );
+  const cleaned = run(cleanup.run);
+  assert.equal(cleaned.status, 0, cleaned.stderr);
+  assert.equal(existsSync(join(directory, 'azure-config.json')), false);
+  assert.equal(existsSync(join(directory, 'azure-outputs.json')), false);
+  assert.equal(existsSync(join(directory, 'docker-azure-images')), false);
+  assert.equal(
+    readFileSync(join(directory, 'unrelated-input'), 'utf8'),
+    'preserved',
+  );
+  assert.doesNotMatch(
+    success.stdout + success.stderr + cleaned.stdout + cleaned.stderr,
+    /PRIVATE_(CONFIG|OUTPUT)_MARKER|PRIVATE_REGISTRY_CREDENTIAL/,
+  );
+});
 
 test('PR validation has no publication and main release waits for Kubernetes verification', () => {
   const pr = workflow('pull-request');
@@ -84,7 +195,13 @@ test('required quality classifies before expensive setup and preserves an authen
         step.run ?? '',
       ),
   )) {
-    assert.equal(step.if, "needs.scope.outputs.mode == 'full'");
+    if (/scripts\/azure-/.test(step.run ?? '')) {
+      assert.equal(
+        step.if,
+        "needs.scope.outputs.mode == 'infrastructure' || needs.scope.outputs.mode == 'full'",
+      );
+      assert.doesNotMatch(step.run, /src\/Web|setup-dotnet/);
+    } else assert.equal(step.if, "needs.scope.outputs.mode == 'full'");
   }
   const marker = steps.findIndex(
     (step) => step.name === 'Full application quality completed',
@@ -227,6 +344,8 @@ test('main release keeps seven independently gated component publications', () =
       contents: 'write',
       packages: 'write',
       actions: 'read',
+      'pull-requests': 'write',
+      'id-token': 'write',
     });
   }
 });
@@ -303,7 +422,7 @@ test('all seven trusted wrappers own independent build promotion and queued muta
       packages: 'write',
       actions: 'read',
     });
-    assert.deepEqual(wrapper.jobs.promote.needs, ['build']);
+    assert.deepEqual(wrapper.jobs.promote.needs, ['build', 'azure']);
     assert.deepEqual(wrapper.jobs.promote.permissions, {
       contents: 'write',
       actions: 'read',

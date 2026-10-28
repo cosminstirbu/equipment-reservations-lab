@@ -1,0 +1,132 @@
+name: Azure operations
+on:
+  workflow_dispatch:
+    inputs:
+      operation:
+        description: Fixed operational action
+        type: choice
+        required: true
+        options:
+          - reaper
+          - stop
+  schedule:
+    - cron: '*/5 * * * *'
+    - cron: '0 23 * * *'
+      timezone: Europe/Bucharest
+permissions:
+  contents: read
+concurrency:
+  group: azure-${{ vars.AZURE_ENVIRONMENT }}
+  cancel-in-progress: false
+jobs:
+  reaper:
+    if: github.ref == 'refs/heads/main' && (github.event.schedule == '*/5 * * * *' || inputs.operation == 'reaper')
+    environment: azure-admission-reaper
+    permissions:
+      contents: read
+      id-token: write
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+        with:
+          ref: refs/heads/main
+          persist-credentials: false
+      - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444
+        with:
+          node-version: 24.15.0
+      - run: npm ci
+      - uses: azure/login@a641126d1b8aa4d1fa005f4f92df94a3a4c4c906
+        with:
+          client-id: ${{ vars.AZURE_REAPER_CLIENT_ID }}
+          tenant-id: ${{ vars.AZURE_TENANT_ID }}
+          subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID }}
+          enable-AzPSSession: false
+        env:
+          AZURE_CORE_OUTPUT: none
+      - name: Write restricted derived inputs
+        env:
+          AZURE_CONFIG_JSON: ${{ secrets.AZURE_CONFIG_JSON }}
+          AZURE_OUTPUTS_JSON: ${{ secrets.AZURE_OUTPUTS_JSON }}
+        run: |
+          node --input-type=module -e "import {writeFileSync} from 'node:fs';import {join} from 'node:path';process.umask(0o077);for(const [name,value] of [['azure-config.json',process.env.AZURE_CONFIG_JSON],['azure-outputs.json',process.env.AZURE_OUTPUTS_JSON]]){if(!value)throw Error('Missing private operational inputs');writeFileSync(join(process.env.RUNNER_TEMP,name),value,{mode:0o600});}"
+      - name: Reap expired scoped network admissions
+        run: node scripts/azure-operations.mjs reaper --config "$RUNNER_TEMP/azure-config.json" --outputs "$RUNNER_TEMP/azure-outputs.json"
+      - name: Remove private inputs
+        if: always()
+        run: |
+          node --input-type=module -e "import {rmSync} from 'node:fs';import {join} from 'node:path';for(const name of ['azure-config.json','azure-outputs.json'])rmSync(join(process.env.RUNNER_TEMP,name),{force:true});"
+  safety_stop:
+    if: github.ref == 'refs/heads/main' && github.event.schedule == '0 23 * * *'
+    environment: azure-safety-stop
+    permissions:
+      contents: read
+      id-token: write
+    runs-on: ubuntu-24.04
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+        with:
+          ref: refs/heads/main
+          persist-credentials: false
+      - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444
+        with:
+          node-version: 24.15.0
+      - run: npm ci
+      - uses: azure/login@a641126d1b8aa4d1fa005f4f92df94a3a4c4c906
+        with:
+          client-id: ${{ vars.AZURE_STOP_CLIENT_ID }}
+          tenant-id: ${{ vars.AZURE_TENANT_ID }}
+          subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID }}
+          enable-AzPSSession: false
+        env:
+          AZURE_CORE_OUTPUT: none
+      - name: Write restricted derived inputs
+        env:
+          AZURE_CONFIG_JSON: ${{ secrets.AZURE_CONFIG_JSON }}
+          AZURE_OUTPUTS_JSON: ${{ secrets.AZURE_OUTPUTS_JSON }}
+        run: |
+          node --input-type=module -e "import {writeFileSync} from 'node:fs';import {join} from 'node:path';process.umask(0o077);for(const [name,value] of [['azure-config.json',process.env.AZURE_CONFIG_JSON],['azure-outputs.json',process.env.AZURE_OUTPUTS_JSON]]){if(!value)throw Error('Missing private operational inputs');writeFileSync(join(process.env.RUNNER_TEMP,name),value,{mode:0o600});}"
+      - name: Stop at local safety deadline
+        run: node scripts/azure-operations.mjs safety-stop --config "$RUNNER_TEMP/azure-config.json" --outputs "$RUNNER_TEMP/azure-outputs.json"
+      - name: Remove private inputs
+        if: always()
+        run: |
+          node --input-type=module -e "import {rmSync} from 'node:fs';import {join} from 'node:path';for(const name of ['azure-config.json','azure-outputs.json'])rmSync(join(process.env.RUNNER_TEMP,name),{force:true});"
+  stop:
+    if: github.ref == 'refs/heads/main' && github.event_name == 'workflow_dispatch' && inputs.operation == 'stop'
+    environment: azure-lifecycle
+    permissions:
+      contents: read
+      id-token: write
+    runs-on: ubuntu-24.04
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+        with:
+          ref: refs/heads/main
+          persist-credentials: false
+      - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444
+        with:
+          node-version: 24.15.0
+      - run: npm ci
+      - uses: azure/login@a641126d1b8aa4d1fa005f4f92df94a3a4c4c906
+        with:
+          client-id: ${{ vars.AZURE_LIFECYCLE_CLIENT_ID }}
+          tenant-id: ${{ vars.AZURE_TENANT_ID }}
+          subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID }}
+          enable-AzPSSession: false
+        env:
+          AZURE_CORE_OUTPUT: none
+      - name: Write restricted derived inputs
+        env:
+          AZURE_CONFIG_JSON: ${{ secrets.AZURE_CONFIG_JSON }}
+          AZURE_OUTPUTS_JSON: ${{ secrets.AZURE_OUTPUTS_JSON }}
+        run: |
+          node --input-type=module -e "import {writeFileSync} from 'node:fs';import {join} from 'node:path';process.umask(0o077);for(const [name,value] of [['azure-config.json',process.env.AZURE_CONFIG_JSON],['azure-outputs.json',process.env.AZURE_OUTPUTS_JSON]]){if(!value)throw Error('Missing private operational inputs');writeFileSync(join(process.env.RUNNER_TEMP,name),value,{mode:0o600});}"
+      - name: Stop compute without destroying data
+        run: node scripts/azure-operations.mjs stop --config "$RUNNER_TEMP/azure-config.json" --outputs "$RUNNER_TEMP/azure-outputs.json"
+      - name: Remove private inputs
+        if: always()
+        run: |
+          node --input-type=module -e "import {rmSync} from 'node:fs';import {join} from 'node:path';for(const name of ['azure-config.json','azure-outputs.json'])rmSync(join(process.env.RUNNER_TEMP,name),{force:true});"

@@ -19,6 +19,7 @@ cross-references. The routing table is cumulative: read every row that applies.
 | Traces, logs, metrics, correlation, or telemetry privacy | [Observability](observability.md) |
 | Application dependency calls, messaging, timeouts, cancellation, retries, or recovery | [Resilience](resilience.md), [Observability](observability.md), and [Testing](testing.md) |
 | AppHost wiring or local orchestration | [Aspire](aspire.md) |
+| Terraform infrastructure, formatting, lint or security gates | [Terraform quality gates](formatting-and-linting.md#terraform-quality-gates) and [Tool output and operational failures](tooling.md) |
 | Change instructions, standards, or policy | [Constitution governance](../../.specify/memory/constitution.md#governance) and the guide that owns the affected requirement |
 
 Apply the same routing during planning, implementation, and review. Feature plans list

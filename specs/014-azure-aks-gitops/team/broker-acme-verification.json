@@ -1,0 +1,33 @@
+{
+  "version": 1,
+  "scope": "Frozen broker adapter/proxy/provider tests and ACME provider contract; shared operational imports are outside this bounded source manifest and remain subject to final integration review.",
+  "files": [
+    {
+      "path": "scripts/azure-broker.mjs",
+      "sha256": "ECEEED6AB0D71848346E9D8709A3CA40EF49A3255CE4C2C6809314610F8EFD42"
+    },
+    {
+      "path": "scripts/azure-broker-transport.test.mjs",
+      "sha256": "6E152DC2207084BA0FB6EBF4ED50C8208F2C1FB9997C033E6151509EB8527235"
+    },
+    {
+      "path": "scripts/azure-broker.test.mjs",
+      "sha256": "7FD6FF19BAA3AE36F78E32969477A395061BBA792FB4ADDE14772BD88386F189"
+    },
+    {
+      "path": "scripts/azure-acme.test.mjs",
+      "sha256": "15C7770E7B5BE5C8132CB965B4F361A6211AE78F169A0C6B583CB7EAE2133A2E"
+    },
+    {
+      "path": "deploy/platform/azure/recovery/monitor/nginx.conf",
+      "sha256": "87C2E31A6531A2C076CB76288B0F61B7B9892078FE89AD8DB49DCA6984D6F2E2"
+    }
+  ],
+  "command": "AZURE_PROVIDER_CONTRACTS=1 verified KIND/KUBECTL; node --test scripts/azure-broker-transport.test.mjs scripts/azure-broker.test.mjs scripts/azure-acme.test.mjs",
+  "environment": "Windows, elevated local Podman access; uniquely named containers and kind cluster; no Azure or real ACME service",
+  "exit_status": 0,
+  "passed": 13,
+  "failed": 0,
+  "skipped": 0,
+  "duration_ms": 125976.9722
+}

@@ -1,0 +1,53 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: rabbitmq
+spec:
+  template:
+    spec:
+      containers:
+        - name: rabbitmq
+          env:
+            - name: RABBITMQ_CONFIG_FILES
+              value: /etc/rabbitmq/equipment-conf
+          ports:
+            - containerPort: 15672
+              $patch: delete
+            - name: management-tls
+              containerPort: 15671
+          volumeMounts:
+            - mountPath: /etc/rabbitmq/conf.d/20-equipment.conf
+              $patch: delete
+            - name: configuration
+              mountPath: /etc/rabbitmq/equipment-conf/20-equipment.conf
+              readOnly: true
+              subPath: rabbitmq.conf
+            - mountPath: /etc/rabbitmq/equipment-definitions.json
+              $patch: delete
+            - name: definitions
+              mountPath: /etc/rabbitmq/equipment-definitions.d/definitions.json
+              readOnly: true
+              subPath: definitions.json
+            - name: secrets-store
+              mountPath: /etc/rabbitmq/equipment-definitions.d/monitor-definitions.json
+              readOnly: true
+              subPath: broker-monitor-definitions
+            - name: management-tls
+              mountPath: /management-tls
+              readOnly: true
+      volumes:
+        - name: management-tls
+          secret:
+            secretName: rabbitmq-management-tls
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: rabbitmq
+spec:
+  ports:
+    - port: 15672
+      $patch: delete
+    - name: management-tls
+      port: 15671
+      targetPort: 15671
