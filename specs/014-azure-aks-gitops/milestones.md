@@ -976,3 +976,38 @@ microsoft.insights are registered; Microsoft.KeyVault is NotRegistered. The Insi
 entry uses lower-case namespace spelling and was confirmed directly. No registration
 was changed. Register KeyVault before eventual approved apply; all actual foundation,
 state/access/audit and main-qualified-plan gates remain pending. M1 is incomplete.
+
+Owner approved a separate 20-active-minute broker trace diagnosis/fix batch on
+2026-10-28, starting 12:49 UTC. Use the existing failed executable test as the loop;
+preserve assembly/module/class parallelism and current time budgets. Establish a
+causal reproducer before any fix, reuse current standards/evidence, and review a
+bounded delta before at most one candidate validation pair. No new test framework,
+installer/Windows repair, blind CI rerun, merge or apply is authorized. If the cause
+cannot be established within the budget, report that limit instead of guessing.
+
+The bounded diagnosis stopped without source changes or a candidate CI run. The
+Linux failure is precisely the missing `broker.definitions.prepare` span at
+BrokerExecutableTests.cs:273; log and metric assertions were not reached. The
+current BrokerBootstrap test project builds with zero warnings/errors. A cached
+Windows focused run skipped the Unix success case and encountered a different
+child-process failure, so it supplies no reproduction of the Linux defect. No
+current-build test pass is claimed. Sampling is explicitly AlwaysOn; shutdown
+and inherited endpoint settings remain unproven hypotheses. Parallelism, timeouts
+and runtime settings were preserved. A narrowly scoped Linux diagnostic run is
+the proposed next decision; the cause and M1 acceptance remain pending.
+
+Owner authorized one diagnostic-only Linux run. Use a temporary
+`diagnostics/broker-trace-014` branch and its read-only, pinned-action workflow;
+leave the PR branch remote unchanged to avoid another full validation pair.
+The existing subprocess/OTLP collector test boundary and assertions are retained.
+Diagnostic output is limited to fixed signal/case labels and numeric process,
+receipt, HTTP-status and decoded-record metadata; payloads, headers, endpoints,
+environment values and raw child output are excluded. This is ordinary assessed
+diagnostic metadata: inspect the projection, build and run the existing cases;
+do not add a new output-test suite. No behavior fix or M1 acceptance is claimed.
+
+Independent verifier verdict for the frozen diagnostic workflow/test delta:
+**pass**, no findings. Existing assertions/deadlines/parallelism retained; output
+contains fixed metadata only. Receipt snapshots do not establish exporter flush
+or delivery. Author build of BrokerBootstrap.Tests with `-warnaserror` passed
+with zero warnings/errors; workflow format check and `git diff --check` passed.

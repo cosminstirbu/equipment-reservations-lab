@@ -1,0 +1,25 @@
+name: Broker trace diagnostic
+on:
+  push:
+    branches: [diagnostics/broker-trace-014]
+    paths:
+      - .github/workflows/broker-trace-diagnostic.yaml
+      - tests/BrokerBootstrap.Tests/BrokerExecutableTests.cs
+permissions:
+  contents: read
+jobs:
+  focused:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+      - uses: actions/setup-dotnet@26b0ec14cb23fa6904739307f278c14f94c95bf1
+        with:
+          global-json-file: global.json
+      - name: Build current broker test project
+        run: dotnet build tests/BrokerBootstrap.Tests/BrokerBootstrap.Tests.csproj --nologo
+      - name: Run existing telemetry cases once
+        run: dotnet run --project tests/BrokerBootstrap.Tests --no-build -- --filter-display-name '*CliExportsCorrelatedPrivateWorkflow*' --show-live-output on

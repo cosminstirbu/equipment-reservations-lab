@@ -237,8 +237,17 @@ public sealed class BrokerExecutableTests
         var traces = new ConcurrentQueue<byte[]>();
         var logs = new ConcurrentQueue<byte[]>();
         var metrics = new ConcurrentQueue<byte[]>();
+        var receipts = new ConcurrentQueue<(string Signal, int Status)>();
         _ = collector.MapPost("/v1/{signal}", async (string signal, Microsoft.AspNetCore.Http.HttpRequest request) =>
         {
+            string receiptSignal = signal is "traces" or "logs" or "metrics" ? signal : "unknown";
+            receipts.Enqueue((receiptSignal, 0));
+            request.HttpContext.Response.OnCompleted(() =>
+            {
+                receipts.Enqueue((receiptSignal, request.HttpContext.Response.StatusCode));
+                return Task.CompletedTask;
+            });
+
             if (request.Headers["x-otlp-api-key"] != ExportKey)
             {
                 return Microsoft.AspNetCore.Http.Results.Unauthorized();
@@ -267,7 +276,31 @@ public sealed class BrokerExecutableTests
         string endpoint = Assert.Single(collector.Services.GetRequiredService<IServer>().Features.Get<IServerAddressesFeature>()!.Addresses);
         try
         {
+            var execution = Stopwatch.StartNew();
             (int code, string diagnostics) = await RunAsync(output, collectorEndpoint: endpoint, collectorKey: ExportKey);
+            TestContext.Current.TestOutputHelper?.WriteLine($"broker_cli case={(fail ? "filesystem_failure" : "success")} exit={code} elapsed_ms={execution.ElapsedMilliseconds}");
+            foreach ((string signal, ConcurrentQueue<byte[]> payloads) in new[] { ("traces", traces), ("logs", logs), ("metrics", metrics) })
+            {
+                int records = -1;
+                int workflows = -1;
+                try
+                {
+                    OtlpMessage[] decoded = [.. OtlpMessage.Records(payloads)];
+                    records = decoded.Length;
+                    if (signal == "traces")
+                    {
+                        workflows = decoded.Count(span => span.Text(5) == "broker.definitions.prepare");
+                    }
+                }
+                catch
+                {
+                    // Diagnostic decoding must not replace the original wire assertions.
+                }
+
+                int[] statuses = [.. receipts.Where(receipt => receipt.Signal == signal).Select(receipt => receipt.Status)];
+                TestContext.Current.TestOutputHelper?.WriteLine($"broker_collector signal={signal} received={statuses.Count(status => status == 0)} completed_200={statuses.Count(status => status == 200)} completed_401={statuses.Count(status => status == 401)} completed_404={statuses.Count(status => status == 404)} completed_other={statuses.Count(status => status is not (0 or 200 or 401 or 404))} payloads={payloads.Count} records={records} matching_workflows={workflows}");
+            }
+
             Assert.Equal(fail ? 1 : 0, code);
             Assert.DoesNotContain("private-broker", diagnostics, StringComparison.Ordinal);
             OtlpMessage workflow = Assert.Single(OtlpMessage.Records(traces), span => span.Text(5) == "broker.definitions.prepare");
