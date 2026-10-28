@@ -763,3 +763,9 @@ workflow for this purpose. Before publishing, confirm private input/plan/state p
 remain ignored/untracked. Publication and external PR creation require explicit
 owner authorization; neither has occurred. Source must later qualify on main and
 receive a fresh exact plan/review before any apply decision.
+
+Owner authorized feature-branch push and draft PR creation on 2026-10-28 for the
+existing source-only Linux checks. Merge and apply remain unauthorized. Publication
+check found zero tracked private artifacts and zero committed matches for actual
+private account/contact/operator-IP input values. GitHub CLI authentication succeeds
+outside the sandbox; no existing open PR was found for this head branch.
