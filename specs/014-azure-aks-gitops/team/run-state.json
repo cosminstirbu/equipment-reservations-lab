@@ -4,7 +4,7 @@
   "milestone_checkpoint": {
     "date": "2026-10-28",
     "milestone": "M1",
-    "status": "m1_round24_quality_security_pass_final_windows_preview_pending",
+    "status": "m1_actual_foundation_preview_pass_owner_pre_apply_decisions_pending",
     "m0_owner_accepted": "2026-10-28",
     "m1_owner_authorized": "2026-10-28",
     "active_batch": "Rounds19-21 sourcebatches passed independentreviews, locally committed5f684cf/ff87a21/b77ed18. Actualpreview now fails broadCLI VM SKU enumeration30s; diagnostic fixedlabelsconfirmed. No savedplan or provisioning. Limit21exhausted; proposed boundedARMqueryrepair requires owner21->22 extension.",
@@ -22,7 +22,7 @@
       "resources_provisioned": false
     },
     "limits_preserved": "Historical preparation9 and implementation18 retained; owner approved implementation limit18->21 with M1 authorization. M2 remains unauthorized.",
-    "remaining": "Owner authorized final boundedWindowsattempt round24 idempotentprivate-directoryrepair andonepreviewretry; noautomaticround25. Overall45active-minute checkpoint from10:40UTC; ifblocked prepareconcreteLinuxstrategy. M1actualfoundation/audit stillpending; noapply/pushmerge authorized."
+    "remaining": "FinalWindowspreview023588d succeeded49.010s,270create10read0update/delete; independentpreviewquality/securitypass. Resolve Entra groupapp-assignment P1/P2 prerequisite (tenantSkus0; recommend ownerapproveddirectuser), keyexpiry/rotation and sourcepublication/Linuxchecks/fresh main-qualifiedplan beforeapply. M1 actualfoundation/audit pending; no round25/pushmerge/apply authorized."
   },
   "baseline_revision": "d1c7238345136340ddbf3a9454807cefffc43c32",
   "preparation_round": 9,

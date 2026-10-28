@@ -5,6 +5,18 @@ and explicit permission to continue. This changes delivery sequencing, not featu
 acceptance, security exceptions or permission to spend. Preserve all existing task
 IDs and evidence. Source assessment baseline: `b2b0064`.
 
+## Current checkpoint
+
+2026-10-28: M0 accepted. M1 source-to-private-preview path now works and the actual
+preview has independent quality/security assessment. **M1 is not complete:** no
+retained foundation has been applied and live state/access/audit qualification is
+pending. No automatic further Windows repair is planned.
+
+Before apply: resolve Entra group-assignment licensing (direct-user app assignment
+recommended for this single-operator lab), obtain explicit source-publication
+authorization and required Linux checks, then review a fresh main-qualified plan.
+The local preview cannot be promoted into apply. No push/merge/apply is authorized.
+
 ## Outcomes and gates
 
 | Milestone | Observable outcome | Acceptance boundary |
@@ -634,3 +646,74 @@ formatting/ESLint/whitespace checks. Security passed all five helper tests, zero
 failed/skipped, 6.380 s. Both confirmed unchanged privacy validation and Unix
 behavior, with no new TOCTOU guarantee claimed. No reviewer edits. One final actual
 Windows preview retry follows a local commit; no automatic further repair.
+
+## Actual foundation preview checkpoint
+
+Round 24 committed locally as `023588d`. The final Windows preview succeeded in
+49.010 s with phase `foundation-preview-not-for-apply`. Private inputs/plan/review
+retain owner-only access. Pinned Terraform inspection confirmed source revision,
+binary plan hash, input hash, preview marker and uncreated state. No raw plan JSON
+was emitted or retained as a new report.
+
+Actual actions: **270 creates, 10 data reads, zero updates/deletes**. Managed scope:
+203 role assignments, 17 custom roles, nine workload identities/federated credentials,
+two storage accounts/11 containers, two RGs (including workload shell), DNS zone,
+retained recovery vault/RSA3072 key, audit workspace/table/DCR, guard policies and
+two operator app registrations/service principals/app-role assignments. No AKS,
+nodes, load balancer or application-secret resources. Counts are Azure objects,
+not a claim of 270 billable services.
+
+Storage plan: HTTPS/TLS1.2, shared keys/public nested access disabled, private
+containers, deny-default/no-bypass networking and versioning. Recovery vault: RBAC,
+purge protection and 90-day soft deletion with deny-default/no-bypass networking.
+Audit remains create-stage only, with readiness/diagnostics/network gate disabled
+and family qualification null. Sensitive use remains gated. Role scopes/conditions
+that depend on new resources still require actual enforcement qualification.
+
+Actual-preview verdicts (verbatim):
+
+> Quality: pass for the actual foundation preview only at 023588d. No quality findings.
+
+> Security: pass — bounded security assessment of the initial foundation preview at
+> 023588d; not apply approval. No new confirmed vulnerability.
+
+Reviewers inspected the private resolved plan in memory using pinned Terraform,
+confirmed plan/input/review association, scope and staging, and changed no files,
+ACLs or cloud resources. This is not M1 acceptance or permission to apply.
+
+### Pre-apply decisions and remaining work
+
+- Both operator app-role assignments resolve to the configured operator group.
+  [Microsoft requires Entra P1/P2 for group-based enterprise-app assignments](https://learn.microsoft.com/en-us/entra/identity/enterprise-apps/assign-user-or-group-access-portal).
+  Read-only Graph subscribedSkus returned zero entries with no next page; no premium
+  plan was found for the current user. The EUR118.51 estimate does not include a new
+  Entra license. No license was purchased or assignment changed. Recommend direct
+  app-role assignments to the one approved user while retaining the group for
+  Azure/Kubernetes access; owner design approval and scoped IAM review are required.
+- Proposed recovery-key expiry in the actual preview is 2027-10-28T00:00:00Z.
+  Confirm that date and an owner renewal/rotation responsibility before a real apply.
+- Reviewed deployment source must reach GitHub main for the unchanged apply contract.
+  Publication is not authorized yet. Prefer publishing the feature branch and
+  obtaining required Linux validation before any merge/apply decision. Main release
+  workflow can publish components, so do not dispatch it as if it were a read-only
+  check; choose a source-only validation path with explicit owner authorization.
+- Generate a new qualifying plan/review after source publication; this preview is
+  explicitly non-promotable. Apply only reviewed exact bytes after authorization.
+  Then complete remote-state authority and audit create → bind → enable/privacy/
+  authorized/denied access/gap qualification. M1 acceptance waits for those outcomes.
+
+The final Windows attempt succeeded; no Linux fallback for preview execution is
+needed. Linux acceptance checks remain pending independently. No new round 25,
+security exception, push/merge or paid provisioning has been inferred.
+
+Concrete licensing refinement proposed for owner decision: in
+`foundation/operators.tf`, change only the two operator app-role principals from
+`config.operatorGroupObjectId` to the existing reviewed
+`bootstrap_operator_object_id`. Keep assignment-required, tenant-only apps,
+`Equipment.Operator` role, operator IP controls and the group used for Azure/AKS
+unchanged. No automatic runtime fallback or purchase. Update operator enrollment/
+removal documentation: removing a group member alone will not revoke an individual's
+app assignment; direct assignment removal is required. Any additional operator needs
+explicit enrollment. Apply declaration verification profile (implement then pinned
+native checks/appropriate IAM delta review), not universal test-first. Actual app
+login and denial verification stays in M2. Do not implement before owner approval.
