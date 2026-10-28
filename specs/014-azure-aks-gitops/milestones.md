@@ -1011,3 +1011,23 @@ Independent verifier verdict for the frozen diagnostic workflow/test delta:
 contains fixed metadata only. Receipt snapshots do not establish exporter flush
 or delivery. Author build of BrokerBootstrap.Tests with `-warnaserror` passed
 with zero warnings/errors; workflow format check and `git diff --check` passed.
+
+Diagnostic commit `603162b3368036049276e1dbe61c63baa73bb798` was published only to
+`diagnostics/broker-trace-014`; the remote PR branch remained unchanged.
+[Run 40693747976](https://github.com/cosminstirbu/equipment-reservations-lab/actions/runs/40693747976)
+completed successfully: two existing cases passed, zero failures/skips. Both child
+processes took 709 ms and each collector received one HTTP-200 request per signal,
+one decoded workflow span and one decoded log; metric records were 23/24. No
+rejected requests were observed. This isolated success does not reproduce or
+resolve the previous full-suite missing-span failure (16 seconds). Contention,
+coverage or other full-run context may matter, but no cause is established.
+The one authorized diagnostic run is consumed; no automatic rerun or fix follows.
+
+Owner then authorized one Linux diagnostic in the original backend concurrency
+and coverage context. The dedicated diagnostic workflow now builds the solution
+and uses the existing `quality.mjs` backend reporting invocation: nine parallel
+modules, native coverage settings, TRX and the original Docker/Ryuk environment.
+Test deadlines and assembly/class parallelism are unchanged; the job uses the
+original PR job's 30-minute bound. Reports stay in owner-only temporary scratch,
+are not uploaded and are removed on exit. Reuse the reviewed test metadata
+projection. No production fix, full PR rerun, merge or Azure action is authorized.

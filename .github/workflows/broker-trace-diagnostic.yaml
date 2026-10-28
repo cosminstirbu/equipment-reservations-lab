@@ -10,7 +10,7 @@ permissions:
 jobs:
   focused:
     runs-on: ubuntu-24.04
-    timeout-minutes: 10
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
         with:
@@ -19,7 +19,20 @@ jobs:
       - uses: actions/setup-dotnet@26b0ec14cb23fa6904739307f278c14f94c95bf1
         with:
           global-json-file: global.json
-      - name: Build current broker test project
-        run: dotnet build tests/BrokerBootstrap.Tests/BrokerBootstrap.Tests.csproj --nologo
-      - name: Run existing telemetry cases once
-        run: dotnet run --project tests/BrokerBootstrap.Tests --no-build -- --filter-display-name '*CliExportsCorrelatedPrivateWorkflow*' --show-live-output on
+      - name: Build current solution
+        run: dotnet build EquipmentReservation.slnx --nologo
+      - name: Run original backend concurrency and coverage once
+        shell: bash
+        env:
+          DOCKER_HOST: unix:///var/run/docker.sock
+          TESTCONTAINERS_RYUK_DISABLED: 'false'
+        run: |
+          set -euo pipefail
+          umask 077
+          results_directory=$(mktemp -d "$RUNNER_TEMP/broker-context.XXXXXX")
+          trap 'rm -rf -- "$results_directory"' EXIT
+          dotnet test --solution EquipmentReservation.slnx \
+            --max-parallel-test-modules 9 --no-build \
+            --results-directory "$results_directory" --report-xunit-trx \
+            --coverage --coverage-settings "$PWD/coverage.runsettings" \
+            --coverage-output-format cobertura --show-live-output on

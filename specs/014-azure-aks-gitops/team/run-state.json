@@ -4,7 +4,7 @@
   "milestone_checkpoint": {
     "date": "2026-10-28",
     "milestone": "M1",
-    "status": "m1_backend_broker_trace_linux_diagnostic_authorized",
+    "status": "m1_backend_original_context_diagnostic_authorized",
     "source_ci": {
       "pr": "https://github.com/cosminstirbu/equipment-reservations-lab/pull/30",
       "head": "5b0977a8fa84faed133992a82708ecd972d825ee",
@@ -16,7 +16,7 @@
     },
     "m0_owner_accepted": "2026-10-28",
     "m1_owner_authorized": "2026-10-28",
-    "active_batch": "Owner authorized one diagnostic-only focused Linux run on diagnostics/broker-trace-014. Existing test gains fixed numeric receipt/record metadata; assertions, production behavior, parallelism and timeouts remain unchanged. No fix claimed. Candidate validation allowance remains unused; M1 foundation is not applied.",
+    "active_batch": "Owner authorized one original backend concurrency/coverage diagnostic on the dedicated branch after isolated Linux run 40693747976 passed. Reuse nine parallel modules, coverage/TRX and existing Docker/Ryuk settings. No production fix or full PR rerun; PR branch remote unchanged. M1 foundation is not applied.",
     "record": "../milestones.md",
     "source_revision": "5b0977a8fa84faed133992a82708ecd972d825ee",
     "owner_checkpoint_after_each_milestone": true,
@@ -31,7 +31,7 @@
       "resources_provisioned": false
     },
     "limits_preserved": "Historical preparation9 and implementation18 retained; owner approved implementation limit18->21 with M1 authorization. M2 remains unauthorized.",
-    "remaining": "Review and execute the authorized focused Linux diagnostic once, then report evidence and next decision. Infrastructure CI passes; KeyVault registration, a main-qualified plan and actual foundation/audit qualification remain pending. No merge or apply."
+    "remaining": "Review and execute the authorized original-backend-context diagnostic once. Cause remains unknown; no automatic repair or rerun. Infrastructure CI passes; KeyVault registration, a main-qualified plan and actual foundation/audit qualification remain pending. No merge or apply."
   },
   "baseline_revision": "d1c7238345136340ddbf3a9454807cefffc43c32",
   "preparation_round": 9,
