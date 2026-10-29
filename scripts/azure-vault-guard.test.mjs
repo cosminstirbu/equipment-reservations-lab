@@ -837,6 +837,27 @@ async function fixture(t) {
       for await (const chunk of request) text += chunk.toString();
       const body = JSON.parse(text);
       const p = body.properties;
+      if (
+        state.preserveRbacOmission &&
+        request.method === (state.omissionMethod ?? 'PATCH') &&
+        p &&
+        (!Object.hasOwn(p, 'enableRbacAuthorization') ||
+          (state.omissionFault === 'explicit' &&
+            p.enableRbacAuthorization === false))
+      ) {
+        if (state.omissionFault === 'protected')
+          vault.properties.enableRbacAuthorization = false;
+        if (state.omissionFault === 'null')
+          vault.properties.enableRbacAuthorization = null;
+        if (state.omissionFault === 'tag') vault.tags.unrelated = 'changed';
+        if (state.omissionFault === 'guard')
+          state.objects.get(
+            guard.assignment_ids.workload,
+          ).properties.enforcementMode = 'DoNotEnforce';
+        response.writeHead(state.omissionFault === 'status' ? 201 : 200);
+        response.end(JSON.stringify(vault));
+        return;
+      }
       const invalid =
         !p ||
         p.tenantId !== config.tenantId ||
@@ -1912,6 +1933,66 @@ test('human policy qualification observes complete both-family both-API PUT and 
     JSON.stringify(record),
     /PRIVATE_VAULT_PROVIDER_VALUE|signature/,
   );
+});
+
+test('human policy qualification records only documented PATCH RBAC omissions as unchanged preservation', async (t) => {
+  const { options, state, vaults } = await fixture(t);
+  state.preserveRbacOmission = true;
+  const before = hash(vaults);
+  const record = await qualifyVaultGuardPolicy({
+    ...options,
+    admissionCidr: '203.0.113.7/32',
+  });
+  assert.equal(record.kind, 'vault-policy-preservation-observation');
+  const preserved = record.cases.filter(
+    (entry) => entry.outcome === 'unchanged-preserved',
+  );
+  assert.equal(preserved.length, 4);
+  for (const entry of preserved) {
+    assert.equal(entry.caseId, 'missing-rbac');
+    assert.equal(entry.method, 'PATCH');
+    assert.ok(['2024-11-01', '2026-02-01'].includes(entry.apiVersion));
+    assert.equal(entry.status, 200);
+    assert.equal(entry.beforeHash, entry.afterHash);
+    assert.equal(Object.hasOwn(entry, 'denialCode'), false);
+  }
+  assert.equal(hash(vaults), before);
+});
+
+test('preservation never qualifies changed state, non-200, PUT omission or full family publication', async (t) => {
+  for (const fault of [
+    'protected',
+    'null',
+    'tag',
+    'guard',
+    'status',
+    'put',
+    'explicit',
+    'family',
+  ])
+    await t.test(fault, async (t) => {
+      const { options, state, requests } = await fixture(t);
+      state.preserveRbacOmission = true;
+      if (fault === 'put') state.omissionMethod = 'PUT';
+      else state.omissionFault = fault;
+      const input = {
+        ...options,
+        admissionCidr: '203.0.113.7/32',
+        purpose: 'human-policy-family',
+        ...(fault === 'family' ? { workloadVaultId: undefined } : {}),
+      };
+      await assert.rejects(
+        fault === 'family'
+          ? qualifyVaultGuards(input)
+          : qualifyVaultGuardPolicy(input),
+        fault === 'family'
+          ? /negative policy provenance.*status=200/
+          : /vault guard/,
+      );
+      assert.equal(state.blobs.size, 0);
+      if (fault === 'family')
+        assert.ok(requests.some((request) => request.method === 'DELETE'));
+    });
 });
 
 test('human qualification never counts RBAC denial, another policy, accepted mutation or changed resource as successful policy proof', async (t) => {

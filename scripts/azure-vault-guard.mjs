@@ -1218,6 +1218,7 @@ async function negative(
   method,
   test,
   allowRbac = false,
+  allowPatchPreservation = false,
 ) {
   const before = await read(ctx, guard.vaultId, apiVersion);
   vaultInvariant(before, ctx, guard.family);
@@ -1227,6 +1228,16 @@ async function negative(
   const after = await read(ctx, guard.vaultId, apiVersion);
   if (vaultHash(before) !== vaultHash(after))
     fail('negative resource changed; explicit human recovery required');
+  const preserved =
+    allowPatchPreservation &&
+    method === 'PATCH' &&
+    ['2024-11-01', '2026-02-01'].includes(apiVersion) &&
+    test.caseId === 'missing-rbac' &&
+    !Object.hasOwn(body.properties, 'enableRbacAuthorization') &&
+    result.status === 200 &&
+    uuid.test(result.requestId ?? '') &&
+    uuid.test(result.correlationId ?? '');
+  if (preserved) vaultInvariant(after, ctx, guard.family);
   const deniedAction =
     allowRbac && ['rbac', 'missing-rbac', 'recover-mode'].includes(test.caseId)
       ? authorizationDenied(result, [
@@ -1234,22 +1245,26 @@ async function negative(
           'Microsoft.KeyVault/vaults/write',
         ])
       : null;
-  if (!policyDenied(result, guard) && !deniedAction)
+  if (!preserved && !policyDenied(result, guard) && !deniedAction)
     fail(
       'negative policy provenance unproven; human review required',
       result.status,
     );
+  let outcome = 'policy-denied';
+  if (deniedAction) outcome = 'rbac-denied';
+  if (preserved) outcome = 'unchanged-preserved';
+  const denialCode = deniedAction
+    ? result.value.error.code
+    : 'RequestDisallowedByPolicy';
   return {
     family: guard.family,
     apiVersion,
     method,
     caseId: test.caseId,
     action: 'Microsoft.KeyVault/vaults/write',
-    outcome: deniedAction ? 'rbac-denied' : 'policy-denied',
+    outcome,
     status: result.status,
-    denialCode: deniedAction
-      ? result.value.error.code
-      : 'RequestDisallowedByPolicy',
+    ...(!preserved ? { denialCode } : {}),
     ...(deniedAction ? { deniedAction } : {}),
     assignmentId: guard.assignmentId,
     definitionId: guard.definitionId,
@@ -1356,6 +1371,10 @@ async function compliant(ctx, guard, apiVersion, method, qualificationId) {
 }
 
 export async function qualifyVaultGuardPolicy(options) {
+  return qualifyPolicy(options, true);
+}
+
+async function qualifyPolicy(options, allowPatchPreservation = false) {
   try {
     const ctx = await humanContext(options);
     const observed = await inspect(ctx);
@@ -1368,7 +1387,17 @@ export async function qualifyVaultGuardPolicy(options) {
             ctx.principalId,
             ctx.config.tenantId,
           ))
-            cases.push(await negative(ctx, guard, apiVersion, method, test));
+            cases.push(
+              await negative(
+                ctx,
+                guard,
+                apiVersion,
+                method,
+                test,
+                false,
+                allowPatchPreservation,
+              ),
+            );
           cases.push(
             await compliant(ctx, guard, apiVersion, method, qualificationId),
           );
@@ -1378,7 +1407,9 @@ export async function qualifyVaultGuardPolicy(options) {
       fail('guard changed during qualification');
     return {
       version: 1,
-      kind: 'vault-policy-observation',
+      kind: cases.some((entry) => entry.outcome === 'unchanged-preserved')
+        ? 'vault-policy-preservation-observation'
+        : 'vault-policy-observation',
       qualificationId,
       environment: ctx.config.environment,
       generation: ctx.config.generation,
@@ -1764,7 +1795,7 @@ async function initialProbe(options) {
   try {
     const current = await read(ctx, id, '2026-02-01');
     if (!owned(current)) fail('probe ownership changed');
-    record = await qualifyVaultGuardPolicy({ ...ctx, now: () => now(ctx) });
+    record = await qualifyPolicy({ ...ctx, now: () => now(ctx) });
     record.roles = roleState;
   } catch (error) {
     primary =
