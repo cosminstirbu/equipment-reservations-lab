@@ -1319,3 +1319,23 @@ assessment to 20 active minutes; no paid provisioning, publication or permission
 changes in this batch. Implementation will use scoped native checks and milestone
 reviews under current engineering profiles, not universal test-first. Preserve
 existing feature acceptance requirements; surface conflicts before dependent work.
+
+M2 read-only preflight at baseline aa010a2 passed on 2026-10-29: West Europe,
+two nodes, Kubernetes1.35.8; 40running hours/month and21% tax yield EUR118.51
+running and EUR98.91 stopped against the existing EUR120 target. Private M2
+configuration now references the actual validated M1 recovery-key version; no
+key or Azure resource was changed. Execution-source review remains pending.
+
+M2 route assessment found hosted-SP proof consumers and main-only barriers incompatible
+with the requested pre-merge human execution. The minimal local procedure in
+[team/m2-local-execution-proposal.md](team/m2-local-execution-proposal.md) keeps
+those barriers intact and reuses native tools and actual human policy checks.
+Independent security verdict: **pass ? design review of frozen proposal
+35EDF851?FCE94B.** Owner agreement on the proof-sequence/feature-source exception
+and separate reviewed artifact pushes is pending. No paid workload provisioning,
+image publication or permission changes occurred in this assessment.
+
+Owner approved the minimal M2 human procedure and reviewed artifact pushes on
+2026-10-29. First action preparation identifies exact human policy fixture/probe
+requests for review before any live mutation; the environment saved creation plan
+follows its actual prerequisite qualification. No permanent local-mode framework.

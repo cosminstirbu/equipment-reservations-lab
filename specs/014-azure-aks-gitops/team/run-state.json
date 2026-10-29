@@ -1,6 +1,6 @@
 {
   "feature_directory": "specs/014-azure-aks-gitops",
-  "status": "m2_authorized_readiness_assessment",
+  "status": "m2_human_policy_action_preparation",
   "milestone_checkpoint": {
     "date": "2026-10-29",
     "milestone": "M1",
@@ -16,7 +16,7 @@
     },
     "m0_owner_accepted": "2026-10-28",
     "m1_owner_authorized": "2026-10-28",
-    "active_batch": "M1 accepted; M2 authorized. First bounded read-only M2 critical-path/readiness assessment, before paid provisioning or publication.",
+    "active_batch": "Owner approved M2 human procedure and reviewed artifact pushes. Preparing exact human policy fixture/probe actions and private environment planning inputs; no workload mutation yet.",
     "foundation_plan": {
       "revision": "38ad0cfdbb2ae2e04ee3f44c3c91a67703d6e122",
       "local_foundation": true,
@@ -1181,5 +1181,38 @@
     "status": "not_executed",
     "blocker": "Automatic approval review could not complete because of a usage limit; this was not a determination that the action was unsafe.",
     "resume": "Refresh private VM/container preflight before execution; owner authorization remains recorded."
+  },
+  "m2_checkpoint": {
+    "date": "2026-10-29",
+    "owner_authorized": true,
+    "baseline_revision": "aa010a2",
+    "read_only_preflight": {
+      "command": "node scripts/azure-infrastructure.mjs preflight --config PRIVATE --stage environment --foundation-outputs PRIVATE",
+      "exit_status": 0,
+      "region": "westeurope",
+      "nodes": 2,
+      "kubernetes_version": "1.35.8",
+      "currency": "EUR",
+      "running_hours": 40,
+      "tax_rate": 0.21,
+      "running_gross": 118.51,
+      "stopped_gross": 98.91,
+      "budget_gross": 120
+    },
+    "private_input_adjustment": "Bound recoveryKeyVersion to actual validated accepted-M1 output; no key changes.",
+    "remaining_execution_prerequisites": [
+      "Reviewed explicit local-human environment/qualification/bootstrap source route",
+      "Actual human family/new-vault qualification before secrets",
+      "Initial immutable dual-registry image publication using retained successful GHCR provenance and supported registry tooling"
+    ],
+    "azure_workload_created": false,
+    "images_published": false,
+    "proposal": {
+      "path": "team/m2-local-execution-proposal.md",
+      "security": "pass ? design review of frozen proposal35EDF851?FCE94B; actual provider checks and owner agreement remain required",
+      "owner_agreement": "approved 2026-10-29",
+      "scope": "One-off native-tool human procedure; no permanent local-mode machinery or SP barrier changes",
+      "artifact_push_authorized": true
+    }
   }
 }

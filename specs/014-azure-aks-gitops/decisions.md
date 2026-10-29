@@ -89,3 +89,10 @@ Deferred planning investigations do not authorize assumptions about actual subsc
 ## Requirement-to-acceptance mapping
 
 Each functional requirement cites acceptance IDs inline in spec.md. Additional success criteria cover cost (FR-022 / SC-001) and declared limitations (FR-023 / SC-002, SC-008). SC-010 covers repository completion governance, not analyst self-approval. This is requirements-quality traceability, not implementation evidence.
+
+## M2 local procedure approval: 2026-10-29
+
+Owner approved the scoped one-off human execution/proof sequence and reviewed
+feature-branch artifact pushes. The authoritative boundary is the
+[M2 operation contract](contracts/operations.md#m2-one-off-local-human-execution-2026-10-29).
+This retains later hosted identity qualification and recovery gates.

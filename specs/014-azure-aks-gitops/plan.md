@@ -1088,3 +1088,10 @@ Reuse existing privacy, migration and backend tests rather than adding a framewo
 or another full application run. Verify changed JavaScript formatting/lint, focused
 contracts and independent quality/security review, then generate a new private
 saved foundation plan. Keep hosted main restrictions and all pending live gates.
+
+### M2 local execution adjustment: 2026-10-29
+
+Owner approved the [M2 operational contract](contracts/operations.md#m2-one-off-local-human-execution-2026-10-29)
+and its bounded native-tool procedure. Reuse existing helpers and actual provider
+checks; do not build a permanent local authorization framework. Existing hosted
+barriers and later qualification remain binding.

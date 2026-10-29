@@ -2066,3 +2066,20 @@ The exact commands live in workflow definitions. Provider qualification remains
 mandatory when affected and before dependent deployment acceptance; no source-only
 result marks that gate passed. Existing app/local-Kubernetes/publication gates stay.
 
+
+## M2 one-off local-human execution (2026-10-29)
+
+Owner approved the [bounded operational procedure](../team/m2-local-execution-proposal.md)
+and reviewed runtime/image artifact pushes to the existing feature branch. For M2
+only, pinned native tools and existing helpers may execute under the verified
+approved human identity from a reviewed clean feature commit, with private exact
+saved-plan/state/input/source bindings and actual human family/new-vault policy
+qualification before secrets. This is an explicit exception to merged-source
+execution for that procedure. Ordinary Argo applications use the fixed repository
+and paths at an immutable reviewed remote feature commit. No merge is approved.
+
+Existing hosted/SP main-only/G3 barriers remain unchanged. Human results cannot
+satisfy their qualification. Operational network grants and optional recovery
+activation remain disabled; no broader privilege or increased budget is granted.
+Exact live fixture/probe actions and Azure saved plans still require concrete
+review/approval before execution. No permanent local-mode framework is required.
