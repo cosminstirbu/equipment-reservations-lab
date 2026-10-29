@@ -4,7 +4,7 @@
   "milestone_checkpoint": {
     "date": "2026-10-29",
     "milestone": "M1",
-    "status": "m1_resources_applied_native_migration_guard_repair",
+    "status": "m1_foundation_verified_audit_bind_plan_adapter_repairs",
     "source_ci": {
       "pr": "https://github.com/cosminstirbu/equipment-reservations-lab/pull/30",
       "head": "c6a903b1c0be64d63a6c823e30c68f266651788e",
@@ -16,7 +16,7 @@
     },
     "m0_owner_accepted": "2026-10-28",
     "m1_owner_authorized": "2026-10-28",
-    "active_batch": "Recovery resources applied: 268 managed resources. Remote state matches backup resources/outputs/lineage, serial advanced 287 to 288; check records differ only in order and retain one unchanged unknown. Native migration cleared local state. Strict guard repair/finalization in progress; all copies preserved.",
+    "active_batch": "All268resources and remote authority verified. DNS control gate initialized. Audit bind planning exposed and corrected producer timestamp precision; causal retry then revealed existing-control-blob 409BlobAlreadyExists adapter mismatch. Controlled probe changed no record and acquired no lease. Exact-code adapter repair in progress; no audit bind apply.",
     "foundation_plan": {
       "revision": "38ad0cfdbb2ae2e04ee3f44c3c91a67703d6e122",
       "local_foundation": true,
@@ -48,7 +48,7 @@
       "resources_provisioned": false
     },
     "limits_preserved": "Historical preparation9 and implementation18 retained; owner approved implementation limit18->21 with M1 authorization. M2 remains unauthorized.",
-    "remaining": "Review and run guarded local migration finalization without Terraform or Azure writes; then continue M1 state/access/audit qualification. No reapply or state push/import.",
+    "remaining": "Review scoped lease-adapter repair and prepare a fresh audit/network-binding plan through normal guards. State/access/audit live qualification and M1 acceptance remain pending.",
     "recovery_plan": {
       "revision": "c55b4910c9925ddfa3460d7c5cf9794d1a7a0d9c",
       "sha256": "e79c8006ba5db3983b0509f54dae67e90d31de3d4806cc80c78f8dd179845419",
@@ -916,7 +916,7 @@
     "status": "owner_selected_local_m1_execution",
     "reason": "Owner authorized finishing M1 locally without merge. T092 implements a narrowly reviewed explicit local-human foundation path; exact saved-plan apply approval remains required. Current CI at c6a903b passes; later changes require scoped verification."
   },
-  "handoff_limits": "Resources created/updated but M1 is incomplete. Remote state content verified read-only; local authority marker pending guard repair. Preserve all copies; no reapply/init/statepush/import. Audit/access/guard qualification and milestone acceptance remain pending.",
+  "handoff_limits": "Foundation resources and remote state verified; all copies preserved. No additional Terraform apply after approved recovery. Audit/network binding plan preparation is blocked on a specific adapter response mismatch; no force lease break or state edits.",
   "deferred_diagnostic_risks": [
     {
       "id": "native_https_body_deadline",

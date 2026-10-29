@@ -1253,8 +1253,15 @@ export function createRestProvider({
     } catch {
       fail('Azure operational request failed; transport or timeout.');
     }
-    if (!response.ok)
-      fail(`Azure operational request failed; status=${response.status}.`);
+    if (!response.ok) {
+      const error = new OperationalFailure(
+        `Azure operational request failed; status=${response.status}.`,
+      );
+      error.httpStatus = response.status;
+      error.blobAlreadyExists =
+        response.headers.get('x-ms-error-code') === 'BlobAlreadyExists';
+      throw error;
+    }
     return response;
   }
   return {
@@ -1267,7 +1274,11 @@ export function createRestProvider({
           '{}',
         );
       } catch (error) {
-        if (!error.message.endsWith('status=412.')) throw error;
+        if (
+          !error.message.endsWith('status=412.') &&
+          !(error.httpStatus === 409 && error.blobAlreadyExists === true)
+        )
+          throw error;
       }
       await request(`${blob}?comp=lease`, 'PUT', {
         'x-ms-lease-action': 'acquire',

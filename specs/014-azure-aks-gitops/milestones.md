@@ -1213,3 +1213,13 @@ drops fractions. The two-file producer correction uses one whole-second base for
 observation and exact 30-minute expiry, without relaxing HCL. Existing regression,
 format/lint checks and independent quality/security reviews passed. Retry the
 normal guarded saved-plan operation once from a clean local checkpoint.
+
+The retry stopped before Terraform at operation-lease acquisition. Read-only HEAD
+confirmed the control blob was available/unlocked. One controlled adapter probe
+returned 409 BlobAlreadyExists from create-only PUT, never reached lease acquire,
+and left the record ETag unchanged. The adapter previously accepted only 412.
+The exact 409/code response is now accepted only for conditional creation; other
+conflicts and authorization failures still fail, and actual lease acquisition
+remains outside that catch. Existing real-HTTP regression, all 24 affected tests,
+static checks and independent quality/security reviews passed. One normal guarded
+replan follows; no audit-binding apply has been authorized or performed.

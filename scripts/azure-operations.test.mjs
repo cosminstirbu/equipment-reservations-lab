@@ -891,6 +891,7 @@ test('failed provider transition cannot be reported stopped', async () => {
 test('real REST adapter uses Blob lease headers and actual AKS read schema', async () => {
   let record = null;
   let lease;
+  let existingBlobFailure = { status: 412 };
   let ranges = ['203.0.113.1/32'];
   const requests = [];
   const server = createServer(async (request, response) => {
@@ -909,7 +910,13 @@ test('real REST adapter uses Blob lease headers and actual AKS read schema', asy
     } else if (request.url.startsWith('/operations/')) {
       if (request.method === 'GET') response.end(JSON.stringify(record));
       else if (request.headers['if-none-match'] && record)
-        response.writeHead(412).end();
+        response
+          .writeHead(existingBlobFailure.status, {
+            ...(existingBlobFailure.code
+              ? { 'x-ms-error-code': existingBlobFailure.code }
+              : {}),
+          })
+          .end('PRIVATE_BLOB_RESPONSE');
       else {
         if (lease && !request.headers['if-none-match'])
           assert.equal(request.headers['x-ms-lease-id'], lease);
@@ -987,6 +994,43 @@ test('real REST adapter uses Blob lease headers and actual AKS read schema', asy
     );
     assert.deepEqual(ranges, ['203.0.113.1/32']);
     assert.equal(record.operation, 'start');
+    const previousRecord = globalThis.structuredClone(record);
+    const leaseId = '11111111-1111-4111-8111-111111111111';
+    for (const failure of [
+      { status: 412 },
+      { status: 409, code: 'BlobAlreadyExists' },
+    ]) {
+      existingBlobFailure = failure;
+      await provider.acquire(leaseId, 60);
+      assert.deepEqual(record, previousRecord);
+      await provider.release(leaseId);
+    }
+    for (const failure of [
+      { status: 409, code: 'PRIVATE_OTHER_CONFLICT' },
+      { status: 409 },
+      { status: 403, code: 'BlobAlreadyExists' },
+    ]) {
+      existingBlobFailure = failure;
+      const previousLeaseRequests = requests.filter((item) =>
+        item.url.includes('comp=lease'),
+      ).length;
+      await assert.rejects(provider.acquire(leaseId, 60), (error) => {
+        assert.equal(
+          error.message,
+          `Azure operational request failed; status=${failure.status}.`,
+        );
+        assert.doesNotMatch(
+          error.message + JSON.stringify(error),
+          /PRIVATE_OTHER_CONFLICT|PRIVATE_BLOB_RESPONSE|PRIVATE_TOKEN/,
+        );
+        return true;
+      });
+      assert.equal(
+        requests.filter((item) => item.url.includes('comp=lease')).length,
+        previousLeaseRequests,
+      );
+      assert.deepEqual(record, previousRecord);
+    }
     assert.equal(
       requests.filter(
         (item) => item.method === 'PUT' && item.url.startsWith('/cluster'),
