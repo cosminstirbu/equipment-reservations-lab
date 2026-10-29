@@ -7,17 +7,19 @@ IDs and evidence. Source assessment baseline: `b2b0064`.
 
 ## Current checkpoint
 
-2026-10-28: M0 accepted. M1 source-to-private-preview path now works and the actual
-preview has independent quality/security assessment. **M1 is not complete:** no
-retained foundation has been applied and live state/access/audit qualification is
-pending. No automatic further Windows repair is planned.
+M0 is accepted. On 2026-10-29, the authorized local foundation apply partially
+created 265 managed resources, then failed on the audit DCR and four role
+assignments. Private local state is preserved; migration did not run. **M1 is not
+complete:** the missing resources and live state/access/audit qualification remain
+pending. The original saved plan is stale and must not be retried.
 
 Direct-user app assignment is now implemented, independently reviewed and verified
 in a fresh actual preview. On 2026-10-29 the owner authorized completing M1
 without merging, using the explicit local-human foundation mode defined in the
 [operation contract](contracts/operations.md#m1-local-foundation-execution-2026-10-29).
-Prepare a fresh qualifying saved plan; the existing preview cannot be applied.
-Merge remains unnecessary and unauthorized; actual apply requires exact-plan approval.
+A fresh local saved plan at `38ad0cf` now passes independent review; the existing
+preview remains ineligible. Exact-plan apply approval is pending. Merge remains
+unnecessary and unauthorized.
 
 Publication update: owner authorized branch push and draft PR. [PR 30](https://github.com/cosminstirbu/equipment-reservations-lab/pull/30)
 is now at `c6a903b`, with its owner-authorized normal validation cycle passed.
@@ -1123,3 +1125,49 @@ Independent security verdict: "**pass — T092 frozen four-file implementation
 against `c6a903b`. No new findings.**" Security independently repeated the six
 focused contracts successfully. Unchanged application/native Terraform evidence
 is reused. Next: local checkpoint and fresh private plan, not an apply.
+
+Fresh durable local plan at `38ad0cfdbb2ae2e04ee3f44c3c91a67703d6e122` passed
+independent quality and security review: 270 creates, 10 reads, zero updates or
+deletes, uncreated state/serial zero and local-mode/nonpreview binding. Plan hash
+`1875d8724e449f4f08b921d6bbd3bc2068647a5967d9ee915fdb7044530883fb`;
+review expires 2026-10-29 08:53:56.232 UTC (10:53:56 Europe/Bucharest).
+Retained IAM conditions/scopes must be verified after creation; audit/network
+readiness and family qualification remain unset, as required by create staging.
+Owner must approve this exact unexpired plan and confirm recovery-key expiry
+2027-10-28T00:00:00Z plus renewal responsibility before apply. Current public retail
+model remains EUR118.51 gross/month at 40 running hours and 21% tax for the eventual
+full solution (EUR98.91 stopped); this is not a separate foundation-only quote.
+T092 is complete; actual apply, verified migration and live qualification remain
+pending. No push, merge, provider registration or Azure resource creation occurred.
+Keep HEAD fixed until plan consumption; evidence-only spec edits remain uncommitted.
+
+Owner explicitly authorized Terraform apply on 2026-10-29 after the plan walkthrough
+and expiry/renewal proposal. At 08:21 UTC, saved-plan bytes/hash, source HEAD and
+unexpired review matched the approved plan. Microsoft.KeyVault registration was
+requested as its prerequisite; actual apply must use that saved plan without
+replanning. No merge/push is authorized. Verify deployed scopes/conditions, state
+migration and staged audit/access evidence before M1 acceptance or dependent use.
+
+Exact saved-plan apply exited 1 after 814.486 seconds. Private local state is
+preserved with 265 managed resources, serial 281; no lock remains. Wrapper outputs
+and the remote migration marker are absent, so state migration did not run. The
+unchanged saved plan is now stale because its uncreated-state binding no longer
+matches; do not retry it. Missing blocks: audit DCR, guard recovery permissions,
+two qualification-consumption readers and recovery-storage network assignment.
+Azure Activity Log safe projections report InvalidTransformQuery, two
+RoleAssignmentExists conflicts and StorageException. A bounded read-only team
+diagnosis is active; no reapply, replan, state mutation or deletion is authorized
+by this diagnostic step. Current Azure resources are partially created and retained.
+
+Confirmed causes: authored DCR projection referenced `_ResourceId`, which actual
+Azure rejected as an undefined input; two never-created consumption-reader
+declarations duplicated state-owned challenge-reader principal/scope/role tuples.
+Repairs preserve the eleven valid input fields plus required platform metadata
+qualification, and consolidate exactly the intended two read paths under existing
+assignment ownership. No import, state edit or deletion was performed. The two
+other missing apply assignments remain absent; their service-error cause is not
+established. Frozen seven-file source repair received independent quality and
+security **pass**, no new findings. Pinned source gates and all 33 foundation plus
+16 environment native contracts passed. Preserve the original plan/review/text in
+private history, commit locally, then generate a fresh zero-delete recovery plan.
+Further apply requires review and approval of that new plan.

@@ -75,7 +75,7 @@ mock_data "azurerm_monitor_data_collection_rule" {
     data_flow = [{
       streams            = ["Microsoft-Table-StorageBlobLogs"]
       destinations       = ["audit"]
-      transform_kql      = "source | project TimeGenerated, _ResourceId, AccountName, Category, OperationName, StatusCode, DurationMs, ServerLatencyMs, AuthenticationType, RequesterObjectId, Protocol, TlsVersion"
+      transform_kql      = "source | project TimeGenerated, AccountName, Category, OperationName, StatusCode, DurationMs, ServerLatencyMs, AuthenticationType, RequesterObjectId, Protocol, TlsVersion"
       built_in_transform = null
       output_stream      = null
     }]

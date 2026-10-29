@@ -43,8 +43,9 @@ locals {
   audit_workspace_resource_id = "/subscriptions/${var.config.subscriptionId}/resourceGroups/${var.config.foundationBackend.resourceGroupName}/providers/Microsoft.OperationalInsights/workspaces/${local.audit_workspace_name}"
   audit_dcr_resource_id       = "/subscriptions/${var.config.subscriptionId}/resourceGroups/${var.config.foundationBackend.resourceGroupName}/providers/Microsoft.Insights/dataCollectionRules/${local.audit_dcr_name}"
   audit_stream                = "Microsoft-Table-StorageBlobLogs"
+  # _ResourceId is platform metadata, not an input column for this stream.
   audit_columns = [
-    "TimeGenerated", "_ResourceId", "AccountName", "Category", "OperationName",
+    "TimeGenerated", "AccountName", "Category", "OperationName",
     "StatusCode", "DurationMs", "ServerLatencyMs", "AuthenticationType",
     "RequesterObjectId", "Protocol", "TlsVersion"
   ]

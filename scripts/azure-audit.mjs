@@ -1,7 +1,7 @@
 import { createHash } from 'node:crypto';
 import { OperationalFailure } from './process.mjs';
 export const auditTransform =
-  'source | project TimeGenerated, _ResourceId, AccountName, Category, OperationName, StatusCode, DurationMs, ServerLatencyMs, AuthenticationType, RequesterObjectId, Protocol, TlsVersion';
+  'source | project TimeGenerated, AccountName, Category, OperationName, StatusCode, DurationMs, ServerLatencyMs, AuthenticationType, RequesterObjectId, Protocol, TlsVersion';
 const digest = createHash('sha256').update(auditTransform).digest('hex');
 const fail = (message) => {
   throw new OperationalFailure(message);

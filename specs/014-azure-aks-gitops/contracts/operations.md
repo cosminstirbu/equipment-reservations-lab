@@ -209,6 +209,10 @@ AuthenticationType,RequesterObjectId,Protocol,TlsVersion. No IP/UPN/URI/ObjectKe
 authhash/details, headers/bodies/contenthashes or raw secondary sink.30day audit
 retention/no archive,.03GB daily protective quota and explicit operator RBAC; actual
 stored-row privacy/audit gap checks required. bypass=None and no Queue-only fix.
+The authored transform projects the eleven nonplatform fields. `_ResourceId`
+remains required platform metadata for live stored-row qualification; the actual
+Azure compiler rejects it as an input symbol, so it is omitted from the authored
+projection. Do not replace it with an invented alias or relax stored-row checks.
 Audit staging: audit_transform_ready=false creates workspace+DCR; reviewed true binding
 uses deterministic existing DCR ID after actual provisioning checks. Separate
 audit_diagnostics_ready remains false until workspace default-DCR/configuration

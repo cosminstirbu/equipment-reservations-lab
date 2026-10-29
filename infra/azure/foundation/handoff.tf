@@ -118,7 +118,7 @@ resource "azurerm_role_assignment" "qualification_challenge_reader" {
   principal_id         = azurerm_user_assigned_identity.github[each.key].principal_id
   principal_type       = "ServicePrincipal"
   condition_version    = "2.0"
-  condition            = "(ActionMatches{'Microsoft.Storage/storageAccounts/blobServices/containers/blobs/read'} AND NOT SubOperationMatches{'Blob.List'}) AND (@Resource[Microsoft.Storage/storageAccounts/blobServices/containers/blobs:path] StringLike 'activation/${var.config.environment}/*/*.json')"
+  condition            = "(ActionMatches{'Microsoft.Storage/storageAccounts/blobServices/containers/blobs/read'} AND NOT SubOperationMatches{'Blob.List'}) AND ((@Resource[Microsoft.Storage/storageAccounts/blobServices/containers/blobs:path] StringLike 'activation/${var.config.environment}/*/*.json') OR (@Resource[Microsoft.Storage/storageAccounts/blobServices/containers/blobs:path] StringLike 'consumption/${var.config.environment}/*/*.json'))"
 }
 
 output "bootstrap_container_name" {
@@ -145,15 +145,4 @@ resource "azurerm_role_assignment" "qualification_peer_reader" {
   principal_type       = "ServicePrincipal"
   condition_version    = "2.0"
   condition            = "(ActionMatches{'Microsoft.Storage/storageAccounts/blobServices/containers/blobs/read'} AND NOT SubOperationMatches{'Blob.List'}) AND (@Resource[Microsoft.Storage/storageAccounts/blobServices/containers/blobs:path] StringLike 'activation/${var.config.environment}/*/*/${each.value}.json')"
-}
-
-resource "azurerm_role_assignment" "qualification_consumption_reader" {
-  for_each = toset(["backup", "restore"])
-
-  scope                = "${azurerm_storage_account.recovery.id}/blobServices/default/containers/${azurerm_storage_container.qualification_challenges.name}"
-  role_definition_name = "Storage Blob Data Reader"
-  principal_id         = azurerm_user_assigned_identity.github[each.key].principal_id
-  principal_type       = "ServicePrincipal"
-  condition_version    = "2.0"
-  condition            = "(ActionMatches{'Microsoft.Storage/storageAccounts/blobServices/containers/blobs/read'} AND NOT SubOperationMatches{'Blob.List'}) AND (@Resource[Microsoft.Storage/storageAccounts/blobServices/containers/blobs:path] StringLike 'consumption/${var.config.environment}/*/*.json')"
 }

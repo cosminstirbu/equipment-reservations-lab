@@ -366,6 +366,30 @@
       "evidence": "team/delegation-t089-security.md; producer flattens permission blocks, losing action/exclusion association on unsupported multiple-block response.",
       "remediation": "Fail closed unless exactlyone permissionblock; derive flat tuple from thatblock. Native zero/two-block intended rejection and faithfuloneblock fullarrays/hash regression; no grant or schema expansion.",
       "closure": "Original security reviewer PASS delegation-producer-repair17-security.md at final four-file frozen producer snapshot, quality delta PASS. Root33foundation+16environment native mocks and infra:check PASS. Actual Azure role cardinality/currentauthority/cache/G3 integration remain pending."
+    },
+    {
+      "id": "Q-M1-IAM-001",
+      "category": "code",
+      "severity": "medium",
+      "blocking": true,
+      "status": "source_repair_reviewed_live_acceptance_pending",
+      "owner": "ci_archives",
+      "reviewer": "milestone0_security",
+      "evidence": "Actual Azure 409 RoleAssignmentExists: qualification consumption-reader tuples duplicate state-owned challenge-reader tuples; existing conditions allow activation paths only.",
+      "remediation": "Keep existing state addresses, combine exactly approved activation/consumption alternatives under the common read/no-list predicate, remove only never-created duplicate declarations, then review a fresh zero-delete plan.",
+      "closure": "Frozen source repair passed independent quality/security review, pinned source gates and 33 foundation plus 16 environment native contracts. Fresh plan review and actual Azure acceptance remain pending."
+    },
+    {
+      "id": "Q-M1-AUDIT-001",
+      "category": "code",
+      "severity": "medium",
+      "blocking": true,
+      "status": "source_repair_reviewed_live_acceptance_pending",
+      "owner": "m1_schema",
+      "reviewer": "milestone0_security",
+      "evidence": "Actual initial foundation apply rejected audit DCR with InvalidPayload and three InvalidTransformQuery detail codes; DCR absent from preserved partial state.",
+      "remediation": "Identify the actual schema/query incompatibility and make the narrow privacy-preserving correction; native/source checks and actual Azure acceptance remain required.",
+      "closure": "Frozen source repair passed independent quality/security review, pinned source gates and 33 foundation plus 16 environment native contracts. Fresh plan review and actual Azure acceptance remain pending."
     }
   ]
 }

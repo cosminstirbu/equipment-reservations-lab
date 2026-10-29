@@ -265,4 +265,8 @@ before T020 bootstrap and T022/T029 acceptance.
 
 ## M1 local foundation execution adjustment
 
-- [ ] T092 [US2] Add the owner-approved explicit local-human foundation plan/apply and DNS-gate mode in scripts/azure-terraform.mjs and scripts/azure-infrastructure.mjs. Extend existing source-authority and plan/review contracts with focused allow/deny cases, retain hosted main-only and preview nonpromotability, run scoped checks and independent review, and prepare a fresh private saved plan. Actual apply and M1 live qualification remain separate acceptance gates.
+- [x] T092 [US2] Add the owner-approved explicit local-human foundation plan/apply and DNS-gate mode in scripts/azure-terraform.mjs and scripts/azure-infrastructure.mjs. Extend existing source-authority and plan/review contracts with focused allow/deny cases, retain hosted main-only and preview nonpromotability, run scoped checks and independent review, and prepare a fresh private saved plan. Actual apply and M1 live qualification remain separate acceptance gates.
+
+## M1 live-provider repairs
+
+- [ ] T093 [US2] Repair actual Azure audit-transform compilation and duplicate qualification-reader role assignments using the preserved partial state. Keep existing state-owned addresses, exact approved permission union and required platform-metadata/privacy checks; run integrated native/source checks and independent review, then prepare a fresh zero-delete saved plan. A new plan approval is required before further apply.

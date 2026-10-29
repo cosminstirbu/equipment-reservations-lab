@@ -397,11 +397,11 @@ run "challenge_reads_survive_recreation_without_foundation_apply" {
         grant.scope == azurerm_role_assignment.qualification_challenge.scope &&
         grant.role_definition_name == "Storage Blob Data Reader" &&
         grant.condition_version == "2.0" &&
-        grant.condition == "(ActionMatches{'Microsoft.Storage/storageAccounts/blobServices/containers/blobs/read'} AND NOT SubOperationMatches{'Blob.List'}) AND (@Resource[Microsoft.Storage/storageAccounts/blobServices/containers/blobs:path] StringLike 'activation/${var.config.environment}/*/*.json')" &&
+        grant.condition == "(ActionMatches{'Microsoft.Storage/storageAccounts/blobServices/containers/blobs/read'} AND NOT SubOperationMatches{'Blob.List'}) AND ((@Resource[Microsoft.Storage/storageAccounts/blobServices/containers/blobs:path] StringLike 'activation/${var.config.environment}/*/*.json') OR (@Resource[Microsoft.Storage/storageAccounts/blobServices/containers/blobs:path] StringLike 'consumption/${var.config.environment}/*/*.json'))" &&
         !strcontains(grant.condition, var.config.generation)
       ])
     )
-    error_message = "Retained backup/restore permissions must admit own-environment challenge metadata after generation-2 recreation without a foundation apply; no list, write, delete, consumption or other-environment reads."
+    error_message = "Retained backup/restore permissions must admit own-environment activation and consumption metadata after generation-2 recreation without a foundation apply; no list, write, delete or other-environment reads."
   }
 }
 
@@ -548,11 +548,12 @@ run "peer_activation_and_consumption_reads_are_narrow" {
         grant.role_definition_name == "Storage Blob Data Reader" &&
         grant.scope == "${azurerm_storage_account.recovery.id}/blobServices/default/containers/qualification-${actor == "backup" ? "restore" : "backup"}" &&
       grant.condition == "(ActionMatches{'Microsoft.Storage/storageAccounts/blobServices/containers/blobs/read'} AND NOT SubOperationMatches{'Blob.List'}) AND (@Resource[Microsoft.Storage/storageAccounts/blobServices/containers/blobs:path] StringLike 'activation/${var.config.environment}/*/*/${actor == "backup" ? "restore" : "backup"}.json')"]) &&
-      alltrue([for actor, grant in azurerm_role_assignment.qualification_consumption_reader :
+      alltrue([for actor, grant in azurerm_role_assignment.qualification_challenge_reader :
         grant.principal_id == azurerm_user_assigned_identity.github[actor].principal_id &&
         grant.role_definition_name == "Storage Blob Data Reader" &&
         grant.scope == azurerm_role_assignment.qualification_challenge.scope &&
-      grant.condition == "(ActionMatches{'Microsoft.Storage/storageAccounts/blobServices/containers/blobs/read'} AND NOT SubOperationMatches{'Blob.List'}) AND (@Resource[Microsoft.Storage/storageAccounts/blobServices/containers/blobs:path] StringLike 'consumption/${var.config.environment}/*/*.json')"])
+        grant.condition_version == "2.0" &&
+      grant.condition == "(ActionMatches{'Microsoft.Storage/storageAccounts/blobServices/containers/blobs/read'} AND NOT SubOperationMatches{'Blob.List'}) AND ((@Resource[Microsoft.Storage/storageAccounts/blobServices/containers/blobs:path] StringLike 'activation/${var.config.environment}/*/*.json') OR (@Resource[Microsoft.Storage/storageAccounts/blobServices/containers/blobs:path] StringLike 'consumption/${var.config.environment}/*/*.json'))"])
     )
     error_message = "Backup/restore may GET only literal peer activation proofs and own-environment recovery consumption, with no list/write/operational-peer-proof reads."
   }

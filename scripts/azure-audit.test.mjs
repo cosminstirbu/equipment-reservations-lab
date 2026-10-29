@@ -4,6 +4,10 @@ import test from 'node:test';
 test('audit qualifier reads actual rule/default binding and rejects changed transform or delayed saved-plan observations', async () => {
   const { qualifyAudit, validateAuditObservation, auditTransform } =
     await import('./azure-audit.mjs');
+  assert.equal(
+    auditTransform,
+    'source | project TimeGenerated, AccountName, Category, OperationName, StatusCode, DurationMs, ServerLatencyMs, AuthenticationType, RequesterObjectId, Protocol, TlsVersion',
+  );
   const config = {
     environment: 'learning',
     generation: 'lab2026',

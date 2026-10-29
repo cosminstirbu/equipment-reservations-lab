@@ -639,9 +639,13 @@ Create and attach the supported workspace transformation BEFORE enabling diagnos
 and verify attachment/configuration before declaring audit readiness. No raw secondary
 sink, untransformed table, export or diagnostic archive is enabled.
 
-The pre-durable-ingestion KQL allowlist retains only TimeGenerated, _ResourceId,
+The durable audit allowlist retains only TimeGenerated, _ResourceId,
 AccountName, Category, OperationName, StatusCode, DurationMs, ServerLatencyMs,
-AuthenticationType, RequesterObjectId, Protocol and TlsVersion. All other source
+AuthenticationType, RequesterObjectId, Protocol and TlsVersion. The authored
+query projects the eleven nonplatform fields; `_ResourceId` is
+required platform metadata and is verified in stored rows. Actual Azure compilation
+on 2026-10-29 rejected `_ResourceId` as an input symbol, so the query does not
+reference it. No alias or raw passthrough is used. All other source
 columns are omitted/null before table storage, including IP, UPN, source/destination
 URI, ObjectKey, auth hash/details, request IDs, user agent/referrer/headers, bodies
 and content hashes. RequesterObjectId is the approved identity correlation field;

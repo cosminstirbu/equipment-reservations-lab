@@ -52,8 +52,8 @@ run "create_retained_audit_without_ingestion" {
   }
 
   assert {
-    condition     = azurerm_monitor_data_collection_rule.audit.kind == "WorkspaceTransforms" && azurerm_monitor_data_collection_rule.audit.data_flow[0].transform_kql == "source | project TimeGenerated, _ResourceId, AccountName, Category, OperationName, StatusCode, DurationMs, ServerLatencyMs, AuthenticationType, RequesterObjectId, Protocol, TlsVersion"
-    error_message = "Stored audit columns must match the approved strict allowlist, without raw metadata."
+    condition     = azurerm_monitor_data_collection_rule.audit.kind == "WorkspaceTransforms" && azurerm_monitor_data_collection_rule.audit.data_flow[0].transform_kql == "source | project TimeGenerated, AccountName, Category, OperationName, StatusCode, DurationMs, ServerLatencyMs, AuthenticationType, RequesterObjectId, Protocol, TlsVersion"
+    error_message = "Authored audit transform must project the exact allowed input columns, without platform or raw metadata."
   }
 
   assert {
@@ -92,7 +92,7 @@ run "reject_stale_audit_qualification" {
       revision                 = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
       workspace_resource_id    = "/subscriptions/11111111-1111-4111-8111-111111111111/resourceGroups/er-contract-foundation/providers/Microsoft.OperationalInsights/workspaces/er-contract-audit"
       dcr_resource_id          = "/subscriptions/11111111-1111-4111-8111-111111111111/resourceGroups/er-contract-foundation/providers/Microsoft.Insights/dataCollectionRules/er-contract-blob-audit-transform"
-      transform_sha256         = sha256("source | project TimeGenerated, _ResourceId, AccountName, Category, OperationName, StatusCode, DurationMs, ServerLatencyMs, AuthenticationType, RequesterObjectId, Protocol, TlsVersion")
+      transform_sha256         = sha256("source | project TimeGenerated, AccountName, Category, OperationName, StatusCode, DurationMs, ServerLatencyMs, AuthenticationType, RequesterObjectId, Protocol, TlsVersion")
       observed_at              = "2000-01-01T00:00:00Z"
       expires_at               = "2000-01-01T00:20:00Z"
       workspace_default_dcr_id = null
@@ -114,7 +114,7 @@ run "reject_cross_generation_audit_qualification" {
       revision                 = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
       workspace_resource_id    = "/subscriptions/11111111-1111-4111-8111-111111111111/resourceGroups/er-contract-foundation/providers/Microsoft.OperationalInsights/workspaces/er-contract-audit"
       dcr_resource_id          = "/subscriptions/11111111-1111-4111-8111-111111111111/resourceGroups/er-contract-foundation/providers/Microsoft.Insights/dataCollectionRules/er-contract-blob-audit-transform"
-      transform_sha256         = sha256("source | project TimeGenerated, _ResourceId, AccountName, Category, OperationName, StatusCode, DurationMs, ServerLatencyMs, AuthenticationType, RequesterObjectId, Protocol, TlsVersion")
+      transform_sha256         = sha256("source | project TimeGenerated, AccountName, Category, OperationName, StatusCode, DurationMs, ServerLatencyMs, AuthenticationType, RequesterObjectId, Protocol, TlsVersion")
       observed_at              = timestamp()
       expires_at               = timeadd(timestamp(), "20m")
       workspace_default_dcr_id = null
@@ -136,7 +136,7 @@ run "bind_verified_existing_transform" {
       revision                 = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
       workspace_resource_id    = "/subscriptions/11111111-1111-4111-8111-111111111111/resourceGroups/er-contract-foundation/providers/Microsoft.OperationalInsights/workspaces/er-contract-audit"
       dcr_resource_id          = "/subscriptions/11111111-1111-4111-8111-111111111111/resourceGroups/er-contract-foundation/providers/Microsoft.Insights/dataCollectionRules/er-contract-blob-audit-transform"
-      transform_sha256         = sha256("source | project TimeGenerated, _ResourceId, AccountName, Category, OperationName, StatusCode, DurationMs, ServerLatencyMs, AuthenticationType, RequesterObjectId, Protocol, TlsVersion")
+      transform_sha256         = sha256("source | project TimeGenerated, AccountName, Category, OperationName, StatusCode, DurationMs, ServerLatencyMs, AuthenticationType, RequesterObjectId, Protocol, TlsVersion")
       observed_at              = timestamp()
       expires_at               = timeadd(timestamp(), "20m")
       workspace_default_dcr_id = null
@@ -162,7 +162,7 @@ run "deny_changed_actual_dcr" {
       revision                 = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
       workspace_resource_id    = "/subscriptions/11111111-1111-4111-8111-111111111111/resourceGroups/er-contract-foundation/providers/Microsoft.OperationalInsights/workspaces/er-contract-audit"
       dcr_resource_id          = "/subscriptions/11111111-1111-4111-8111-111111111111/resourceGroups/er-contract-foundation/providers/Microsoft.Insights/dataCollectionRules/er-contract-blob-audit-transform"
-      transform_sha256         = sha256("source | project TimeGenerated, _ResourceId, AccountName, Category, OperationName, StatusCode, DurationMs, ServerLatencyMs, AuthenticationType, RequesterObjectId, Protocol, TlsVersion")
+      transform_sha256         = sha256("source | project TimeGenerated, AccountName, Category, OperationName, StatusCode, DurationMs, ServerLatencyMs, AuthenticationType, RequesterObjectId, Protocol, TlsVersion")
       observed_at              = timestamp()
       expires_at               = timeadd(timestamp(), "20m")
       workspace_default_dcr_id = null
@@ -190,7 +190,7 @@ run "deny_wrong_actual_workspace_link" {
       revision                 = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
       workspace_resource_id    = "/subscriptions/11111111-1111-4111-8111-111111111111/resourceGroups/er-contract-foundation/providers/Microsoft.OperationalInsights/workspaces/er-contract-audit"
       dcr_resource_id          = "/subscriptions/11111111-1111-4111-8111-111111111111/resourceGroups/er-contract-foundation/providers/Microsoft.Insights/dataCollectionRules/er-contract-blob-audit-transform"
-      transform_sha256         = sha256("source | project TimeGenerated, _ResourceId, AccountName, Category, OperationName, StatusCode, DurationMs, ServerLatencyMs, AuthenticationType, RequesterObjectId, Protocol, TlsVersion")
+      transform_sha256         = sha256("source | project TimeGenerated, AccountName, Category, OperationName, StatusCode, DurationMs, ServerLatencyMs, AuthenticationType, RequesterObjectId, Protocol, TlsVersion")
       observed_at              = timestamp()
       expires_at               = timeadd(timestamp(), "20m")
       workspace_default_dcr_id = "/subscriptions/11111111-1111-4111-8111-111111111111/resourceGroups/er-contract-foundation/providers/Microsoft.Insights/dataCollectionRules/unrelated"
@@ -214,7 +214,7 @@ run "enable_only_qualified_protected_sinks" {
       revision                 = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
       workspace_resource_id    = "/subscriptions/11111111-1111-4111-8111-111111111111/resourceGroups/er-contract-foundation/providers/Microsoft.OperationalInsights/workspaces/er-contract-audit"
       dcr_resource_id          = "/subscriptions/11111111-1111-4111-8111-111111111111/resourceGroups/er-contract-foundation/providers/Microsoft.Insights/dataCollectionRules/er-contract-blob-audit-transform"
-      transform_sha256         = sha256("source | project TimeGenerated, _ResourceId, AccountName, Category, OperationName, StatusCode, DurationMs, ServerLatencyMs, AuthenticationType, RequesterObjectId, Protocol, TlsVersion")
+      transform_sha256         = sha256("source | project TimeGenerated, AccountName, Category, OperationName, StatusCode, DurationMs, ServerLatencyMs, AuthenticationType, RequesterObjectId, Protocol, TlsVersion")
       observed_at              = timestamp()
       expires_at               = timeadd(timestamp(), "20m")
       workspace_default_dcr_id = "/subscriptions/11111111-1111-4111-8111-111111111111/resourceGroups/er-contract-foundation/providers/Microsoft.Insights/dataCollectionRules/er-contract-blob-audit-transform"
