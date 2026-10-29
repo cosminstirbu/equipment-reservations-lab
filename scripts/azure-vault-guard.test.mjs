@@ -1457,7 +1457,7 @@ test('public guard pointer and canary APIs suppress arbitrary token-provider err
 });
 
 test('guard inspection reads both actual assignments, definition, exemptions and strict vault invariants through ARM', async (t) => {
-  const { options, requests } = await fixture(t);
+  const { options, requests, state } = await fixture(t);
   const observed = await inspectVaultGuards(options);
   assert.equal(observed.guards.length, 2);
   assert.deepEqual(observed.guards.map((guard) => guard.family).sort(), [
@@ -1479,6 +1479,17 @@ test('guard inspection reads both actual assignments, definition, exemptions and
       .length,
     2,
   );
+  assert.ok(requests.every((request) => request.method === 'GET'));
+  for (const family of ['recovery', 'workload'])
+    delete state.objects.get(options.guard.assignment_ids[family]).properties
+      .notScopes;
+  const omitted = await inspectVaultGuards(options);
+  assert.deepEqual(omitted.guards, observed.guards);
+  const assignment = state.objects.get(options.guard.assignment_ids.workload);
+  for (const value of [null, {}, '', ['excluded-scope']]) {
+    assignment.properties.notScopes = value;
+    await assert.rejects(inspectVaultGuards(options), /assignment inspection/);
+  }
   assert.ok(requests.every((request) => request.method === 'GET'));
 });
 

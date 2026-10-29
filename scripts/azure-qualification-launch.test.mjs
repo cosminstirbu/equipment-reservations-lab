@@ -259,12 +259,42 @@ test('sanitized public prove dispatch reaches argument validation without an ESM
   assert.match(result.stderr, /qualification|Qualification/);
 });
 
+test('actual repository qualification definition includes every tracked workflow in its source closure', async () => {
+  const { qualificationSourceDefinition } =
+    await import('./azure-qualification-launch.mjs');
+  const definition = qualificationSourceDefinition({ root: resolve('.') });
+  for (const path of [
+    '.github/workflows/azure-provider-qualification.yaml',
+    '.github/workflows/broker-trace-diagnostic.yaml',
+  ])
+    assert.match(
+      definition.manifest.assets.find((entry) => entry.path === path)?.sha256 ??
+        '',
+      /^[a-f0-9]{64}$/,
+    );
+});
+
 test('actual Git definition accepts an app-only commit but changes transitive and package identity', async (t) => {
   const { qualificationSourceDefinition } =
     await import('./azure-qualification-launch.mjs');
   const { root, revision } = checkout(t);
   const initial = qualificationSourceDefinition({ root, revision });
   assert.deepEqual(initial, qualificationSourceDefinition({ root }));
+  const unlistedWorkflow = join(root, '.github/workflows/unlisted.yaml');
+  writeFileSync(unlistedWorkflow, 'name: Unreviewed\n');
+  assert.throws(() => qualificationSourceDefinition({ root }), /invalid/);
+  rmSync(unlistedWorkflow);
+  const workflow = '.github/workflows/azure-provider-qualification.yaml';
+  writeFileSync(
+    join(root, workflow),
+    readFileSync(join(root, workflow), 'utf8') +
+      '\n# changed reviewed workflow\n',
+  );
+  assert.notEqual(
+    initial.probeDefinitionHash,
+    qualificationSourceDefinition({ root }).probeDefinitionHash,
+  );
+  git(root, 'checkout', '--', workflow);
   writeFileSync(join(root, 'app-only.txt'), 'application content');
   git(root, 'add', '.');
   git(root, 'commit', '-m', 'Application-only change');

@@ -991,8 +991,8 @@ async function inspect(ctx, skipWorkload = false) {
       !idEqual(p?.scope, expected.scope_ids[family]) ||
       !idEqual(p?.policyDefinitionId, expected.definition_id) ||
       p?.enforcementMode !== 'Default' ||
-      !Array.isArray(p.notScopes) ||
-      p.notScopes.length ||
+      (Object.hasOwn(p, 'notScopes') &&
+        (!Array.isArray(p.notScopes) || p.notScopes.length !== 0)) ||
       (p.overrides ?? []).length ||
       (p.resourceSelectors ?? []).length ||
       (assignment.identity && assignment.identity.type !== 'None') ||
