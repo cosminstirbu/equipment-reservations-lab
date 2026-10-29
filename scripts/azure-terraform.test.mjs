@@ -1,5 +1,260 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
+import { Buffer } from 'node:buffer';
+
+test('foundation migration preserves the full snapshot across native serial advancement and check ordering', async () => {
+  const { validateFoundationMigration } = await import('./azure-terraform.mjs');
+  const local = {
+    version: 4,
+    terraform_version: '1.17.0',
+    lineage: 'fixture-lineage',
+    serial: 287,
+    resources: [{ mode: 'managed', type: 'fixture', instances: [] }],
+    outputs: { fixture: { value: true } },
+    check_results: [
+      {
+        config_addr: 'data.fixture.b',
+        object_kind: 'resource',
+        status: 'unknown',
+        objects: [],
+      },
+      {
+        config_addr: 'data.fixture.a',
+        object_kind: 'resource',
+        status: 'pass',
+        objects: [],
+      },
+    ],
+  };
+  const remote = {
+    ...globalThis.structuredClone(local),
+    serial: 288,
+    check_results: [...local.check_results].reverse(),
+  };
+  assert.doesNotThrow(() => validateFoundationMigration(local, remote));
+  assert.doesNotThrow(() =>
+    validateFoundationMigration(local, { ...remote, serial: 287 }),
+  );
+  for (const change of [
+    { serial: 286 },
+    { serial: 289 },
+    { lineage: 'foreign' },
+    { version: 3 },
+    { outputs: {} },
+    { resources: [] },
+    { extra: true },
+    {
+      check_results: [
+        { ...local.check_results[0], status: 'pass' },
+        local.check_results[1],
+      ],
+    },
+    { check_results: [local.check_results[0], local.check_results[0]] },
+    { check_results: [{ ...local.check_results[0], config_addr: '' }] },
+    { check_results: null },
+  ])
+    assert.throws(
+      () => validateFoundationMigration(local, { ...remote, ...change }),
+      /migration/i,
+    );
+  assert.deepEqual(
+    local.check_results.map((x) => x.status),
+    ['unknown', 'pass'],
+  );
+});
+
+test('foundation migration finalization verifies real private files and backend before creating authority without Terraform', async (t) => {
+  const { finalizeFoundationMigration, createTerraformContext } =
+    await import('./azure-terraform.mjs');
+  const { createPrivateDirectory } = await import('./local-platform.mjs');
+  const { existsSync } = await import('node:fs');
+  const { createHash } = await import('node:crypto');
+  const { spawnSync } = await import('node:child_process');
+  const root = mkdtempSync(join(tmpdir(), 'migration-finalize-'));
+  const git = (...args) => {
+    const result = spawnSync('git', ['-c', 'core.hooksPath=', ...args], {
+      cwd: root,
+      encoding: 'utf8',
+    });
+    assert.equal(result.status, 0, result.stderr);
+    return result.stdout.trim();
+  };
+  try {
+    git('init', '--quiet');
+    writeFileSync(join(root, '.gitignore'), '.local/\n');
+    git('add', '.');
+    git(
+      '-c',
+      'user.name=Contract',
+      '-c',
+      'user.email=contract@example.invalid',
+      'commit',
+      '--quiet',
+      '--no-gpg-sign',
+      '-m',
+      'fixture',
+    );
+    const revision = git('rev-parse', 'HEAD');
+    const config = {
+      gitRevision: revision,
+      environment: 'learning',
+      subscriptionId: '22222222-2222-4222-8222-222222222222',
+      tenantId: '33333333-3333-4333-8333-333333333333',
+      foundationBackend: {
+        resourceGroupName: 'fixture-group',
+        storageAccountName: 'fixtureaccount',
+        containerName: 'foundation',
+        key: 'fixture.tfstate',
+      },
+    };
+    const directory = join(root, '.local/azure/learning/foundation-bootstrap');
+    const source = join(directory, 'foundation');
+    createPrivateDirectory(directory);
+    createPrivateDirectory(source);
+    createPrivateDirectory(join(source, '.terraform'));
+    const write = (path, value) =>
+      writeFileSync(
+        path,
+        typeof value === 'string' ? value : JSON.stringify(value),
+        { mode: 0o600 },
+      );
+    const backendHash = createHash('sha256')
+      .update(JSON.stringify(config.foundationBackend))
+      .digest('hex');
+    write(join(directory, 'local-authority.json'), { version: 1, backendHash });
+    const backup = {
+      version: 4,
+      terraform_version: '1.17.0',
+      lineage: 'fixture',
+      serial: 7,
+      outputs: {},
+      resources: [],
+      check_results: [],
+    };
+    write(join(source, 'terraform.tfstate.backup'), backup);
+    write(join(source, 'terraform.tfstate'), '');
+    const native = {
+      backend: {
+        type: 'azurerm',
+        config: {
+          resource_group_name: 'fixture-group',
+          storage_account_name: 'fixtureaccount',
+          container_name: 'foundation',
+          key: 'fixture.tfstate',
+          use_azuread_auth: true,
+        },
+      },
+    };
+    const nativePath = join(source, '.terraform/terraform.tfstate');
+    write(nativePath, native);
+    let remote = { ...backup, serial: 8 };
+    let revokeOnRead = false;
+    const requests = [];
+    t.mock.method(globalThis, 'fetch', async (url, options) => {
+      assert.equal(options.method ?? 'GET', 'GET');
+      requests.push(url);
+      if (url.startsWith('https://management.azure.com/'))
+        return { ok: true, status: 200 };
+      assert.equal(
+        url,
+        'https://fixtureaccount.blob.core.windows.net/foundation/fixture.tfstate',
+      );
+      if (revokeOnRead) human = false;
+      return {
+        ok: true,
+        status: 200,
+        arrayBuffer: async () => Buffer.from(JSON.stringify(remote)),
+      };
+    });
+    const settings = {
+      stage: 'foundation-bootstrap',
+      localFoundation: true,
+      bootstrapOperatorObjectId: '11111111-1111-4111-8111-111111111111',
+    };
+    let human = true;
+    const boundary = {
+      root,
+      environment: {},
+      run: (args) => {
+        if (args[0] === 'ad') return { id: settings.bootstrapOperatorObjectId };
+        assert.equal(args[0], 'account');
+        return args[1] === 'get-access-token'
+          ? { accessToken: 'SYNTHETIC_TOKEN' }
+          : {
+              user: { type: human ? 'user' : 'servicePrincipal' },
+              state: 'Enabled',
+              id: config.subscriptionId,
+              tenantId: config.tenantId,
+            };
+      },
+    };
+    const finalize = () =>
+      finalizeFoundationMigration(config, revision, settings, boundary);
+    const context = () =>
+      createTerraformContext(
+        {
+          config,
+          revision,
+          stage: 'foundation-bootstrap',
+          bootstrapOperatorObjectId: settings.bootstrapOperatorObjectId,
+        },
+        boundary,
+      );
+    const marker = join(directory, 'remote-authority.json');
+    await assert.rejects(
+      () =>
+        finalizeFoundationMigration(
+          config,
+          revision,
+          { ...settings, localFoundation: false },
+          boundary,
+        ),
+      /local-human/i,
+    );
+    await assert.rejects(
+      () =>
+        finalizeFoundationMigration(config, revision, settings, {
+          ...boundary,
+          environment: { CI: 'true' },
+        }),
+      /local-human/i,
+    );
+    await assert.rejects(context, /ambiguous/i);
+    remote = { ...remote, resources: [{ changed: true }] };
+    await assert.rejects(finalize, /migration/i);
+    assert.equal(existsSync(marker), false);
+    remote = { ...backup, serial: 8 };
+    native.backend.config.use_msi = true;
+    write(nativePath, native);
+    await assert.rejects(finalize, /backend/i);
+    delete native.backend.config.use_msi;
+    write(nativePath, native);
+    human = false;
+    await assert.rejects(finalize, /human/i);
+    human = true;
+    revokeOnRead = true;
+    await assert.rejects(finalize, /human/i);
+    assert.equal(existsSync(marker), false);
+    revokeOnRead = false;
+    human = true;
+    assert.equal((await finalize()).status, 'foundation-migration-finalized');
+    assert.equal(JSON.parse(readFileSync(marker, 'utf8')).serial, 8);
+    assert.equal(readFileSync(join(source, 'terraform.tfstate'), 'utf8'), '');
+    assert.deepEqual(
+      JSON.parse(
+        readFileSync(join(source, 'terraform.tfstate.backup'), 'utf8'),
+      ),
+      backup,
+    );
+    await assert.rejects(finalize, /authority|exists/i);
+    await assert.rejects(context, /network-gate-ready/);
+    write(join(source, 'terraform.tfstate'), '{malformed');
+    await assert.rejects(context, SyntaxError);
+    assert.ok(requests.length > 0);
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+});
 
 test('unfinished protected guard operations fail the mandatory G3 prerequisite before provider access', async () => {
   const { executeGuardQualification } = await import('./azure-terraform.mjs');
@@ -715,7 +970,12 @@ test('real Git phase revisions advance through runtime and app commits while the
       initialFoundationPreview: false,
       localFoundation: true,
     };
-    for (const command of ['plan', 'apply', 'foundation-gate'])
+    for (const command of [
+      'plan',
+      'apply',
+      'foundation-gate',
+      'foundation-migration-finalize',
+    ])
       await verifyInfrastructureRevision(command, local, options);
     for (const auditStage of ['create', 'bind', 'enable'])
       await verifyInfrastructureRevision(

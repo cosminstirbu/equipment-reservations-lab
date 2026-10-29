@@ -4,7 +4,7 @@
   "milestone_checkpoint": {
     "date": "2026-10-29",
     "milestone": "M1",
-    "status": "m1_partial_apply_repairs_reviewed_fresh_plan_pending",
+    "status": "m1_resources_applied_native_migration_guard_repair",
     "source_ci": {
       "pr": "https://github.com/cosminstirbu/equipment-reservations-lab/pull/30",
       "head": "c6a903b1c0be64d63a6c823e30c68f266651788e",
@@ -16,7 +16,7 @@
     },
     "m0_owner_accepted": "2026-10-28",
     "m1_owner_authorized": "2026-10-28",
-    "active_batch": "IAM duplicate and DCR undefined-input source repairs passed independent reviews, pinned source gates and 49 native contracts. Partial local state preserved. Original artifacts privately archived. Fresh recovery plan next; no further apply approved yet.",
+    "active_batch": "Recovery resources applied: 268 managed resources. Remote state matches backup resources/outputs/lineage, serial advanced 287 to 288; check records differ only in order and retain one unchanged unknown. Native migration cleared local state. Strict guard repair/finalization in progress; all copies preserved.",
     "foundation_plan": {
       "revision": "38ad0cfdbb2ae2e04ee3f44c3c91a67703d6e122",
       "local_foundation": true,
@@ -35,7 +35,7 @@
       "stale_due_to_state_change": true
     },
     "record": "../milestones.md",
-    "source_revision": "38ad0cfdbb2ae2e04ee3f44c3c91a67703d6e122",
+    "source_revision": "c55b4910c9925ddfa3460d7c5cf9794d1a7a0d9c",
     "owner_checkpoint_after_each_milestone": true,
     "next_milestone_authorized": false,
     "quota_requests": {
@@ -48,7 +48,22 @@
       "resources_provisioned": false
     },
     "limits_preserved": "Historical preparation9 and implementation18 retained; owner approved implementation limit18->21 with M1 authorization. M2 remains unauthorized.",
-    "remaining": "Establish causal fixes for actual Azure DCR/role-assignment failures, review changed source and a fresh saved plan before any further apply. Keep partial resources/state intact; no merge or hosted activation."
+    "remaining": "Review and run guarded local migration finalization without Terraform or Azure writes; then continue M1 state/access/audit qualification. No reapply or state push/import.",
+    "recovery_plan": {
+      "revision": "c55b4910c9925ddfa3460d7c5cf9794d1a7a0d9c",
+      "sha256": "e79c8006ba5db3983b0509f54dae67e90d31de3d4806cc80c78f8dd179845419",
+      "local_foundation": true,
+      "state_serial": 281,
+      "create": 3,
+      "update": 2,
+      "delete": 0,
+      "expires_at": "2026-10-29T09:59:22.044Z",
+      "quality": "pass",
+      "security": "pass",
+      "apply_authorized": true,
+      "owner_approval_date": "2026-10-29",
+      "apply_result": "All five resource changes recorded; wrapper stopped verifying native state migration"
+    }
   },
   "baseline_revision": "d1c7238345136340ddbf3a9454807cefffc43c32",
   "preparation_round": 9,
@@ -901,7 +916,7 @@
     "status": "owner_selected_local_m1_execution",
     "reason": "Owner authorized finishing M1 locally without merge. T092 implements a narrowly reviewed explicit local-human foundation path; exact saved-plan apply approval remains required. Current CI at c6a903b passes; later changes require scoped verification."
   },
-  "handoff_limits": "M1 partial creation: 265 managed resources in private local state; migration/access/audit qualification incomplete. Original plan is stale and must not be retried. Read-only bounded diagnosis active; no cleanup deletion, merge or hosted activation.",
+  "handoff_limits": "Resources created/updated but M1 is incomplete. Remote state content verified read-only; local authority marker pending guard repair. Preserve all copies; no reapply/init/statepush/import. Audit/access/guard qualification and milestone acceptance remain pending.",
   "deferred_diagnostic_risks": [
     {
       "id": "native_https_body_deadline",

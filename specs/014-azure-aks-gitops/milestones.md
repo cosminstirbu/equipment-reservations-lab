@@ -7,18 +7,19 @@ IDs and evidence. Source assessment baseline: `b2b0064`.
 
 ## Current checkpoint
 
-M0 is accepted. On 2026-10-29, the authorized local foundation apply partially
-created 265 managed resources, then failed on the audit DCR and four role
-assignments. Private local state is preserved; migration did not run. **M1 is not
-complete:** the missing resources and live state/access/audit qualification remain
-pending. The original saved plan is stale and must not be retried.
+M0 is accepted. On 2026-10-29, the approved recovery apply completed all resource
+changes, recording 268 managed resources. Native migration copied state to Azure;
+the wrapper then falsely rejected Terraform's one-step serial advance. Backup
+and remote contents match, and all copies are preserved. Guarded local authority
+finalization is under review. **M1 is not complete:** state authority and live
+access/audit qualification remain pending. No resource reapply is planned here.
 
 Direct-user app assignment is now implemented, independently reviewed and verified
 in a fresh actual preview. On 2026-10-29 the owner authorized completing M1
 without merging, using the explicit local-human foundation mode defined in the
 [operation contract](contracts/operations.md#m1-local-foundation-execution-2026-10-29).
-A fresh local saved plan at `38ad0cf` now passes independent review; the existing
-preview remains ineligible. Exact-plan apply approval is pending. Merge remains
+The initial and recovery plans were explicitly approved and consumed. Current work
+finalizes state authority without another apply or migration. Merge remains
 unnecessary and unauthorized.
 
 Publication update: owner authorized branch push and draft PR. [PR 30](https://github.com/cosminstirbu/equipment-reservations-lab/pull/30)
@@ -1171,3 +1172,32 @@ security **pass**, no new findings. Pinned source gates and all 33 foundation pl
 16 environment native contracts passed. Preserve the original plan/review/text in
 private history, commit locally, then generate a fresh zero-delete recovery plan.
 Further apply requires review and approval of that new plan.
+
+Fresh recovery plan at `c55b4910c9925ddfa3460d7c5cf9794d1a7a0d9c` passed
+independent quality/security review. Hash
+`e79c8006ba5db3983b0509f54dae67e90d31de3d4806cc80c78f8dd179845419`,
+state serial 281, local durable mode. Exactly three creates (corrected DCR and two
+absent apply grants) and two condition-only updates (backup/restore existing
+challenge-reader assignments); no other managed changes, deletion or replacement.
+Expires 2026-10-29 09:59:22.044 UTC (11:59:22 Europe/Bucharest). Private plan.txt and
+review.json now describe this recovery plan; consumed original artifacts are in
+private history. New owner approval is pending. No further apply was performed.
+
+Owner approved the recovery plan. Before execution, source/hash/expiry/state matched.
+Terraform recorded all three creates and both condition updates; the operation then
+stopped at the wrapper's migration verification guard. Private backup records 268
+managed resources, serial 287; remote Azure Blob state has the same lineage,
+resources and outputs at serial 288. The nine check-result records are identical
+after sorting their top-level order (eight pass, one unchanged unknown data-source
+check). Pinned Terraform 1.17 source explains the one-step serial increment and
+native clearing of the former local state file. No state loss is demonstrated.
+All copies are preserved, and the local remote-authority marker is not yet written.
+A narrowly reviewed verification/finalization repair is in progress; it must run
+no apply, init, state push/import or Azure mutation and must preserve every copy.
+
+Migration repair passed independent quality/security review. A test-only helper
+export finding (Q-MIG-001) was corrected through the existing public factory;
+quality closed it. Final affected suites passed 36/36 with zero skips; focused
+migration checks passed 2/2, plus scoped formatting, ESLint and whitespace checks.
+Next operation is guarded local finalization only, not another Terraform apply or
+migration. The recorded unknown check remains unknown and acceptance gates remain.

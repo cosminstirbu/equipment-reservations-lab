@@ -390,6 +390,17 @@
       "evidence": "Actual initial foundation apply rejected audit DCR with InvalidPayload and three InvalidTransformQuery detail codes; DCR absent from preserved partial state.",
       "remediation": "Identify the actual schema/query incompatibility and make the narrow privacy-preserving correction; native/source checks and actual Azure acceptance remain required.",
       "closure": "Frozen source repair passed independent quality/security review, pinned source gates and 33 foundation plus 16 environment native contracts. Fresh plan review and actual Azure acceptance remain pending."
+    },
+    {
+      "id": "Q-M1-MIGRATION-001",
+      "category": "code",
+      "severity": "medium",
+      "blocking": true,
+      "status": "source_repair_in_progress",
+      "owner": "m1_schema",
+      "reviewer": "milestone0_security",
+      "evidence": "Pinned Terraform 1.17 Azure migration legitimately advanced serial by one and cleared source state; remote and backup are otherwise equivalent, including order-insensitive identical check-result records. Wrapper exact-serial guard falsely rejected completion.",
+      "remediation": "Strict full-snapshot comparator with same-lineage/same-or-one-step serial semantics, private pre-init preservation, and guarded local finalization; no mutation of remote state or loss of existing copies."
     }
   ]
 }

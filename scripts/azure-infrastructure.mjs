@@ -1462,6 +1462,7 @@ async function main() {
       'plan',
       'apply',
       'foundation-gate',
+      'foundation-migration-finalize',
       'operator-credentials',
       'bootstrap',
       'guard-qualify',
@@ -1474,10 +1475,28 @@ async function main() {
     );
   const stage = options.stage ?? 'environment';
   if (
+    command === 'foundation-migration-finalize' &&
+    (stage !== 'foundation-bootstrap' ||
+      options.localFoundation !== 'true' ||
+      options.foundationOutputs ||
+      options.bootstrapLocator ||
+      options.environmentOutputs ||
+      (options.networkGateReady !== undefined &&
+        options.networkGateReady !== 'false'))
+  )
+    fail(
+      'Local foundation migration finalization requires explicit local-human foundation scope.',
+    );
+  if (
     options.localFoundation &&
     (!['true', 'false'].includes(options.localFoundation) ||
       (options.localFoundation === 'true' &&
-        (!['plan', 'apply', 'foundation-gate'].includes(command) ||
+        (![
+          'plan',
+          'apply',
+          'foundation-gate',
+          'foundation-migration-finalize',
+        ].includes(command) ||
           stage !== 'foundation-bootstrap' ||
           options.initialFoundationPreview === 'true' ||
           options.bootstrapLocator ||
@@ -1645,6 +1664,16 @@ async function main() {
         config,
         foundation,
         rotate: options.rotate === 'true',
+      });
+    } else if (command === 'foundation-migration-finalize') {
+      const { finalizeFoundationMigration } =
+        await import('./azure-terraform.mjs');
+      result = await finalizeFoundationMigration(config, options.revision, {
+        ...options,
+        stage,
+        localFoundation: true,
+        initialFoundationPreview: options.initialFoundationPreview === 'true',
+        networkGateReady: false,
       });
     } else if (command === 'foundation-gate') {
       if (stage !== 'foundation-bootstrap' || !foundation)

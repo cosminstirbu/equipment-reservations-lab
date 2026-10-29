@@ -1,6 +1,7 @@
 import { createGeneratorInput } from './azure-generator-input.mjs';
 import { createHash } from 'node:crypto';
 import { Buffer } from 'node:buffer';
+import { isDeepStrictEqual } from 'node:util';
 import {
   existsSync,
   readFileSync,
@@ -85,12 +86,12 @@ export function assertSourceRevision(revision, { root = repository } = {}) {
     );
 }
 
-export function azureTokenProvider(config) {
+export function azureTokenProvider(config, run = runAzure) {
   const tokens = new Map();
   return async (resource) => {
     const previous = tokens.get(resource);
     if (previous && previous.expires > Date.now()) return previous.value;
-    const result = runAzure([
+    const result = run([
       'account',
       'get-access-token',
       '--resource',
@@ -621,9 +622,10 @@ async function foundationAuthority(
   const marker = existsSync(markerPath)
     ? JSON.parse(readFileSync(markerPath, 'utf8'))
     : undefined;
-  const local = existsSync(localPath)
-    ? validateState(JSON.parse(readFileSync(localPath, 'utf8')))
+  const localBytes = existsSync(localPath)
+    ? readFileSync(localPath, 'utf8')
     : undefined;
+  const local = localBytes ? validateState(JSON.parse(localBytes)) : undefined;
   const localAuthority = existsSync(localAuthorityPath)
     ? JSON.parse(readFileSync(localAuthorityPath, 'utf8'))
     : undefined;
@@ -641,6 +643,8 @@ async function foundationAuthority(
     localFoundation,
     auditStage,
   });
+  if (localBytes === '' && mode !== 'remote')
+    fail('Empty local foundation state requires verified remote authority.');
   if (mode === 'local' && !localAuthority)
     writeFileSync(
       localAuthorityPath,
@@ -648,6 +652,178 @@ async function foundationAuthority(
       { mode: 0o600 },
     );
   return { mode, backendHash, markerPath, store };
+}
+
+export function validateFoundationMigration(local, remote) {
+  const invalid = () =>
+    fail(
+      'Foundation migration snapshot mismatch; preserve all state copies for recovery.',
+    );
+  const normalize = (state) => {
+    validateState(state);
+    if (
+      state.version !== 4 ||
+      !Number.isSafeInteger(state.serial) ||
+      typeof state.terraform_version !== 'string' ||
+      !state.terraform_version ||
+      !Array.isArray(state.resources) ||
+      !state.outputs ||
+      typeof state.outputs !== 'object' ||
+      Array.isArray(state.outputs)
+    )
+      invalid();
+    const snapshot = { ...state };
+    delete snapshot.serial;
+    if (
+      snapshot.check_results !== undefined &&
+      snapshot.check_results !== null
+    ) {
+      if (!Array.isArray(snapshot.check_results)) invalid();
+      const refs = new Set();
+      for (const record of snapshot.check_results) {
+        if (
+          !record ||
+          typeof record.config_addr !== 'string' ||
+          !/^[A-Za-z_][A-Za-z0-9_.[\]"-]*$/.test(record.config_addr) ||
+          refs.has(record.config_addr) ||
+          typeof record.object_kind !== 'string' ||
+          !record.object_kind ||
+          !['pass', 'fail', 'error', 'unknown'].includes(record.status) ||
+          !Array.isArray(record.objects) ||
+          record.objects.some(
+            (object) =>
+              !object ||
+              typeof object.object_addr !== 'string' ||
+              !object.object_addr.trim() ||
+              !['pass', 'fail', 'error', 'unknown'].includes(object.status),
+          )
+        )
+          invalid();
+        refs.add(record.config_addr);
+      }
+      snapshot.check_results = [...snapshot.check_results].sort((a, b) =>
+        a.config_addr.localeCompare(b.config_addr),
+      );
+    }
+    return snapshot;
+  };
+  const left = normalize(local);
+  const right = normalize(remote);
+  if (
+    ![local.serial, local.serial + 1].includes(remote.serial) ||
+    !isDeepStrictEqual(left, right)
+  )
+    invalid();
+  return remote;
+}
+
+export async function finalizeFoundationMigration(
+  config,
+  revision,
+  settings = {},
+  boundary = {},
+) {
+  if (
+    settings.localFoundation !== true ||
+    settings.stage !== 'foundation-bootstrap' ||
+    settings.initialFoundationPreview === true ||
+    ![undefined, 'create'].includes(settings.auditStage) ||
+    ![undefined, false].includes(settings.networkGateReady)
+  )
+    fail(
+      'Foundation migration finalization requires explicit local-human foundation mode.',
+    );
+  const revisionSettings = { ...settings, config, revision };
+  const verify = () =>
+    verifyInfrastructureRevision(
+      'foundation-migration-finalize',
+      revisionSettings,
+      boundary,
+    );
+  await verify();
+  const directory = resolve(
+    boundary.root ?? repository,
+    '.local/azure',
+    config.environment,
+    'foundation-bootstrap',
+  );
+  const source = join(directory, 'foundation');
+  assertPrivatePath(directory, 0o700);
+  assertPrivatePath(source, 0o700);
+  const markerPath = join(directory, 'remote-authority.json');
+  if (existsSync(markerPath))
+    fail(
+      'Foundation migration authority marker already exists; it will not be overwritten.',
+    );
+  const readPrivate = (path) => {
+    assertPrivatePath(path, 0o600);
+    try {
+      return JSON.parse(readFileSync(path, 'utf8'));
+    } catch {
+      fail('Private foundation migration evidence is invalid.');
+    }
+  };
+  const backendHash = hash(JSON.stringify(config.foundationBackend));
+  const localAuthority = readPrivate(join(directory, 'local-authority.json'));
+  if (
+    localAuthority.version !== 1 ||
+    localAuthority.backendHash !== backendHash
+  )
+    fail('Foundation migration local backend authority mismatch.');
+  const native = readPrivate(join(source, '.terraform', 'terraform.tfstate'));
+  const expected = {
+    resource_group_name: config.foundationBackend.resourceGroupName,
+    storage_account_name: config.foundationBackend.storageAccountName,
+    container_name: config.foundationBackend.containerName,
+    key: config.foundationBackend.key,
+    use_azuread_auth: true,
+  };
+  if (
+    native.backend?.type !== 'azurerm' ||
+    !native.backend.config ||
+    Object.entries(expected).some(
+      ([key, value]) => native.backend.config[key] !== value,
+    ) ||
+    Object.entries(native.backend.config).some(
+      ([key, value]) => !Object.hasOwn(expected, key) && value !== null,
+    )
+  )
+    fail(
+      'Foundation migration native backend does not match the exact Azure AD target.',
+    );
+  const preserved = join(source, 'terraform.tfstate.pre-migration');
+  const local = readPrivate(
+    existsSync(preserved)
+      ? preserved
+      : join(source, 'terraform.tfstate.backup'),
+  );
+  const localPath = join(source, 'terraform.tfstate');
+  if (existsSync(localPath)) {
+    assertPrivatePath(localPath, 0o600);
+    const bytes = readFileSync(localPath, 'utf8');
+    if (bytes) validateFoundationMigration(local, readPrivate(localPath));
+  }
+  const token = azureTokenProvider(config, boundary.run ?? runAzure);
+  const remote = await privateBlobStore(
+    config,
+    {},
+    token,
+    config.foundationBackend,
+  ).state();
+  validateFoundationMigration(local, remote);
+  await verify();
+  writeFileSync(
+    markerPath,
+    JSON.stringify({
+      version: 1,
+      backendHash,
+      lineage: remote.lineage,
+      serial: remote.serial,
+    }),
+    { mode: 0o600, flag: 'wx' },
+  );
+  assertPrivatePath(markerPath, 0o600);
+  return { status: 'foundation-migration-finalized' };
 }
 
 async function verifiedGate(config, foundation, token) {
@@ -749,29 +925,33 @@ export async function initializeFoundationGate(
   return { phase: 'operational-dns-gate-verified-binding-review-required' };
 }
 
-export async function createTerraformContext({
-  config,
-  foundation,
-  stage = 'environment',
-  revision,
-  signal,
-  recoveryKeyExpirationDate,
-  networkGateReady = false,
-  bootstrapOperatorObjectId,
-  auditStage = 'create',
-  command = 'plan',
-  locatorHash,
-  verifyAccess,
-  guardStage = 'creation',
-  familyHandlePath,
-  generationHandlePath,
-  environment: deployedEnvironment,
-  operation,
-  initialFoundationPreview = false,
-  localFoundation = false,
-  bootstrapLocator,
-}) {
-  assertSourceRevision(revision);
+export async function createTerraformContext(
+  {
+    config,
+    foundation,
+    stage = 'environment',
+    revision,
+    signal,
+    recoveryKeyExpirationDate,
+    networkGateReady = false,
+    bootstrapOperatorObjectId,
+    auditStage = 'create',
+    command = 'plan',
+    locatorHash,
+    verifyAccess,
+    guardStage = 'creation',
+    familyHandlePath,
+    generationHandlePath,
+    environment: deployedEnvironment,
+    operation,
+    initialFoundationPreview = false,
+    localFoundation = false,
+    bootstrapLocator,
+  },
+  boundary = {},
+) {
+  const root = boundary.root ?? repository;
+  assertSourceRevision(revision, { root });
   if (typeof initialFoundationPreview !== 'boolean')
     fail('Initial foundation preview flag must be an explicit boolean.');
   if (typeof localFoundation !== 'boolean')
@@ -794,20 +974,17 @@ export async function createTerraformContext({
     environment: deployedEnvironment,
   };
   if (initialFoundationPreview || localFoundation)
-    await verifyInfrastructureRevision(command, {
-      ...revisionSettings,
-      revision,
-    });
-  const directory = resolve(
-    repository,
-    '.local/azure',
-    config.environment,
-    stage,
-  );
+    await verifyInfrastructureRevision(
+      command,
+      {
+        ...revisionSettings,
+        revision,
+      },
+      boundary,
+    );
+  const directory = resolve(root, '.local/azure', config.environment, stage);
   createPrivateDirectory(directory);
-  const tools = qualityContext();
-  const terraform = verifiedTool(tools, 'terraform');
-  const token = azureTokenProvider(config);
+  const token = azureTokenProvider(config, boundary.run ?? runAzure);
   const authority =
     stage === 'foundation-bootstrap'
       ? await foundationAuthority(
@@ -837,6 +1014,8 @@ export async function createTerraformContext({
       await verifiedGate(config, foundation, token);
     }
   }
+  const tools = qualityContext();
+  const terraform = verifiedTool(tools, 'terraform');
   let source = resolve(
     repository,
     'infra/azure',
@@ -1149,10 +1328,14 @@ export async function createTerraformContext({
           .join('\n'),
     ),
     assertRevision: async (revision) => {
-      await verifyInfrastructureRevision(command, {
-        ...revisionSettings,
-        revision,
-      });
+      await verifyInfrastructureRevision(
+        command,
+        {
+          ...revisionSettings,
+          revision,
+        },
+        boundary,
+      );
       if (initialFoundationPreview)
         await foundationAuthority(config, directory, token, true);
       else if (localFoundation) {
@@ -1185,7 +1368,16 @@ export async function createTerraformContext({
       if (stage !== 'foundation-bootstrap' || authority.mode === 'remote')
         return;
       const localPath = join(source, 'terraform.tfstate');
-      const local = validateState(JSON.parse(readFileSync(localPath, 'utf8')));
+      assertPrivatePath(localPath, 0o600);
+      const localBytes = readFileSync(localPath);
+      const local = validateState(JSON.parse(localBytes.toString('utf8')));
+      validateFoundationMigration(local, local);
+      writeFileSync(
+        join(source, 'terraform.tfstate.pre-migration'),
+        localBytes,
+        { mode: 0o600, flag: 'wx' },
+      );
+      assertPrivatePath(join(source, 'terraform.tfstate.pre-migration'), 0o600);
       assertTerraformSource(source, stagedInventory);
       copyFileSync(
         resolve(repository, 'infra/azure/foundation/versions.tf'),
@@ -1208,10 +1400,15 @@ export async function createTerraformContext({
         }).map(([key, value]) => `-backend-config=${key}=${value}`),
       ]);
       const remote = await authority.store.state();
-      if (remote.lineage !== local.lineage || remote.serial !== local.serial)
-        fail(
-          'Foundation migration authority mismatch; preserve all state copies for recovery.',
-        );
+      validateFoundationMigration(local, remote);
+      await verifyInfrastructureRevision(
+        command,
+        {
+          ...revisionSettings,
+          revision,
+        },
+        boundary,
+      );
       writeFileSync(
         authority.markerPath,
         JSON.stringify({
@@ -1220,10 +1417,9 @@ export async function createTerraformContext({
           lineage: remote.lineage,
           serial: remote.serial,
         }),
-        { mode: 0o600 },
+        { mode: 0o600, flag: 'wx' },
       );
-      for (const path of [localPath, localPath + '.backup'])
-        if (existsSync(path)) rmSync(path);
+      assertPrivatePath(authority.markerPath, 0o600);
     },
     async scan(path) {
       verifyPolicy(tools);
@@ -1684,7 +1880,12 @@ export async function verifyInfrastructureRevision(
 
   if (
     (localFoundation
-      ? !['plan', 'apply', 'foundation-gate'].includes(command)
+      ? ![
+          'plan',
+          'apply',
+          'foundation-gate',
+          'foundation-migration-finalize',
+        ].includes(command)
       : command !== 'plan') ||
     settings.stage !== 'foundation-bootstrap' ||
     !(

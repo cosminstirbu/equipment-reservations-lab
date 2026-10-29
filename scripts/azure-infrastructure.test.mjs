@@ -536,6 +536,30 @@ test('public initial foundation preview rejects unknown flags and excluded comma
 
 test('public local foundation mode rejects malformed flags and excluded routes before configuration access', () => {
   for (const args of [
+    ['foundation-migration-finalize', '--stage', 'foundation-bootstrap'],
+    [
+      'foundation-migration-finalize',
+      '--stage',
+      'foundation-bootstrap',
+      '--local-foundation',
+      'false',
+    ],
+    [
+      'foundation-migration-finalize',
+      '--stage',
+      'environment',
+      '--local-foundation',
+      'true',
+    ],
+    [
+      'foundation-migration-finalize',
+      '--stage',
+      'foundation-bootstrap',
+      '--local-foundation',
+      'true',
+      '--network-gate-ready',
+      'unknown',
+    ],
     [
       'plan',
       '--stage',

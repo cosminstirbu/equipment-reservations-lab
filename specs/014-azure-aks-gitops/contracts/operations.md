@@ -2019,6 +2019,20 @@ Local authority does not authorize vault-family probes or bypass unfinished G3
 qualification, operational grants or live audit/access acceptance. Actual apply
 still requires review and owner approval of the new saved plan.
 
+Native state migration preserves a private pre-init snapshot because Terraform can
+clear its old local state file. Verification requires the same lineage and exact
+state content, allowing only unchanged serial or the native one-step increment.
+Only top-level check-result ordering is normalized; records and statuses remain
+identical, including any unchanged unknown status, which is not qualification.
+
+An interrupted migration can be finalized through the explicit local-human
+`foundation-migration-finalize` operation. Require the fixed private backup,
+matching local backend-authority record, exact native backend target and actual
+remote snapshot, plus source/identity rechecks before exclusive private marker
+creation. Preserve all copies; run no apply, init, state push/import or Azure
+mutation. A cleared local file is ignored only after verified remote authority;
+nonempty malformed or divergent state remains blocking.
+
 ## Owner-approved direct operator app assignments
 
 Owner approved on 2026-10-28 replacing the two Argo CD/Aspire operator app-role
