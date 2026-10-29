@@ -87,6 +87,7 @@ export async function qualifyAudit({
     properties.dataCollectionEndpointId
   )
     fail('Actual audit DCR transform, stream or destination is invalid.');
+  const observed = Math.floor(now / 1000) * 1000;
   const observation = {
     version: 1,
     stage,
@@ -96,8 +97,10 @@ export async function qualifyAudit({
     workspace_resource_id: outputs.audit_workspace_resource_id,
     dcr_resource_id: outputs.audit_dcr_resource_id,
     transform_sha256: digest,
-    observed_at: new Date(now).toISOString(),
-    expires_at: new Date(now + 1800000).toISOString(),
+    observed_at: new Date(observed).toISOString().replace('.000Z', 'Z'),
+    expires_at: new Date(observed + 1800000)
+      .toISOString()
+      .replace('.000Z', 'Z'),
     workspace_default_dcr_id:
       workspace?.properties?.defaultDataCollectionRuleResourceId ?? null,
     dcr_provisioning_state: 'Succeeded',

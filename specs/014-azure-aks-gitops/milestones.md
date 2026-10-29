@@ -1201,3 +1201,15 @@ quality closed it. Final affected suites passed 36/36 with zero skips; focused
 migration checks passed 2/2, plus scoped formatting, ESLint and whitespace checks.
 Next operation is guarded local finalization only, not another Terraform apply or
 migration. The recorded unknown check remains unknown and acceptance gates remain.
+
+Guarded finalization at `9804850` succeeded and independently verified the remote
+authority marker at serial 288, with all copies preserved. Fixed create-only DNS
+lease-control initialization also succeeded. Audit-bind planning then stopped at
+its qualification precondition before any new apply. One reviewed read-only JSON
+diagnostic showed existing-DCR validity true and observation validity false.
+All observation binding/freshness fields matched; actual fractional milliseconds
+failed the strict maximum-window comparison because pinned Terraform `timeadd`
+drops fractions. The two-file producer correction uses one whole-second base for
+observation and exact 30-minute expiry, without relaxing HCL. Existing regression,
+format/lint checks and independent quality/security reviews passed. Retry the
+normal guarded saved-plan operation once from a clean local checkpoint.

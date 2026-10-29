@@ -56,11 +56,17 @@ test('audit qualifier reads actual rule/default binding and rejects changed tran
     outputs,
     stage: 'enable',
     request,
-    now: 1000000000000,
+    now: 1000000000468,
   });
   assert.equal(calls.length, 2);
   assert.equal(observation.stage, 'enable');
-  validateAuditObservation(observation, config, outputs, 1000000000001);
+  assert.equal(observation.observed_at, '2001-09-09T01:46:40Z');
+  assert.equal(observation.expires_at, '2001-09-09T02:16:40Z');
+  assert.equal(
+    Date.parse(observation.expires_at) - Date.parse(observation.observed_at),
+    1800000,
+  );
+  validateAuditObservation(observation, config, outputs, 1000000000469);
   assert.throws(
     () =>
       validateAuditObservation(
