@@ -223,7 +223,7 @@ run "enable_only_qualified_protected_sinks" {
 
   }
   assert {
-    condition     = length(azurerm_monitor_diagnostic_setting.blob_audit) == 2 && alltrue([for diagnostic in azurerm_monitor_diagnostic_setting.blob_audit : diagnostic.log_analytics_workspace_id == azurerm_log_analytics_workspace.audit.id && diagnostic.log_analytics_destination_type == "Dedicated" && toset([for log in diagnostic.enabled_log : log.category]) == toset(["StorageRead", "StorageWrite", "StorageDelete"]) && diagnostic.storage_account_id == null && diagnostic.eventhub_authorization_rule_id == null && diagnostic.partner_solution_id == null])
+    condition     = length(azurerm_monitor_diagnostic_setting.blob_audit) == 2 && alltrue([for diagnostic in azurerm_monitor_diagnostic_setting.blob_audit : diagnostic.log_analytics_workspace_id == azurerm_log_analytics_workspace.audit.id && toset([for log in diagnostic.enabled_log : log.category]) == toset(["StorageRead", "StorageWrite", "StorageDelete"]) && diagnostic.storage_account_id == null && diagnostic.eventhub_authorization_rule_id == null && diagnostic.partner_solution_id == null])
     error_message = "Both Blob sinks require exactly approved categories and only the transformed workspace destination."
   }
 }

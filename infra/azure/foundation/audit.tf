@@ -182,11 +182,10 @@ resource "azurerm_monitor_diagnostic_setting" "blob_audit" {
     recovery = azurerm_storage_account.recovery.id
   } : {}
 
-  name                           = "protected-blob-audit"
-  target_resource_id             = "${each.value}/blobServices/default"
-  log_analytics_workspace_id     = azurerm_log_analytics_workspace.audit.id
-  log_analytics_destination_type = "Dedicated"
-  depends_on                     = [terraform_data.audit_stage_guard, azurerm_monitor_data_collection_rule.audit]
+  name                       = "protected-blob-audit"
+  target_resource_id         = "${each.value}/blobServices/default"
+  log_analytics_workspace_id = azurerm_log_analytics_workspace.audit.id
+  depends_on                 = [terraform_data.audit_stage_guard, azurerm_monitor_data_collection_rule.audit]
 
   enabled_log {
     category = "StorageRead"
