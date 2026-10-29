@@ -3,11 +3,13 @@
 **Branch**: `014-azure-aks-gitops` | **Date**: 2026-10-26 | **Spec**: [spec.md](spec.md)
 
 Input: [approved decisions](decisions.md), baseline `d1c7238345136340ddbf3a9454807cefffc43c32`.
-Preparation draft; independent design reviews/tasks remain pending.
+Prepared baseline with scoped independent reviews; execution and acceptance follow
+the milestone checkpoints below.
 
 Current delivery sequencing and owner checkpoints are recorded in
 [milestones.md](milestones.md). Historical preparation reviews remain evidence for
-their stated scope; current source integration and live acceptance are pending.
+their stated scope. Current M1 qualification and remaining milestone gates are
+reported in that checkpoint; full-feature acceptance remains pending.
 
 ## Azure CI verification profile
 
@@ -639,9 +641,9 @@ Create and attach the supported workspace transformation BEFORE enabling diagnos
 and verify attachment/configuration before declaring audit readiness. No raw secondary
 sink, untransformed table, export or diagnostic archive is enabled.
 
-The durable audit allowlist retains only TimeGenerated, _ResourceId,
-AccountName, Category, OperationName, StatusCode, DurationMs, ServerLatencyMs,
-AuthenticationType, RequesterObjectId, Protocol and TlsVersion. The authored
+The durable payload/resource allowlist and the two exact permitted Azure platform
+metadata fields are defined in the [audit operation contract](contracts/operations.md).
+The authored
 query projects the eleven nonplatform fields; `_ResourceId` is
 required platform metadata and is verified in stored rows. Actual Azure compilation
 on 2026-10-29 rejected `_ResourceId` as an input symbol, so the query does not

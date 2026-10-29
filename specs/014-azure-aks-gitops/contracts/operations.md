@@ -203,12 +203,17 @@ no production egress; fixed client streams restore over DB protocol, never arbit
 Job exec. Real pinned schema/extension/RLS/denial tests required before activation.
 
 Audit contract: state+recovery Blob Read/Write/Delete -> dedicated retained workspace,
-workspace transformation attached before ingestion. Durable allowlist is TimeGenerated,
+workspace transformation attached before ingestion. Durable payload/resource allowlist is TimeGenerated,
 _ResourceId,AccountName,Category,OperationName,StatusCode,DurationMs,ServerLatencyMs,
 AuthenticationType,RequesterObjectId,Protocol,TlsVersion. No IP/UPN/URI/ObjectKey,
 authhash/details, headers/bodies/contenthashes or raw secondary sink.30day audit
 retention/no archive,.03GB daily protective quota and explicit operator RBAC; actual
 stored-row privacy/audit gap checks required. bypass=None and no Queue-only fix.
+Only two additional Azure-generated table fields are permitted: `TenantId` must
+equal the configured Log Analytics workspace ID, and `Type` must equal
+`StorageBlobLogs`. These structural fields are not requester/source payload; do
+not admit `RequesterTenantId` or arbitrary platform fields. Verify exact values
+in stored rows, as documented by the [table schema](https://learn.microsoft.com/en-us/azure/azure-monitor/reference/tables/storagebloblogs).
 The authored transform projects the eleven nonplatform fields. `_ResourceId`
 remains required platform metadata for live stored-row qualification; the actual
 Azure compiler rejects it as an input symbol, so it is omitted from the authored

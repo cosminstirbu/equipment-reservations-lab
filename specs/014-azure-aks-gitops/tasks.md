@@ -269,4 +269,4 @@ before T020 bootstrap and T022/T029 acceptance.
 
 ## M1 live-provider repairs
 
-- [ ] T093 [US2] Repair actual Azure audit-transform compilation and duplicate qualification-reader role assignments using the preserved partial state. Keep existing state-owned addresses, exact approved permission union and required platform-metadata/privacy checks; run integrated native/source checks and independent review, then prepare a fresh zero-delete saved plan. A new plan approval is required before further apply.
+- [x] T093 [US2] Repair actual Azure audit-transform compilation and duplicate qualification-reader role assignments using the preserved partial state. Keep existing state-owned addresses, exact approved permission union and required platform-metadata/privacy checks; run integrated native/source checks and independent review, then prepare a fresh zero-delete saved plan. A new plan approval is required before further apply.

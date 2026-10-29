@@ -7,26 +7,26 @@ IDs and evidence. Source assessment baseline: `b2b0064`.
 
 ## Current checkpoint
 
-M0 is accepted. On 2026-10-29, the approved recovery apply completed all resource
-changes, recording 268 managed resources. Native migration copied state to Azure;
-the wrapper then falsely rejected Terraform's one-step serial advance. Backup
-and remote contents match, and all copies are preserved. Guarded local authority
-finalization is under review. **M1 is not complete:** state authority and live
-access/audit qualification remain pending. No resource reapply is planned here.
+M0 is accepted. M1's approved local foundation applies succeeded. Remote Azure
+Blob state is authoritative at serial 292 with 280 managed resources; preserved
+local migration copies remain available. Both-account audit routing, exact resource
+association, stored-row privacy and bounded operation/outcome checks passed.
+Independent security closed the original audit and duplicate-IAM repair findings.
 
-Direct-user app assignment is now implemented, independently reviewed and verified
-in a fresh actual preview. On 2026-10-29 the owner authorized completing M1
-without merging, using the explicit local-human foundation mode defined in the
+**M1 was accepted by the owner on 2026-10-29; M2 is authorized.** The source correction at
+`65c9da1e9e0dc8177b6275fdd1e40b99d5678374` passed formatting, native
+validation/lint/security and all 49 Terraform contracts (zero failures/skips).
+Independent quality/security passed the bounded correction. The final guarded
+plan against serial 292 reports **0 creates, 0 updates, 0 deletes, 0 reads**.
+No additional apply is needed. Acceptance is recorded below.
+
+M1 uses the owner-approved local-human mode in the
 [operation contract](contracts/operations.md#m1-local-foundation-execution-2026-10-29).
-The initial and recovery plans were explicitly approved and consumed. Current work
-finalizes state authority without another apply or migration. Merge remains
-unnecessary and unauthorized.
-
-Publication update: owner authorized branch push and draft PR. [PR 30](https://github.com/cosminstirbu/equipment-reservations-lab/pull/30)
-is now at `c6a903b`, with its owner-authorized normal validation cycle passed.
-Backend 596/596, frontend 64/64 and deployed behavior 6/6 passed without skips;
-Azure source validation passed with three intentional skips. Earlier trace
-cancellation remains unexplained. Merge/apply remain unauthorized.
+No merge or further publication is needed. [Draft PR 30](https://github.com/cosminstirbu/equipment-reservations-lab/pull/30)
+remains at `c6a903b` with its previously recorded normal CI passing; later local
+repairs use their scoped native/source checks. Full-feature recovery, hosted
+identity enforcement and workload gates remain pending in later milestones.
+M2 is authorized; its execution starts with the bounded readiness assessment below.
 
 ## Outcomes and gates
 
@@ -1223,3 +1223,99 @@ conflicts and authorization failures still fail, and actual lease acquisition
 remains outside that catch. Existing real-HTTP regression, all 24 affected tests,
 static checks and independent quality/security reviews passed. One normal guarded
 replan follows; no audit-binding apply has been authorized or performed.
+
+Normal guarded audit-bind planning succeeded at
+`eb229e60341a6267eadacf5f55313f9c5941f5aa`. Independent quality and security both
+passed the exact private plan: 10 creates (nine exact reserved-TXT read/write grants
+and one Terraform guard) and two updates (workspace default-DCR link and stage
+guard), no other changes/deletions/replacements. Diagnostics remain disabled;
+operational vault grants and family qualification remain absent. Plan hash
+`3a498a20960546205c0a8fc5bb711a544936a9b3a3015454f1765394fccd68ad`,
+state serial 288, expires 2026-10-29 11:21:22.150 UTC (13:21:22 Bucharest).
+Private plan.txt/review.json now describe this next stage. New owner apply approval
+is pending; keep HEAD fixed until plan consumption. Remaining M1 work includes
+separate diagnostic enablement and actual stored-row/privacy/access/gap evidence.
+
+Owner approved audit-bind plan; expiry/hash/source/serial matched before execution.
+Apply returned foundation-applied-remote-state-verified. Independent post-bind
+review verified remote state serial 290, all nine exact TXT grants recorded, live
+default-DCR link and zero diagnostic settings. Next diagnostic-enable plan at
+`eb229e60341a6267eadacf5f55313f9c5941f5aa` passed independent quality/security:
+two exact retained Blob diagnostic settings plus one staging-guard update, no
+deletion or other changes. Dedicated StorageBlobLogs destination, only Read/Write/
+Delete categories, no secondary sink/metrics/archive or IAM changes. Plan hash
+`12d0b2add1fecd0ae23daa68ac392db9561f742fb6c0410b729874c6bc521af0`,
+state serial 290, expires 2026-10-29 11:39:18.973 UTC (13:39:18 Bucharest). New owner
+apply approval is pending; actual row/privacy/access/gap evidence remains required.
+
+
+Owner approved diagnostic-enable plan. Guarded apply succeeded and independently
+verified remote state serial 292. Both retained Blob services now have diagnostic
+settings; actual service omits the requested destination-type property. Routing
+was therefore checked against stored data rather than inferred from that property.
+
+On 2026-10-29, an independently reviewed bounded synthetic probe ran from
+11:21:25 to 11:21:55 UTC: 12 requests, zero failures. Both nonce-owned objects
+passed create, duplicate-create rejection, authenticated read, anonymous denial,
+conditional delete and HEAD-404 cleanup. The conditional conflict proves create
+semantics, not an RBAC denial. No real state/recovery objects were modified.
+
+Server-only aggregates obtained at 11:28 UTC show six StorageBlobLogs rows per
+account, including one successful write/read/delete and one conditional conflict
+each. No matching AzureDiagnostics rows were returned. No populated fields beyond
+the approved payload/resource fields and exact-valued Azure structural TenantId/Type
+were found. Workspace/table values matched, and all twelve resource IDs were
+nonempty at Blob-service scope. Exact full ARM membership remains to be checked.
+Anonymous workspace query returned 401; authenticated operator query succeeded.
+The operator's broader privileges prevent attributing that success solely to the
+operator-group assignment. Authenticated unassigned-user/hosted denials remain
+unproved. Source no-op drift and independent qualification assessment remain
+pending; M1 is not accepted and M2 is not authorized.
+
+Follow-up aggregate confirmed exact full expected Blob-service ARM membership for
+all twelve rows, zero mismatches, and no AzureDiagnostics matches by either
+account name or exact resource ID. Independent security review accepts bounded
+operation/outcome and stored-row privacy evidence. Identity-specific authenticated
+denials remain later gates; these probes do not claim them or lossless logging.
+
+Final same-input plan at eb229e6 completed successfully with zero creates/deletes
+and exactly two updates: only the Blob diagnostic destination selector changed
+from service-empty to Dedicated. Source reconciliation removes that unsupported
+Optional+Computed declaration, retaining workspace/categories/transform/protection.
+The existing native sink assertion removes only its selector expectation, keeping
+workspace/category/secondary-sink checks. Declarative verification follows the
+implementation; actual routing remains established by stored rows rather than a
+mocked selector. Independent quality and security passed this bounded delta.
+
+Final M1 handoff check at65c9da1: normal guarded plan/scanner exited0 with
+zero changes, state serial292. Plan hash
+`f6ef37c530d8b785cc02ffd8e7230734d933183bbe5ef4c156055658348dd403`.
+Pinned formatting and infra:check passed; infra:test passed33foundation plus
+16environment contracts, zero failures/skips. Exact temporary probe receipt
+was deleted at qualification end; all state/migration copies are preserved.
+M1 is ready for owner acceptance, not yet accepted. No M2 execution, merge,
+push or hosted activation is authorized by this checkpoint.
+
+Independent quality/convergence verdict at65c9da1: **Scoped M1 quality and
+convergence: pass. No remaining M1 implementation blockers identified.**
+Independent security verdict: **pass ? bounded M1 security qualification.**
+Final source delta: **pass ? observed one-attribute removal in audit.tf.
+No privacy exception required.** These verdicts cover M1 only; later identity,
+G3, workload, hosted delivery and recovery gates remain pending.
+
+## M1 acceptance and M2 start: 2026-10-29
+
+Owner accepted M1 and authorized M2, requesting the M2 summary before execution.
+M1 source/native/live evidence and scoped independent verdicts above remain binding.
+M2 targets trusted browser access to the application, Argo CD and Aspire Dashboard,
+with immutable images, guarded workload-vault admission and scoped secrets. Initial
+image publication belongs to M2; full dual-registry delivery automation remains M4.
+Recovery activation/credentials and destructive recreation remain gated for M5.
+
+First M2 batch: read-only assessment of existing environment Terraform, installer,
+runtime projection and image/bootstrap path, identifying the shortest supported
+sequence and concrete remaining prerequisites. Reuse M1 evidence. Bound the
+assessment to 20 active minutes; no paid provisioning, publication or permission
+changes in this batch. Implementation will use scoped native checks and milestone
+reviews under current engineering profiles, not universal test-first. Preserve
+existing feature acceptance requirements; surface conflicts before dependent work.

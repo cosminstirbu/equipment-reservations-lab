@@ -1,10 +1,10 @@
 {
   "feature_directory": "specs/014-azure-aks-gitops",
-  "status": "checkpoint_incomplete",
+  "status": "m2_authorized_readiness_assessment",
   "milestone_checkpoint": {
     "date": "2026-10-29",
     "milestone": "M1",
-    "status": "m1_foundation_verified_audit_bind_plan_adapter_repairs",
+    "status": "m1_accepted_m2_authorized",
     "source_ci": {
       "pr": "https://github.com/cosminstirbu/equipment-reservations-lab/pull/30",
       "head": "c6a903b1c0be64d63a6c823e30c68f266651788e",
@@ -16,7 +16,7 @@
     },
     "m0_owner_accepted": "2026-10-28",
     "m1_owner_authorized": "2026-10-28",
-    "active_batch": "All268resources and remote authority verified. DNS control gate initialized. Audit bind planning exposed and corrected producer timestamp precision; causal retry then revealed existing-control-blob 409BlobAlreadyExists adapter mismatch. Controlled probe changed no record and acquired no lease. Exact-code adapter repair in progress; no audit bind apply.",
+    "active_batch": "M1 accepted; M2 authorized. First bounded read-only M2 critical-path/readiness assessment, before paid provisioning or publication.",
     "foundation_plan": {
       "revision": "38ad0cfdbb2ae2e04ee3f44c3c91a67703d6e122",
       "local_foundation": true,
@@ -35,9 +35,9 @@
       "stale_due_to_state_change": true
     },
     "record": "../milestones.md",
-    "source_revision": "c55b4910c9925ddfa3460d7c5cf9794d1a7a0d9c",
+    "source_revision": "65c9da1e9e0dc8177b6275fdd1e40b99d5678374",
     "owner_checkpoint_after_each_milestone": true,
-    "next_milestone_authorized": false,
+    "next_milestone_authorized": true,
     "quota_requests": {
       "owner_authorized": true,
       "region": "westeurope",
@@ -45,10 +45,10 @@
       "provider_registration": "Microsoft.Quota Registered",
       "regional": "Requested12; Compute usage2026-10-28T09:11Z effective limit24 used0; no additional increase submitted",
       "dsv5_family": "Requested12; Compute usage2026-10-28T09:11Z effective limit12 used0; quota blocker cleared",
-      "resources_provisioned": false
+      "resources_provisioned": true
     },
     "limits_preserved": "Historical preparation9 and implementation18 retained; owner approved implementation limit18->21 with M1 authorization. M2 remains unauthorized.",
-    "remaining": "Review scoped lease-adapter repair and prepare a fresh audit/network-binding plan through normal guards. State/access/audit live qualification and M1 acceptance remain pending.",
+    "remaining": "M2 browser deployment and its declared gates; M3-M5 remain unauthorized. No merge/push authorization.",
     "recovery_plan": {
       "revision": "c55b4910c9925ddfa3460d7c5cf9794d1a7a0d9c",
       "sha256": "e79c8006ba5db3983b0509f54dae67e90d31de3d4806cc80c78f8dd179845419",
@@ -62,7 +62,120 @@
       "security": "pass",
       "apply_authorized": true,
       "owner_approval_date": "2026-10-29",
-      "apply_result": "All five resource changes recorded; wrapper stopped verifying native state migration"
+      "apply_result": "All five approved changes completed; native migration and guarded local authority finalization verified"
+    },
+    "remote_authority": {
+      "verified": true,
+      "state_serial": 292,
+      "managed_resources": 280,
+      "backup_serial": 287,
+      "copies_preserved": true,
+      "unchanged_unknown_check": "data.azurerm_role_definition.workload_delegation_admin",
+      "marker_serial": 288
+    },
+    "audit_bind_plan": {
+      "revision": "eb229e60341a6267eadacf5f55313f9c5941f5aa",
+      "sha256": "3a498a20960546205c0a8fc5bb711a544936a9b3a3015454f1765394fccd68ad",
+      "state_serial": 288,
+      "audit_stage": "bind",
+      "network_gate_ready": true,
+      "create": 10,
+      "update": 2,
+      "delete": 0,
+      "expires_at": "2026-10-29T11:21:22.150Z",
+      "quality": "pass",
+      "security": "pass",
+      "apply_authorized": true,
+      "owner_approval_date": "2026-10-29",
+      "apply_result": "foundation-applied-remote-state-verified; independent live DCR link verification passed"
+    },
+    "diagnostic_enable_plan": {
+      "revision": "eb229e60341a6267eadacf5f55313f9c5941f5aa",
+      "sha256": "12d0b2add1fecd0ae23daa68ac392db9561f742fb6c0410b729874c6bc521af0",
+      "state_serial": 290,
+      "audit_stage": "enable",
+      "network_gate_ready": true,
+      "create": 2,
+      "update": 1,
+      "delete": 0,
+      "expires_at": "2026-10-29T11:39:18.973Z",
+      "quality": "pass",
+      "security": "pass",
+      "apply_authorized": true,
+      "owner_approval_date": "2026-10-29",
+      "apply_result": "foundation-applied-remote-state-verified; remote serial292, 280 managed resources; live audit qualification passed"
+    },
+    "live_audit_qualification": {
+      "date": "2026-10-29",
+      "source_revision": "eb229e60341a6267eadacf5f55313f9c5941f5aa",
+      "remote_state_serial": 292,
+      "probe_window_utc": [
+        "2026-10-29T11:21:25.429Z",
+        "2026-10-29T11:21:55.334Z"
+      ],
+      "requests": 12,
+      "probe_cleanup": "Both owned nonce objects deleted; HEAD 404 confirmed; zero failures or cleanup uncertainty.",
+      "stored_rows_per_account": 6,
+      "successful_write_read_delete_each": true,
+      "conditional_create_conflict_each": true,
+      "populated_unapproved_fields": 0,
+      "wrong_workspace_metadata": 0,
+      "wrong_table_metadata": 0,
+      "missing_resource_id": 0,
+      "resource_scope": "Exact full expected Blob-service ARM membership verified for all twelve rows; zero mismatches. Same query selected both account names and exact resource IDs; no matching AzureDiagnostics rows.",
+      "routing": "Both sources StorageBlobLogs; no matching AzureDiagnostics rows in bounded query.",
+      "anonymous_workspace_query_status": 401,
+      "limitations": "Conditional conflict is not an RBAC denial. Authenticated human has broader privileges; unassigned authenticated-user/hosted actor denials remain unproved. No raw rows printed.",
+      "independent_security": "pass ? bounded M1 security qualification. Exact full Blob-service membership/routing/privacy and actual IAM tuple/condition GETs passed. Later identity-specific gates remain pending.",
+      "temporary_receipt": "Exact owned receipt deleted after qualification; durable aggregate evidence retained. State and migration backups preserved."
+    },
+    "final_drift_check": {
+      "revision": "eb229e60341a6267eadacf5f55313f9c5941f5aa",
+      "plan_hash": "b8ed34e62a94578fcedf22004c3a9cc90890f27e2de61641b8de592acf97799f",
+      "state_serial": 292,
+      "create": 0,
+      "update": 2,
+      "delete": 0,
+      "sole_changed_attribute": "log_analytics_destination_type",
+      "disposition": "Unsupported optional field omitted by Azure; source-only removal and fresh no-op plan pending. No apply authorized or performed."
+    },
+    "final_reconciliation": {
+      "revision": "65c9da1e9e0dc8177b6275fdd1e40b99d5678374",
+      "files": [
+        "infra/azure/foundation/audit.tf",
+        "infra/azure/foundation/tests/audit.tftest.hcl"
+      ],
+      "checks": {
+        "format": "pass",
+        "infra_check": "pass",
+        "infra_test": {
+          "passed": 49,
+          "failed": 0,
+          "skipped": 0
+        }
+      },
+      "quality": "pass including existing native assertion and metadata alignment",
+      "security": "pass bounded source delta; no privacy exception required",
+      "apply_performed": false,
+      "final_plan": {
+        "sha256": "f6ef37c530d8b785cc02ffd8e7230734d933183bbe5ef4c156055658348dd403",
+        "state_serial": 292,
+        "create": 0,
+        "update": 0,
+        "delete": 0,
+        "read": 0,
+        "exit_status": 0
+      },
+      "convergence": "pass ? Scoped M1 quality and convergence: pass. No remaining M1 implementation blockers identified. Owner acceptance pending; M2 unauthorized."
+    },
+    "m1_owner_accepted": "2026-10-29",
+    "m2_owner_authorized": "2026-10-29",
+    "m2_initial_batch": {
+      "scope": "Read-only critical-path/readiness assessment",
+      "active_minutes": 20,
+      "paid_provisioning": false,
+      "publication": false,
+      "permission_changes": false
     }
   },
   "baseline_revision": "d1c7238345136340ddbf3a9454807cefffc43c32",
@@ -916,7 +1029,7 @@
     "status": "owner_selected_local_m1_execution",
     "reason": "Owner authorized finishing M1 locally without merge. T092 implements a narrowly reviewed explicit local-human foundation path; exact saved-plan apply approval remains required. Current CI at c6a903b passes; later changes require scoped verification."
   },
-  "handoff_limits": "Foundation resources and remote state verified; all copies preserved. No additional Terraform apply after approved recovery. Audit/network binding plan preparation is blocked on a specific adapter response mismatch; no force lease break or state edits.",
+  "handoff_limits": "M1 incomplete: foundation and remote state verified; audit rule bound. Diagnostics remain disabled pending new exact-plan approval. After enable, live audit/access evidence and owner M1 acceptance remain required. No merge/push/workload deployment.",
   "deferred_diagnostic_risks": [
     {
       "id": "native_https_body_deadline",

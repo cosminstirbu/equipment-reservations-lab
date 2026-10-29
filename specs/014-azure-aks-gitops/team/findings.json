@@ -371,36 +371,59 @@
       "id": "Q-M1-IAM-001",
       "category": "code",
       "severity": "medium",
-      "blocking": true,
-      "status": "source_repair_reviewed_live_acceptance_pending",
+      "blocking": false,
+      "status": "closed_source_and_live_qualification",
       "owner": "ci_archives",
       "reviewer": "milestone0_security",
       "evidence": "Actual Azure 409 RoleAssignmentExists: qualification consumption-reader tuples duplicate state-owned challenge-reader tuples; existing conditions allow activation paths only.",
       "remediation": "Keep existing state addresses, combine exactly approved activation/consumption alternatives under the common read/no-list predicate, remove only never-created duplicate declarations, then review a fresh zero-delete plan.",
-      "closure": "Frozen source repair passed independent quality/security review, pinned source gates and 33 foundation plus 16 environment native contracts. Fresh plan review and actual Azure acceptance remain pending."
+      "closure": "Independent security PASS 2026-10-29: four exact live ARM assignment GETs match state for scope, principal, role, type and conditions; both reader conditions equal reviewed activation/consumption union. Actor-specific enforcement remains later qualification."
     },
     {
       "id": "Q-M1-AUDIT-001",
       "category": "code",
       "severity": "medium",
-      "blocking": true,
-      "status": "source_repair_reviewed_live_acceptance_pending",
+      "blocking": false,
+      "status": "closed_source_and_live_qualification",
       "owner": "m1_schema",
       "reviewer": "milestone0_security",
       "evidence": "Actual initial foundation apply rejected audit DCR with InvalidPayload and three InvalidTransformQuery detail codes; DCR absent from preserved partial state.",
       "remediation": "Identify the actual schema/query incompatibility and make the narrow privacy-preserving correction; native/source checks and actual Azure acceptance remain required.",
-      "closure": "Frozen source repair passed independent quality/security review, pinned source gates and 33 foundation plus 16 environment native contracts. Fresh plan review and actual Azure acceptance remain pending."
+      "closure": "Independent security PASS 2026-10-29: actual repaired DCR/default binding and both-account stored rows verify exact resources, operation/outcome coverage, routing and stored privacy. Later identity-specific/recovery gates remain pending."
     },
     {
       "id": "Q-M1-MIGRATION-001",
       "category": "code",
       "severity": "medium",
-      "blocking": true,
-      "status": "source_repair_in_progress",
+      "blocking": false,
+      "status": "closed_source_and_actual_finalization",
       "owner": "m1_schema",
       "reviewer": "milestone0_security",
       "evidence": "Pinned Terraform 1.17 Azure migration legitimately advanced serial by one and cleared source state; remote and backup are otherwise equivalent, including order-insensitive identical check-result records. Wrapper exact-serial guard falsely rejected completion.",
-      "remediation": "Strict full-snapshot comparator with same-lineage/same-or-one-step serial semantics, private pre-init preservation, and guarded local finalization; no mutation of remote state or loss of existing copies."
+      "remediation": "Strict full-snapshot comparator with same-lineage/same-or-one-step serial semantics, private pre-init preservation, and guarded local finalization; no mutation of remote state or loss of existing copies.",
+      "closure": "Independent source reviews and 36 affected checks passed; actual guarded finalization succeeded and independent quality verified marker/backend/lineage/serial288 with all copies preserved. M1 audit/access acceptance remains separate."
+    },
+    {
+      "id": "Q-M1-AUDIT-DEST-001",
+      "category": "environment",
+      "severity": "medium",
+      "blocking": false,
+      "status": "closed_actual_routing_qualification",
+      "owner": "coordinator",
+      "reviewer": "m1_quality",
+      "evidence": "Both accounts: six matching stored rows each, exact full Blob-service resource IDs, only StorageBlobLogs; zero matching AzureDiagnostics rows. Unsupported optional selector removed at65c9da1 with independent quality/security PASS.",
+      "closure": "Routing proof closed. Final no-op reconciliation result is recorded separately in milestone state."
+    },
+    {
+      "id": "Q-M1-META-001",
+      "category": "code",
+      "severity": "medium",
+      "blocking": false,
+      "status": "closed_current_checkpoint_alignment",
+      "owner": "coordinator",
+      "reviewer": "m1_quality",
+      "evidence": "Current checkpoint, plan header, state serial292/resourcecount280, provisioned flag and original repair findings aligned with actual evidence.",
+      "closure": "Independent quality confirmed current metadata alignment; final plan result/owner acceptance remain separately pending."
     }
   ]
 }
