@@ -156,6 +156,7 @@ test('saved plan binds inputs, tool policy, state and reviewed revision before e
   const calls = [];
   let normalized = 0;
   let consumed = 0;
+  let planActions = ['create'];
   const context = {
     directory,
     revision: 'a'.repeat(40),
@@ -174,7 +175,10 @@ test('saved plan binds inputs, tool policy, state and reviewed revision before e
         return JSON.stringify({
           format_version: '1.2',
           resource_changes: [
-            { type: 'azurerm_resource_group', change: { actions: ['create'] } },
+            {
+              type: 'azurerm_resource_group',
+              change: { actions: planActions },
+            },
           ],
         });
       return '';
@@ -219,6 +223,28 @@ test('saved plan binds inputs, tool policy, state and reviewed revision before e
     readFileSync(join(directory, 'saved.tfplan'), 'utf8'),
     'PRIVATE_PLAN',
   );
+  context.localFoundation = true;
+  planActions = ['update'];
+  const localReview = await planDeployment(context);
+  assert.equal(localReview.localFoundation, true);
+  await assert.rejects(
+    () => applyDeployment({ ...context, localFoundation: false }, localReview),
+    /mode/i,
+  );
+  await assert.rejects(
+    () => applyDeployment(context, { ...localReview, localFoundation: false }),
+    /mode/i,
+  );
+  const { localFoundation, ...mainReview } = localReview;
+  assert.equal(localFoundation, true);
+  await assert.rejects(() => applyDeployment(context, mainReview), /mode/i);
+  await applyDeployment(context, localReview);
+  planActions = ['delete', 'create'];
+  await assert.rejects(() => planDeployment(context), /destructive/i);
+  await assert.rejects(
+    () => applyDeployment(context, localReview),
+    /destructive/i,
+  );
 });
 
 test('scanner failure never publishes a saved plan or permits apply', async (t) => {
@@ -261,6 +287,30 @@ test('verified remote foundation authority survives later binding and missing ma
     serial: 2,
   };
   const remote = { lineage: 'retained-state', serial: 3 };
+  for (const auditStage of ['bind', 'enable']) {
+    assert.throws(
+      () =>
+        foundationBackendMode({
+          backendHash: marker.backendHash,
+          accountExists: false,
+          localFoundation: true,
+          auditStage,
+        }),
+      /remote.*audit|audit.*remote/i,
+    );
+    assert.equal(
+      foundationBackendMode({
+        marker,
+        backendHash: marker.backendHash,
+        remote,
+        accountExists: true,
+        localFoundation: true,
+        auditStage,
+      }),
+      'remote',
+    );
+  }
+
   assert.equal(
     foundationBackendMode({
       marker,
@@ -649,6 +699,7 @@ test('real Git phase revisions advance through runtime and app commits while the
         args[0] === 'account'
           ? {
               user: { type: 'user' },
+              state: 'Enabled',
               id: config.subscriptionId,
               tenantId: config.tenantId,
             }
@@ -659,6 +710,79 @@ test('real Git phase revisions advance through runtime and app commits while the
       }),
     };
     await verifyInfrastructureRevision('plan', preview, options);
+    const local = {
+      ...preview,
+      initialFoundationPreview: false,
+      localFoundation: true,
+    };
+    for (const command of ['plan', 'apply', 'foundation-gate'])
+      await verifyInfrastructureRevision(command, local, options);
+    for (const auditStage of ['create', 'bind', 'enable'])
+      await verifyInfrastructureRevision(
+        'plan',
+        { ...local, auditStage, networkGateReady: true, foundation: {} },
+        options,
+      );
+    for (const change of [
+      { localFoundation: 'true' },
+      { localFoundation: null },
+      { initialFoundationPreview: true },
+      { stage: 'environment' },
+      { auditStage: null },
+      { auditStage: 'foreign' },
+      { familyHandlePath: 'family.json' },
+      { generationHandlePath: '' },
+      { bootstrapLocator: 'locator.json' },
+      { environment: {} },
+    ])
+      await assert.rejects(
+        () =>
+          verifyInfrastructureRevision(
+            'plan',
+            { ...local, ...change },
+            options,
+          ),
+        /foundation|preview/i,
+      );
+    await assert.rejects(
+      () => verifyInfrastructureRevision('destroy', local, options),
+      /foundation/i,
+    );
+    await assert.rejects(
+      () =>
+        verifyInfrastructureRevision('plan', local, {
+          ...options,
+          environment: { GITHUB_RUN_ID: '1' },
+        }),
+      /foundation/i,
+    );
+    await assert.rejects(
+      () =>
+        verifyInfrastructureRevision('apply', local, {
+          ...options,
+          run: () => ({ user: { type: 'servicePrincipal' } }),
+        }),
+      /human|foundation/i,
+    );
+    await assert.rejects(
+      () =>
+        verifyInfrastructureRevision(
+          'apply',
+          { ...local, revision: '0'.repeat(40) },
+          options,
+        ),
+      /revision/i,
+    );
+    await assert.rejects(
+      () =>
+        verifyInfrastructureRevision(
+          'foundation-gate',
+          { ...local, localFoundation: false },
+          options,
+        ),
+      /reviewed main/i,
+    );
+
     for (const change of [
       { initialFoundationPreview: 'true' },
       { initialFoundationPreview: null },

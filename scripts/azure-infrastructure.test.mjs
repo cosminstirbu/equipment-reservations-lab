@@ -534,6 +534,39 @@ test('public initial foundation preview rejects unknown flags and excluded comma
   }
 });
 
+test('public local foundation mode rejects malformed flags and excluded routes before configuration access', () => {
+  for (const args of [
+    [
+      'plan',
+      '--stage',
+      'foundation-bootstrap',
+      '--local-foundation',
+      'unknown',
+    ],
+    ['plan', '--stage', 'environment', '--local-foundation', 'true'],
+    [
+      'guard-qualify',
+      '--stage',
+      'foundation-bootstrap',
+      '--local-foundation',
+      'true',
+    ],
+    [
+      'apply',
+      '--stage',
+      'foundation-bootstrap',
+      '--local-foundation',
+      'true',
+      '--initial-foundation-preview',
+      'true',
+    ],
+  ]) {
+    const result = invoke(...args, '--config', 'unused-private-config.json');
+    assert.equal(result.status, 1);
+    assert.match(result.stderr, /local foundation/i);
+  }
+});
+
 test('public guard qualification dispatch rejects missing purpose and projection before provider access', async (t) => {
   const { createPrivateDirectory } = await import('./local-platform.mjs');
   const directory = mkdtempSync(join(tmpdir(), 'azure-guard-cli-'));

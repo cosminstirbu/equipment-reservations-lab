@@ -1992,6 +1992,29 @@ Implementation and scoped verification are tracked in the
 [M1 execution ledger](../milestones.md#m1-execution-ledger). Local checkpoint commits
 are approved; push/merge and provisioning remain separate decisions.
 
+## M1 local foundation execution (2026-10-29)
+
+The owner authorized completing M1 locally without merging. Explicit
+`--local-foundation true` permits a clean, exact reviewed feature commit for
+foundation-bootstrap plan/apply and fixed foundation DNS-gate initialization.
+This supersedes the remote-main prerequisite only for that local mode; hosted,
+environment, recovery and destructive execution retain their existing restrictions.
+The initial preview mode above remains nonpromotable and mutually exclusive.
+
+Require actual Azure CLI human identity matching the reviewed bootstrap operator,
+subscription and tenant, and reject hosted/CI/OIDC or ambient service-principal
+credentials. Recheck exact clean source at entry and before mutations. Bind mode,
+configuration, tools/policy, saved-plan bytes and state lineage/serial through the
+existing plan/review association; reject cross-mode or preview artifact reuse.
+Keep backend authority resolution, verified migration, persistent operator CIDRs,
+leases/ACL checks and audit create → bind → enable qualifications unchanged.
+Audit bind/enable in this mode requires verified remote backend authority. Reject
+delete/replacement actions in both local-mode plans and saved-plan apply; the mode
+does not authorize destructive Terraform changes through an ordinary apply.
+Local authority does not authorize vault-family probes or bypass unfinished G3
+qualification, operational grants or live audit/access acceptance. Actual apply
+still requires review and owner approval of the new saved plan.
+
 ## Owner-approved direct operator app assignments
 
 Owner approved on 2026-10-28 replacing the two Argo CD/Aspire operator app-role

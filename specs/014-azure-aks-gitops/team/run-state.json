@@ -2,23 +2,23 @@
   "feature_directory": "specs/014-azure-aks-gitops",
   "status": "checkpoint_incomplete",
   "milestone_checkpoint": {
-    "date": "2026-10-28",
+    "date": "2026-10-29",
     "milestone": "M1",
-    "status": "m1_current_candidate_pr_validation_authorized",
+    "status": "m1_local_foundation_mode_authorized_in_progress",
     "source_ci": {
       "pr": "https://github.com/cosminstirbu/equipment-reservations-lab/pull/30",
-      "head": "5b0977a8fa84faed133992a82708ecd972d825ee",
-      "pr_validation": "40687461290 FAILURE: tooling150pass1skip,frontend64PASS,backend595pass1fail0skip; local013KubePASS",
-      "azure_source": "40687460924 SUCCESS:191pass0fail3skip; TFsource/nativecontracts/manifestsPASS",
-      "extra_workflow_validation": "No azure-images validation failure observed at5b0977a; actualpublication untested",
+      "head": "c6a903b1c0be64d63a6c823e30c68f266651788e",
+      "pr_validation": "40699575567 SUCCESS: backend 596, frontend 64 and deployed behavior 6 passed without failures/skips; tooling 150 passed/1 skipped, additional checks 200 passed/1 skipped; all jobs passed",
+      "azure_source": "40699575568 SUCCESS: 191 passed, zero failed, three skipped; Terraform source/native contracts/manifests passed",
+      "extra_workflow_validation": "Actual image publication remains untested",
       "reruns_or_manual_dispatch": false,
       "published_fix": "Downloads-directory separation7d54eff validated by targetLinux successful toolpreparation"
     },
     "m0_owner_accepted": "2026-10-28",
     "m1_owner_authorized": "2026-10-28",
-    "active_batch": "Owner authorized publishing the current reviewed candidate to draft PR 30 for one normal validation cycle. Reuse passing backend diagnostic 40697275177 at 79e3e42 and scoped reviews; prior trace cancellation remains unresolved. No merge or Azure apply; M1 foundation not applied.",
+    "active_batch": "T092 local-human foundation mode passed six focused contracts, formatting/lint and independent quality/security review against c6a903b. Prepare a fresh private saved plan from the clean local checkpoint. Hosted main-only and preview rejection retained. No push, merge or Azure apply; M1 foundation not applied.",
     "record": "../milestones.md",
-    "source_revision": "5b0977a8fa84faed133992a82708ecd972d825ee",
+    "source_revision": "c6a903b1c0be64d63a6c823e30c68f266651788e",
     "owner_checkpoint_after_each_milestone": true,
     "next_milestone_authorized": false,
     "quota_requests": {
@@ -31,7 +31,7 @@
       "resources_provisioned": false
     },
     "limits_preserved": "Historical preparation9 and implementation18 retained; owner approved implementation limit18->21 with M1 authorization. M2 remains unauthorized.",
-    "remaining": "Publish and observe one full PR validation cycle for the current candidate. Retain prior trace cancellation as unresolved. KeyVault registration, a main-qualified plan, manual Azure qualification and actual foundation/audit qualification remain pending. No merge or apply."
+    "remaining": "Implement and review T092 local-human foundation mode, then prepare a fresh saved plan without merging. Keep hosted execution main-only and Azure operational activation disabled. Exact-plan apply approval and actual foundation/state/access/audit qualification remain pending."
   },
   "baseline_revision": "d1c7238345136340ddbf3a9454807cefffc43c32",
   "preparation_round": 9,
@@ -881,10 +881,10 @@
     }
   },
   "intervention": {
-    "status": "needs_intervention_single_backend_broker_trace_test",
-    "reason": "Source CI5b0977a passes; fullPRquality has one broker executable exported-trace assertion failure. Cause unproven; no blind rerun/repair. Historical approvedPodmanrestart was never executed; its original record is preserved under controlled_runtime_restart."
+    "status": "owner_selected_local_m1_execution",
+    "reason": "Owner authorized finishing M1 locally without merge. T092 implements a narrowly reviewed explicit local-human foundation path; exact saved-plan apply approval remains required. Current CI at c6a903b passes; later changes require scoped verification."
   },
-  "handoff_limits": "Incomplete feature/M1, not acceptance. Privatefoundationpreview and scopedsource reviews pass. DraftPR30 published at5b0977a; Azure sourceCI/tooling/frontend/local013Kube pass, onebackendtrace testblocksPR. Source-authority/G3/activation and livefoundation/audit/hosted/recovery remainpending; manualAzureproviderqualification unexecuted. ApprovedPodmanrestart neverexecuted. No Azure infrastructure apply/provisioning.",
+  "handoff_limits": "Incomplete feature/M1, not acceptance. CI at c6a903b passes; later T092 local-human foundation delta has scoped checks and independent reviews. Owner chose local M1 without merge. Fresh saved-plan review/approval and live foundation/state/access/audit qualification remain pending. Hosted publication/operational activation and G3/recovery gates remain closed. No Azure infrastructure apply/provisioning.",
   "deferred_diagnostic_risks": [
     {
       "id": "native_https_body_deadline",

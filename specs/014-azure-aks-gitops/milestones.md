@@ -13,14 +13,17 @@ retained foundation has been applied and live state/access/audit qualification i
 pending. No automatic further Windows repair is planned.
 
 Direct-user app assignment is now implemented, independently reviewed and verified
-in a fresh actual preview. Before apply: obtain explicit source-publication
-authorization and required Linux checks, then review a fresh main-qualified plan.
-The local preview cannot be promoted into apply. Merge/apply remain unauthorized.
+in a fresh actual preview. On 2026-10-29 the owner authorized completing M1
+without merging, using the explicit local-human foundation mode defined in the
+[operation contract](contracts/operations.md#m1-local-foundation-execution-2026-10-29).
+Prepare a fresh qualifying saved plan; the existing preview cannot be applied.
+Merge remains unnecessary and unauthorized; actual apply requires exact-plan approval.
 
 Publication update: owner authorized branch push and draft PR. [PR 30](https://github.com/cosminstirbu/equipment-reservations-lab/pull/30)
-is now at `5b0977a`. Azure source checks, tooling/frontend checks and existing local
-Kubernetes verification pass. One backend broker-telemetry test blocks full PR
-quality. Merge/apply remain unauthorized. See the latest validation result.
+is now at `c6a903b`, with its owner-authorized normal validation cycle passed.
+Backend 596/596, frontend 64/64 and deployed behavior 6/6 passed without skips;
+Azure source validation passed with three intentional skips. Earlier trace
+cancellation remains unexplained. Merge/apply remain unauthorized.
 
 ## Outcomes and gates
 
@@ -1076,3 +1079,47 @@ existing draft feature PR and one normal PR validation cycle. Reuse the scoped
 diagnostic reviews and passing backend result at `79e3e42`; retain the earlier
 trace cancellation as unresolved. No merge, Azure apply or additional diagnostic
 rerun is authorized by this checkpoint.
+
+Current candidate `c6a903b1c0be64d63a6c823e30c68f266651788e` passed both normal
+lanes, independently confirmed by the verifier:
+[PR validation 40699575567](https://github.com/cosminstirbu/equipment-reservations-lab/actions/runs/40699575567)
+and [Azure source 40699575568](https://github.com/cosminstirbu/equipment-reservations-lab/actions/runs/40699575568).
+All PR jobs passed: backend 596, frontend 64 and deployed behavior six, with zero
+failures/skips in those suites. Tooling passed 150 with one skip; additional
+post-quality checks passed 200 with one skip. Azure contracts passed 191 with
+three skips in each source lane; Terraform/static/manifests passed. No rerun was
+performed. This establishes current CI success, not permanent correction of the
+earlier trace cancellation or actual Azure provider acceptance. M1 still requires
+retained foundation creation and live state/access/audit qualification. No merge,
+Azure apply or milestone acceptance is implied.
+
+Source-to-main assessment: architect recommends choosing integration scope before
+merge. Full PR 30 can trigger existing main GHCR publication/local GitOps updates
+and introduces Azure maintenance schedules; a foundation-only split requires real
+helper/dependency extraction and separate review/CI. Security gives conditional
+GO for source-only merge readiness at `c6a903b`, provided Azure image publication
+stays disabled and operational credentials/environments stay unconfigured until
+separately qualified. Read-only GitHub inspection found no repository variables,
+secrets or environments; Azure workflows currently lack authentication inputs.
+The reaper path is not protected by the unfinished Terraform G3 barrier, so that
+barrier must not be represented as a universal operation safeguard. Initial fresh
+foundation planning after an authorized merge is supported; apply is not approved.
+Owner scope choice was requested before preparing either integration path.
+
+Owner chose completing M1 without merge. Local-human foundation mode is the
+approved durable path; source-to-main integration is deferred. The scoped design
+received independent security **pass**, retaining exact clean SHA/human identity,
+plan mode association, backend migration and audit/ACL gates. Implement T092 with
+targeted source-authority contracts and scoped checks; reuse unaffected CI evidence.
+Fresh read-only Azure checks on 2026-10-29 confirm CLI user/subscription/tenant
+match private configuration; KeyVault provider remains NotRegistered. No Azure
+resource has been provisioned by this follow-up.
+
+T092 source checks passed: six focused authorization/plan/CLI contracts, zero
+failures/skips, plus four-file formatting, ESLint and whitespace checks.
+Independent quality verdict: "Verdict: **pass** for frozen T092’s four-file delta
+on `c6a903b`. No findings."
+Independent security verdict: "**pass — T092 frozen four-file implementation
+against `c6a903b`. No new findings.**" Security independently repeated the six
+focused contracts successfully. Unchanged application/native Terraform evidence
+is reused. Next: local checkpoint and fresh private plan, not an apply.

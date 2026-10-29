@@ -1446,6 +1446,7 @@ async function main() {
       '--bootstrap-operator-object-id': 'bootstrapOperatorObjectId',
       '--network-gate-ready': 'networkGateReady',
       '--initial-foundation-preview': 'initialFoundationPreview',
+      '--local-foundation': 'localFoundation',
       '--oidc-expiration-date': 'oidcExpirationDate',
       '--rotate': 'rotate',
       '--confirm-environment': 'confirmation',
@@ -1472,6 +1473,19 @@ async function main() {
       'Private configuration required: preflight|validate-config|plan|apply|foundation-gate --config PATH.',
     );
   const stage = options.stage ?? 'environment';
+  if (
+    options.localFoundation &&
+    (!['true', 'false'].includes(options.localFoundation) ||
+      (options.localFoundation === 'true' &&
+        (!['plan', 'apply', 'foundation-gate'].includes(command) ||
+          stage !== 'foundation-bootstrap' ||
+          options.initialFoundationPreview === 'true' ||
+          options.bootstrapLocator ||
+          options.environmentOutputs)))
+  )
+    fail(
+      'Local foundation mode requires an explicit boolean and eligible foundation operation.',
+    );
   if (
     options.initialFoundationPreview &&
     (!['true', 'false'].includes(options.initialFoundationPreview) ||
@@ -1643,6 +1657,12 @@ async function main() {
         config,
         options.revision,
         foundation,
+        {
+          ...options,
+          localFoundation: options.localFoundation === 'true',
+          initialFoundationPreview: options.initialFoundationPreview === 'true',
+          networkGateReady: options.networkGateReady === 'true',
+        },
       );
     } else if (['plan', 'apply'].includes(command)) {
       const { executeInfrastructure } = await import('./azure-terraform.mjs');
@@ -1669,6 +1689,7 @@ async function main() {
             : undefined),
         networkGateReady: options.networkGateReady === 'true',
         initialFoundationPreview: options.initialFoundationPreview === 'true',
+        localFoundation: options.localFoundation === 'true',
       });
     } else result = await preflight(config, { stage, foundation });
     console.log(JSON.stringify(result));

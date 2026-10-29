@@ -1070,3 +1070,15 @@ UID. This is checkpoint observation, not a global Argo lock or zero-TOCTOU guara
 Trusted backup/human administration boundaries remain explicit, not signer/WORM claims.
 Preparation PASS does not close code findings, waive budgets, approve real fixtures or
 establish live Azure behavior. Coordinator holds dependent repairs pending process decision.
+
+## M1 local execution adjustment — 2026-10-29
+
+Complete foundation creation and qualification locally before merge, as authorized
+by the owner. Implement only the explicit local-human foundation mode defined in
+the [operation contract](contracts/operations.md#m1-local-foundation-execution-2026-10-29).
+This is custom source-authority logic: extend existing public revision/plan/apply
+and CLI contracts with targeted failing authorization cases before implementation.
+Reuse existing privacy, migration and backend tests rather than adding a framework
+or another full application run. Verify changed JavaScript formatting/lint, focused
+contracts and independent quality/security review, then generate a new private
+saved foundation plan. Keep hosted main restrictions and all pending live gates.

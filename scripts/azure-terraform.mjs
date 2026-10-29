@@ -549,6 +549,8 @@ export function foundationBackendMode({
   localAuthority,
   accountExists,
   initialFoundationPreview = false,
+  localFoundation = false,
+  auditStage = 'create',
 }) {
   if (
     initialFoundationPreview &&
@@ -571,6 +573,10 @@ export function foundationBackendMode({
       );
     return 'remote';
   }
+  if (localFoundation && ['bind', 'enable'].includes(auditStage))
+    fail(
+      'Verified remote foundation authority is required for audit bind or enable.',
+    );
   if (
     remote ||
     (accountExists && !(local && localAuthority?.backendHash === backendHash))
@@ -586,6 +592,7 @@ async function foundationAuthority(
   directory,
   token,
   initialFoundationPreview = false,
+  { localFoundation = false, auditStage = 'create' } = {},
 ) {
   const backendHash = hash(JSON.stringify(config.foundationBackend));
   const markerPath = join(directory, 'remote-authority.json');
@@ -631,6 +638,8 @@ async function foundationAuthority(
     localAuthority,
     accountExists,
     initialFoundationPreview,
+    localFoundation,
+    auditStage,
   });
   if (mode === 'local' && !localAuthority)
     writeFileSync(
@@ -678,8 +687,20 @@ async function verifiedGate(config, foundation, token) {
   return url;
 }
 
-export async function initializeFoundationGate(config, revision, foundation) {
-  assertSourceRevision(revision);
+export async function initializeFoundationGate(
+  config,
+  revision,
+  foundation,
+  settings = {},
+) {
+  const revisionSettings = {
+    ...settings,
+    config,
+    revision,
+    foundation,
+    stage: 'foundation-bootstrap',
+  };
+  await verifyInfrastructureRevision('foundation-gate', revisionSettings);
   await preflight(config, { stage: 'foundation-bootstrap' });
   const directory = resolve(
     repository,
@@ -696,6 +717,7 @@ export async function initializeFoundationGate(config, revision, foundation) {
   const group =
     foundation?.dns_zone_resource_group_name ??
     config.foundationBackend.resourceGroupName;
+  await verifyInfrastructureRevision('foundation-gate', revisionSettings);
   let response;
   try {
     response = await globalThis.fetch(
@@ -746,10 +768,14 @@ export async function createTerraformContext({
   environment: deployedEnvironment,
   operation,
   initialFoundationPreview = false,
+  localFoundation = false,
+  bootstrapLocator,
 }) {
   assertSourceRevision(revision);
   if (typeof initialFoundationPreview !== 'boolean')
     fail('Initial foundation preview flag must be an explicit boolean.');
+  if (typeof localFoundation !== 'boolean')
+    fail('Local foundation flag must be an explicit boolean.');
   const revisionSettings = {
     config,
     foundation,
@@ -761,10 +787,13 @@ export async function createTerraformContext({
     generationHandlePath,
     locatorHash,
     bootstrapOperatorObjectId,
+    guardStage,
     initialFoundationPreview,
+    localFoundation,
+    bootstrapLocator,
     environment: deployedEnvironment,
   };
-  if (initialFoundationPreview)
+  if (initialFoundationPreview || localFoundation)
     await verifyInfrastructureRevision(command, {
       ...revisionSettings,
       revision,
@@ -786,6 +815,7 @@ export async function createTerraformContext({
           directory,
           token,
           initialFoundationPreview,
+          { localFoundation, auditStage },
         )
       : undefined;
   if (stage === 'foundation-bootstrap') {
@@ -1082,6 +1112,7 @@ export async function createTerraformContext({
     directory,
     revision,
     initialFoundationPreview,
+    localFoundation,
     requalify,
     guard,
     validatePlan:
@@ -1098,6 +1129,7 @@ export async function createTerraformContext({
       variables,
       locatorHash: locatorHash ?? null,
       initialFoundationPreview,
+      ...(localFoundation ? { localFoundation: true } : {}),
     }),
     policyHash: hash(
       controlledTerraformCli +
@@ -1123,6 +1155,20 @@ export async function createTerraformContext({
       });
       if (initialFoundationPreview)
         await foundationAuthority(config, directory, token, true);
+      else if (localFoundation) {
+        const current = await foundationAuthority(
+          config,
+          directory,
+          token,
+          false,
+          { localFoundation, auditStage },
+        );
+        if (
+          current.mode !== authority.mode ||
+          current.backendHash !== authority.backendHash
+        )
+          fail('Foundation state authority changed; a new plan is required.');
+      }
     },
     run,
     planArguments: [`-var-file=${variablesPath}`],
@@ -1347,6 +1393,9 @@ function summarizePlan(plan) {
 }
 
 export async function planDeployment(context) {
+  const { localFoundation = false } = context;
+  if (typeof localFoundation !== 'boolean')
+    fail('Local foundation plan mode is invalid.');
   const directory = resolve(context.directory);
   createPrivateDirectory(directory);
   await context.assertRevision(context.revision);
@@ -1377,6 +1426,8 @@ export async function planDeployment(context) {
       fail('Terraform resolved plan JSON is invalid.');
     }
     const actions = summarizePlan(plan);
+    if (localFoundation && actions.delete > 0)
+      fail('Local foundation mode cannot execute a destructive plan.');
     if (context.validatePlan) await context.validatePlan(plan);
     writeFileSync(jsonPath, raw, { mode: 0o600 });
     await context.scan(jsonPath);
@@ -1388,6 +1439,7 @@ export async function planDeployment(context) {
       ...(context.initialFoundationPreview
         ? { initialFoundationPreview: true }
         : {}),
+      ...(localFoundation ? { localFoundation: true } : {}),
       revision: context.revision,
       inputHash: context.inputHash,
       policyHash: context.policyHash,
@@ -1439,6 +1491,14 @@ export async function applyDeployment(context, review) {
     fail(
       'Initial foundation preview cannot be applied; a new qualifying plan/review is required.',
     );
+  const { localFoundation = false } = context;
+  if (
+    typeof localFoundation !== 'boolean' ||
+    Object.hasOwn(review, 'localFoundation') !== localFoundation ||
+    (Object.hasOwn(review, 'localFoundation') &&
+      review.localFoundation !== true)
+  )
+    fail('Saved plan local foundation mode does not match this apply context.');
   await context.assertRevision(context.revision);
   const state = validateState(await context.state());
   const path = join(resolve(context.directory), 'saved.tfplan');
@@ -1452,14 +1512,16 @@ export async function applyDeployment(context, review) {
     stateSerial: state.serial,
   });
   if (context.requalify) await context.requalify();
-  if (context.validatePlan) {
+  if (context.validatePlan || localFoundation) {
     let plan;
     try {
       plan = JSON.parse(await context.run(['show', '-json', path]));
     } catch {
       fail('Saved guard plan cannot be independently normalized before apply.');
     }
-    await context.validatePlan(plan);
+    if (localFoundation && summarizePlan(plan).delete > 0)
+      fail('Local foundation mode cannot execute a destructive saved plan.');
+    if (context.validatePlan) await context.validatePlan(plan);
   }
   if (context.beforeApply)
     await context.beforeApply({ review, savedPlanPath: path });
@@ -1601,24 +1663,47 @@ export async function verifyInfrastructureRevision(
     environment = process.env,
   } = {},
 ) {
-  const { config, revision, initialFoundationPreview = false } = settings;
+  const {
+    config,
+    revision,
+    initialFoundationPreview = false,
+    localFoundation = false,
+  } = settings;
   assertPhaseRevision(config, revision, { root });
   if (typeof initialFoundationPreview !== 'boolean')
     fail('Initial foundation preview flag must be an explicit boolean.');
-  if (!initialFoundationPreview)
+  if (
+    typeof localFoundation !== 'boolean' ||
+    (localFoundation && initialFoundationPreview)
+  )
+    fail(
+      'Local foundation mode requires a boolean and cannot be combined with preview.',
+    );
+  if (!initialFoundationPreview && !localFoundation)
     return verifyTrustedMainRevision(config, revision, { request });
 
   if (
-    command !== 'plan' ||
+    (localFoundation
+      ? !['plan', 'apply', 'foundation-gate'].includes(command)
+      : command !== 'plan') ||
     settings.stage !== 'foundation-bootstrap' ||
-    ![undefined, 'create'].includes(settings.auditStage) ||
-    ![undefined, false].includes(settings.networkGateReady) ||
+    !(
+      localFoundation
+        ? [undefined, 'create', 'bind', 'enable']
+        : [undefined, 'create']
+    ).includes(settings.auditStage) ||
+    !(localFoundation ? [undefined, false, true] : [undefined, false]).includes(
+      settings.networkGateReady,
+    ) ||
+    (localFoundation &&
+      settings.guardStage !== undefined &&
+      settings.guardStage !== 'creation') ||
     [
       'familyHandlePath',
       'generationHandlePath',
       'bootstrapLocator',
       'locatorHash',
-      'foundation',
+      ...(!localFoundation ? ['foundation'] : []),
       'environment',
     ].some((key) => settings[key] !== undefined) ||
     Object.entries(environment).some(
@@ -1630,12 +1715,13 @@ export async function verifyInfrastructureRevision(
     )
   )
     fail(
-      'Initial foundation preview is restricted to local-human initial create plans.',
+      'Local foundation execution and initial foundation preview require eligible local-human foundation operations.',
     );
 
   const account = run(['account', 'show']);
   if (
     account?.user?.type !== 'user' ||
+    (localFoundation && account.state !== 'Enabled') ||
     account.id !== config.subscriptionId ||
     account.tenantId !== config.tenantId
   )
