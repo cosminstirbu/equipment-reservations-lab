@@ -1179,7 +1179,7 @@ patches:
                     },
                     {
                       "name": "Dashboard__Frontend__OpenIdConnect__RequiredClaimType",
-                      "value": "roles"
+                      "value": "http://schemas.microsoft.com/ws/2008/06/identity/claims/role"
                     },
                     {
                       "name": "Dashboard__Frontend__OpenIdConnect__RequiredClaimValue",
