@@ -190,6 +190,21 @@ test('reviewed runtime component renders immutable Azure application with retain
     );
     assert.ok(platformRendered.includes('kind: ClusterIssuer'));
     assert.ok(platformRendered.includes('kind: NetworkPolicy'));
+    const platformDocuments = platformRendered
+      .split(/^---\s*$/m)
+      .filter((text) => text.trim())
+      .map((text) => parsers.Yaml.parse(text).data);
+    const traefik = platformDocuments.find(
+      (item) => item.kind === 'Deployment' && item.metadata.name === 'traefik',
+    );
+    assert.deepEqual(
+      traefik.spec.template.spec.containers[0].args.filter((argument) =>
+        argument.startsWith('--providers.kubernetesingress.ingressendpoint.'),
+      ),
+      [
+        `--providers.kubernetesingress.ingressendpoint.ip=${input().environment.ingress_public_ip}`,
+      ],
+    );
     const rendered = execFileSync(
       binary,
       ['kustomize', join(directory, 'deploy/environments/azure')],

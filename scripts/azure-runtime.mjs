@@ -711,6 +711,20 @@ export function renderRuntimeProjection(input) {
         patches: [
           { patch: JSON.stringify(ingressPatch) },
           { patch: JSON.stringify(certManagerPatch) },
+          {
+            target: {
+              kind: 'Deployment',
+              name: 'traefik',
+              namespace: 'equipment-platform',
+            },
+            patch: JSON.stringify([
+              {
+                op: 'add',
+                path: '/spec/template/spec/containers/0/args/-',
+                value: `--providers.kubernetesingress.ingressendpoint.ip=${environment.ingress_public_ip}`,
+              },
+            ]),
+          },
         ],
       }),
       'identities.json': json({
