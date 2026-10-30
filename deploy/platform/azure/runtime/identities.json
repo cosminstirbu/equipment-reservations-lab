@@ -1,0 +1,391 @@
+{
+  "apiVersion": "v1",
+  "kind": "List",
+  "items": [
+    {
+      "apiVersion": "v1",
+      "kind": "ServiceAccount",
+      "metadata": {
+        "name": "otel-collector",
+        "namespace": "equipment-platform",
+        "annotations": {
+          "argocd.argoproj.io/sync-wave": "-50",
+          "argocd.argoproj.io/sync-options": "Prune=false,Delete=false",
+          "azure.workload.identity/client-id": "291aa1ee-983d-4559-b3a5-8230e40b93a0"
+        }
+      },
+      "automountServiceAccountToken": false
+    },
+    {
+      "apiVersion": "secrets-store.csi.x-k8s.io/v1",
+      "kind": "SecretProviderClass",
+      "metadata": {
+        "name": "otel-collector",
+        "namespace": "equipment-platform",
+        "annotations": {
+          "argocd.argoproj.io/sync-wave": "-50",
+          "argocd.argoproj.io/sync-options": "Prune=false,Delete=false"
+        }
+      },
+      "spec": {
+        "provider": "azure",
+        "parameters": {
+          "usePodIdentity": "false",
+          "clientID": "291aa1ee-983d-4559-b3a5-8230e40b93a0",
+          "keyvaultName": "erw4e7b2c544c382b33a5",
+          "tenantId": "ce6c409e-7ec6-4ec6-be6d-011755790f9b",
+          "objects": "array:\n  - |\n    objectName: inventory-otlp\n    objectType: secret\n    objectVersion: \"\"\n  - |\n    objectName: reservations-otlp\n    objectType: secret\n    objectVersion: \"\"\n  - |\n    objectName: notifications-otlp\n    objectType: secret\n    objectVersion: \"\"\n  - |\n    objectName: database-bootstrap-otlp\n    objectType: secret\n    objectVersion: \"\"\n  - |\n    objectName: identity-bootstrap-otlp\n    objectType: secret\n    objectVersion: \"\"\n  - |\n    objectName: broker-bootstrap-otlp\n    objectType: secret\n    objectVersion: \"\"\n  - |\n    objectName: dashboard-otlp\n    objectType: secret\n    objectVersion: \"\"\n  - |\n    objectName: prometheus-api-token\n    objectType: secret\n    objectVersion: \"\"\n  - |\n    objectName: loki-api-token\n    objectType: secret\n    objectVersion: \"\"\n  - |\n    objectName: tempo-api-token\n    objectType: secret\n    objectVersion: \"\""
+        },
+        "secretObjects": [
+          {
+            "secretName": "otel-collector-credentials",
+            "type": "Opaque",
+            "data": [
+              {
+                "key": "inventoryToken",
+                "objectName": "inventory-otlp"
+              },
+              {
+                "key": "reservationsToken",
+                "objectName": "reservations-otlp"
+              },
+              {
+                "key": "notificationsToken",
+                "objectName": "notifications-otlp"
+              },
+              {
+                "key": "databaseBootstrapToken",
+                "objectName": "database-bootstrap-otlp"
+              },
+              {
+                "key": "identityBootstrapToken",
+                "objectName": "identity-bootstrap-otlp"
+              },
+              {
+                "key": "brokerBootstrapToken",
+                "objectName": "broker-bootstrap-otlp"
+              },
+              {
+                "key": "dashboardOtlp",
+                "objectName": "dashboard-otlp"
+              },
+              {
+                "key": "prometheusToken",
+                "objectName": "prometheus-api-token"
+              },
+              {
+                "key": "lokiToken",
+                "objectName": "loki-api-token"
+              },
+              {
+                "key": "tempoToken",
+                "objectName": "tempo-api-token"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "apiVersion": "v1",
+      "kind": "ServiceAccount",
+      "metadata": {
+        "name": "prometheus",
+        "namespace": "equipment-platform",
+        "annotations": {
+          "argocd.argoproj.io/sync-wave": "-50",
+          "argocd.argoproj.io/sync-options": "Prune=false,Delete=false",
+          "azure.workload.identity/client-id": "9d598c77-176b-45e4-b764-356b2c759143"
+        }
+      },
+      "automountServiceAccountToken": false
+    },
+    {
+      "apiVersion": "secrets-store.csi.x-k8s.io/v1",
+      "kind": "SecretProviderClass",
+      "metadata": {
+        "name": "prometheus",
+        "namespace": "equipment-platform",
+        "annotations": {
+          "argocd.argoproj.io/sync-wave": "-50",
+          "argocd.argoproj.io/sync-options": "Prune=false,Delete=false"
+        }
+      },
+      "spec": {
+        "provider": "azure",
+        "parameters": {
+          "usePodIdentity": "false",
+          "clientID": "9d598c77-176b-45e4-b764-356b2c759143",
+          "keyvaultName": "erw4e7b2c544c382b33a5",
+          "tenantId": "ce6c409e-7ec6-4ec6-be6d-011755790f9b",
+          "objects": "array:\n  - |\n    objectName: prometheus-api-token\n    objectType: secret\n    objectVersion: \"\""
+        },
+        "secretObjects": [
+          {
+            "secretName": "prometheus-credentials",
+            "type": "Opaque",
+            "data": [
+              {
+                "key": "apiToken",
+                "objectName": "prometheus-api-token"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "apiVersion": "v1",
+      "kind": "ServiceAccount",
+      "metadata": {
+        "name": "loki",
+        "namespace": "equipment-platform",
+        "annotations": {
+          "argocd.argoproj.io/sync-wave": "-50",
+          "argocd.argoproj.io/sync-options": "Prune=false,Delete=false",
+          "azure.workload.identity/client-id": "f29e6df8-484d-4794-b88e-1f2882fe4424"
+        }
+      },
+      "automountServiceAccountToken": false
+    },
+    {
+      "apiVersion": "secrets-store.csi.x-k8s.io/v1",
+      "kind": "SecretProviderClass",
+      "metadata": {
+        "name": "loki",
+        "namespace": "equipment-platform",
+        "annotations": {
+          "argocd.argoproj.io/sync-wave": "-50",
+          "argocd.argoproj.io/sync-options": "Prune=false,Delete=false"
+        }
+      },
+      "spec": {
+        "provider": "azure",
+        "parameters": {
+          "usePodIdentity": "false",
+          "clientID": "f29e6df8-484d-4794-b88e-1f2882fe4424",
+          "keyvaultName": "erw4e7b2c544c382b33a5",
+          "tenantId": "ce6c409e-7ec6-4ec6-be6d-011755790f9b",
+          "objects": "array:\n  - |\n    objectName: loki-api-token\n    objectType: secret\n    objectVersion: \"\""
+        },
+        "secretObjects": [
+          {
+            "secretName": "loki-credentials",
+            "type": "Opaque",
+            "data": [
+              {
+                "key": "apiToken",
+                "objectName": "loki-api-token"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "apiVersion": "v1",
+      "kind": "ServiceAccount",
+      "metadata": {
+        "name": "tempo",
+        "namespace": "equipment-platform",
+        "annotations": {
+          "argocd.argoproj.io/sync-wave": "-50",
+          "argocd.argoproj.io/sync-options": "Prune=false,Delete=false",
+          "azure.workload.identity/client-id": "cb60db0d-5564-42ea-ad0d-4adf3bcddf99"
+        }
+      },
+      "automountServiceAccountToken": false
+    },
+    {
+      "apiVersion": "secrets-store.csi.x-k8s.io/v1",
+      "kind": "SecretProviderClass",
+      "metadata": {
+        "name": "tempo",
+        "namespace": "equipment-platform",
+        "annotations": {
+          "argocd.argoproj.io/sync-wave": "-50",
+          "argocd.argoproj.io/sync-options": "Prune=false,Delete=false"
+        }
+      },
+      "spec": {
+        "provider": "azure",
+        "parameters": {
+          "usePodIdentity": "false",
+          "clientID": "cb60db0d-5564-42ea-ad0d-4adf3bcddf99",
+          "keyvaultName": "erw4e7b2c544c382b33a5",
+          "tenantId": "ce6c409e-7ec6-4ec6-be6d-011755790f9b",
+          "objects": "array:\n  - |\n    objectName: tempo-api-token\n    objectType: secret\n    objectVersion: \"\""
+        },
+        "secretObjects": [
+          {
+            "secretName": "tempo-credentials",
+            "type": "Opaque",
+            "data": [
+              {
+                "key": "apiToken",
+                "objectName": "tempo-api-token"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "apiVersion": "v1",
+      "kind": "ServiceAccount",
+      "metadata": {
+        "name": "grafana",
+        "namespace": "equipment-platform",
+        "annotations": {
+          "argocd.argoproj.io/sync-wave": "-50",
+          "argocd.argoproj.io/sync-options": "Prune=false,Delete=false",
+          "azure.workload.identity/client-id": "da9832d1-f531-4133-8c0a-d98ffb9b2cc7"
+        }
+      },
+      "automountServiceAccountToken": false
+    },
+    {
+      "apiVersion": "secrets-store.csi.x-k8s.io/v1",
+      "kind": "SecretProviderClass",
+      "metadata": {
+        "name": "grafana",
+        "namespace": "equipment-platform",
+        "annotations": {
+          "argocd.argoproj.io/sync-wave": "-50",
+          "argocd.argoproj.io/sync-options": "Prune=false,Delete=false"
+        }
+      },
+      "spec": {
+        "provider": "azure",
+        "parameters": {
+          "usePodIdentity": "false",
+          "clientID": "da9832d1-f531-4133-8c0a-d98ffb9b2cc7",
+          "keyvaultName": "erw4e7b2c544c382b33a5",
+          "tenantId": "ce6c409e-7ec6-4ec6-be6d-011755790f9b",
+          "objects": "array:\n  - |\n    objectName: grafana-admin-password\n    objectType: secret\n    objectVersion: \"\"\n  - |\n    objectName: prometheus-api-token\n    objectType: secret\n    objectVersion: \"\"\n  - |\n    objectName: loki-api-token\n    objectType: secret\n    objectVersion: \"\"\n  - |\n    objectName: tempo-api-token\n    objectType: secret\n    objectVersion: \"\""
+        },
+        "secretObjects": [
+          {
+            "secretName": "grafana-credentials",
+            "type": "Opaque",
+            "data": [
+              {
+                "key": "adminPassword",
+                "objectName": "grafana-admin-password"
+              },
+              {
+                "key": "prometheusToken",
+                "objectName": "prometheus-api-token"
+              },
+              {
+                "key": "lokiToken",
+                "objectName": "loki-api-token"
+              },
+              {
+                "key": "tempoToken",
+                "objectName": "tempo-api-token"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "apiVersion": "cert-manager.io/v1",
+      "kind": "ClusterIssuer",
+      "metadata": {
+        "name": "letsencrypt-staging",
+        "annotations": {
+          "argocd.argoproj.io/sync-wave": "-50",
+          "argocd.argoproj.io/sync-options": "Prune=false,Delete=false"
+        }
+      },
+      "spec": {
+        "acme": {
+          "server": "https://acme-staging-v02.api.letsencrypt.org/directory",
+          "privateKeySecretRef": {
+            "name": "letsencrypt-staging-account"
+          },
+          "solvers": [
+            {
+              "selector": {
+                "dnsZones": [
+                  "codingfunlab.com"
+                ]
+              },
+              "dns01": {
+                "azureDNS": {
+                  "subscriptionID": "85b5d828-a2f1-4f44-9efa-54a932f164c4",
+                  "resourceGroupName": "er-learning-foundation",
+                  "hostedZoneName": "codingfunlab.com",
+                  "environment": "AzurePublicCloud",
+                  "managedIdentity": {
+                    "clientID": "9f420551-afd8-451d-bec4-b4f83f134d0c"
+                  }
+                }
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "apiVersion": "cert-manager.io/v1",
+      "kind": "ClusterIssuer",
+      "metadata": {
+        "name": "letsencrypt-production",
+        "annotations": {
+          "argocd.argoproj.io/sync-wave": "-50",
+          "argocd.argoproj.io/sync-options": "Prune=false,Delete=false"
+        }
+      },
+      "spec": {
+        "acme": {
+          "server": "https://acme-v02.api.letsencrypt.org/directory",
+          "privateKeySecretRef": {
+            "name": "letsencrypt-production-account"
+          },
+          "solvers": [
+            {
+              "selector": {
+                "dnsZones": [
+                  "codingfunlab.com"
+                ]
+              },
+              "dns01": {
+                "azureDNS": {
+                  "subscriptionID": "85b5d828-a2f1-4f44-9efa-54a932f164c4",
+                  "resourceGroupName": "er-learning-foundation",
+                  "hostedZoneName": "codingfunlab.com",
+                  "environment": "AzurePublicCloud",
+                  "managedIdentity": {
+                    "clientID": "9f420551-afd8-451d-bec4-b4f83f134d0c"
+                  }
+                }
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "apiVersion": "traefik.io/v1alpha1",
+      "kind": "Middleware",
+      "metadata": {
+        "name": "operator-source",
+        "namespace": "argocd",
+        "annotations": {
+          "argocd.argoproj.io/sync-wave": "-50",
+          "argocd.argoproj.io/sync-options": "Prune=false,Delete=false"
+        }
+      },
+      "spec": {
+        "ipAllowList": {
+          "sourceRange": [
+            "86.121.79.53/32"
+          ]
+        }
+      }
+    }
+  ]
+}

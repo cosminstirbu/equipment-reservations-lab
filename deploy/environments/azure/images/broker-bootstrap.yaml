@@ -1,0 +1,11 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: rabbitmq
+spec:
+  template:
+    spec:
+      initContainers:
+        - name: definitions
+          image: er4e7b2c544c382b33a5.azurecr.io/equipment-reservations-lab-broker-bootstrap@sha256:0d13f7c4b3c4343b33baec419ddf81ecce47808958c23feff7fbca002b2b6fc7

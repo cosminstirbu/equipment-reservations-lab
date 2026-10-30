@@ -1,0 +1,196 @@
+{
+  "apiVersion": "v1",
+  "kind": "List",
+  "items": [
+    {
+      "apiVersion": "v1",
+      "kind": "ServiceAccount",
+      "metadata": {
+        "name": "equipment-backup-client",
+        "namespace": "equipment-recovery",
+        "annotations": {
+          "argocd.argoproj.io/sync-wave": "-50",
+          "argocd.argoproj.io/sync-options": "Prune=false,Delete=false",
+          "azure.workload.identity/client-id": "2e2dba6c-3439-4dec-973b-d9c00372a2a0"
+        }
+      },
+      "automountServiceAccountToken": false
+    },
+    {
+      "apiVersion": "secrets-store.csi.x-k8s.io/v1",
+      "kind": "SecretProviderClass",
+      "metadata": {
+        "name": "equipment-backup-client",
+        "namespace": "equipment-recovery",
+        "annotations": {
+          "argocd.argoproj.io/sync-wave": "-50",
+          "argocd.argoproj.io/sync-options": "Prune=false,Delete=false"
+        }
+      },
+      "spec": {
+        "provider": "azure",
+        "parameters": {
+          "usePodIdentity": "false",
+          "clientID": "2e2dba6c-3439-4dec-973b-d9c00372a2a0",
+          "keyvaultName": "erw4e7b2c544c382b33a5",
+          "tenantId": "ce6c409e-7ec6-4ec6-be6d-011755790f9b",
+          "objects": "array:\n  - |\n    objectName: backup-postgres-password\n    objectType: secret\n    objectVersion: \"\"\n  - |\n    objectName: verification-postgres-password\n    objectType: secret\n    objectVersion: \"\""
+        },
+        "secretObjects": [
+          {
+            "secretName": "equipment-backup-client-credentials",
+            "type": "Opaque",
+            "data": [
+              {
+                "key": "postgresPassword",
+                "objectName": "backup-postgres-password"
+              },
+              {
+                "key": "verificationPassword",
+                "objectName": "verification-postgres-password"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "apiVersion": "v1",
+      "kind": "ServiceAccount",
+      "metadata": {
+        "name": "equipment-restore-client",
+        "namespace": "equipment-recovery",
+        "annotations": {
+          "argocd.argoproj.io/sync-wave": "-50",
+          "argocd.argoproj.io/sync-options": "Prune=false,Delete=false",
+          "azure.workload.identity/client-id": "6dda06a9-016f-49bd-8732-5c2236bc3570"
+        }
+      },
+      "automountServiceAccountToken": false
+    },
+    {
+      "apiVersion": "secrets-store.csi.x-k8s.io/v1",
+      "kind": "SecretProviderClass",
+      "metadata": {
+        "name": "equipment-restore-client",
+        "namespace": "equipment-recovery",
+        "annotations": {
+          "argocd.argoproj.io/sync-wave": "-50",
+          "argocd.argoproj.io/sync-options": "Prune=false,Delete=false"
+        }
+      },
+      "spec": {
+        "provider": "azure",
+        "parameters": {
+          "usePodIdentity": "false",
+          "clientID": "6dda06a9-016f-49bd-8732-5c2236bc3570",
+          "keyvaultName": "erw4e7b2c544c382b33a5",
+          "tenantId": "ce6c409e-7ec6-4ec6-be6d-011755790f9b",
+          "objects": "array:\n  - |\n    objectName: restore-postgres-password\n    objectType: secret\n    objectVersion: \"\""
+        },
+        "secretObjects": [
+          {
+            "secretName": "equipment-restore-client-credentials",
+            "type": "Opaque",
+            "data": [
+              {
+                "key": "postgresPassword",
+                "objectName": "restore-postgres-password"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "apiVersion": "v1",
+      "kind": "ServiceAccount",
+      "metadata": {
+        "name": "equipment-verification-server",
+        "namespace": "equipment-recovery",
+        "annotations": {
+          "argocd.argoproj.io/sync-wave": "-50",
+          "argocd.argoproj.io/sync-options": "Prune=false,Delete=false",
+          "azure.workload.identity/client-id": "170f1e2e-4312-4e54-8c7b-b26cb335fd3f"
+        }
+      },
+      "automountServiceAccountToken": false
+    },
+    {
+      "apiVersion": "secrets-store.csi.x-k8s.io/v1",
+      "kind": "SecretProviderClass",
+      "metadata": {
+        "name": "equipment-verification-server",
+        "namespace": "equipment-recovery",
+        "annotations": {
+          "argocd.argoproj.io/sync-wave": "-50",
+          "argocd.argoproj.io/sync-options": "Prune=false,Delete=false"
+        }
+      },
+      "spec": {
+        "provider": "azure",
+        "parameters": {
+          "usePodIdentity": "false",
+          "clientID": "170f1e2e-4312-4e54-8c7b-b26cb335fd3f",
+          "keyvaultName": "erw4e7b2c544c382b33a5",
+          "tenantId": "ce6c409e-7ec6-4ec6-be6d-011755790f9b",
+          "objects": "array:\n  - |\n    objectName: verification-postgres-password\n    objectType: secret\n    objectVersion: \"\""
+        },
+        "secretObjects": [
+          {
+            "secretName": "equipment-verification-server-credentials",
+            "type": "Opaque",
+            "data": [
+              {
+                "key": "postgresPassword",
+                "objectName": "verification-postgres-password"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "apiVersion": "secrets-store.csi.x-k8s.io/v1",
+      "kind": "SecretProviderClass",
+      "metadata": {
+        "name": "recovery-database-bootstrap",
+        "namespace": "equipment",
+        "annotations": {
+          "argocd.argoproj.io/sync-wave": "-50",
+          "argocd.argoproj.io/sync-options": "Prune=false,Delete=false"
+        }
+      },
+      "spec": {
+        "provider": "azure",
+        "parameters": {
+          "usePodIdentity": "false",
+          "clientID": "e29ceb25-76bb-4b2a-9a9c-83ea4cfd56cf",
+          "keyvaultName": "erw4e7b2c544c382b33a5",
+          "tenantId": "ce6c409e-7ec6-4ec6-be6d-011755790f9b",
+          "objects": "array:\n  - |\n    objectName: postgres-admin\n    objectType: secret\n    objectVersion: \"\"\n  - |\n    objectName: backup-postgres-password\n    objectType: secret\n    objectVersion: \"\"\n  - |\n    objectName: restore-postgres-password\n    objectType: secret\n    objectVersion: \"\""
+        },
+        "secretObjects": [
+          {
+            "secretName": "recovery-database-bootstrap-credentials",
+            "type": "Opaque",
+            "data": [
+              {
+                "key": "postgresAdmin",
+                "objectName": "postgres-admin"
+              },
+              {
+                "key": "backupPassword",
+                "objectName": "backup-postgres-password"
+              },
+              {
+                "key": "restorePassword",
+                "objectName": "restore-postgres-password"
+              }
+            ]
+          }
+        ]
+      }
+    }
+  ]
+}

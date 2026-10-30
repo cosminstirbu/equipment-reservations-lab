@@ -1,0 +1,11 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: web
+spec:
+  template:
+    spec:
+      containers:
+        - name: web
+          image: er4e7b2c544c382b33a5.azurecr.io/equipment-reservations-lab-web@sha256:d0fceef2c1f36cd2c2fff6825ed969c9e56058d3e69f054c4d16a8c2bcf12ba9

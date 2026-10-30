@@ -1,0 +1,11 @@
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: identity-bootstrap
+spec:
+  template:
+    spec:
+      containers:
+        - name: identity-bootstrap
+          image: er4e7b2c544c382b33a5.azurecr.io/equipment-reservations-lab-identity-bootstrap@sha256:e61bd01f29be5277c9e31f2cae8aa50a4bfb52a37c48ec7ea1bd00cce8a106a0

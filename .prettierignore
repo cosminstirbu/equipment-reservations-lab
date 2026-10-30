@@ -15,3 +15,8 @@ specs/**
 # Verified upstream release bytes; provenance is checked before installation.
 deploy/platform/azure/certificates/controller/cert-manager.yaml
 deploy/platform/azure/ingress/traefik-crds.yaml
+
+# Canonical generated runtime bytes are verified by the runtime projection validator.
+deploy/environments/azure/runtime/
+deploy/platform/azure/runtime/
+deploy/platform/azure/recovery/runtime/

@@ -1,0 +1,565 @@
+{
+  "apiVersion": "v1",
+  "kind": "List",
+  "items": [
+    {
+      "apiVersion": "v1",
+      "kind": "ServiceAccount",
+      "metadata": {
+        "name": "postgres",
+        "namespace": "equipment",
+        "annotations": {
+          "argocd.argoproj.io/sync-wave": "-50",
+          "argocd.argoproj.io/sync-options": "Prune=false,Delete=false",
+          "azure.workload.identity/client-id": "d49e4f3e-c455-4fd5-9bdd-13b9378a8798"
+        }
+      },
+      "automountServiceAccountToken": false
+    },
+    {
+      "apiVersion": "secrets-store.csi.x-k8s.io/v1",
+      "kind": "SecretProviderClass",
+      "metadata": {
+        "name": "postgres",
+        "namespace": "equipment",
+        "annotations": {
+          "argocd.argoproj.io/sync-wave": "-50",
+          "argocd.argoproj.io/sync-options": "Prune=false,Delete=false"
+        }
+      },
+      "spec": {
+        "provider": "azure",
+        "parameters": {
+          "usePodIdentity": "false",
+          "clientID": "d49e4f3e-c455-4fd5-9bdd-13b9378a8798",
+          "keyvaultName": "erw4e7b2c544c382b33a5",
+          "tenantId": "ce6c409e-7ec6-4ec6-be6d-011755790f9b",
+          "objects": "array:\n  - |\n    objectName: postgres-admin\n    objectType: secret\n    objectVersion: \"\""
+        },
+        "secretObjects": [
+          {
+            "secretName": "postgres-credentials",
+            "type": "Opaque",
+            "data": [
+              {
+                "key": "postgresAdmin",
+                "objectName": "postgres-admin"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "apiVersion": "v1",
+      "kind": "ServiceAccount",
+      "metadata": {
+        "name": "database-bootstrap",
+        "namespace": "equipment",
+        "annotations": {
+          "argocd.argoproj.io/sync-wave": "-50",
+          "argocd.argoproj.io/sync-options": "Prune=false,Delete=false",
+          "azure.workload.identity/client-id": "e29ceb25-76bb-4b2a-9a9c-83ea4cfd56cf"
+        }
+      },
+      "automountServiceAccountToken": false
+    },
+    {
+      "apiVersion": "secrets-store.csi.x-k8s.io/v1",
+      "kind": "SecretProviderClass",
+      "metadata": {
+        "name": "database-bootstrap",
+        "namespace": "equipment",
+        "annotations": {
+          "argocd.argoproj.io/sync-wave": "-50",
+          "argocd.argoproj.io/sync-options": "Prune=false,Delete=false"
+        }
+      },
+      "spec": {
+        "provider": "azure",
+        "parameters": {
+          "usePodIdentity": "false",
+          "clientID": "e29ceb25-76bb-4b2a-9a9c-83ea4cfd56cf",
+          "keyvaultName": "erw4e7b2c544c382b33a5",
+          "tenantId": "ce6c409e-7ec6-4ec6-be6d-011755790f9b",
+          "objects": "array:\n  - |\n    objectName: postgres-admin\n    objectType: secret\n    objectVersion: \"\"\n  - |\n    objectName: inventory-db\n    objectType: secret\n    objectVersion: \"\"\n  - |\n    objectName: reservations-db\n    objectType: secret\n    objectVersion: \"\"\n  - |\n    objectName: notifications-db\n    objectType: secret\n    objectVersion: \"\"\n  - |\n    objectName: keycloak-db\n    objectType: secret\n    objectVersion: \"\"\n  - |\n    objectName: database-bootstrap-otlp\n    objectType: secret\n    objectVersion: \"\""
+        },
+        "secretObjects": [
+          {
+            "secretName": "database-bootstrap-credentials",
+            "type": "Opaque",
+            "data": [
+              {
+                "key": "postgresAdmin",
+                "objectName": "postgres-admin"
+              },
+              {
+                "key": "inventoryDb",
+                "objectName": "inventory-db"
+              },
+              {
+                "key": "reservationsDb",
+                "objectName": "reservations-db"
+              },
+              {
+                "key": "notificationsDb",
+                "objectName": "notifications-db"
+              },
+              {
+                "key": "keycloakDb",
+                "objectName": "keycloak-db"
+              },
+              {
+                "key": "otlpToken",
+                "objectName": "database-bootstrap-otlp"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "apiVersion": "v1",
+      "kind": "ServiceAccount",
+      "metadata": {
+        "name": "keycloak",
+        "namespace": "equipment",
+        "annotations": {
+          "argocd.argoproj.io/sync-wave": "-50",
+          "argocd.argoproj.io/sync-options": "Prune=false,Delete=false",
+          "azure.workload.identity/client-id": "718ab4d5-2ffe-47e8-9be8-8c65bb8b3e4c"
+        }
+      },
+      "automountServiceAccountToken": false
+    },
+    {
+      "apiVersion": "secrets-store.csi.x-k8s.io/v1",
+      "kind": "SecretProviderClass",
+      "metadata": {
+        "name": "keycloak",
+        "namespace": "equipment",
+        "annotations": {
+          "argocd.argoproj.io/sync-wave": "-50",
+          "argocd.argoproj.io/sync-options": "Prune=false,Delete=false"
+        }
+      },
+      "spec": {
+        "provider": "azure",
+        "parameters": {
+          "usePodIdentity": "false",
+          "clientID": "718ab4d5-2ffe-47e8-9be8-8c65bb8b3e4c",
+          "keyvaultName": "erw4e7b2c544c382b33a5",
+          "tenantId": "ce6c409e-7ec6-4ec6-be6d-011755790f9b",
+          "objects": "array:\n  - |\n    objectName: keycloak-db\n    objectType: secret\n    objectVersion: \"\"\n  - |\n    objectName: identity-admin\n    objectType: secret\n    objectVersion: \"\""
+        },
+        "secretObjects": [
+          {
+            "secretName": "keycloak-credentials",
+            "type": "Opaque",
+            "data": [
+              {
+                "key": "keycloakDb",
+                "objectName": "keycloak-db"
+              },
+              {
+                "key": "identityAdmin",
+                "objectName": "identity-admin"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "apiVersion": "v1",
+      "kind": "ServiceAccount",
+      "metadata": {
+        "name": "identity-bootstrap",
+        "namespace": "equipment",
+        "annotations": {
+          "argocd.argoproj.io/sync-wave": "-50",
+          "argocd.argoproj.io/sync-options": "Prune=false,Delete=false",
+          "azure.workload.identity/client-id": "284aed01-4cb1-47b8-be6e-69974e902966"
+        }
+      },
+      "automountServiceAccountToken": false
+    },
+    {
+      "apiVersion": "secrets-store.csi.x-k8s.io/v1",
+      "kind": "SecretProviderClass",
+      "metadata": {
+        "name": "identity-bootstrap",
+        "namespace": "equipment",
+        "annotations": {
+          "argocd.argoproj.io/sync-wave": "-50",
+          "argocd.argoproj.io/sync-options": "Prune=false,Delete=false"
+        }
+      },
+      "spec": {
+        "provider": "azure",
+        "parameters": {
+          "usePodIdentity": "false",
+          "clientID": "284aed01-4cb1-47b8-be6e-69974e902966",
+          "keyvaultName": "erw4e7b2c544c382b33a5",
+          "tenantId": "ce6c409e-7ec6-4ec6-be6d-011755790f9b",
+          "objects": "array:\n  - |\n    objectName: identity-admin\n    objectType: secret\n    objectVersion: \"\"\n  - |\n    objectName: alice\n    objectType: secret\n    objectVersion: \"\"\n  - |\n    objectName: bob\n    objectType: secret\n    objectVersion: \"\"\n  - |\n    objectName: manager\n    objectType: secret\n    objectVersion: \"\"\n  - |\n    objectName: staff\n    objectType: secret\n    objectVersion: \"\"\n  - |\n    objectName: reservations-client\n    objectType: secret\n    objectVersion: \"\"\n  - |\n    objectName: identity-bootstrap-otlp\n    objectType: secret\n    objectVersion: \"\""
+        },
+        "secretObjects": [
+          {
+            "secretName": "identity-bootstrap-credentials",
+            "type": "Opaque",
+            "data": [
+              {
+                "key": "identityAdmin",
+                "objectName": "identity-admin"
+              },
+              {
+                "key": "alice",
+                "objectName": "alice"
+              },
+              {
+                "key": "bob",
+                "objectName": "bob"
+              },
+              {
+                "key": "manager",
+                "objectName": "manager"
+              },
+              {
+                "key": "staff",
+                "objectName": "staff"
+              },
+              {
+                "key": "reservationsClient",
+                "objectName": "reservations-client"
+              },
+              {
+                "key": "otlpToken",
+                "objectName": "identity-bootstrap-otlp"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "apiVersion": "v1",
+      "kind": "ServiceAccount",
+      "metadata": {
+        "name": "inventory",
+        "namespace": "equipment",
+        "annotations": {
+          "argocd.argoproj.io/sync-wave": "-50",
+          "argocd.argoproj.io/sync-options": "Prune=false,Delete=false",
+          "azure.workload.identity/client-id": "ff8270de-44fc-4075-903b-33b750cfec65"
+        }
+      },
+      "automountServiceAccountToken": false
+    },
+    {
+      "apiVersion": "secrets-store.csi.x-k8s.io/v1",
+      "kind": "SecretProviderClass",
+      "metadata": {
+        "name": "inventory",
+        "namespace": "equipment",
+        "annotations": {
+          "argocd.argoproj.io/sync-wave": "-50",
+          "argocd.argoproj.io/sync-options": "Prune=false,Delete=false"
+        }
+      },
+      "spec": {
+        "provider": "azure",
+        "parameters": {
+          "usePodIdentity": "false",
+          "clientID": "ff8270de-44fc-4075-903b-33b750cfec65",
+          "keyvaultName": "erw4e7b2c544c382b33a5",
+          "tenantId": "ce6c409e-7ec6-4ec6-be6d-011755790f9b",
+          "objects": "array:\n  - |\n    objectName: inventory-db\n    objectType: secret\n    objectVersion: \"\"\n  - |\n    objectName: inventory-otlp\n    objectType: secret\n    objectVersion: \"\""
+        },
+        "secretObjects": [
+          {
+            "secretName": "inventory-credentials",
+            "type": "Opaque",
+            "data": [
+              {
+                "key": "inventoryDb",
+                "objectName": "inventory-db"
+              },
+              {
+                "key": "otlpToken",
+                "objectName": "inventory-otlp"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "apiVersion": "v1",
+      "kind": "ServiceAccount",
+      "metadata": {
+        "name": "reservations",
+        "namespace": "equipment",
+        "annotations": {
+          "argocd.argoproj.io/sync-wave": "-50",
+          "argocd.argoproj.io/sync-options": "Prune=false,Delete=false",
+          "azure.workload.identity/client-id": "182bfb6c-3f55-4a42-8557-5aaca646a768"
+        }
+      },
+      "automountServiceAccountToken": false
+    },
+    {
+      "apiVersion": "secrets-store.csi.x-k8s.io/v1",
+      "kind": "SecretProviderClass",
+      "metadata": {
+        "name": "reservations",
+        "namespace": "equipment",
+        "annotations": {
+          "argocd.argoproj.io/sync-wave": "-50",
+          "argocd.argoproj.io/sync-options": "Prune=false,Delete=false"
+        }
+      },
+      "spec": {
+        "provider": "azure",
+        "parameters": {
+          "usePodIdentity": "false",
+          "clientID": "182bfb6c-3f55-4a42-8557-5aaca646a768",
+          "keyvaultName": "erw4e7b2c544c382b33a5",
+          "tenantId": "ce6c409e-7ec6-4ec6-be6d-011755790f9b",
+          "objects": "array:\n  - |\n    objectName: reservations-db\n    objectType: secret\n    objectVersion: \"\"\n  - |\n    objectName: reservations-client\n    objectType: secret\n    objectVersion: \"\"\n  - |\n    objectName: rabbit-publisher\n    objectType: secret\n    objectVersion: \"\"\n  - |\n    objectName: reservations-otlp\n    objectType: secret\n    objectVersion: \"\""
+        },
+        "secretObjects": [
+          {
+            "secretName": "reservations-credentials",
+            "type": "Opaque",
+            "data": [
+              {
+                "key": "reservationsDb",
+                "objectName": "reservations-db"
+              },
+              {
+                "key": "reservationsClient",
+                "objectName": "reservations-client"
+              },
+              {
+                "key": "rabbitPublisher",
+                "objectName": "rabbit-publisher"
+              },
+              {
+                "key": "otlpToken",
+                "objectName": "reservations-otlp"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "apiVersion": "v1",
+      "kind": "ServiceAccount",
+      "metadata": {
+        "name": "notifications",
+        "namespace": "equipment",
+        "annotations": {
+          "argocd.argoproj.io/sync-wave": "-50",
+          "argocd.argoproj.io/sync-options": "Prune=false,Delete=false",
+          "azure.workload.identity/client-id": "1eaebfa7-ed50-407c-961e-c35d14d84c3f"
+        }
+      },
+      "automountServiceAccountToken": false
+    },
+    {
+      "apiVersion": "secrets-store.csi.x-k8s.io/v1",
+      "kind": "SecretProviderClass",
+      "metadata": {
+        "name": "notifications",
+        "namespace": "equipment",
+        "annotations": {
+          "argocd.argoproj.io/sync-wave": "-50",
+          "argocd.argoproj.io/sync-options": "Prune=false,Delete=false"
+        }
+      },
+      "spec": {
+        "provider": "azure",
+        "parameters": {
+          "usePodIdentity": "false",
+          "clientID": "1eaebfa7-ed50-407c-961e-c35d14d84c3f",
+          "keyvaultName": "erw4e7b2c544c382b33a5",
+          "tenantId": "ce6c409e-7ec6-4ec6-be6d-011755790f9b",
+          "objects": "array:\n  - |\n    objectName: notifications-db\n    objectType: secret\n    objectVersion: \"\"\n  - |\n    objectName: rabbit-consumer\n    objectType: secret\n    objectVersion: \"\"\n  - |\n    objectName: notifications-otlp\n    objectType: secret\n    objectVersion: \"\""
+        },
+        "secretObjects": [
+          {
+            "secretName": "notifications-credentials",
+            "type": "Opaque",
+            "data": [
+              {
+                "key": "notificationsDb",
+                "objectName": "notifications-db"
+              },
+              {
+                "key": "rabbitConsumer",
+                "objectName": "rabbit-consumer"
+              },
+              {
+                "key": "otlpToken",
+                "objectName": "notifications-otlp"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "apiVersion": "v1",
+      "kind": "ServiceAccount",
+      "metadata": {
+        "name": "rabbitmq",
+        "namespace": "equipment",
+        "annotations": {
+          "argocd.argoproj.io/sync-wave": "-50",
+          "argocd.argoproj.io/sync-options": "Prune=false,Delete=false",
+          "azure.workload.identity/client-id": "a4724876-e1af-4255-aeef-99b10ca625ea"
+        }
+      },
+      "automountServiceAccountToken": false
+    },
+    {
+      "apiVersion": "secrets-store.csi.x-k8s.io/v1",
+      "kind": "SecretProviderClass",
+      "metadata": {
+        "name": "rabbitmq",
+        "namespace": "equipment",
+        "annotations": {
+          "argocd.argoproj.io/sync-wave": "-50",
+          "argocd.argoproj.io/sync-options": "Prune=false,Delete=false"
+        }
+      },
+      "spec": {
+        "provider": "azure",
+        "parameters": {
+          "usePodIdentity": "false",
+          "clientID": "a4724876-e1af-4255-aeef-99b10ca625ea",
+          "keyvaultName": "erw4e7b2c544c382b33a5",
+          "tenantId": "ce6c409e-7ec6-4ec6-be6d-011755790f9b",
+          "objects": "array:\n  - |\n    objectName: broker-monitor-definitions\n    objectType: secret\n    objectVersion: \"\"\n  - |\n    objectName: rabbit-admin\n    objectType: secret\n    objectVersion: \"\"\n  - |\n    objectName: rabbit-publisher\n    objectType: secret\n    objectVersion: \"\"\n  - |\n    objectName: rabbit-consumer\n    objectType: secret\n    objectVersion: \"\"\n  - |\n    objectName: broker-admin-salt\n    objectType: secret\n    objectVersion: \"\"\n  - |\n    objectName: broker-publisher-salt\n    objectType: secret\n    objectVersion: \"\"\n  - |\n    objectName: broker-consumer-salt\n    objectType: secret\n    objectVersion: \"\"\n  - |\n    objectName: broker-bootstrap-otlp\n    objectType: secret\n    objectVersion: \"\""
+        },
+        "secretObjects": [
+          {
+            "secretName": "rabbitmq-credentials",
+            "type": "Opaque",
+            "data": [
+              {
+                "key": "monitorDefinitions",
+                "objectName": "broker-monitor-definitions"
+              },
+              {
+                "key": "rabbitAdmin",
+                "objectName": "rabbit-admin"
+              },
+              {
+                "key": "rabbitPublisher",
+                "objectName": "rabbit-publisher"
+              },
+              {
+                "key": "rabbitConsumer",
+                "objectName": "rabbit-consumer"
+              },
+              {
+                "key": "brokerAdminSalt",
+                "objectName": "broker-admin-salt"
+              },
+              {
+                "key": "brokerPublisherSalt",
+                "objectName": "broker-publisher-salt"
+              },
+              {
+                "key": "brokerConsumerSalt",
+                "objectName": "broker-consumer-salt"
+              },
+              {
+                "key": "otlpToken",
+                "objectName": "broker-bootstrap-otlp"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "apiVersion": "v1",
+      "kind": "ServiceAccount",
+      "metadata": {
+        "name": "dashboard",
+        "namespace": "equipment",
+        "annotations": {
+          "argocd.argoproj.io/sync-wave": "-50",
+          "argocd.argoproj.io/sync-options": "Prune=false,Delete=false",
+          "azure.workload.identity/client-id": "2999d82c-85fb-479d-a678-8c5f1e689db6"
+        }
+      },
+      "automountServiceAccountToken": false
+    },
+    {
+      "apiVersion": "secrets-store.csi.x-k8s.io/v1",
+      "kind": "SecretProviderClass",
+      "metadata": {
+        "name": "dashboard",
+        "namespace": "equipment",
+        "annotations": {
+          "argocd.argoproj.io/sync-wave": "-50",
+          "argocd.argoproj.io/sync-options": "Prune=false,Delete=false"
+        }
+      },
+      "spec": {
+        "provider": "azure",
+        "parameters": {
+          "usePodIdentity": "false",
+          "clientID": "2999d82c-85fb-479d-a678-8c5f1e689db6",
+          "keyvaultName": "erw4e7b2c544c382b33a5",
+          "tenantId": "ce6c409e-7ec6-4ec6-be6d-011755790f9b",
+          "objects": "array:\n  - |\n    objectName: dashboard-api\n    objectType: secret\n    objectVersion: \"\"\n  - |\n    objectName: dashboard-otlp\n    objectType: secret\n    objectVersion: \"\"\n  - |\n    objectName: dashboard-oidc-client-secret\n    objectType: secret\n    objectVersion: \"\""
+        },
+        "secretObjects": [
+          {
+            "secretName": "dashboard-credentials",
+            "type": "Opaque",
+            "data": [
+              {
+                "key": "dashboardApi",
+                "objectName": "dashboard-api"
+              },
+              {
+                "key": "dashboardOtlp",
+                "objectName": "dashboard-otlp"
+              },
+              {
+                "key": "oidcClientSecret",
+                "objectName": "dashboard-oidc-client-secret"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "apiVersion": "traefik.io/v1alpha1",
+      "kind": "Middleware",
+      "metadata": {
+        "name": "operator-source",
+        "namespace": "equipment",
+        "annotations": {
+          "argocd.argoproj.io/sync-wave": "-50",
+          "argocd.argoproj.io/sync-options": "Prune=false,Delete=false"
+        }
+      },
+      "spec": {
+        "ipAllowList": {
+          "sourceRange": [
+            "86.121.79.53/32"
+          ]
+        }
+      }
+    }
+  ]
+}
