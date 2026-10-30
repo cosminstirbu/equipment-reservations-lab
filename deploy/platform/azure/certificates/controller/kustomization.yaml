@@ -20,6 +20,31 @@ patches:
       - op: add
         path: /spec/template/metadata/labels/azure.workload.identity~1use
         value: 'true'
+      - op: test
+        path: /spec/template/spec/containers/0/args/2
+        value: --leader-election-namespace=kube-system
+      - op: replace
+        path: /spec/template/spec/containers/0/args/2
+        value: --leader-election-namespace=cert-manager
+  - target:
+      kind: Deployment
+      name: cert-manager-cainjector
+    patch: |-
+      - op: test
+        path: /spec/template/spec/containers/0/args/1
+        value: --leader-election-namespace=kube-system
+      - op: replace
+        path: /spec/template/spec/containers/0/args/1
+        value: --leader-election-namespace=cert-manager
+  - target:
+      group: rbac.authorization.k8s.io
+      kind: Role|RoleBinding
+      name: cert-manager(-cainjector)?:leaderelection
+      namespace: kube-system
+    patch: |-
+      - op: replace
+        path: /metadata/namespace
+        value: cert-manager
   - target:
       kind: Deployment
     patch: |-
