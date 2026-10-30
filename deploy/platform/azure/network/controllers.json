@@ -27,7 +27,7 @@
         "name": "argocd-dns-api",
         "namespace": "argocd",
         "annotations": {
-          "argocd.argoproj.io/sync-wave": "-70",
+          "argocd.argoproj.io/sync-wave": "-71",
           "argocd.argoproj.io/sync-options": "Prune=false,Delete=false"
         }
       },
@@ -163,15 +163,27 @@
         "name": "argocd-internal",
         "namespace": "argocd",
         "annotations": {
-          "argocd.argoproj.io/sync-wave": "-70",
+          "argocd.argoproj.io/sync-wave": "-71",
           "argocd.argoproj.io/sync-options": "Prune=false,Delete=false"
         }
       },
       "spec": {
         "podSelector": {
-          "matchLabels": {
-            "app.kubernetes.io/part-of": "argocd"
-          }
+          "matchExpressions": [
+            {
+              "key": "app.kubernetes.io/name",
+              "operator": "In",
+              "values": [
+                "argocd-application-controller",
+                "argocd-applicationset-controller",
+                "argocd-dex-server",
+                "argocd-notifications-controller",
+                "argocd-redis",
+                "argocd-repo-server",
+                "argocd-server"
+              ]
+            }
+          ]
         },
         "policyTypes": ["Ingress", "Egress"],
         "ingress": [
@@ -179,9 +191,21 @@
             "from": [
               {
                 "podSelector": {
-                  "matchLabels": {
-                    "app.kubernetes.io/part-of": "argocd"
-                  }
+                  "matchExpressions": [
+                    {
+                      "key": "app.kubernetes.io/name",
+                      "operator": "In",
+                      "values": [
+                        "argocd-application-controller",
+                        "argocd-applicationset-controller",
+                        "argocd-dex-server",
+                        "argocd-notifications-controller",
+                        "argocd-redis",
+                        "argocd-repo-server",
+                        "argocd-server"
+                      ]
+                    }
+                  ]
                 }
               }
             ],
@@ -210,9 +234,21 @@
             "to": [
               {
                 "podSelector": {
-                  "matchLabels": {
-                    "app.kubernetes.io/part-of": "argocd"
-                  }
+                  "matchExpressions": [
+                    {
+                      "key": "app.kubernetes.io/name",
+                      "operator": "In",
+                      "values": [
+                        "argocd-application-controller",
+                        "argocd-applicationset-controller",
+                        "argocd-dex-server",
+                        "argocd-notifications-controller",
+                        "argocd-redis",
+                        "argocd-repo-server",
+                        "argocd-server"
+                      ]
+                    }
+                  ]
                 }
               }
             ],
