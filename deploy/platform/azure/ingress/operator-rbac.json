@@ -12,7 +12,7 @@
       "rules": [
         {
           "apiGroups": [""],
-          "resources": ["services", "endpoints", "secrets"],
+          "resources": ["services", "endpoints", "secrets", "configmaps"],
           "verbs": ["get", "list", "watch"]
         },
         {
