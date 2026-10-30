@@ -391,7 +391,7 @@ patches:
                   "name": "rabbitmq",
                   "volumeMounts": [
                     {
-                      "name": "trust",
+                      "mountPath": "/trust",
                       "$patch": "delete"
                     },
                     {
@@ -1260,7 +1260,7 @@ patches:
                   ],
                   "volumeMounts": [
                     {
-                      "name": "trust",
+                      "mountPath": "/trust",
                       "$patch": "delete"
                     },
                     {
