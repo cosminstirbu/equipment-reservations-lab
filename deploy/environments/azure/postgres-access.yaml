@@ -1,0 +1,18 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: postgres
+spec:
+  template:
+    spec:
+      containers:
+        - name: postgres
+          args: ['-c', 'hba_file=/etc/equipment/pg_hba.conf']
+          volumeMounts:
+            - name: postgres-access
+              mountPath: /etc/equipment
+              readOnly: true
+      volumes:
+        - name: postgres-access
+          configMap:
+            name: equipment-postgres-access

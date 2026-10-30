@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import { createHash } from 'node:crypto';
 import { Buffer } from 'node:buffer';
-import { spawnSync } from 'node:child_process';
+import { spawnSync, execFileSync } from 'node:child_process';
 import {
   mkdtempSync,
   mkdirSync,
@@ -14,15 +14,688 @@ import {
 } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, dirname } from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 import { check } from 'prettier';
 import {
   promotionFiles,
   promote,
   githubGateway,
   refreshJobSuffixes,
+  proposeAzure,
+  validateAzurePublication,
 } from './promote-images.mjs';
 import { imageNames, readJobInputs } from './deployment-validation.mjs';
+
+test('Azure publication validation binds exact registry, repository and workload patch with safe malformed-input errors', () => {
+  const source = {
+    schemaVersion: 1,
+    component: 'inventory',
+    repository: { id: 123, name: 'example/equipment' },
+    sourceRevision: 'd'.repeat(40),
+    sourceRef: 'refs/heads/main',
+    runId: 456,
+    runAttempt: 1,
+    workflow: '.github/workflows/validate.yaml',
+    image: 'ghcr.io/example/equipment-inventory',
+    digest: `sha256:${'e'.repeat(64)}`,
+  };
+  const publication = {
+    schemaVersion: 1,
+    source,
+    image: 'learning.azurecr.io/equipment-inventory',
+    digest: source.digest,
+  };
+  const options = {
+    acrLoginServer: 'learning.azurecr.io',
+    repository: source.repository,
+    patch: imagePatch(
+      'inventory',
+      `${publication.image}@${publication.digest}`,
+    ),
+  };
+  assert.equal(validateAzurePublication(publication, options), publication);
+  for (const invalid of [
+    { ...publication, image: 42 },
+    { ...publication, digest: `sha256:${'f'.repeat(64)}` },
+    { ...publication, unknown: true },
+    { ...publication, source: { ...source, sourceRef: 'refs/heads/feature' } },
+  ])
+    assert.throws(
+      () => validateAzurePublication(invalid, options),
+      /Invalid Azure component publication/,
+    );
+  for (const invalidOptions of [
+    { ...options, acrLoginServer: 'other.azurecr.io' },
+    { ...options, repository: { ...source.repository, id: 999 } },
+    {
+      ...options,
+      patch: imagePatch('web', `${publication.image}@${publication.digest}`),
+    },
+  ])
+    assert.throws(
+      () => validateAzurePublication(publication, invalidOptions),
+      /Invalid Azure component publication/,
+    );
+});
+
+test('lost operation lease prevents authenticated GitHub requests before a proposal mutation', async () => {
+  const gateway = githubGateway({
+    repository: 'example/equipment',
+    component: 'inventory',
+    azure: true,
+    token: 'PRIVATE',
+    signal: globalThis.AbortSignal.abort(),
+    request: async () => assert.fail('lost lease must not access GitHub'),
+  });
+  await assert.rejects(gateway.readState(), /cancel|lease/i);
+});
+
+test('verified Azure publication creates a review branch and PR without updating main', async () => {
+  const writes = [];
+  const source = {
+    schemaVersion: 1,
+    component: 'inventory',
+    repository: { id: 123, name: 'example/equipment' },
+    sourceRevision: 'd'.repeat(40),
+    sourceRef: 'refs/heads/main',
+    runId: 456,
+    runAttempt: 1,
+    workflow: '.github/workflows/validate.yaml',
+    image: 'ghcr.io/example/equipment-inventory',
+    digest: `sha256:${'e'.repeat(64)}`,
+  };
+  const gateway = githubGateway({
+    repository: source.repository.name,
+    component: source.component,
+    azure: true,
+    token: 'PRIVATE_TOKEN',
+    request: async (url, options) => {
+      const body = options.body && JSON.parse(options.body);
+      if (options.method !== 'GET') writes.push({ url, body });
+      let status = 200;
+      let value;
+      if (url.endsWith('/git/ref/heads/main'))
+        value = { object: { sha: 'a'.repeat(40) } };
+      else if (url.includes('/git/ref/heads/automation/')) {
+        status = 404;
+        value = {};
+      } else if (url.includes('/git/commits/') && options.method === 'GET')
+        value = { sha: 'a'.repeat(40), tree: { sha: 'b'.repeat(40) } };
+      else if (url.includes('/git/trees/') && options.method === 'GET')
+        value = { sha: 'b'.repeat(40), tree: [] };
+      else if (url.endsWith('/git/trees')) value = { sha: 'c'.repeat(40) };
+      else if (url.endsWith('/git/commits')) value = { sha: 'f'.repeat(40) };
+      else if (url.endsWith('/graphql')) value = { data: { updateRefs: {} } };
+      else if (url.includes('/pulls?')) value = [];
+      else if (url.endsWith('/pulls')) value = { number: 42 };
+      else value = { node_id: 'repo-node' };
+      return { ok: status === 200, status, json: async () => value };
+    },
+  });
+  const result = await proposeAzure({
+    publication: {
+      schemaVersion: 1,
+      source,
+      image: 'learning.azurecr.io/equipment-inventory',
+      digest: source.digest,
+    },
+    gateway,
+  });
+  assert.equal(result.number, 42);
+  const tree = writes.find((call) => call.url.endsWith('/git/trees')).body.tree;
+  assert.deepEqual(tree.map((file) => file.path).sort(), [
+    'deploy/environments/azure/images/inventory.yaml',
+    'deploy/environments/azure/releases/inventory.json',
+  ]);
+  assert.match(
+    tree.find((file) => file.path.endsWith('.yaml')).content,
+    /learning\.azurecr\.io\/equipment-inventory@sha256:/,
+  );
+  const refs = writes.find((call) => call.url.endsWith('/graphql')).body
+    .variables.input.refUpdates;
+  assert.equal(refs.length, 1);
+  assert.match(refs[0].name, /^refs\/heads\/automation\/azure-image-/);
+  assert.equal(refs[0].beforeOid, '0'.repeat(40));
+  assert.equal(refs[0].force, false);
+  assert.equal(
+    writes.find((call) => call.url.endsWith('/pulls')).body.base,
+    'main',
+  );
+});
+
+test('aggregate Azure proposal preserves prior verified components and rejects races or unowned branches before writes', async () => {
+  for (const scenario of [
+    'aggregate',
+    'race',
+    'unowned',
+    'merged',
+    'divergent',
+  ]) {
+    const source = {
+      schemaVersion: 1,
+      component: 'inventory',
+      repository: { id: 123, name: 'example/equipment' },
+      sourceRevision: 'd'.repeat(40),
+      sourceRef: 'refs/heads/main',
+      runId: 456,
+      runAttempt: 1,
+      workflow: '.github/workflows/validate.yaml',
+      image: 'ghcr.io/example/equipment-inventory',
+      digest: `sha256:${'e'.repeat(64)}`,
+    };
+    const prior = {
+      ...source,
+      component: scenario === 'divergent' ? 'inventory' : 'web',
+      image:
+        scenario === 'divergent'
+          ? 'ghcr.io/example/equipment-inventory'
+          : 'ghcr.io/example/equipment-web',
+      digest:
+        scenario === 'divergent' ? `sha256:${'f'.repeat(64)}` : source.digest,
+    };
+    const publication = (record) => ({
+      schemaVersion: 1,
+      source: record,
+      image: `learning.azurecr.io/equipment-${record.component}`,
+      digest: record.digest,
+    });
+    const priorFiles = {
+      [`deploy/environments/azure/releases/${prior.component}.json`]: `${JSON.stringify(publication(prior), null, 2)}\n`,
+      [`deploy/environments/azure/images/${prior.component}.yaml`]: imagePatch(
+        prior.component,
+        `learning.azurecr.io/equipment-${prior.component}@${prior.digest}`,
+      ),
+    };
+    const writes = [];
+    let reads = 0;
+    const blobs = new Map(
+      Object.entries(priorFiles).map(([path, text]) => {
+        const bytes = Buffer.from(text);
+        const sha = createHash('sha1')
+          .update(Buffer.concat([Buffer.from(`blob ${bytes.length}\0`), bytes]))
+          .digest('hex');
+        return [sha, { path, text }];
+      }),
+    );
+    const request = async (url, options) => {
+      const body = options.body && JSON.parse(options.body);
+      if (options.method !== 'GET') writes.push({ url, body });
+      let value;
+      if (url.endsWith('/git/ref/heads/main')) {
+        reads++;
+        value = {
+          object: {
+            sha:
+              scenario === 'race' && reads > 1
+                ? '9'.repeat(40)
+                : 'a'.repeat(40),
+          },
+        };
+      } else if (url.includes('/git/ref/heads/automation/'))
+        value = { object: { sha: 'b'.repeat(40) } };
+      else if (url.includes('/compare/'))
+        value = {
+          behind_by: 1,
+          ahead_by: scenario === 'merged' ? 0 : 1,
+          merge_base_commit: {
+            sha: scenario === 'merged' ? 'b'.repeat(40) : 'c'.repeat(40),
+          },
+          commits:
+            scenario === 'merged'
+              ? []
+              : [
+                  {
+                    sha: 'b'.repeat(40),
+                    author: {
+                      login:
+                        scenario === 'unowned'
+                          ? 'someone'
+                          : 'github-actions[bot]',
+                    },
+                    commit: {
+                      message: 'chore: propose Azure component images\n',
+                    },
+                  },
+                ],
+          files: Object.keys(priorFiles).map((filename) => ({
+            filename,
+            status: 'added',
+          })),
+        };
+      else if (url.includes('/git/commits/') && options.method === 'GET') {
+        const sha = url.split('/').at(-1);
+        value = {
+          sha,
+          tree: {
+            sha: sha === 'b'.repeat(40) ? '1'.repeat(40) : '2'.repeat(40),
+          },
+        };
+      } else if (url.includes('/git/trees/') && options.method === 'GET') {
+        const sha = url.split('/').at(-1).split('?')[0];
+        value = {
+          sha,
+          tree:
+            sha === '1'.repeat(40) || scenario === 'merged'
+              ? [...blobs].map(([sha, { path }]) => ({
+                  sha,
+                  path,
+                  type: 'blob',
+                  mode: '100644',
+                }))
+              : [],
+        };
+      } else if (url.includes('/git/blobs/')) {
+        const sha = url.split('/').at(-1);
+        value = {
+          sha,
+          encoding: 'base64',
+          content: Buffer.from(blobs.get(sha).text).toString('base64'),
+        };
+      } else if (url.endsWith('/git/trees')) value = { sha: 'f'.repeat(40) };
+      else if (url.endsWith('/git/commits')) value = { sha: 'e'.repeat(40) };
+      else if (url.endsWith('/graphql')) value = { data: { updateRefs: {} } };
+      else if (url.includes('/pulls?')) value = [];
+      else if (url.endsWith('/pulls')) value = { number: 42 };
+      else value = { node_id: 'repo-node' };
+      return { ok: true, status: 200, json: async () => value };
+    };
+    const gateway = githubGateway({
+      repository: source.repository.name,
+      component: 'inventory',
+      azure: true,
+      token: 'PRIVATE',
+      request,
+    });
+    const action = proposeAzure({ publication: publication(source), gateway });
+    if (
+      scenario === 'race' ||
+      scenario === 'unowned' ||
+      scenario === 'divergent'
+    ) {
+      await assert.rejects(
+        action,
+        scenario === 'race'
+          ? /changed/
+          : scenario === 'divergent'
+            ? /different.*source|source.*different|divergent/i
+            : /not managed/,
+      );
+      assert.deepEqual(writes, []);
+    } else {
+      await action;
+      const tree = writes.find((call) => call.url.endsWith('/git/trees')).body;
+      assert.equal(tree.base_tree, '2'.repeat(40));
+      assert.ok(tree.tree.some((file) => file.path.endsWith('/web.json')));
+      assert.ok(
+        tree.tree.some((file) => file.path.endsWith('/inventory.json')),
+      );
+      assert.equal(
+        writes.find((call) => call.url.endsWith('/graphql')).body.variables
+          .input.refUpdates[0].beforeOid,
+        'b'.repeat(40),
+      );
+    }
+  }
+});
+
+test('dual publication copies the proven digest, verifies both destinations and retries without rebuilding', (t) => {
+  const fixture = dualRegistryFixture(t);
+  for (let attempt = 0; attempt < 2; attempt++) {
+    const result = fixture.run();
+    assert.equal(result.status, 0, result.stderr);
+    const publication = JSON.parse(readFileSync(fixture.output, 'utf8'));
+    assert.equal(publication.digest, fixture.record.digest);
+    assert.equal(publication.image, 'learning.azurecr.io/equipment-inventory');
+    assert.deepEqual(publication.source, fixture.record);
+  }
+  const commands = fixture.commands();
+  assert.equal(commands.filter((args) => args.includes('create')).length, 2);
+  assert.ok(commands.every((args) => !args.includes('build')));
+  assert.ok(
+    commands
+      .filter((args) => args.includes('create'))
+      .every(
+        (args) =>
+          args.at(-1) === `${fixture.record.image}@${fixture.record.digest}`,
+      ),
+  );
+  assert.equal(
+    readFileSync(fixture.sentinel, 'utf8'),
+    'unchanged deployment reference',
+  );
+});
+
+test('dual publication fails closed on partial copy, manifest mismatch, missing platform or wrong source without private output', (t) => {
+  const fixture = dualRegistryFixture(t);
+  for (const failure of [
+    'copy',
+    'destination',
+    'source',
+    'platform',
+    'labels',
+  ]) {
+    rmSync(fixture.output, { force: true });
+    const result = fixture.run({
+      REGISTRY_FAILURE: failure,
+      REGISTRY_PROPOSE: 'true',
+    });
+    assert.equal(result.status, 1, failure);
+    assert.match(
+      result.stderr,
+      /(?:registry|publication|index|source|platform)/i,
+    );
+    assert.doesNotMatch(result.stdout + result.stderr, /PRIVATE_REGISTRY/);
+    assert.equal(fixture.outputExists(), false, failure);
+    assert.ok(fixture.commands().every((args) => args[0] !== 'GITHUB_REQUEST'));
+    assert.equal(
+      readFileSync(fixture.sentinel, 'utf8'),
+      'unchanged deployment reference',
+    );
+  }
+});
+
+test('dual publication rejects untrusted invocation and changed provenance before accessing registries', (t) => {
+  const fixture = dualRegistryFixture(t);
+  for (const changed of [
+    { GITHUB_EVENT_NAME: 'pull_request' },
+    { GITHUB_REF: 'refs/heads/untrusted' },
+    { GITHUB_SHA: 'f'.repeat(40) },
+    { GITHUB_REPOSITORY_ID: '999' },
+  ]) {
+    const before = fixture.commands().length;
+    const result = fixture.run(changed);
+    assert.equal(result.status, 1);
+    assert.equal(fixture.commands().length, before);
+    assert.equal(fixture.outputExists(), false);
+  }
+});
+
+test('ACR recreation reuses a committed reviewed release without current-run substitution or rebuild', (t) => {
+  const fixture = dualRegistryFixture(t);
+  const result = fixture.repopulate();
+  assert.equal(result.status, 0, result.stderr);
+  const publication = JSON.parse(readFileSync(fixture.output, 'utf8'));
+  assert.deepEqual(publication.source, fixture.record);
+  assert.equal(publication.digest, fixture.record.digest);
+  assert.ok(fixture.commands().every((args) => !args.includes('build')));
+});
+
+test('registry authentication reports only safe status for real process success and failure', (t) => {
+  const fixture = dualRegistryFixture(t);
+  const success = fixture.login();
+  assert.equal(success.status, 0, success.stderr);
+  assert.match(success.stdout, /authentication ready/);
+  const failure = fixture.login({ REGISTRY_FAILURE: 'login' });
+  assert.equal(failure.status, 1);
+  assert.match(failure.stderr, /ACR federated registry login.*status=19/);
+  assert.doesNotMatch(
+    success.stdout + success.stderr + failure.stdout + failure.stderr,
+    /PRIVATE_REGISTRY/,
+  );
+});
+
+test('registry subprocess waits keep the operation lease heartbeat event loop responsive', (t) => {
+  const fixture = dualRegistryFixture(t);
+  const result = fixture.run({ REGISTRY_TICKS: 'true' });
+  assert.equal(result.status, 0, result.stderr);
+  assert.ok(
+    fixture.commands().some((args) => args[0] === 'HEARTBEAT_TICK'),
+    'lease heartbeat must run while registry child is active',
+  );
+});
+
+test('remote publication verification scopes Docker credentials to child environment without changing caller environment', (t) => {
+  const fixture = dualRegistryFixture(t);
+  const result = fixture.run({
+    REGISTRY_VERIFY_ENV: 'true',
+    REGISTRY_EXPECTED_DOCKER_CONFIG: 'fixture-private-config',
+  });
+  assert.equal(result.status, 0, result.stderr);
+});
+
+test('production publication CLI requires the shared private operation lease before any registry access', (t) => {
+  const fixture = dualRegistryFixture(t);
+  const result = fixture.production();
+  assert.equal(result.status, 1);
+  assert.match(result.stderr, /configuration|Private/);
+  assert.deepEqual(fixture.commands(), []);
+  assert.equal(fixture.outputExists(), false);
+});
+
+test('lost operation lease cancels an active registry child and prevents GitHub mutation', (t) => {
+  const fixture = dualRegistryFixture(t);
+  const result = fixture.run({
+    REGISTRY_ABORT: 'true',
+    REGISTRY_TICKS: 'true',
+    REGISTRY_PROPOSE: 'true',
+  });
+  assert.equal(result.status, 1, result.stderr);
+  assert.match(result.stderr, /cancel|failed/i);
+  assert.ok(fixture.commands().some((args) => args.includes('create')));
+  assert.ok(fixture.commands().every((args) => args[0] !== 'GITHUB_REQUEST'));
+  assert.equal(fixture.outputExists(), false);
+});
+
+function dualRegistryFixture(t) {
+  const directory = mkdtempSync(join(tmpdir(), 'dual-registry-'));
+  t.after(() => rmSync(directory, { recursive: true, force: true }));
+  const index = {
+    schemaVersion: 2,
+    mediaType: 'application/vnd.oci.image.index.v1+json',
+    manifests: ['amd64', 'arm64'].map((architecture, i) => ({
+      digest: `sha256:${String(i + 1).repeat(64)}`,
+      platform: { os: 'linux', architecture },
+    })),
+  };
+  const raw = JSON.stringify(index);
+  const record = {
+    schemaVersion: 1,
+    component: 'inventory',
+    repository: { id: 123, name: 'example/equipment' },
+    sourceRevision: 'd'.repeat(40),
+    sourceRef: 'refs/heads/main',
+    runId: 456,
+    runAttempt: 1,
+    workflow: '.github/workflows/validate.yaml',
+    image: 'ghcr.io/example/equipment-inventory',
+    digest: `sha256:${createHash('sha256').update(raw).digest('hex')}`,
+  };
+  const intent = {
+    schemaVersion: 1,
+    repository: record.repository,
+    sourceRevision: record.sourceRevision,
+    sourceRef: record.sourceRef,
+    runId: record.runId,
+    runAttempt: 1,
+    workflow: record.workflow,
+    event: 'push',
+    selected: ['inventory'],
+    components: Object.fromEntries(
+      imageNames.map((name) => [name, { target: null, proposal: null }]),
+    ),
+  };
+  const resultPath = join(directory, 'component-result.json');
+  const intentPath = join(directory, 'run-intent.json');
+  const output = join(directory, 'publication.json');
+  const calls = join(directory, 'calls.jsonl');
+  const sentinel = join(directory, 'deployment-reference');
+  writeFileSync(resultPath, JSON.stringify({ record, index }));
+  writeFileSync(intentPath, JSON.stringify(intent));
+  writeFileSync(sentinel, 'unchanged deployment reference');
+  writeFileSync(calls, '');
+  const provider = join(directory, 'registry.mjs');
+  writeFileSync(
+    provider,
+    `import fs from 'node:fs';
+const args=process.argv.slice(2);fs.appendFileSync(process.env.REGISTRY_CALLS,JSON.stringify(args)+'\\n');
+const fail=process.env.REGISTRY_FAILURE;const acr=args.at(-1).includes('azurecr.io');
+if(process.env.REGISTRY_EXPECTED_DOCKER_CONFIG&&process.env.DOCKER_CONFIG!==process.env.REGISTRY_EXPECTED_DOCKER_CONFIG){console.error('PRIVATE_REGISTRY_CONFIG');process.exit(31);}
+if(args[0]==='login'){if(fail==='login'){console.log('PRIVATE_REGISTRY_TOKEN');console.error('PRIVATE_REGISTRY_ERROR');process.exit(19);}process.exit(0);}
+if(args.includes('create')){if(fail==='copy'){console.error('PRIVATE_REGISTRY_TOKEN');process.exit(23);}if(process.env.REGISTRY_TICKS==='true')await new Promise(resolve=>setTimeout(resolve,200));process.exit(0);}
+if(args.includes('--raw')){let index=${raw};if((fail==='destination'&&acr)||(fail==='source'&&!acr))index.extra='PRIVATE_REGISTRY_PAYLOAD';if(fail==='platform')index.manifests.pop();process.stdout.write(JSON.stringify(index));}
+else {const architecture=args.at(-1).endsWith('2'.repeat(64))?'arm64':'amd64';process.stdout.write(JSON.stringify({os:'linux',architecture,config:{Labels:{'org.opencontainers.image.revision':fail==='labels'?'PRIVATE_REGISTRY_REVISION':'${record.sourceRevision}','org.opencontainers.image.source':'https://github.com/example/equipment'}}}));}`,
+  );
+  const preload = join(directory, 'preload.mjs');
+  writeFileSync(
+    preload,
+    `import cp from 'node:child_process';import fs from 'node:fs';import {syncBuiltinESMExports} from 'node:module';const original=cp.execFileSync;const spawn=cp.spawn;let active=0;
+const target=(command,args)=>command==='docker'?[${JSON.stringify(provider)},...args]:(command==='az'&&process.platform!=='win32'||command==='cmd.exe')?[${JSON.stringify(provider)},'login',...args]:null;
+cp.execFileSync=(command,args,options)=>{const routed=target(command,args);if(!routed)return original(command,args,options);active++;try{return original(process.execPath,routed,options);}finally{active--;}};
+cp.spawn=(command,args,options)=>{const routed=target(command,args);if(!routed)return spawn(command,args,options);active++;const child=spawn(process.execPath,routed,options);child.once('close',()=>active--);return child;};
+if(process.env.REGISTRY_TICKS==='true')setInterval(()=>{if(active)fs.appendFileSync(process.env.REGISTRY_CALLS,JSON.stringify(['HEARTBEAT_TICK'])+'\\n');},30).unref();
+syncBuiltinESMExports();globalThis.fetch=async()=>{fs.appendFileSync(process.env.REGISTRY_CALLS,JSON.stringify(['GITHUB_REQUEST'])+'\\n');throw new Error('PRIVATE_REGISTRY_GITHUB');};`,
+  );
+  const releaseDirectory = join(
+    directory,
+    'deploy/environments/azure/releases',
+  );
+  mkdirSync(releaseDirectory, { recursive: true });
+  writeFileSync(
+    join(releaseDirectory, 'inventory.json'),
+    JSON.stringify({
+      schemaVersion: 1,
+      source: record,
+      image: 'previous.azurecr.io/equipment-inventory',
+      digest: record.digest,
+    }),
+  );
+  const git = (...args) =>
+    execFileSync('git', args, {
+      cwd: directory,
+      encoding: 'utf8',
+      stdio: 'pipe',
+    }).trim();
+  git('init', '-q', '-b', 'main');
+  git('config', 'user.name', 'Registry fixture');
+  git('config', 'user.email', 'fixture@example.invalid');
+  git('add', 'deploy');
+  git('commit', '-qm', 'Reviewed original publication');
+  const revision = git('rev-parse', 'HEAD');
+  const driver = join(directory, 'command-driver.mjs');
+  writeFileSync(
+    driver,
+    `import fs from 'node:fs';import {runPromotionCommand,verifyAzurePublication} from ${JSON.stringify(new URL('./promote-images.mjs', import.meta.url).href)};import {safeFailure} from ${JSON.stringify(new URL('./process.mjs', import.meta.url).href)};const controller=new AbortController();if(process.env.REGISTRY_ABORT==='true'){const watcher=setInterval(()=>{if(fs.readFileSync(process.env.REGISTRY_CALLS,'utf8').includes('"create"')){clearInterval(watcher);controller.abort();}},10);watcher.unref();}try{if(process.env.REGISTRY_VERIFY_ENV==='true'){const before=process.env.DOCKER_CONFIG;const source=JSON.parse(fs.readFileSync(process.argv[3],'utf8')).record;await verifyAzurePublication({schemaVersion:1,source,image:'learning.azurecr.io/equipment-inventory',digest:source.digest},{env:{...process.env,DOCKER_CONFIG:process.env.REGISTRY_EXPECTED_DOCKER_CONFIG}});if(process.env.DOCKER_CONFIG!==before)throw Error('Caller environment changed');}else await runPromotionCommand({signal:controller.signal});}catch(error){console.error(safeFailure(error,'Publication failed'));process.exitCode=1;}`,
+  );
+  return {
+    record,
+    output,
+    sentinel,
+    production: () =>
+      spawnSync(
+        process.execPath,
+        [
+          '--import',
+          pathToFileURL(preload).href,
+          fileURLToPath(new URL('./promote-images.mjs', import.meta.url)),
+          'dual',
+          resultPath,
+          intentPath,
+          'learning.azurecr.io',
+          output,
+        ],
+        {
+          encoding: 'utf8',
+          timeout: 30000,
+          env: {
+            ...process.env,
+            AZURE_CONFIG_PATH: '',
+            AZURE_OUTPUTS_PATH: '',
+            REGISTRY_CALLS: calls,
+          },
+        },
+      ),
+    login: (extra = {}) =>
+      spawnSync(
+        process.execPath,
+        [
+          '--import',
+          pathToFileURL(preload).href,
+          fileURLToPath(new URL('./promote-images.mjs', import.meta.url)),
+          'registry-login',
+          'learning.azurecr.io',
+        ],
+        {
+          encoding: 'utf8',
+          timeout: 30000,
+          env: {
+            ...process.env,
+            GITHUB_EVENT_NAME: 'push',
+            GITHUB_REF: 'refs/heads/main',
+            REGISTRY_CALLS: calls,
+            ...extra,
+          },
+        },
+      ),
+    repopulate: () =>
+      spawnSync(
+        process.execPath,
+        [
+          '--import',
+          pathToFileURL(preload).href,
+          driver,
+          'repopulate',
+          'inventory',
+          'learning.azurecr.io',
+          output,
+        ],
+        {
+          cwd: directory,
+          encoding: 'utf8',
+          timeout: 30000,
+          env: {
+            ...process.env,
+            GITHUB_EVENT_NAME: 'workflow_dispatch',
+            GITHUB_REF: 'refs/heads/main',
+            GITHUB_SHA: revision,
+            GITHUB_REPOSITORY: record.repository.name,
+            GITHUB_REPOSITORY_ID: '123',
+            REGISTRY_CALLS: calls,
+          },
+        },
+      ),
+    outputExists: () => {
+      try {
+        readFileSync(output);
+        return true;
+      } catch {
+        return false;
+      }
+    },
+    commands: () =>
+      readFileSync(calls, 'utf8').split('\n').filter(Boolean).map(JSON.parse),
+    run: (extra = {}) =>
+      spawnSync(
+        process.execPath,
+        [
+          '--import',
+          pathToFileURL(preload).href,
+          driver,
+          'dual',
+          resultPath,
+          intentPath,
+          'learning.azurecr.io',
+          output,
+          ...(extra.REGISTRY_PROPOSE === 'true' ? ['--propose'] : []),
+        ],
+        {
+          encoding: 'utf8',
+          timeout: 30000,
+          env: {
+            ...process.env,
+            GITHUB_EVENT_NAME: 'push',
+            GITHUB_REF: record.sourceRef,
+            GITHUB_SHA: record.sourceRevision,
+            GITHUB_REPOSITORY: record.repository.name,
+            GITHUB_REPOSITORY_ID: '123',
+            GITHUB_RUN_ID: '456',
+            GITHUB_RUN_ATTEMPT: '1',
+            REGISTRY_CALLS: calls,
+            ...extra,
+          },
+        },
+      ),
+  };
+}
 
 test('authenticated GitHub failures retain safe phase or status without raw response data', async () => {
   for (const failure of ['transport', 'body', 'status']) {

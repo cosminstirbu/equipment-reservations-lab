@@ -1,0 +1,11 @@
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: database-bootstrap
+spec:
+  template:
+    spec:
+      containers:
+        - name: database-bootstrap
+          image: er4e7b2c544c382b33a5.azurecr.io/equipment-reservations-lab-database-bootstrap@sha256:5b2b5681f4580ef441b6423f0b72235607ae014a57f1cf34510ab7234ab3b552

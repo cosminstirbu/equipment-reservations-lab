@@ -1,0 +1,186 @@
+apiVersion: argoproj.io/v1alpha1
+kind: AppProject
+metadata:
+  annotations:
+    argocd.argoproj.io/sync-options: Prune=false,Delete=false
+  name: equipment-azure
+  namespace: argocd
+spec:
+  clusterResourceWhitelist: []
+  syncWindows:
+    - kind: deny
+      schedule: '0 20 * * *'
+      duration: 2h
+      timeZone: Europe/Bucharest
+      applications: [equipment-azure]
+      manualSync: false
+  destinations:
+    - namespace: equipment
+      server: https://kubernetes.default.svc
+  namespaceResourceWhitelist:
+    - group: ''
+      kind: Service
+    - group: ''
+      kind: ConfigMap
+    - group: ''
+      kind: PersistentVolumeClaim
+    - group: ''
+      kind: ServiceAccount
+    - group: apps
+      kind: Deployment
+    - group: apps
+      kind: StatefulSet
+    - group: batch
+      kind: Job
+    - group: networking.k8s.io
+      kind: Ingress
+    - group: networking.k8s.io
+      kind: NetworkPolicy
+    - group: secrets-store.csi.x-k8s.io
+      kind: SecretProviderClass
+    - group: cert-manager.io
+      kind: Certificate
+    - group: traefik.io
+      kind: Middleware
+    - group: traefik.io
+      kind: IngressRoute
+  orphanedResources:
+    warn: true
+  sourceRepos:
+    - https://github.com/cosminstirbu/equipment-reservations-lab.git
+---
+apiVersion: argoproj.io/v1alpha1
+kind: AppProject
+metadata:
+  annotations:
+    argocd.argoproj.io/sync-options: Prune=false,Delete=false
+  name: equipment-azure-platform
+  namespace: argocd
+spec:
+  clusterResourceWhitelist:
+    - group: ''
+      kind: Namespace
+    - group: storage.k8s.io
+      kind: StorageClass
+    - group: networking.k8s.io
+      kind: IngressClass
+    - group: apiextensions.k8s.io
+      kind: CustomResourceDefinition
+    - group: rbac.authorization.k8s.io
+      kind: ClusterRole
+    - group: rbac.authorization.k8s.io
+      kind: ClusterRoleBinding
+    - group: admissionregistration.k8s.io
+      kind: ValidatingWebhookConfiguration
+    - group: admissionregistration.k8s.io
+      kind: MutatingWebhookConfiguration
+    - group: admissionregistration.k8s.io
+      kind: ValidatingAdmissionPolicy
+    - group: admissionregistration.k8s.io
+      kind: ValidatingAdmissionPolicyBinding
+    - group: cert-manager.io
+      kind: ClusterIssuer
+  destinations:
+    - namespace: equipment
+      server: https://kubernetes.default.svc
+    - namespace: equipment-platform
+      server: https://kubernetes.default.svc
+    - namespace: equipment-recovery
+      server: https://kubernetes.default.svc
+    - namespace: cert-manager
+      server: https://kubernetes.default.svc
+    - namespace: argocd
+      server: https://kubernetes.default.svc
+  namespaceResourceWhitelist:
+    - group: ''
+      kind: Pod
+    - group: ''
+      kind: Service
+    - group: ''
+      kind: ConfigMap
+    - group: ''
+      kind: PersistentVolumeClaim
+    - group: ''
+      kind: ServiceAccount
+    - group: apps
+      kind: Deployment
+    - group: apps
+      kind: StatefulSet
+    - group: batch
+      kind: Job
+    - group: networking.k8s.io
+      kind: Ingress
+    - group: networking.k8s.io
+      kind: NetworkPolicy
+    - group: secrets-store.csi.x-k8s.io
+      kind: SecretProviderClass
+    - group: cert-manager.io
+      kind: Certificate
+    - group: traefik.io
+      kind: Middleware
+    - group: traefik.io
+      kind: IngressRoute
+    - group: rbac.authorization.k8s.io
+      kind: Role
+    - group: rbac.authorization.k8s.io
+      kind: RoleBinding
+    - group: cert-manager.io
+      kind: Issuer
+  orphanedResources:
+    warn: true
+  sourceRepos:
+    - https://github.com/cosminstirbu/equipment-reservations-lab.git
+---
+{
+  'apiVersion': 'argoproj.io/v1alpha1',
+  'kind': 'AppProject',
+  'metadata':
+    {
+      'name': 'equipment-azure-recovery',
+      'namespace': 'argocd',
+      'annotations':
+        { 'argocd.argoproj.io/sync-options': 'Prune=false,Delete=false' },
+    },
+  'spec':
+    {
+      'clusterResourceWhitelist': [],
+      'destinations':
+        [
+          {
+            'namespace': 'equipment',
+            'server': 'https://kubernetes.default.svc',
+          },
+          {
+            'namespace': 'equipment-recovery',
+            'server': 'https://kubernetes.default.svc',
+          },
+        ],
+      'namespaceResourceWhitelist':
+        [
+          { 'group': '', 'kind': 'Pod' },
+          { 'group': '', 'kind': 'ServiceAccount' },
+          { 'group': '', 'kind': 'ConfigMap' },
+          { 'group': 'batch', 'kind': 'Job' },
+          { 'group': 'networking.k8s.io', 'kind': 'NetworkPolicy' },
+          {
+            'group': 'secrets-store.csi.x-k8s.io',
+            'kind': 'SecretProviderClass',
+          },
+          { 'group': 'rbac.authorization.k8s.io', 'kind': 'RoleBinding' },
+        ],
+      'sourceRepos':
+        ['https://github.com/cosminstirbu/equipment-reservations-lab.git'],
+      'orphanedResources': { 'warn': true },
+      'syncWindows':
+        [
+          {
+            'kind': 'deny',
+            'schedule': '0 20 * * *',
+            'duration': '2h',
+            'timeZone': 'Europe/Bucharest',
+            'applications': ['equipment-azure-recovery'],
+            'manualSync': false,
+          },
+        ],
+    },
+}

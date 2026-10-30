@@ -16,3 +16,15 @@ src/Web/auth-config.json
 .local/kubernetes/
 # Playwright CLI output (may contain credentials)
 .playwright-cli/
+
+# Private Azure operational inputs and Terraform outputs; provider locks are committed.
+.local/azure/
+**/.terraform/
+*.tfstate
+*.tfstate.*
+*.tfplan
+*.tfplan.json
+*.tfvars
+*.tfvars.json
+!infra/azure/examples/source-scan.tfvars
+crash.log

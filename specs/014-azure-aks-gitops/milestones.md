@@ -1,0 +1,1341 @@
+# Incremental delivery checkpoints
+
+Owner approved this sequence on 2026-10-28. Stop after each milestone for review
+and explicit permission to continue. This changes delivery sequencing, not feature
+acceptance, security exceptions or permission to spend. Preserve all existing task
+IDs and evidence. Source assessment baseline: `b2b0064`.
+
+## Current checkpoint
+
+M0 is accepted. M1's approved local foundation applies succeeded. Remote Azure
+Blob state is authoritative at serial 292 with 280 managed resources; preserved
+local migration copies remain available. Both-account audit routing, exact resource
+association, stored-row privacy and bounded operation/outcome checks passed.
+Independent security closed the original audit and duplicate-IAM repair findings.
+
+**M1 was accepted by the owner on 2026-10-29; M2 is authorized.** The source correction at
+`65c9da1e9e0dc8177b6275fdd1e40b99d5678374` passed formatting, native
+validation/lint/security and all 49 Terraform contracts (zero failures/skips).
+Independent quality/security passed the bounded correction. The final guarded
+plan against serial 292 reports **0 creates, 0 updates, 0 deletes, 0 reads**.
+No additional apply is needed. Acceptance is recorded below.
+
+M1 uses the owner-approved local-human mode in the
+[operation contract](contracts/operations.md#m1-local-foundation-execution-2026-10-29).
+No merge or further publication is needed. [Draft PR 30](https://github.com/cosminstirbu/equipment-reservations-lab/pull/30)
+remains at `c6a903b` with its previously recorded normal CI passing; later local
+repairs use their scoped native/source checks. Full-feature recovery, hosted
+identity enforcement and workload gates remain pending in later milestones.
+M2 is authorized; its execution starts with the bounded readiness assessment below.
+
+## Outcomes and gates
+
+| Milestone | Observable outcome | Acceptance boundary |
+| --- | --- | --- |
+| M0: feasibility | Deployment-readiness decision with exact blockers | Current quota/SKU, identity prerequisites and tax-inclusive BOM; supported runner and minimum safe dependency path |
+| M1: foundation | Retained Azure resources and protected Terraform state | Reviewed plan, approved configuration/spend, native checks, actual state/access and Blob audit qualification before dependent sensitive use |
+| M2: browser deployment | Application booking plus authorized Argo CD/Aspire browser access | Actual guarded vault creation/grants, runtime projection, immutable images, scoped secrets, trusted HTTPS, access denials and application readiness |
+| M3: cost-conscious operation | Stop/start preserves a recorded booking | Actual lifecycle/readiness, serialized operations, safety schedule/override and running/stopped inventory |
+| M4: GitHub delivery | Approved infrastructure change and dual-registry release | Actual OIDC/protected saved-plan execution, stale/unauthorized denials, verified GHCR/ACR content and GitOps reconciliation |
+| M5: recovery/recreation | Original login and booking survive workload loss | Verified backup, protected teardown, clean hosted recreation, actual restore, independent final reviews and owner acceptance |
+
+M2 may be application-ready with recovery-qualification-pending, as already allowed
+by the [plan](plan.md) and [operation contract](contracts/operations.md#preparation-repair6-q-d014-007-creation-versus-grant-plan).
+It cannot bypass vault family/current-generation qualification before secrets or
+operational grants. Recovery credentials, production bindings, SQL and Application
+remain gated. Initial verified image publication is a prerequisite for M2; complete
+publication/promotion automation remains M4. This split needs owner agreement before
+dependent implementation. Destructive recreation waits for M5's verified backup.
+
+## Task mapping
+
+Shared IDs denote slices, not permission to mark the entire task complete.
+
+| Milestone | Primary task groups | Cross-cutting slices |
+| --- | --- | --- |
+| M0 | T006–T007, T060 feasibility only | Read-only assessment of foundation, installer and guard prerequisites |
+| M1 | T001–T013 | T057–T058, T060, T063; prerequisite producer/guard portions of T076–T078, T080, T082–T083, T085–T086, T088–T089 |
+| M2 | T014–T022, T035–T039; browser portion T041 | T055–T056, installer T061, separation T065/T068/T075, ordinary activation T082/T086, T084; initial artifact portion T040 |
+| M3 | T030–T034 | T008–T009, T026, T057, T060 |
+| M4 | T023–T024, T027–T028, T040; release portion T041 | T056, T063, T069, T075, T079, hosted apply T082; source preparation T029 |
+| M5 | T025, T029, T042–T049 | T059, recovery T061, T062, T064–T074, T076–T078, T080–T083, T085–T091 |
+
+T050–T053 provide scoped runbook/check/review/convergence work at each integrated
+milestone. T054 remains final full-feature acceptance. Existing completed history
+and unmet live checks remain unchanged.
+
+## Execution boundaries
+
+- M0 is read-only: three specialist assessments, maximum 20 active minutes each,
+  no native cluster reruns, no paid resources, no code repairs. Coordinator owns
+  this checkpoint and status metadata; specialists return concise evidence.
+- Existing Ubuntu 24.04 native provider lanes in `pull-request.yaml` and
+  `validate.yaml` are the intended acceptance runner. They have not been qualified
+  at this checkpoint. Windows/Podman feedback is not substitute Linux evidence.
+  A fixture capacity/scheduling change requires implementation and verification;
+  none is made here. No workflow dispatch or publication occurs in M0.
+- Use focused/static checks while editing and affected integrated gates at handoff.
+  Follow the current [verification profiles](../../docs/engineering/testing.md#verification-profile).
+- Historical preparation 9/9 and implementation 18/18 remain exhausted. M0 assesses
+  a changed strategy; it does not reset repair budgets. A concrete integration
+  batch and explicit extension are needed before resuming blocked repairs.
+- Retain the existing trusted human/trusted-main/installer/backup-producer boundary.
+  Evidence is not WORM or independent signing. Do not expand the threat model or
+  add machinery for compromise of these trusted anchors without an owner decision.
+- At each checkpoint, report implemented, source-verified and live-qualified
+  separately. No passing subset or milestone implies full-feature completion.
+
+## M0 checkpoint: 2026-10-28
+
+**Status: M0 accepted by the owner on 2026-10-28; M1 authorized, starting with the
+bounded source integration batch below. No live deployment clearance.**
+
+### Current evidence
+
+- Ignored owner inputs contain the supplied 21% tax; the deployment configuration
+  still needs to bind the selected account, operator group and exact SKU/patch.
+  Subscription and tenant are discoverable from the existing CLI session; the owner
+  does not need to supply them again. No private values were copied here.
+- Follow-up direct `az account show --only-show-errors --output json` succeeded
+  outside the sandbox: enabled default subscription, tenant and user identity are
+  present. The sandboxed call failed on access to local Azure configuration.
+  This corrects the earlier unavailable account observation. Subsequent checks below
+  supersede the initial unknown quota and permission prerequisites.
+- Subsequent direct read-only CLI checks established a concrete quota blocker:
+  `az vm list-usage --location westeurope` succeeded in 2.665 seconds. Regional
+  cores: limit 10, used 0. Dsv5-family cores: limit 0, used 0. The planned two
+  D4s_v5 nodes require eight family cores. No quota request or alternative
+  configuration was applied. This supersedes the earlier unverified quota status.
+- Security prerequisite reads support the current human bootstrap authority:
+  subscription ARM permissions cover resource groups, custom roles/assignments,
+  policy definitions/assignments, identities/federation, Storage, Key Vault and audit
+  collection rules. Three permission blocks, no pagination; one visible unconditional
+  Owner role and no visible subscription deny assignments. Graph showed Global
+  Administrator membership and app registration allowed by default-user policy.
+  These are read-only prerequisite observations, not successful creation/federation,
+  data-plane/provider qualification or proof of future workflow permissions.
+- `az aks get-versions --location westeurope` succeeded in 1.926 seconds and returned
+  approved-family patches 1.35.0 through 1.35.8. Candidate exact patch: 1.35.8;
+  no deployment input was changed. Actual SKU/deployment capacity is not guaranteed.
+- `az vm list-skus --location westeurope --size Standard_D4s_v5 --all` did not
+  finish within the investigation window; the local client was interrupted (exit 1).
+  Subscription-specific SKU restrictions remain unknown. Existing `runAzure` wrapper
+  also failed status 2 after 2.755 seconds while direct CLI succeeded; this does not
+  establish authentication failure. No wrapper repair or repeated SKU sampling occurred.
+- Follow-up SKU qualification at approximately 09:14 UTC used a bounded direct ARM
+  `Microsoft.Compute/skus` GET, API 2021-07-01, server-side West Europe location
+  filter and 30-second HTTP timeout. It succeeded in 5.480 seconds with no next page:
+  exact Standard_D4s_v5, West Europe, zones 1/2/3, restrictions empty, 4 vCPUs and
+  16 GB memory. This supersedes the unknown SKU restriction status above and establishes
+  advertised eligibility, not guaranteed physical allocation. A preceding unresponsive
+  CLI request was interrupted; no source/configuration or cloud mutation occurred.
+- The EUR120 monthly cap at 40 running hours includes 21% tax. Refreshed public
+  baseline meters with existing quantities/reserves total EUR97.93911386 net /
+  EUR118.50632777 gross, leaving EUR1.49367223 gross headroom. The stopped scenario,
+  conservatively retaining the same variable/audit allowances, is EUR81.74711386 net /
+  EUR98.91400777 gross. This is a usage estimate, not a hard billing cap; actual
+  retained inventory, variable operations and deployment runtime must remain bounded.
+- Public Azure MCP retail checks confirmed EUR Consumption prices for D4s_v5
+  compute (0.2024/hour), P6 disk (9.8796/month plus 0.5377 mount), E4 disk
+  (2.1119/month plus 0.2974 mount), IPv4 (0.0044/hour), ACR Basic (0.1466/day),
+  first-tier DNS zone (0.44) and audit ingestion (2.6311/GB). Follow-up public queries
+  resolved Standard global load-balancer included rules (0.022/hour), LB data
+  (0.0044/GB), Blob Hot LRS first-tier storage (0.0172/GB/month) and Key Vault
+  Standard operations (0.0264/10K). Existing usage/verification allowance EUR16 and
+  audit processing/query allowance EUR0.50 are retained. Source retail lookup behavior
+  remains separately unqualified; no missing-meter fix was made to the tooling.
+  Individual variable-operation tariffs were not all refreshed; the EUR16 reserve
+  remains an assumption requiring actual transaction/egress/runtime checks.
+- Ubuntu native verification is already declared in CI. No run was performed here;
+  prior local native failures remain unresolved, and the approved VM restart was
+  never executed. No more local runtime sampling occurred.
+- Terraform roots, source gates, runtime overlays, secret provisioning, Argo install,
+  readiness and operational helpers are reusable, subject to their recorded review
+  scope. No current live Azure result is claimed.
+
+### Concrete source dependencies
+
+1. `azure-terraform.mjs` deliberately rejects guard qualification and environment
+   planning through unfinished `requireGuardAuthorityContract()`.
+2. Foundation now emits `workload_delegation`; the strict JavaScript output/cache
+   schema migration is incomplete. Resolve producer/consumer agreement first.
+3. Complete current authority/G3 validation and actual qualification before replacing
+   that barrier; never remove it merely to enable deployment.
+4. Connect ordinary application activation/pointer publication to the real
+   creation → qualification → reviewed grant → bootstrap → readiness sequence.
+5. Separate optional recovery configuration/challenge failure from ordinary bootstrap
+   readiness, preserving recovery grants and qualification gates.
+6. Supply actual verified component release artifacts for the first deployment;
+   the required Azure release directory is currently absent.
+
+### Independent specialist verdicts
+
+Architect: read-only assessment; the dependency path above is source-blocked and
+requires integrated producer/cache/authority/activation work. Minimum initial image
+publication must precede M2. No source or cloud mutation was performed.
+
+Security reviewer verdict (verbatim):
+
+> Verdict: needs_information for milestone sequencing; M1 is viable in stages,
+> while M2 remains source-blocked at `b2b0064`. No new vulnerability finding or
+> risk acceptance.
+
+Read-only permission follow-up verdict (verbatim):
+
+> Permission prerequisites: read-only evidence supports bootstrap authority;
+> execution remains unqualified.
+
+Feasibility specialist follow-up verdict (verbatim):
+
+> M0 remains no-go before M1: West Europe DSv5 family quota is zero.
+
+Vault qualification protects application-secret use as well as recovery. Audit
+resources may be staged before qualification, but dependent sensitive use requires
+actual transformation/privacy/access/gap evidence. Existing source/design closures
+do not establish live gate closure.
+
+Documentary delta review after this record and discovery/status links were written
+(reviewers' verdicts verbatim; no implementation or live acceptance):
+
+> Security: pass — documentary delta only. Milestones, discovery links and checkpoint
+> metadata preserve security gates, historical evidence, exhausted 9/9 and 18/18
+> budgets, and explicit owner stops. M1 audit staging remains conditional; M2 guard
+> qualification remains blocking. No M0 feasibility acceptance or subsequent
+> execution authorization is implied.
+
+> Architecture: Scoped consistency verdict: pass for milestone documentation and
+> metadata only.
+
+Author checks: changed Markdown links/anchors, JSON syntax, consistency/readability
+and `git diff --check` passed. No application build or provider tests were run for
+this documentary change.
+
+### Next decision
+
+The owner authorized the two 12-vCPU quota requests on 2026-10-28. Initial quota
+reads returned `MissingRegistrationForResourceProvider`; `Microsoft.Compute` was
+already registered. The necessary `Microsoft.Quota` registration was requested and
+reached Registered; reads succeeded after propagation. Azure MCP quota tools expose
+reads only, so the requests used Azure CLI `az rest` and the documented Quota API
+2025-09-01. Exact JSON bodies specified only the resource name and LimitValue 12.
+Temporary non-secret request files were removed after each submission.
+
+Both West Europe PUT requests succeeded and returned requested limit 12 with
+`provisioningState=InProgress`: `cores` (previously 10) and `standardDSv5Family`
+(previously 0). A subsequent successful `az vm list-usage` reported effective
+regional limit **12**, used 0; Dsv5-family limit **0**, used 0. Regional increase is
+effective; the family request is submitted but not yet established as approved.
+Follow-up quota API status reads were unavailable at that point; no rejection or
+approval was inferred from that. At 2026-10-28 09:11 UTC, the first check in the
+owner-requested ten-minute monitoring window succeeded: Compute usage reported
+**Dsv5-family limit 12, used 0**, and **regional limit 24, used 0**. The requested
+family increase is effective and the quota blocker is cleared. Monitoring stopped
+immediately as requested. We submitted limit 12 for each; the later regional value
+24 is Azure's observed effective limit, not an additional request by the agent.
+This authorization covers quota administration only, not M1/resource provisioning.
+
+Complete remaining SKU/configuration/source feasibility checks and obtain M0
+sign-off. No further quota increase or alternative configuration is authorized. Eight
+family cores are the initial steady-state minimum; the existing environment sets
+`max_surge = "1"`, so a third four-core node requires 12 during upgrades. The
+regional limit was 10 and is now 24. Quota is capacity
+permission, not permission to create a permanent third node; surge runtime remains
+part of the cost allowance. The submitted quota path preserves the
+approved design and does not authorize provisioning. Do not start M1 or resume
+guard repairs at this checkpoint. Positive quota/capacity and a complete passing
+cost check remain required before paid workload deployment. At M0 sign-off, agree
+the next integration batch and repair-budget extension: align the
+`workload_delegation` producer/cache/consumer schemas and shared fixtures, run focused
+contracts and obtain targeted independent reviews. Keep the unconditional authority
+barrier until real current-authority/G3 validation and qualification are integrated.
+Initial image-publication sequencing and deployment configuration also need agreement
+before dependent implementation. No security waiver is proposed.
+
+## M0 closeout proposal
+
+The architecture follow-up recommends **conditional GO for bounded M1 source
+preparation**, not apply. Missing private operator group/CIDRs/backend names block
+configuration qualification and apply, not this source integration. A narrow Graph
+query for group names starting with equipment/codingfunlab returned zero candidates;
+it neither proves that no suitable group exists nor selects/creates a group.
+
+Proposed first batch: coordinate the already-reviewed Terraform
+`workload_delegation` output with the strict consumer/cache schema and shared fixtures.
+Keep existing grants, conditions and the unfinished-authority barrier unchanged.
+Deliverable: matching producer/consumer contracts, focused passing checks, and
+independent quality/security delta reviews. Do not expand into full G3, activation,
+recovery or local Podman diagnosis in this batch.
+
+Owner accepted M0 and authorized M1 on 2026-10-28, including this proposed first
+source batch with up to three implementation repair rounds (historical limit
+18 → 21), maximum 60 active minutes before reporting progress or intervention.
+Preparation remains
+9/9; no counter resets. The shared milestone stop remains in force: do not proceed
+to M2 without explicit approval. This bounded source batch alone does not complete
+M1; actual foundation qualification remains its milestone acceptance requirement.
+Any separate paid apply still needs a concrete reviewed plan, private configuration
+and all applicable safety/cost gates. No additional cloud mutation, publication or
+security exception follows from the proposal.
+
+Architecture follow-up verdict (verbatim):
+
+> Yes: conditional GO for bounded M1 source preparation, with live deployment
+> feasibility still conditional on the exact SKU check and confirmed private inputs.
+
+The exact SKU check subsequently passed as recorded above. Private configuration,
+actual provider qualification and source gate completion remain mandatory before use.
+
+## M1 execution ledger
+
+Started 2026-10-28 09:16 UTC, source baseline `b2b0064` plus the existing M0
+documentation changes. Scope: T089 producer/cache/consumer schema integration only.
+One coder owns affected JavaScript implementation/shared-fixture/tests; coordinator
+owns documentation/status. Independent quality and security reviewers assess the
+frozen batch. No Terraform declaration, grant, barrier or cloud mutation is planned.
+
+Standards: custom authority-validation behavior retains test-first; preserve strict
+schemas and actual trusted-expectation boundaries. Use focused regressions, affected
+contracts and scoped format/ESLint. Reuse unchanged Terraform producer reviews and
+native evidence. Native Linux/provider and actual Azure gates remain pending; no
+new local Podman investigation. Do not mark T089 or M1 complete from a passing subset.
+
+Pre-execution: no extension hooks configured; Spec Kit prerequisites resolve feature
+014 and its existing artifacts. Requirements checklist 16/16 and operations checklist
+20/20 checked. These are requirements-quality evidence, not implementation acceptance.
+
+Batch design decision: the cache lacks independent source facts for every role in
+the delegation descriptor. Do not construct a trusted expected descriptor from the
+received descriptor. Reuse the existing parser through a small production transport
+validation API (exact nested fields, grammar and hashes) and cross-bind only the
+independently available workload scope/apply/destroy identities. The authority API
+continues requiring an independent expectedDescriptor, and the unconditional G3
+barrier remains. Security scope guidance (verbatim):
+
+> Option A is acceptable for transport validation only: exact schema, supported
+> grammar, canonical hashes and independently available scope/principal crossbindings.
+>
+> Keep authority validation unchanged: mandatory independent expectedDescriptor,
+> no self-derived expectations, and the unconditional authority barrier. Missing
+> source facts still block semantic publisher/current-authority qualification.
+
+This expands the coder's owned files to the existing guard helper and its focused
+tests, solely for parser reuse. Tests cover valid producer-shaped projection and
+malformed/hash/grammar/crossbinding rejection plus preserved authority rejection;
+real parser/fixture/cache stay in the boundary. No provider fixture is necessary
+for transport parsing, and no test result establishes actual Azure authority.
+
+Implementation round 19, first batch frozen for review (six JavaScript files):
+`azure-infrastructure.mjs`/test, `azure-vault-guard.mjs`/test,
+`azure-guard-test-fixture.mjs`, `azure-handoff.test.mjs`. The reviewed producer-shaped
+delegation fixture is reused; Terraform, grants, conditions and authority barrier
+are unchanged. No whole task checkbox is completed.
+
+Author evidence on the frozen source:
+
+- RED: `node --test --test-name-pattern 'workload delegation transport|guard output schema' scripts/azure-vault-guard.test.mjs scripts/azure-infrastructure.test.mjs`:
+  exit 1, two intended failures (missing API and rejected nested field), 194 ms.
+- GREEN: same focused command, two passed, zero failed/skipped, 211.5 ms.
+- `node --test scripts/azure-vault-guard.test.mjs scripts/azure-infrastructure.test.mjs scripts/azure-handoff.test.mjs scripts/azure-guard-activation.test.mjs`:
+  84 passed, zero failed/skipped, 22.194 seconds. After explicit cache-negative
+  assertions were added, the handoff file passed 2/2 again in 395.97 ms.
+- Scoped format-check, ESLint for the six files and whitespace checks passed.
+
+Independent security verdict (verbatim):
+
+> pass — bounded first-M1 transport/cache batch. No new findings.
+
+Security independently ran focused parser/transport/schema/cache tests: 11 passed,
+zero failed/skipped, exit 0, 438 ms. Mandatory independent expectation, lack of any
+source-authority claim and unchanged barrier were inspected. This is not deployment
+approval.
+
+Independent quality verdict (verbatim):
+
+> pass for the frozen six-file T089 transport integration at b2b0064 plus reviewed
+> working diff. No findings.
+
+Quality independently ran three affected suites: 82 passed, zero failed/skipped;
+the focused unfinished-G3 regression passed 1/1. Six-file format check, scoped ESLint
+and whitespace check passed. Reviewer made no edits. Both verdicts cover this
+source subset only; actual source authority/provider qualification and M1 acceptance
+remain pending.
+
+Owner separately requested a dedicated Entra security group containing only the
+current signed-in user. Created `equipment-azure-operators` after exact-name collision
+check; security-enabled, mail-disabled. Actual membership GET verified exactly one
+member, the current user. Identifier is stored only in existing ignored private
+owner inputs. No role assignment or other group membership was changed. This is the
+only cloud setup mutation in this batch; it was explicitly authorized separately
+from the source-only implementation scope.
+
+Owner also selected this machine's current public IPv4 /32. The detected value is
+stored only in ignored private owner inputs. No firewall was changed. Dynamic IP
+changes require a future explicit configuration update; no broader fallback range.
+
+## Proposed M1 initial foundation preview refinement
+
+**Owner approved on 2026-10-28; implementation pending.** Source reviews passed the first batch,
+but the next initial foundation plan currently requires clean deployment code at the
+exact GitHub main SHA. The working feature is not on main; a local commit alone
+does not meet that contract. Publishing unfinished feature implementation merely
+to inspect its first foundation plan is not proposed.
+
+Proposed limited change: allow a local-human initial foundation preview at an exact
+independently reviewed, clean feature commit. All of these conditions must hold:
+
+- Operation is plan, stage foundation-bootstrap, audit stage create, network gate
+  false, backend authority verified local/uncreated. No remote foundation maintenance,
+  audit bind/enable, family proof, environment plan or hosted execution qualifies.
+- Preserve exact clean HEAD verification at entry and subsequent revision assertions;
+  approval names a specific SHA, never an arbitrary branch. A commit is still required.
+- Retain private local plan/review files, pinned tools/providers, provider registration
+  disabled, state/input binding and resolved-plan security scan.
+- Keep remote-main enforcement on apply and every existing mutation/hosted path.
+  Preview output is not apply approval and cannot be promoted directly to apply;
+  a fresh qualifying plan/review is required under the existing apply contract.
+- Preserve the unfinished G3 barrier and pending native/provider/security gates.
+
+This preview contacts Azure/providers and writes sensitive local files. It performs
+no cloud-resource mutation; it is not side-effect-free. The existing initial path
+has no remote plan publication or operation admission, whereas remote foundation
+maintenance may take leases/locks and is excluded. Meaningful tests must demonstrate
+the narrow allowed case and rejection of every excluded path, including apply reuse.
+Use existing revision/backend validation; do not add a new trust framework.
+
+Security scope assessment (verbatim):
+
+> Supported minimal option: a separately approved local-human initial foundation
+> preview from an exact independently reviewed, clean feature commit. Keep remote-main
+> enforcement for apply, hosted execution and every other mutation path.
+
+Owner approved this exact source-policy refinement and local checkpoint commits
+(no push/merge). This is not permission to
+provision or treat preview evidence as deployment acceptance. A later reviewed-source
+publication/apply decision remains separate. Existing M1 authorization does not waive
+the current main-only contract. No preparation budget has been reset or extended.
+
+Approved refinement execution: prior independently reviewed transport batch and M0/M1
+records committed locally as `5f684cf`; nothing pushed or merged. Round 20 starts
+with focused revision/backend-preview regressions before implementation. Private
+draft configuration now binds verified account/tenant/operator group/current IPv4,
+AKS 1.35.8, supplied tax and initial null recovery-key version. Naming is deterministic
+and generation is 20261028a. Proposed key expiry is 2027-10-28T00:00:00Z for preview
+review only; no key is created. A repository ACL check initially failed; the two
+private input files were restricted to the current owner, preserving values, and
+both checks now pass. Neither private contents nor identifiers are committed.
+
+Read-only initial naming checks: proposed foundation resource group does not exist;
+the proposed deterministic state-storage name is available. No existing resource is
+adopted or created. Availability may change before any later apply.
+
+Round 20 implemented and frozen against `5f684cf`: four files,
+`azure-terraform.mjs`/test and `azure-infrastructure.mjs`/test. Explicit preview flag,
+local human/account verification, narrow eligibility, entry/context revision and
+backend rechecks, preview artifact marker/input association and apply rejection.
+No hosted/main apply or G3 barrier relaxation.
+
+Author evidence: intended RED (missing revision API and existing-state rejection),
+two failures, 596.7 ms. Affected two suites passed 31/31, zero skipped, 12.645 s;
+final focused preview/revision/CLI cases passed 3/3, zero skipped, 5.706 s. Scoped
+four-file format-check, ESLint and whitespace checks passed. Existing local Terraform
+source-staging test ran; this is not Azure provider/native cluster qualification.
+
+Security verdict (verbatim):
+
+> pass — scoped round-20 initial foundation preview. No new findings.
+
+Independent focused revision/preview tests passed 3/3, zero failed/skipped, 5.989 s.
+Reviewer confirmed excluded mutation paths, provider registration disabled,
+non-promotable preview and unchanged ordinary/main/apply/G3 constraints. Source
+approval does not establish actual preview success or provisioning permission.
+
+Quality verdict (verbatim):
+
+> pass for round 20’s frozen four-file diff on 5f684cf. No findings.
+
+Independent focused preview/revision/G3 tests passed 4/4, zero failed/skipped;
+four-file format-check, scoped ESLint and whitespace checks passed. No reviewer edits.
+Both source verdicts cover the exact reviewed delta; native/live M1 gates remain open.
+
+Round 20 committed locally as `ff87a21`. Private configuration pinned to that exact
+clean source; validation and both private-file ACL checks passed. Actual approved
+`executeInfrastructure('plan', ...)` preview stopped at the first Azure account read:
+exit 2, 680 ms, total 1.883 s. No Terraform plan, operation lease, remote publication
+or resource mutation occurred. Direct Azure CLI reads previously succeeded, so the
+remaining round 21 is scoped to the exact Windows CLI-wrapper invocation. No retry
+with weaker identity checks or alternate credentials is authorized.
+
+Round 21 causal wrapper repair frozen against `ff87a21` (infrastructure module and
+its test only). Real Windows cmd → controlled az.cmd fixture reproduced literal
+quotes in the account/show argv (RED 1 failed, zero skipped, 313.5 ms), without
+authentication/network. This excludes account configuration or PATH selection as
+the cause of that corruption. One Windows verbatim-argument option fixes the quoting;
+Windows percent expansion is rejected rather than silently interpreted. Quoted
+spaces/URL ampersands and Unix behavior are retained.
+
+The same regression passed 1/1, zero skipped, 548 ms. Actual original authenticated
+`runAzure(['account','show'])` then passed outside the sandbox in 1.278 s; only safe
+enabled/user status was exposed. Scoped formatting/ESLint/whitespace checks passed.
+No Terraform, preview identity policy, authority barrier or cloud resource changed.
+Independent delta reviews are pending before the preview retry.
+
+Round 21 independent verdicts (verbatim):
+
+> Quality: pass for the frozen two-file round-21 delta against ff87a21. No findings.
+
+> Security: pass — scoped round-21 Windows argv repair. No new findings.
+
+Quality independently passed the real Windows argv regression 1/1, zero skipped,
+521 ms; security passed it 1/1, zero skipped, 560 ms. Reviewers inspected current
+production callers (none needs percent-encoded arguments), unchanged Unix/private
+capture and retained argument allowlist. No reviewer edits. Source repair is accepted
+within scope; actual preview remains to be retried. Implementation limit 21/21 is
+now exhausted; another source repair requires a changed-strategy budget decision.
+
+Round 21 committed locally as `b77ed18`. Actual preview from that clean reviewed
+source passed the repaired account read, then failed on an Azure read timeout
+(30.029 s; total 36.105 s), before Terraform planning. A single diagnostic rerun
+through existing `preflight` run injection exposed fixed safe labels only: account,
+AKS versions, VM SKU enumeration. The last phase timed out at 30.010 s (total
+32.865 s). This identifies the broad `az vm list-skus --location ... --all`
+preflight call as the blocker. No timeout increase, unchecked SKU substitution,
+provider mutation or source diagnostic instrumentation was made.
+
+**Checkpoint: needs_intervention; M1 incomplete.** No saved foundation plan exists.
+Three authorized repair rounds (19–21) are used. Source fixes passed their reviews;
+the actual source-to-private-plan path remains blocked by SKU discovery. Native
+Linux, actual foundation/audit and later milestones are still pending.
+
+Proposed changed strategy, not implemented: replace broad CLI SKU enumeration in
+T007's preflight with a bounded regional ARM resourceSkus read using the existing
+private token/request boundary. The same regional query succeeded during M0 in
+5.480 s. Select exact D4s_v5, validate scope/region/schema and complete pagination,
+and continue rejecting missing/restricted/ambiguous/incomplete results. Preserve
+current time budgets, subscription binding, private output, quota/cost/permission
+checks and all preview/apply gates. No fallback to the earlier observation as a
+caller-supplied ready flag. Reuse existing provider-contract tests; add focused
+faithful response/pagination negatives only for changed owned behavior.
+
+Request one additional implementation repair round (21 → 22), maximum 20 active
+minutes before reporting a result/intervention, with independent delta reviews and
+one unchanged real-preview retry after a local checkpoint commit. This is a concrete
+API strategy change, not more samples of the stalled CLI call. No provisioning,
+push/merge, permission expansion or timeout inflation is requested. Owner approval
+is required by the existing bounded-execution protocol before dependent repair.
+
+Owner approved this exact round-22 strategy on 2026-10-28. Started 09:51 UTC;
+20-active-minute checkpoint, one actual-preview retry after independent review and
+local commit. Existing guides/reviews are reused; one coder owns the SKU read and
+focused contracts, two reviewers assess the frozen delta. No new cloud mutation,
+permission or timeout change is approved.
+
+Round 22 frozen: infrastructure module and focused tests only. New regional ARM
+discovery uses existing private CLI token acquisition and standard fetch, exact
+subscription/resourceSkus/API/filter pagination, complete response checks and exact
+single configured SKU selection. Existing total 120 s/per-request maximum 30 s
+budgets and quota/price/permission/preview/apply gates remain unchanged.
+
+Verification choice under current guides: targeted regression for the changed
+provider boundary, not a universal test-first requirement. Real preflight,
+configuration/capability/cost logic remain in the test; CLI and ARM are narrow external
+boundaries with faithful two-page response and failure fixtures. RED caught the old
+broad CLI call (one failure, zero skipped, 172.8 ms); four focused tests then passed,
+zero skipped, 170.4 ms. Scoped two-file format-check, ESLint and whitespace checks
+passed. No provider/native runs by coder. Independent delta reviews pending.
+
+Round 22 independent verdicts (verbatim):
+
+> Quality: pass for round 22’s frozen two-file delta on e933f80. No findings.
+
+> Security: pass — scoped round-22 regional SKU discovery delta. No new findings.
+
+Quality passed four focused tests, zero failed/skipped, 190 ms, plus scoped
+formatting/ESLint/whitespace checks. Security passed the focused complete/paginated
+SKU regression 1/1, zero skipped, 165 ms, inspecting token/header privacy, forbidden
+redirects and same-origin/subscription/path/API/filter checks before every request.
+No reviewer edits. Actual provider/preview qualification remains pending.
+
+Round 22 committed locally as `7796bb8`. The single authorized actual preview
+retry progressed past regional SKU discovery, then failed quota validation in
+16.827 s, before Terraform planning. Read-only inspection of the two relevant CLI
+quota rows confirmed regional limit/currentValue `"24"`/`"0"` and Dsv5-family
+`"12"`/`"0"`: all four values are strings. The numeric-only evaluator rejects the
+provider boundary shape despite sufficient actual quota. No validation was bypassed,
+plan generated, timeout changed or resource created. Unchanged retail BOM read also
+passed independently (13 entries, 723 ms).
+
+**Checkpoint: needs_intervention; limit 22/22 exhausted, M1 incomplete.** Concrete
+next proposal: normalize only canonical nonnegative safe-integer decimal strings
+for CLI quota limit/currentValue at the response boundary, retaining the evaluator's
+numeric contract and all existing quota thresholds/denials. Reject missing, negative,
+fractional, whitespace/noncanonical, overflow or unrelated coercible input. Preserve
+existing numeric responses. Focused faithful CLI-shape and invalid-value tests plus
+independent delta review are sufficient; no new fixture framework or provider-loop
+investigation is proposed. Request one additional repair round (22 → 23), maximum
+15 active minutes, and one post-review/local-commit preview retry. No source work
+on that proposal occurs before owner approval; no broader authority or provisioning
+is requested.
+
+Owner approved round 23 on 2026-10-28: strict CLI quota normalization only,
+15-active-minute checkpoint, independent delta review and one actual preview retry
+after a local commit. No threshold, permission, timeout or other gate change.
+
+Round 23 frozen against `64b5183`: infrastructure module/test only, 17 production
+lines. CLI quota rows are copied and limit/currentValue normalized only from canonical
+nonnegative safe-integer strings; valid numeric counts retained. Pure evaluator and
+eight-core threshold unchanged. Public preflight tests retain actual evaluator/cost
+logic and reuse faithful CLI/HTTP boundaries. RED reproduced the observed string
+counts being rejected (one failure, zero skipped, 172.98 ms). Four focused tests
+passed, zero failed/skipped, 192.24 ms; scoped formatting/ESLint/whitespace checks
+passed. No provider/native calls by coder. Independent delta review pending.
+
+Round 23 independent verdicts (verbatim):
+
+> Quality: pass for round 23’s frozen two-file delta on 64b5183. No findings.
+
+> Security: pass — scoped round-23 quota normalization. No new findings.
+
+Quality passed four focused tests, zero failed/skipped, 159 ms, and scoped
+formatting/ESLint/whitespace checks. Security passed the focused boundary regression
+1/1, zero skipped, 161 ms. Both inspected strict syntax/range handling, unchanged
+numeric evaluator/thresholds and copied response rows. No reviewer edits. Actual
+preview remains pending.
+
+Round 23 committed locally as `e1a54a9`. The single actual preview retry passed
+quota validation and progressed into private workspace setup, then failed Windows
+ACL preparation (exit 1, 736 ms; total 36.653 s). No saved plan or resource creation.
+Read-only checks confirmed the existing workspace directories are regular,
+current-user-owned and pass the repository's 0700-equivalent ACL checker; no state
+or remote-authority marker was present.
+
+A disposable empty-directory reproducer isolated the actual helper defect: first
+`createPrivateDirectory(parent)` succeeds, second call fails ACL rewriting (558 ms).
+The same privacy assertion succeeds on already-prepared real directories. The
+probe touched no real state/configuration and its empty directories were removed.
+This is a repeat-setup defect in the shared Windows helper, not insufficient Azure
+quota or permission, and not evidence that broader file access is acceptable.
+
+**Checkpoint: needs_intervention; implementation 23/23 exhausted, M1 incomplete.**
+Proposed round 24 (maximum 15 active minutes): make private-directory setup idempotent
+by verifying and reusing an already-valid private directory before attempting an ACL
+rewrite. Preserve regular-directory/symlink, owner and access checks, and verified
+preparation/failure for invalid permissions. Extend existing helper tests with a
+real Windows repeat-setup regression and affected privacy cases; obtain independent
+delta reviews. Then local checkpoint and one actual preview retry. No Terraform
+policy, ACL broadening, timeout change, cloud mutation, push or merge is proposed.
+Owner approval is required before this additional repair; no implementation yet.
+
+Owner authorized the final bounded Windows attempt on 2026-10-28 after clarifying
+verification profiles and stopping criteria. Round 24 implements only the proven
+private-directory repeat defect, then one preview retry; no automatic round 25.
+Overall closure checkpoint: 45 active minutes from 10:40 UTC, with a different
+Linux execution proposal if Windows remains blocked. M1 is not complete merely
+because source repairs or a preview pass. No apply, publication or security waiver.
+
+Verification profile: this helper enforces file access controls, so its focused
+real-Windows regression begins failing before the fix. No universal test-first rule
+is applied to unrelated wrappers/output/declarations. Existing owner/allowlist/link
+tests are reused; only helper/module test files are owned by the coder.
+
+Round 24 frozen against `a937780`: `local-platform.mjs` and its existing test file,
+six production lines. Existing regular/non-symlink, owner and full-control/allowlist
+checks must pass before reusing the directory; otherwise existing preparation and
+final verification remain. Unix behavior and Windows ACL policy are unchanged.
+RED reproduced second-call failure (one failed, zero skipped, 1.783 s). All five
+helper tests then passed, zero failed/skipped, 6.037 s, including real Windows
+repeat/broad-grant/inherited/link coverage. Scoped formatting/ESLint/whitespace
+checks passed. No coder cloud/provider calls; independent review pending.
+
+Round 24 independent verdicts (verbatim):
+
+> Quality: pass for round 24’s frozen two-file delta on a937780. No findings.
+
+> Security: pass — scoped round-24 Windows private-directory reuse. No new findings.
+
+Quality passed two targeted tests, zero failed/skipped, 6.465 s, plus scoped
+formatting/ESLint/whitespace checks. Security passed all five helper tests, zero
+failed/skipped, 6.380 s. Both confirmed unchanged privacy validation and Unix
+behavior, with no new TOCTOU guarantee claimed. No reviewer edits. One final actual
+Windows preview retry follows a local commit; no automatic further repair.
+
+## Actual foundation preview checkpoint
+
+Round 24 committed locally as `023588d`. The final Windows preview succeeded in
+49.010 s with phase `foundation-preview-not-for-apply`. Private inputs/plan/review
+retain owner-only access. Pinned Terraform inspection confirmed source revision,
+binary plan hash, input hash, preview marker and uncreated state. No raw plan JSON
+was emitted or retained as a new report.
+
+Actual actions: **270 creates, 10 data reads, zero updates/deletes**. Managed scope:
+203 role assignments, 17 custom roles, nine workload identities/federated credentials,
+two storage accounts/11 containers, two RGs (including workload shell), DNS zone,
+retained recovery vault/RSA3072 key, audit workspace/table/DCR, guard policies and
+two operator app registrations/service principals/app-role assignments. No AKS,
+nodes, load balancer or application-secret resources. Counts are Azure objects,
+not a claim of 270 billable services.
+
+Storage plan: HTTPS/TLS1.2, shared keys/public nested access disabled, private
+containers, deny-default/no-bypass networking and versioning. Recovery vault: RBAC,
+purge protection and 90-day soft deletion with deny-default/no-bypass networking.
+Audit remains create-stage only, with readiness/diagnostics/network gate disabled
+and family qualification null. Sensitive use remains gated. Role scopes/conditions
+that depend on new resources still require actual enforcement qualification.
+
+Actual-preview verdicts (verbatim):
+
+> Quality: pass for the actual foundation preview only at 023588d. No quality findings.
+
+> Security: pass — bounded security assessment of the initial foundation preview at
+> 023588d; not apply approval. No new confirmed vulnerability.
+
+Reviewers inspected the private resolved plan in memory using pinned Terraform,
+confirmed plan/input/review association, scope and staging, and changed no files,
+ACLs or cloud resources. This is not M1 acceptance or permission to apply.
+
+### Pre-apply decisions and remaining work
+
+- Both operator app-role assignments resolve to the configured operator group.
+  [Microsoft requires Entra P1/P2 for group-based enterprise-app assignments](https://learn.microsoft.com/en-us/entra/identity/enterprise-apps/assign-user-or-group-access-portal).
+  Read-only Graph subscribedSkus returned zero entries with no next page; no premium
+  plan was found for the current user. The EUR118.51 estimate does not include a new
+  Entra license. No license was purchased or assignment changed. Recommend direct
+  app-role assignments to the one approved user while retaining the group for
+  Azure/Kubernetes access; owner design approval and scoped IAM review are required.
+- Proposed recovery-key expiry in the actual preview is 2027-10-28T00:00:00Z.
+  Confirm that date and an owner renewal/rotation responsibility before a real apply.
+- Reviewed deployment source must reach GitHub main for the unchanged apply contract.
+  Publication is not authorized yet. Prefer publishing the feature branch and
+  obtaining required Linux validation before any merge/apply decision. Main release
+  workflow can publish components, so do not dispatch it as if it were a read-only
+  check; choose a source-only validation path with explicit owner authorization.
+- Generate a new qualifying plan/review after source publication; this preview is
+  explicitly non-promotable. Apply only reviewed exact bytes after authorization.
+  Then complete remote-state authority and audit create → bind → enable/privacy/
+  authorized/denied access/gap qualification. M1 acceptance waits for those outcomes.
+
+The final Windows attempt succeeded; no Linux fallback for preview execution is
+needed. Linux acceptance checks remain pending independently. No new round 25,
+security exception, push/merge or paid provisioning has been inferred.
+
+Concrete licensing refinement proposed for owner decision: in
+`foundation/operators.tf`, change only the two operator app-role principals from
+`config.operatorGroupObjectId` to the existing reviewed
+`bootstrap_operator_object_id`. Keep assignment-required, tenant-only apps,
+`Equipment.Operator` role, operator IP controls and the group used for Azure/AKS
+unchanged. No automatic runtime fallback or purchase. Update operator enrollment/
+removal documentation: removing a group member alone will not revoke an individual's
+app assignment; direct assignment removal is required. Any additional operator needs
+explicit enrollment. Apply declaration verification profile (implement then pinned
+native checks/appropriate IAM delta review), not universal test-first. Actual app
+login and denial verification stays in M2. Do not implement before owner approval.
+
+Owner approved this exact direct-assignment refinement on 2026-10-28. Implement-first
+declarative change now frozen: operator app principal expression and existing native
+assertion only. Existing tenant/role/assignment-required/IP and Azure/AKS group are
+retained. Runbook/plan/model/task links now distinguish direct app enrollment/removal
+from group membership. No premium purchase, publication or apply is authorized.
+
+Pinned foundation format, check (fmt/backend-free init/validate/TFLint/Trivy) and test
+passed; 33 mocked native contracts, zero skipped. Initial sandbox registry access
+failed; outside-sandbox run passed with no provider/lockfile change. This follows
+the declaration verification profile, with no test-first requirement or invented
+RED. Actual browser access/denials remain M2. Independent delta review pending.
+
+Direct-assignment independent verdicts (verbatim):
+
+> Quality: pass for the operator-assignment delta on 2613159 and the reviewed
+> documentation changes. No findings.
+
+> Security: pass — scoped direct operator-assignment source and documentation
+> delta. No new findings.
+
+Reviewers inspected exact two-principal change, unchanged tenant/role/assignment/
+group boundaries and enrollment/removal guidance; reused the passing 33 native
+contracts and pinned gates. No redundant tests or live calls. Fresh private-plan
+principal confirmation remains before the next owner checkpoint.
+
+Direct-assignment change committed locally as `048c6e9`. Fresh private preview
+succeeded in 43.550 s: still 270 creates, 10 data reads, zero updates/deletes.
+Pinned private plan inspection confirmed exactly two app-role assignments, both to
+the reviewed bootstrap user, neither to the operator group. Security independently
+confirmed plan/review revision/hash binding and those exact principals; unchanged
+earlier plan assessment remains applicable. Security verdict (verbatim):
+
+> pass — resolved operator-assignment delta only.
+
+No license, live app assignment, firewall or cloud resource was changed. The approved
+licensing prerequisite is resolved in source/planned configuration; actual M2 login
+and removal evidence remain pending. This is not M1 acceptance or apply permission.
+
+Next publication proposal: push only branch `014-azure-aks-gitops` and open a draft
+PR against main so existing read-only PR/source Linux checks can run. The PR remains
+explicitly work in progress; no merge or apply. Do not dispatch the main release
+workflow for this purpose. Before publishing, confirm private input/plan/state paths
+remain ignored/untracked. Publication and external PR creation require explicit
+owner authorization; neither has occurred. Source must later qualify on main and
+receive a fresh exact plan/review before any apply decision.
+
+Owner authorized feature-branch push and draft PR creation on 2026-10-28 for the
+existing source-only Linux checks. Merge and apply remain unauthorized. Publication
+check found zero tracked private artifacts and zero committed matches for actual
+private account/contact/operator-IP input values. GitHub CLI authentication succeeds
+outside the sandbox; no existing open PR was found for this head branch.
+
+## Source CI checkpoint
+
+Feature branch pushed and draft PR 30 created under explicit owner authorization.
+Checked head: `267309f69eb73af93db30d8319a38ed5b5365e22`. No merge, apply or source
+repair occurred during publication/monitoring.
+
+- [PR validation 40679360066](https://github.com/cosminstirbu/equipment-reservations-lab/actions/runs/40679360066)
+  failed classification: ERR_MODULE_NOT_FOUND for @stoplight/spectral-parsers.
+  Source inspection confirms classification imports that dependency before npm ci;
+  setup-node's download cache does not install node_modules. Quality/Kubernetes
+  checks were skipped; downstream summary failure is consequential.
+- [Azure source checks 40679360084](https://github.com/cosminstirbu/equipment-reservations-lab/actions/runs/40679360084)
+  failed infra:tools verified tar extraction (exit 2, 23 ms). Available safe logs
+  do not prove the extraction cause. The preparation code uses tar for all archives;
+  verify Linux ZIP-format compatibility as the next bounded diagnostic. Infrastructure
+  checks/contracts/operational tests were skipped, not passed.
+
+Draft body now names both blocking results. No reruns, cancellation, diagnostic
+logging changes or automatic repairs were made. The CI evidence is recorded locally
+without another status-only push that would retrigger validation.
+
+Proposed next scope, not authorized: one bounded Linux CI setup batch, maximum
+30 active minutes and two validation runs, to install dependencies before the
+classifier and diagnose/correct format-aware verified extraction. Preserve pinned
+archive/executable checksums, policy integrity and contents-only PR permissions;
+no timeout inflation, ignored failures, Azure identity, merge or apply. Use the
+implementation-first declaration/thin-wrapper profile, then actual clean-runner
+checks; add only useful focused contracts. Report a pass or a concrete strategy
+decision at that limit, without automatic extensions.
+
+Owner approved the CI scope-and-setup batch on 2026-10-28. Started 11:32 UTC;
+30 active minutes, at most two workflow runs total. One reviewed candidate push
+will trigger the two existing PR/source workflows; no reruns/manual qualification
+dispatch are assumed. Two disjoint coders own workflow routing and archive extraction;
+coordinator owns documentation. Implement-first declaration/thin-wrapper profiles,
+focused checks and independent delta reviews precede publication.
+
+Scope of the lane split is Azure infrastructure qualification. Existing application,
+backend/frontend and feature-013 local deployment checks remain intact. Expensive
+Azure native/provider scenarios move to a fixed manual read-only lane with capacity
+limits; they remain required when affected and before dependent deployment acceptance.
+Source-only success must not claim provider/feature acceptance. No policy exceptions,
+permission expansion, skipped-failure pass, merge or apply are authorized.
+
+CI batch frozen against `354c538`: three existing workflow definitions, one new
+manual provider definition, existing workflow contracts and archive preparation.
+Classifiers install npm dependencies first. Three source lanes share the same fixed
+12-file tooling suite; pinned Terraform/manifest gates remain. Application/local-013
+and publication gates are preserved, so this mixed CI candidate still selects full
+application checks. No classifier allowlist was broadened.
+
+Linux ZIP extraction now uses unzip; other archives retain tar. All four pinned
+Linux ZIPs passed archive and executable checksum smoke checks with Git-for-Windows
+unzip. This establishes argument/archive compatibility, not target Linux success.
+Existing quality tests passed 13/13, scoped formatting/ESLint/whitespace passed.
+Workflow tests passed 9/9; component/workflow checks passed 25 with one existing
+platform-specific skip. No new tests were written first for these declarations/
+thin wrappers; existing contracts were updated after implementation as relevant.
+
+Independent verdicts (verbatim):
+
+> Quality: pass for the frozen CI/workflow and extraction delta on 354c538,
+> including the new manual workflow. No findings.
+
+> Security: pass — scoped CI/profile and Linux ZIP extraction delta against
+> 354c538. No new findings.
+
+Both independently passed nine workflow contracts and inspected preserved permissions,
+checksum/private-output boundaries and pending manual qualification. No reviewer
+edits, native fixtures or workflow runs. Publish one candidate for the two authorized
+automatic source workflow runs; stop at the agreed budget/result checkpoint.
+
+## CI batch result
+
+Published reviewed candidate `2bfc06470d8f5e4ac8b2c6225484c1b0bc05177a` once,
+starting exactly the two authorized workflows. No reruns or manual dispatch occurred.
+
+- [PR 40682081449](https://github.com/cosminstirbu/equipment-reservations-lab/actions/runs/40682081449):
+  classification passed. Quality failed at tool preparation; downstream source/app
+  quality checks were not reached. Existing local-013 Kubernetes verification passed,
+  including actual isolated deployment and real deployed behavior. Summary failed
+  consequentially; the PR run is failure, not partial acceptance.
+- [Azure source 40682081385](https://github.com/cosminstirbu/equipment-reservations-lab/actions/runs/40682081385):
+  infra:tools failed with only the safe generic quality-operation message. Downstream
+  source checks/tests were skipped. Logs do not establish the new underlying cause.
+
+Within the original time budget, source inspection and a disposable filesystem
+probe confirmed a deterministic Linux path bug: downloaded archive `tools/kubectl`
+collides with the required executable parent `tools/kubectl/` (EEXIST). This is a
+confirmed source defect, not a proven attribution of the coarse CI error. The
+local-only three-line fix separates `tools/downloads/` from installed paths without
+changing URL basenames, checksums, private output, limits or verified-tool reuse.
+
+All 16 pinned platform path layouts passed filesystem smoke; existing quality tests
+passed 13/13, zero skipped. Scoped formatting/ESLint/whitespace checks passed. Delta
+quality/security verdicts (verbatim):
+
+> Quality: Local-only downloads-directory delta verdict PASS; no findings.
+
+> Security: pass — three-line download-directory delta against 2bfc064. No new findings.
+
+Quality independently checked all 16 paths (zero collisions), passed 13/13 quality
+tests in 14.409 s, and inspected whitespace. Security reused those checks and
+inspected unchanged integrity/privacy boundaries. Linux execution of the fix remains
+unqualified. It is committed locally, unpublished; no third workflow was triggered.
+
+**Checkpoint:** two-run allowance exhausted. The reviewed local fix is ready for
+one additional candidate validation attempt (the same two automatic workflows),
+requiring owner authorization before push. No further source changes are proposed
+in that attempt. If tool preparation still fails, stop installer repairs and
+present a materially different tool-setup strategy, rather than automatically
+extending the loop. Source-only/provider/full-feature/M1 gates remain honestly pending.
+
+## Additional validation result: 7d54eff
+
+Owner approved one further validation pair. Published exact
+`7d54eff5ae8cd5ad9831323555a6d129fdf6935a`; no further source repair, rerun, manual
+dispatch, merge or apply occurred.
+
+- [PR 40684625248](https://github.com/cosminstirbu/equipment-reservations-lab/actions/runs/40684625248)
+  failed; classification and existing local-013 Kubernetes verification passed.
+- [Azure source 40684625235](https://github.com/cosminstirbu/equipment-reservations-lab/actions/runs/40684625235)
+  failed. Tool preparation, Terraform source gates and native Terraform contracts
+  passed on Linux. Focused suite: 194 total, 189 passed, two failed, three skipped.
+  Manual provider qualification remains pending.
+- Both failures are azure-terraform.test.mjs saved-plan association and preview
+  non-promotability cases. Their fake plan writers omit mode 0600; Linux rejects
+  those files through the existing production privacy check. Fix fixture fidelity,
+  not that check. No test assertion or production source was changed here.
+- GitHub also emitted [azure-images validation 40684616072](https://github.com/cosminstirbu/equipment-reservations-lab/actions/runs/40684616072),
+  a workflow-file failure with zero jobs, not a manually dispatched publication.
+  Exact server schema message is unavailable. Source contains three runner.temp
+  expressions in job env; [GitHub's context table](https://docs.github.com/en/actions/reference/workflows-and-actions/contexts)
+  excludes runner there and permits it in steps. This source problem is confirmed
+  independently; the exact server error was not recovered. queue:max is supported.
+
+Installer setup now works on target Linux; stop installer repairs. Proposed next
+bounded scope is only explicit private mode on the two fake plan files and fixed
+image-workflow path initialization in a valid runner/step context. Preserve main/
+enablement/approval/OIDC guards, cleanup and privacy checks. Implement first and
+update relevant existing contracts; no universal test-first or new framework.
+New source work/publication requires an owner decision. No automatic repair or
+further validation attempt has started; M1 remains incomplete.
+
+Owner approved the bounded correctness batch on 2026-10-28: 15 active minutes of
+source work and one candidate validation pair. Scope is only the two fake saved-plan
+file modes and valid step-context initialization of the image workflow's fixed
+private paths, plus relevant existing contract adjustments. Implement first, scoped
+checks and independent review; no new test framework/test-first phase, production
+privacy relaxation, publication-guard change, installer repair, merge or apply.
+
+Correctness delta frozen against `7ad06d8`: two synthetic plan files now explicitly
+use 0600. Image workflow paths initialize through a valid early Bash/GITHUB_ENV
+step; existing materialization/cleanup and all publication conditions/identity gates
+remain unchanged. Existing assertions were updated after implementation; no new
+test framework or invented RED phase. Four focused checks passed, zero skipped,
+7.615 s, plus scoped formatting/ESLint/whitespace checks.
+
+Independent verdicts (verbatim):
+
+> Quality: pass for the frozen three-file delta on 7ad06d8. No findings.
+
+> Security: pass — scoped three-file correctness delta against 7ad06d8. No new findings.
+
+Quality independently passed four focused tests, zero skipped, 9.497 s and scoped
+checks. Security reused that evidence and inspected fixed-path quoting, order and
+unchanged private-file/publication controls. One candidate validation pair follows;
+no Azure publication, manual qualification or apply is authorized.
+
+## Correctness validation result: 5b0977a
+
+Published one reviewed candidate `5b0977a8fa84faed133992a82708ecd972d825ee` for the
+authorized validation pair. No repair, rerun, manual dispatch, merge or apply followed.
+
+- [Azure source 40687460924](https://github.com/cosminstirbu/equipment-reservations-lab/actions/runs/40687460924)
+  **passed**: 194 tests, 191 passed, zero failed, three intentional skips. Tool
+  preparation, Terraform source gates/native contracts and manifests passed.
+- [PR 40687461290](https://github.com/cosminstirbu/equipment-reservations-lab/actions/runs/40687461290)
+  **failed** full quality. Tooling passed 150 with one skip; frontend passed 64.
+  Backend ran 596 tests: 595 passed, one failed, zero skipped. The case is
+  BrokerBootstrap.Tests.BrokerExecutableTests.CliExportsCorrelatedPrivateWorkflowBeforeExitForSuccessAndFilesystemFailure(fail:False);
+  Assert.Single found no matching exported item. Cause is not established; do not
+  label it flaky, unrelated or fixed without evidence. Report/summary failures are
+  consequential, not additional application defects.
+- Existing local-013 Kubernetes verification passed, including isolated deployment,
+  real deployed behavior and cleanup. This does not establish manual Azure provider
+  qualification. No new azure-images workflow-file failure was observed at this head;
+  actual image publication remains untested.
+
+**Checkpoint:** infrastructure/tooling blockers are resolved on Linux. Stop this
+batch at the agreed validation allowance. One existing backend observability test
+remains blocking; any diagnosis/repair is a separate bounded application task, not
+another installer round. Existing failing test supplies the feedback loop; no new
+test framework or blind rerun is proposed. No further source changes were made.
+
+Read-only pre-apply provider inspection: Storage, ManagedIdentity, Network,
+ContainerService, ContainerRegistry, OperationalInsights, PolicyInsights and
+microsoft.insights are registered; Microsoft.KeyVault is NotRegistered. The Insights
+entry uses lower-case namespace spelling and was confirmed directly. No registration
+was changed. Register KeyVault before eventual approved apply; all actual foundation,
+state/access/audit and main-qualified-plan gates remain pending. M1 is incomplete.
+
+Owner approved a separate 20-active-minute broker trace diagnosis/fix batch on
+2026-10-28, starting 12:49 UTC. Use the existing failed executable test as the loop;
+preserve assembly/module/class parallelism and current time budgets. Establish a
+causal reproducer before any fix, reuse current standards/evidence, and review a
+bounded delta before at most one candidate validation pair. No new test framework,
+installer/Windows repair, blind CI rerun, merge or apply is authorized. If the cause
+cannot be established within the budget, report that limit instead of guessing.
+
+The bounded diagnosis stopped without source changes or a candidate CI run. The
+Linux failure is precisely the missing `broker.definitions.prepare` span at
+BrokerExecutableTests.cs:273; log and metric assertions were not reached. The
+current BrokerBootstrap test project builds with zero warnings/errors. A cached
+Windows focused run skipped the Unix success case and encountered a different
+child-process failure, so it supplies no reproduction of the Linux defect. No
+current-build test pass is claimed. Sampling is explicitly AlwaysOn; shutdown
+and inherited endpoint settings remain unproven hypotheses. Parallelism, timeouts
+and runtime settings were preserved. A narrowly scoped Linux diagnostic run is
+the proposed next decision; the cause and M1 acceptance remain pending.
+
+Owner authorized one diagnostic-only Linux run. Use a temporary
+`diagnostics/broker-trace-014` branch and its read-only, pinned-action workflow;
+leave the PR branch remote unchanged to avoid another full validation pair.
+The existing subprocess/OTLP collector test boundary and assertions are retained.
+Diagnostic output is limited to fixed signal/case labels and numeric process,
+receipt, HTTP-status and decoded-record metadata; payloads, headers, endpoints,
+environment values and raw child output are excluded. This is ordinary assessed
+diagnostic metadata: inspect the projection, build and run the existing cases;
+do not add a new output-test suite. No behavior fix or M1 acceptance is claimed.
+
+Independent verifier verdict for the frozen diagnostic workflow/test delta:
+**pass**, no findings. Existing assertions/deadlines/parallelism retained; output
+contains fixed metadata only. Receipt snapshots do not establish exporter flush
+or delivery. Author build of BrokerBootstrap.Tests with `-warnaserror` passed
+with zero warnings/errors; workflow format check and `git diff --check` passed.
+
+Diagnostic commit `603162b3368036049276e1dbe61c63baa73bb798` was published only to
+`diagnostics/broker-trace-014`; the remote PR branch remained unchanged.
+[Run 40693747976](https://github.com/cosminstirbu/equipment-reservations-lab/actions/runs/40693747976)
+completed successfully: two existing cases passed, zero failures/skips. Both child
+processes took 709 ms and each collector received one HTTP-200 request per signal,
+one decoded workflow span and one decoded log; metric records were 23/24. No
+rejected requests were observed. This isolated success does not reproduce or
+resolve the previous full-suite missing-span failure (16 seconds). Contention,
+coverage or other full-run context may matter, but no cause is established.
+The one authorized diagnostic run is consumed; no automatic rerun or fix follows.
+
+Owner then authorized one Linux diagnostic in the original backend concurrency
+and coverage context. The dedicated diagnostic workflow now builds the solution
+and uses the existing `quality.mjs` backend reporting invocation: nine parallel
+modules, native coverage settings, TRX and the original Docker/Ryuk environment.
+Test deadlines and assembly/class parallelism are unchanged; the job uses the
+original PR job's 30-minute bound. Reports stay in owner-only temporary scratch,
+are not uploaded and are removed on exit. Reuse the reviewed test metadata
+projection. No production fix, full PR rerun, merge or Azure action is authorized.
+
+Independent workflow-delta review against `603162b`: **pass**, no findings;
+command and nine-module concurrency/coverage match the backend reporting lane.
+Formatting, JSON syntax and `git diff --check` passed. Published diagnostic-only
+commit `1d9d0a763da1f4291ff5862f692cca8a1bcfe48a` to the dedicated branch.
+[Run 40694522611](https://github.com/cosminstirbu/equipment-reservations-lab/actions/runs/40694522611)
+built successfully, then reported 591 passing, five failing and zero skipped
+tests. The broker filesystem-failure case reproduced the missing workflow span:
+child exit 1, elapsed 13,646 ms, one trace receipt, no captured trace payload and
+HTTP 499; logs/metrics each completed HTTP 200 with captured records. This narrows
+the failure to trace request transfer/cancellation before capture, without proving
+the cancellation initiator or a causal fix. Four other failures are in OpenAPI
+validation; this workflow omitted the required npm dependency setup, so the run
+does not faithfully qualify the complete backend suite. No retry was performed.
+
+Owner authorized a bounded follow-up cancellation investigation from 13:25 UTC,
+limited to 20 active minutes and one diagnostic Linux run. Distinguish exporter
+request cancellation, process exit and collector body handling with fixed safe
+metadata; preserve behavior, test deadlines and parallelism. Correct the known
+npm prerequisite omission before that run. No production fix or automatic retry
+is authorized by this diagnostic batch.
+
+Frozen timeline/prerequisite delta independently reviewed: **pass**, no findings.
+Warnings-as-errors build, scoped test/workflow formatting and whitespace checks
+passed. Diagnostic commit `79e3e42b56174ccb71ef8a35aa74c3ed0fb317b9` was published
+only to the dedicated diagnostic branch. Run 40697275177 performs the single
+authorized execution. Timeline values are parent observations; exit callbacks
+may lag actual exit and snapshots may omit later callbacks. No definitive causal
+ordering or production fix can be inferred from those observations alone.
+
+[Run 40697275177](https://github.com/cosminstirbu/equipment-reservations-lab/actions/runs/40697275177)
+completed successfully at `79e3e42`: 596 passing backend tests, zero failures and
+zero skips, duration 5m 07.700s. npm setup and solution build passed. This is
+positive evidence for the current backend concurrency/coverage context; it does
+not establish a causal correction of the earlier intermittent trace cancellation.
+No broker timeline lines appeared in the successful solution-run log, so no
+request/exit ordering is claimed. The single authorized run is consumed; stop
+this diagnostic batch without further reruns. Full PR validation at this revision,
+manual Azure qualification and actual M1 foundation work remain pending.
+
+Owner authorized publishing the current reviewed diagnostic candidate to the
+existing draft feature PR and one normal PR validation cycle. Reuse the scoped
+diagnostic reviews and passing backend result at `79e3e42`; retain the earlier
+trace cancellation as unresolved. No merge, Azure apply or additional diagnostic
+rerun is authorized by this checkpoint.
+
+Current candidate `c6a903b1c0be64d63a6c823e30c68f266651788e` passed both normal
+lanes, independently confirmed by the verifier:
+[PR validation 40699575567](https://github.com/cosminstirbu/equipment-reservations-lab/actions/runs/40699575567)
+and [Azure source 40699575568](https://github.com/cosminstirbu/equipment-reservations-lab/actions/runs/40699575568).
+All PR jobs passed: backend 596, frontend 64 and deployed behavior six, with zero
+failures/skips in those suites. Tooling passed 150 with one skip; additional
+post-quality checks passed 200 with one skip. Azure contracts passed 191 with
+three skips in each source lane; Terraform/static/manifests passed. No rerun was
+performed. This establishes current CI success, not permanent correction of the
+earlier trace cancellation or actual Azure provider acceptance. M1 still requires
+retained foundation creation and live state/access/audit qualification. No merge,
+Azure apply or milestone acceptance is implied.
+
+Source-to-main assessment: architect recommends choosing integration scope before
+merge. Full PR 30 can trigger existing main GHCR publication/local GitOps updates
+and introduces Azure maintenance schedules; a foundation-only split requires real
+helper/dependency extraction and separate review/CI. Security gives conditional
+GO for source-only merge readiness at `c6a903b`, provided Azure image publication
+stays disabled and operational credentials/environments stay unconfigured until
+separately qualified. Read-only GitHub inspection found no repository variables,
+secrets or environments; Azure workflows currently lack authentication inputs.
+The reaper path is not protected by the unfinished Terraform G3 barrier, so that
+barrier must not be represented as a universal operation safeguard. Initial fresh
+foundation planning after an authorized merge is supported; apply is not approved.
+Owner scope choice was requested before preparing either integration path.
+
+Owner chose completing M1 without merge. Local-human foundation mode is the
+approved durable path; source-to-main integration is deferred. The scoped design
+received independent security **pass**, retaining exact clean SHA/human identity,
+plan mode association, backend migration and audit/ACL gates. Implement T092 with
+targeted source-authority contracts and scoped checks; reuse unaffected CI evidence.
+Fresh read-only Azure checks on 2026-10-29 confirm CLI user/subscription/tenant
+match private configuration; KeyVault provider remains NotRegistered. No Azure
+resource has been provisioned by this follow-up.
+
+T092 source checks passed: six focused authorization/plan/CLI contracts, zero
+failures/skips, plus four-file formatting, ESLint and whitespace checks.
+Independent quality verdict: "Verdict: **pass** for frozen T092’s four-file delta
+on `c6a903b`. No findings."
+Independent security verdict: "**pass — T092 frozen four-file implementation
+against `c6a903b`. No new findings.**" Security independently repeated the six
+focused contracts successfully. Unchanged application/native Terraform evidence
+is reused. Next: local checkpoint and fresh private plan, not an apply.
+
+Fresh durable local plan at `38ad0cfdbb2ae2e04ee3f44c3c91a67703d6e122` passed
+independent quality and security review: 270 creates, 10 reads, zero updates or
+deletes, uncreated state/serial zero and local-mode/nonpreview binding. Plan hash
+`1875d8724e449f4f08b921d6bbd3bc2068647a5967d9ee915fdb7044530883fb`;
+review expires 2026-10-29 08:53:56.232 UTC (10:53:56 Europe/Bucharest).
+Retained IAM conditions/scopes must be verified after creation; audit/network
+readiness and family qualification remain unset, as required by create staging.
+Owner must approve this exact unexpired plan and confirm recovery-key expiry
+2027-10-28T00:00:00Z plus renewal responsibility before apply. Current public retail
+model remains EUR118.51 gross/month at 40 running hours and 21% tax for the eventual
+full solution (EUR98.91 stopped); this is not a separate foundation-only quote.
+T092 is complete; actual apply, verified migration and live qualification remain
+pending. No push, merge, provider registration or Azure resource creation occurred.
+Keep HEAD fixed until plan consumption; evidence-only spec edits remain uncommitted.
+
+Owner explicitly authorized Terraform apply on 2026-10-29 after the plan walkthrough
+and expiry/renewal proposal. At 08:21 UTC, saved-plan bytes/hash, source HEAD and
+unexpired review matched the approved plan. Microsoft.KeyVault registration was
+requested as its prerequisite; actual apply must use that saved plan without
+replanning. No merge/push is authorized. Verify deployed scopes/conditions, state
+migration and staged audit/access evidence before M1 acceptance or dependent use.
+
+Exact saved-plan apply exited 1 after 814.486 seconds. Private local state is
+preserved with 265 managed resources, serial 281; no lock remains. Wrapper outputs
+and the remote migration marker are absent, so state migration did not run. The
+unchanged saved plan is now stale because its uncreated-state binding no longer
+matches; do not retry it. Missing blocks: audit DCR, guard recovery permissions,
+two qualification-consumption readers and recovery-storage network assignment.
+Azure Activity Log safe projections report InvalidTransformQuery, two
+RoleAssignmentExists conflicts and StorageException. A bounded read-only team
+diagnosis is active; no reapply, replan, state mutation or deletion is authorized
+by this diagnostic step. Current Azure resources are partially created and retained.
+
+Confirmed causes: authored DCR projection referenced `_ResourceId`, which actual
+Azure rejected as an undefined input; two never-created consumption-reader
+declarations duplicated state-owned challenge-reader principal/scope/role tuples.
+Repairs preserve the eleven valid input fields plus required platform metadata
+qualification, and consolidate exactly the intended two read paths under existing
+assignment ownership. No import, state edit or deletion was performed. The two
+other missing apply assignments remain absent; their service-error cause is not
+established. Frozen seven-file source repair received independent quality and
+security **pass**, no new findings. Pinned source gates and all 33 foundation plus
+16 environment native contracts passed. Preserve the original plan/review/text in
+private history, commit locally, then generate a fresh zero-delete recovery plan.
+Further apply requires review and approval of that new plan.
+
+Fresh recovery plan at `c55b4910c9925ddfa3460d7c5cf9794d1a7a0d9c` passed
+independent quality/security review. Hash
+`e79c8006ba5db3983b0509f54dae67e90d31de3d4806cc80c78f8dd179845419`,
+state serial 281, local durable mode. Exactly three creates (corrected DCR and two
+absent apply grants) and two condition-only updates (backup/restore existing
+challenge-reader assignments); no other managed changes, deletion or replacement.
+Expires 2026-10-29 09:59:22.044 UTC (11:59:22 Europe/Bucharest). Private plan.txt and
+review.json now describe this recovery plan; consumed original artifacts are in
+private history. New owner approval is pending. No further apply was performed.
+
+Owner approved the recovery plan. Before execution, source/hash/expiry/state matched.
+Terraform recorded all three creates and both condition updates; the operation then
+stopped at the wrapper's migration verification guard. Private backup records 268
+managed resources, serial 287; remote Azure Blob state has the same lineage,
+resources and outputs at serial 288. The nine check-result records are identical
+after sorting their top-level order (eight pass, one unchanged unknown data-source
+check). Pinned Terraform 1.17 source explains the one-step serial increment and
+native clearing of the former local state file. No state loss is demonstrated.
+All copies are preserved, and the local remote-authority marker is not yet written.
+A narrowly reviewed verification/finalization repair is in progress; it must run
+no apply, init, state push/import or Azure mutation and must preserve every copy.
+
+Migration repair passed independent quality/security review. A test-only helper
+export finding (Q-MIG-001) was corrected through the existing public factory;
+quality closed it. Final affected suites passed 36/36 with zero skips; focused
+migration checks passed 2/2, plus scoped formatting, ESLint and whitespace checks.
+Next operation is guarded local finalization only, not another Terraform apply or
+migration. The recorded unknown check remains unknown and acceptance gates remain.
+
+Guarded finalization at `9804850` succeeded and independently verified the remote
+authority marker at serial 288, with all copies preserved. Fixed create-only DNS
+lease-control initialization also succeeded. Audit-bind planning then stopped at
+its qualification precondition before any new apply. One reviewed read-only JSON
+diagnostic showed existing-DCR validity true and observation validity false.
+All observation binding/freshness fields matched; actual fractional milliseconds
+failed the strict maximum-window comparison because pinned Terraform `timeadd`
+drops fractions. The two-file producer correction uses one whole-second base for
+observation and exact 30-minute expiry, without relaxing HCL. Existing regression,
+format/lint checks and independent quality/security reviews passed. Retry the
+normal guarded saved-plan operation once from a clean local checkpoint.
+
+The retry stopped before Terraform at operation-lease acquisition. Read-only HEAD
+confirmed the control blob was available/unlocked. One controlled adapter probe
+returned 409 BlobAlreadyExists from create-only PUT, never reached lease acquire,
+and left the record ETag unchanged. The adapter previously accepted only 412.
+The exact 409/code response is now accepted only for conditional creation; other
+conflicts and authorization failures still fail, and actual lease acquisition
+remains outside that catch. Existing real-HTTP regression, all 24 affected tests,
+static checks and independent quality/security reviews passed. One normal guarded
+replan follows; no audit-binding apply has been authorized or performed.
+
+Normal guarded audit-bind planning succeeded at
+`eb229e60341a6267eadacf5f55313f9c5941f5aa`. Independent quality and security both
+passed the exact private plan: 10 creates (nine exact reserved-TXT read/write grants
+and one Terraform guard) and two updates (workspace default-DCR link and stage
+guard), no other changes/deletions/replacements. Diagnostics remain disabled;
+operational vault grants and family qualification remain absent. Plan hash
+`3a498a20960546205c0a8fc5bb711a544936a9b3a3015454f1765394fccd68ad`,
+state serial 288, expires 2026-10-29 11:21:22.150 UTC (13:21:22 Bucharest).
+Private plan.txt/review.json now describe this next stage. New owner apply approval
+is pending; keep HEAD fixed until plan consumption. Remaining M1 work includes
+separate diagnostic enablement and actual stored-row/privacy/access/gap evidence.
+
+Owner approved audit-bind plan; expiry/hash/source/serial matched before execution.
+Apply returned foundation-applied-remote-state-verified. Independent post-bind
+review verified remote state serial 290, all nine exact TXT grants recorded, live
+default-DCR link and zero diagnostic settings. Next diagnostic-enable plan at
+`eb229e60341a6267eadacf5f55313f9c5941f5aa` passed independent quality/security:
+two exact retained Blob diagnostic settings plus one staging-guard update, no
+deletion or other changes. Dedicated StorageBlobLogs destination, only Read/Write/
+Delete categories, no secondary sink/metrics/archive or IAM changes. Plan hash
+`12d0b2add1fecd0ae23daa68ac392db9561f742fb6c0410b729874c6bc521af0`,
+state serial 290, expires 2026-10-29 11:39:18.973 UTC (13:39:18 Bucharest). New owner
+apply approval is pending; actual row/privacy/access/gap evidence remains required.
+
+
+Owner approved diagnostic-enable plan. Guarded apply succeeded and independently
+verified remote state serial 292. Both retained Blob services now have diagnostic
+settings; actual service omits the requested destination-type property. Routing
+was therefore checked against stored data rather than inferred from that property.
+
+On 2026-10-29, an independently reviewed bounded synthetic probe ran from
+11:21:25 to 11:21:55 UTC: 12 requests, zero failures. Both nonce-owned objects
+passed create, duplicate-create rejection, authenticated read, anonymous denial,
+conditional delete and HEAD-404 cleanup. The conditional conflict proves create
+semantics, not an RBAC denial. No real state/recovery objects were modified.
+
+Server-only aggregates obtained at 11:28 UTC show six StorageBlobLogs rows per
+account, including one successful write/read/delete and one conditional conflict
+each. No matching AzureDiagnostics rows were returned. No populated fields beyond
+the approved payload/resource fields and exact-valued Azure structural TenantId/Type
+were found. Workspace/table values matched, and all twelve resource IDs were
+nonempty at Blob-service scope. Exact full ARM membership remains to be checked.
+Anonymous workspace query returned 401; authenticated operator query succeeded.
+The operator's broader privileges prevent attributing that success solely to the
+operator-group assignment. Authenticated unassigned-user/hosted denials remain
+unproved. Source no-op drift and independent qualification assessment remain
+pending; M1 is not accepted and M2 is not authorized.
+
+Follow-up aggregate confirmed exact full expected Blob-service ARM membership for
+all twelve rows, zero mismatches, and no AzureDiagnostics matches by either
+account name or exact resource ID. Independent security review accepts bounded
+operation/outcome and stored-row privacy evidence. Identity-specific authenticated
+denials remain later gates; these probes do not claim them or lossless logging.
+
+Final same-input plan at eb229e6 completed successfully with zero creates/deletes
+and exactly two updates: only the Blob diagnostic destination selector changed
+from service-empty to Dedicated. Source reconciliation removes that unsupported
+Optional+Computed declaration, retaining workspace/categories/transform/protection.
+The existing native sink assertion removes only its selector expectation, keeping
+workspace/category/secondary-sink checks. Declarative verification follows the
+implementation; actual routing remains established by stored rows rather than a
+mocked selector. Independent quality and security passed this bounded delta.
+
+Final M1 handoff check at65c9da1: normal guarded plan/scanner exited0 with
+zero changes, state serial292. Plan hash
+`f6ef37c530d8b785cc02ffd8e7230734d933183bbe5ef4c156055658348dd403`.
+Pinned formatting and infra:check passed; infra:test passed33foundation plus
+16environment contracts, zero failures/skips. Exact temporary probe receipt
+was deleted at qualification end; all state/migration copies are preserved.
+M1 is ready for owner acceptance, not yet accepted. No M2 execution, merge,
+push or hosted activation is authorized by this checkpoint.
+
+Independent quality/convergence verdict at65c9da1: **Scoped M1 quality and
+convergence: pass. No remaining M1 implementation blockers identified.**
+Independent security verdict: **pass ? bounded M1 security qualification.**
+Final source delta: **pass ? observed one-attribute removal in audit.tf.
+No privacy exception required.** These verdicts cover M1 only; later identity,
+G3, workload, hosted delivery and recovery gates remain pending.
+
+## M1 acceptance and M2 start: 2026-10-29
+
+Owner accepted M1 and authorized M2, requesting the M2 summary before execution.
+M1 source/native/live evidence and scoped independent verdicts above remain binding.
+M2 targets trusted browser access to the application, Argo CD and Aspire Dashboard,
+with immutable images, guarded workload-vault admission and scoped secrets. Initial
+image publication belongs to M2; full dual-registry delivery automation remains M4.
+Recovery activation/credentials and destructive recreation remain gated for M5.
+
+First M2 batch: read-only assessment of existing environment Terraform, installer,
+runtime projection and image/bootstrap path, identifying the shortest supported
+sequence and concrete remaining prerequisites. Reuse M1 evidence. Bound the
+assessment to 20 active minutes; no paid provisioning, publication or permission
+changes in this batch. Implementation will use scoped native checks and milestone
+reviews under current engineering profiles, not universal test-first. Preserve
+existing feature acceptance requirements; surface conflicts before dependent work.
+
+M2 read-only preflight at baseline aa010a2 passed on 2026-10-29: West Europe,
+two nodes, Kubernetes1.35.8; 40running hours/month and21% tax yield EUR118.51
+running and EUR98.91 stopped against the existing EUR120 target. Private M2
+configuration now references the actual validated M1 recovery-key version; no
+key or Azure resource was changed. Execution-source review remains pending.
+
+M2 route assessment found hosted-SP proof consumers and main-only barriers incompatible
+with the requested pre-merge human execution. The minimal local procedure in
+[team/m2-local-execution-proposal.md](team/m2-local-execution-proposal.md) keeps
+those barriers intact and reuses native tools and actual human policy checks.
+Independent security verdict: **pass ? design review of frozen proposal
+35EDF851?FCE94B.** Owner agreement on the proof-sequence/feature-source exception
+and separate reviewed artifact pushes is pending. No paid workload provisioning,
+image publication or permission changes occurred in this assessment.
+
+Owner approved the minimal M2 human procedure and reviewed artifact pushes on
+2026-10-29. First action preparation identifies exact human policy fixture/probe
+requests for review before any live mutation; the environment saved creation plan
+follows its actual prerequisite qualification. No permanent local-mode framework.

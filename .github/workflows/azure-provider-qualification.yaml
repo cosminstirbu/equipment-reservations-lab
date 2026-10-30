@@ -1,0 +1,47 @@
+name: Azure native provider qualification
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: azure-provider-qualification
+  cancel-in-progress: false
+jobs:
+  providers:
+    name: Native Azure provider contracts
+    permissions:
+      contents: read
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+      - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444
+        with:
+          node-version: 24.15.0
+          cache: npm
+      - run: npm ci
+      - run: npm run infra:tools
+      - uses: actions/setup-dotnet@26b0ec14cb23fa6904739307f278c14f94c95bf1
+        with:
+          global-json-file: global.json
+      - name: Prepare native Azure provider runtime
+        shell: bash
+        run: |
+          set -euo pipefail
+          sudo apt-get update --quiet
+          sudo apt-get install --yes podman
+          mkdir -p "$RUNNER_TEMP/azure-provider-bin"
+          printf '%s\n' '#!/usr/bin/env bash' 'exec sudo --non-interactive /usr/bin/podman "$@"' > "$RUNNER_TEMP/azure-provider-bin/podman"
+          chmod 0755 "$RUNNER_TEMP/azure-provider-bin/podman"
+          "$RUNNER_TEMP/azure-provider-bin/podman" info >/dev/null
+          echo "$RUNNER_TEMP/azure-provider-bin" >> "$GITHUB_PATH"
+      - name: Azure tooling and provider contracts
+        run: node --test --test-concurrency=1 scripts/azure-*.test.mjs scripts/manifest-quality.test.mjs
+        env:
+          KUBECTL: ${{ github.workspace }}/.cache/azure-toolchain/kubectl/kubectl
+          KIND: ${{ github.workspace }}/.cache/azure-toolchain/kind/kind
+          CONTAINER_RUNTIME: podman
+          AZURE_PROVIDER_CONTRACTS: '1'

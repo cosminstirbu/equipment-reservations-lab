@@ -1,0 +1,108 @@
+{
+  "version": 1,
+  "approval": {
+    "approver": "Human environment owner",
+    "date": "2026-10-26",
+    "record": "specs/014-azure-aks-gitops/team/proposed-policy-exceptions.md"
+  },
+  "exceptions": [
+    {
+      "tool": "trivy",
+      "rule": "AVD-AZU-0010",
+      "root": "infra/azure/foundation",
+      "resource": "azurerm_storage_account.state",
+      "rationale": "Keep bypass=None and scoped network admission instead of trusting all Azure services."
+    },
+    {
+      "tool": "trivy",
+      "rule": "AVD-AZU-0010",
+      "root": "infra/azure/foundation",
+      "resource": "azurerm_storage_account.recovery",
+      "rationale": "Keep bypass=None and scoped network admission instead of trusting all Azure services."
+    },
+    {
+      "tool": "trivy",
+      "rule": "AVD-AZU-0058",
+      "root": "infra/azure/foundation",
+      "resource": "azurerm_storage_account.state",
+      "rationale": "Cost-conscious LRS has explicitly accepted regional-loss exposure."
+    },
+    {
+      "tool": "trivy",
+      "rule": "AVD-AZU-0058",
+      "root": "infra/azure/foundation",
+      "resource": "azurerm_storage_account.recovery",
+      "rationale": "Cost-conscious LRS has explicitly accepted regional-loss exposure."
+    },
+    {
+      "tool": "trivy",
+      "rule": "AVD-AZU-0060",
+      "root": "infra/azure/foundation",
+      "resource": "azurerm_storage_account.state",
+      "rationale": "Platform and infrastructure encryption replace storage-account CMK; state has no extra envelope layer."
+    },
+    {
+      "tool": "trivy",
+      "rule": "AVD-AZU-0060",
+      "root": "infra/azure/foundation",
+      "resource": "azurerm_storage_account.recovery",
+      "rationale": "Platform and infrastructure encryption plus backup-object envelope encryption replace storage-account CMK."
+    },
+    {
+      "tool": "trivy",
+      "rule": "AVD-AZU-0040",
+      "root": "infra/azure/environment",
+      "resource": "azurerm_kubernetes_cluster.application",
+      "rationale": "Use the approved bounded in-cluster telemetry stack instead of managed Azure monitoring."
+    },
+    {
+      "tool": "trivy",
+      "rule": "AVD-AZU-0065",
+      "root": "infra/azure/environment",
+      "resource": "azurerm_kubernetes_cluster.application",
+      "rationale": "Keep public API with narrow ranges, Entra RBAC and tested admission cleanup instead of a private API."
+    },
+    {
+      "tool": "trivy",
+      "rule": "AVD-AZU-0066",
+      "root": "infra/azure/environment",
+      "resource": "azurerm_kubernetes_cluster.application",
+      "rationale": "Omit Azure Policy addon; source and GitOps checks do not claim equivalent runtime admission."
+    },
+    {
+      "tool": "trivy",
+      "rule": "AVD-AZU-0067",
+      "root": "infra/azure/environment",
+      "resource": "azurerm_kubernetes_cluster.application",
+      "rationale": "Use platform-managed disk encryption instead of a customer-managed disk encryption set."
+    },
+    {
+      "tool": "tflint",
+      "rule": "azurerm_resources_missing_prevent_destroy",
+      "root": "infra/azure/environment",
+      "resource": "azurerm_container_registry.application",
+      "rationale": "Disposable workload registry must support reviewed destructive rehearsal and source-proven GHCR recovery."
+    },
+    {
+      "tool": "trivy",
+      "rule": "AVD-AZU-0057",
+      "root": "infra/azure/foundation",
+      "resource": "azurerm_storage_account.state",
+      "rationale": "Owner-approved Queue logging rule false positive ignores protected Blob diagnostics; actual Blob audit qualification and privacy remain required."
+    },
+    {
+      "tool": "trivy",
+      "rule": "AVD-AZU-0057",
+      "root": "infra/azure/foundation",
+      "resource": "azurerm_storage_account.recovery",
+      "rationale": "Owner-approved Queue logging rule false positive ignores protected Blob diagnostics; actual Blob audit qualification and privacy remain required."
+    },
+    {
+      "tool": "tflint",
+      "rule": "azurerm_resources_missing_prevent_destroy",
+      "root": "infra/azure/environment",
+      "resource": "azurerm_key_vault.workload",
+      "rationale": "Owner-approved disposable workload vault lifecycle permits reviewed environment recreation; retained vault protection and audit qualification remain mandatory."
+    }
+  ]
+}

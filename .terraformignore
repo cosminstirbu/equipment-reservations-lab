@@ -1,0 +1,14 @@
+.git/
+.local/
+.cache/
+**/.terraform/
+**/node_modules/
+**/*.tfstate
+**/*.tfstate.*
+**/*.tfplan
+**/*.tfplan.json
+**/*.tfvars
+**/*.tfvars.json
+!infra/azure/examples/source-scan.tfvars
+**/*.secret.yaml
+**/kubeconfig*

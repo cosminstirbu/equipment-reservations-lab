@@ -1,0 +1,192 @@
+{
+  "apiVersion": "v1",
+  "kind": "List",
+  "items": [
+    {
+      "apiVersion": "admissionregistration.k8s.io/v1",
+      "kind": "ValidatingAdmissionPolicy",
+      "metadata": { "name": "equipment-verification-jobs" },
+      "spec": {
+        "failurePolicy": "Fail",
+        "matchConstraints": {
+          "resourceRules": [
+            {
+              "apiGroups": ["batch"],
+              "apiVersions": ["v1"],
+              "operations": ["CREATE", "UPDATE"],
+              "resources": ["jobs"],
+              "scope": "Namespaced"
+            }
+          ]
+        },
+        "matchConditions": [
+          {
+            "name": "recovery-namespace",
+            "expression": "request.namespace == 'equipment-recovery'"
+          }
+        ],
+        "validations": [
+          {
+            "expression": "(object.metadata.name.matches('^equipment-verify-[a-f0-9]{16}$')) && (object.metadata.namespace == 'equipment-recovery') && (object.metadata.labels.size() == 2) && (object.metadata.labels['equipment.verify/point'].matches('^[a-f0-9]{16}$')) && (object.metadata.labels['azure.workload.identity/use'] == 'true') && (object.metadata.name == 'equipment-verify-' + object.metadata.labels['equipment.verify/point']) && (!has(object.metadata.annotations) || object.metadata.annotations.size() == 0) && (!has(object.metadata.ownerReferences) || object.metadata.ownerReferences.size() == 0) && (!has(object.metadata.finalizers) || object.metadata.finalizers.size() == 0) && (object.spec.template.spec.serviceAccountName == \"equipment-verification-server\")",
+            "message": "Only the reviewed isolated verification template is permitted."
+          },
+          {
+            "expression": "(object.spec.template.spec.automountServiceAccountToken == false) && (object.spec.template.spec.restartPolicy == \"Never\") && (object.spec.template.spec.terminationGracePeriodSeconds == 10) && (object.spec.template.spec.securityContext.runAsNonRoot == true) && (object.spec.template.spec.securityContext.runAsUser == 999) && (object.spec.template.spec.securityContext.runAsGroup == 999) && (object.spec.template.spec.securityContext.fsGroup == 999) && (object.spec.template.spec.securityContext.seccompProfile.type == \"RuntimeDefault\") && (object.spec.template.spec.containers.size() == 1) && (object.spec.template.spec.containers[0].name == \"postgres\")",
+            "message": "Only the reviewed isolated verification template is permitted."
+          },
+          {
+            "expression": "(object.spec.template.spec.containers[0].image == \"docker.io/library/postgres@sha256:74935e72241653ca55e0414067e6d8763aceb8a810eb51b452253ec3dcfc4336\") && (object.spec.template.spec.containers[0].imagePullPolicy == \"IfNotPresent\") && (object.spec.template.spec.containers[0].command.size() == 1) && (object.spec.template.spec.containers[0].command[0] == \"docker-entrypoint.sh\") && (object.spec.template.spec.containers[0].args.size() == 7) && (object.spec.template.spec.containers[0].args[0] == \"postgres\") && (object.spec.template.spec.containers[0].args[1] == \"-c\") && (object.spec.template.spec.containers[0].args[2] == \"log_statement=none\") && (object.spec.template.spec.containers[0].args[3] == \"-c\") && (object.spec.template.spec.containers[0].args[4] == \"log_min_error_statement=panic\")",
+            "message": "Only the reviewed isolated verification template is permitted."
+          },
+          {
+            "expression": "(object.spec.template.spec.containers[0].args[5] == \"-c\") && (object.spec.template.spec.containers[0].args[6] == \"max_connections=10\") && (object.spec.template.spec.containers[0].env.size() == 4) && (object.spec.template.spec.containers[0].env[0].name == \"POSTGRES_USER\") && (object.spec.template.spec.containers[0].env[0].value == \"verification_admin\") && (object.spec.template.spec.containers[0].env[1].name == \"POSTGRES_DB\") && (object.spec.template.spec.containers[0].env[1].value == \"postgres\") && (object.spec.template.spec.containers[0].env[2].name == \"PGDATA\") && (object.spec.template.spec.containers[0].env[2].value == \"/data/pgdata\") && (object.spec.template.spec.containers[0].env[3].name == \"POSTGRES_PASSWORD\")",
+            "message": "Only the reviewed isolated verification template is permitted."
+          },
+          {
+            "expression": "(object.spec.template.spec.containers[0].env[3].valueFrom.secretKeyRef.name == \"equipment-verification-server-credentials\") && (object.spec.template.spec.containers[0].env[3].valueFrom.secretKeyRef.key == \"postgresPassword\") && (object.spec.template.spec.containers[0].ports.size() == 1) && (object.spec.template.spec.containers[0].ports[0].name == \"postgres\") && (object.spec.template.spec.containers[0].ports[0].containerPort == 5432) && (object.spec.template.spec.containers[0].ports[0].protocol == \"TCP\") && (dyn(object.spec.template.spec.containers[0].resources).requests.cpu == \"100m\") && (dyn(object.spec.template.spec.containers[0].resources).requests.memory == \"128Mi\") && (dyn(object.spec.template.spec.containers[0].resources).limits.cpu == \"500m\") && (dyn(object.spec.template.spec.containers[0].resources).limits.memory == \"512Mi\")",
+            "message": "Only the reviewed isolated verification template is permitted."
+          },
+          {
+            "expression": "(object.spec.template.spec.containers[0].securityContext.allowPrivilegeEscalation == false) && (object.spec.template.spec.containers[0].securityContext.readOnlyRootFilesystem == true) && (object.spec.template.spec.containers[0].securityContext.capabilities.drop.size() == 1) && (object.spec.template.spec.containers[0].securityContext.capabilities.drop[0] == \"ALL\") && (object.spec.template.spec.containers[0].startupProbe.exec.command.size() == 3) && (object.spec.template.spec.containers[0].startupProbe.exec.command[0] == \"/bin/sh\") && (object.spec.template.spec.containers[0].startupProbe.exec.command[1] == \"-ec\") && (object.spec.template.spec.containers[0].startupProbe.exec.command[2] == \"PGPASSWORD=\\\"$POSTGRES_PASSWORD\\\" psql -X -h 127.0.0.1 -U verification_admin -d postgres --set ON_ERROR_STOP=1 -Atc \\\"SELECT 1\\\" >/dev/null 2>&1\") && (object.spec.template.spec.containers[0].startupProbe.periodSeconds == 5) && (object.spec.template.spec.containers[0].startupProbe.timeoutSeconds == 3)",
+            "message": "Only the reviewed isolated verification template is permitted."
+          },
+          {
+            "expression": "(object.spec.template.spec.containers[0].startupProbe.failureThreshold == 60) && (object.spec.template.spec.containers[0].readinessProbe.exec.command.size() == 3) && (object.spec.template.spec.containers[0].readinessProbe.exec.command[0] == \"/bin/sh\") && (object.spec.template.spec.containers[0].readinessProbe.exec.command[1] == \"-ec\") && (object.spec.template.spec.containers[0].readinessProbe.exec.command[2] == \"PGPASSWORD=\\\"$POSTGRES_PASSWORD\\\" psql -X -h 127.0.0.1 -U verification_admin -d postgres --set ON_ERROR_STOP=1 -Atc \\\"SELECT 1\\\" >/dev/null 2>&1\") && (object.spec.template.spec.containers[0].readinessProbe.periodSeconds == 5) && (object.spec.template.spec.containers[0].readinessProbe.timeoutSeconds == 3) && (object.spec.template.spec.containers[0].readinessProbe.failureThreshold == 3) && (object.spec.template.spec.containers[0].livenessProbe.exec.command.size() == 3) && (object.spec.template.spec.containers[0].livenessProbe.exec.command[0] == \"/bin/sh\")",
+            "message": "Only the reviewed isolated verification template is permitted."
+          },
+          {
+            "expression": "(object.spec.template.spec.containers[0].livenessProbe.exec.command[1] == \"-ec\") && (object.spec.template.spec.containers[0].livenessProbe.exec.command[2] == \"PGPASSWORD=\\\"$POSTGRES_PASSWORD\\\" psql -X -h 127.0.0.1 -U verification_admin -d postgres --set ON_ERROR_STOP=1 -Atc \\\"SELECT 1\\\" >/dev/null 2>&1\") && (object.spec.template.spec.containers[0].livenessProbe.periodSeconds == 5) && (object.spec.template.spec.containers[0].livenessProbe.timeoutSeconds == 3) && (object.spec.template.spec.containers[0].livenessProbe.failureThreshold == 3) && (object.spec.template.spec.containers[0].volumeMounts.size() == 4) && (object.spec.template.spec.containers[0].volumeMounts[0].name == \"data\") && (object.spec.template.spec.containers[0].volumeMounts[0].mountPath == \"/data\") && (object.spec.template.spec.containers[0].volumeMounts[1].name == \"tmp\") && (object.spec.template.spec.containers[0].volumeMounts[1].mountPath == \"/tmp\")",
+            "message": "Only the reviewed isolated verification template is permitted."
+          },
+          {
+            "expression": "(object.spec.template.spec.containers[0].volumeMounts[2].name == \"run\") && (object.spec.template.spec.containers[0].volumeMounts[2].mountPath == \"/var/run/postgresql\") && (object.spec.template.spec.containers[0].volumeMounts[3].name == \"credentials\") && (object.spec.template.spec.containers[0].volumeMounts[3].mountPath == \"/mnt/secrets-store\") && (object.spec.template.spec.containers[0].volumeMounts[3].readOnly == true) && (object.spec.template.spec.volumes.size() == 4) && (object.spec.template.spec.volumes[0].name == \"data\") && (dyn(object.spec.template.spec.volumes[0].emptyDir).sizeLimit == \"1Gi\") && (object.spec.template.spec.volumes[1].name == \"tmp\") && (dyn(object.spec.template.spec.volumes[1].emptyDir).sizeLimit == \"16Mi\")",
+            "message": "Only the reviewed isolated verification template is permitted."
+          },
+          {
+            "expression": "(object.spec.template.spec.volumes[2].name == \"run\") && (dyn(object.spec.template.spec.volumes[2].emptyDir).sizeLimit == \"8Mi\") && (object.spec.template.spec.volumes[3].name == \"credentials\") && (object.spec.template.spec.volumes[3].csi.driver == \"secrets-store.csi.k8s.io\") && (object.spec.template.spec.volumes[3].csi.readOnly == true) && (object.spec.template.spec.volumes[3].csi.volumeAttributes.secretProviderClass == \"equipment-verification-server\") && (object.spec.activeDeadlineSeconds == 600) && (object.spec.ttlSecondsAfterFinished == 300) && (object.spec.backoffLimit == 0) && (!has(object.spec.template.metadata.annotations) || object.spec.template.metadata.annotations.size() == 0)",
+            "message": "Only the reviewed isolated verification template is permitted."
+          },
+          {
+            "expression": "(!has(object.spec.podFailurePolicy)) && (!has(object.spec.successPolicy)) && (!has(object.spec.backoffLimitPerIndex)) && (!has(object.spec.maxFailedIndexes)) && (!has(object.spec.managedBy)) && (!has(object.spec.manualSelector) || object.spec.manualSelector == false) && (!has(object.spec.suspend) || object.spec.suspend == false) && (!has(object.spec.parallelism) || object.spec.parallelism == 1) && (!has(object.spec.completions) || object.spec.completions == 1) && (!has(object.spec.completionMode) || object.spec.completionMode == 'NonIndexed')",
+            "message": "Only the reviewed isolated verification template is permitted."
+          },
+          {
+            "expression": "(!has(object.spec.template.spec.initContainers)) && (!has(object.spec.template.spec.ephemeralContainers)) && (!has(object.spec.template.spec.hostAliases)) && (!has(object.spec.template.spec.imagePullSecrets)) && (!has(object.spec.template.spec.nodeName)) && (!has(object.spec.template.spec.nodeSelector)) && (!has(object.spec.template.spec.priorityClassName)) && (!has(object.spec.template.spec.resourceClaims)) && (!has(object.spec.template.spec.runtimeClassName)) && (!has(object.spec.template.spec.schedulingGates))",
+            "message": "Only the reviewed isolated verification template is permitted."
+          },
+          {
+            "expression": "(!has(object.spec.template.spec.shareProcessNamespace)) && (!has(object.spec.template.spec.subdomain)) && (!has(object.spec.template.spec.affinity)) && (!has(object.spec.template.spec.topologySpreadConstraints)) && (!has(object.spec.template.spec.tolerations)) && (!has(object.spec.template.spec.readinessGates)) && (!has(object.spec.template.spec.hostname)) && (!has(object.spec.template.spec.resources)) && (!has(object.spec.template.spec.hostNetwork) || object.spec.template.spec.hostNetwork == false) && (!has(object.spec.template.spec.hostPID) || object.spec.template.spec.hostPID == false)",
+            "message": "Only the reviewed isolated verification template is permitted."
+          },
+          {
+            "expression": "(!has(object.spec.template.spec.hostIPC) || object.spec.template.spec.hostIPC == false) && (!has(object.spec.template.spec.securityContext.sysctls)) && (!has(object.spec.template.spec.securityContext.supplementalGroups)) && (!has(object.spec.template.spec.securityContext.windowsOptions)) && (!has(object.spec.template.spec.securityContext.seLinuxOptions)) && (!has(object.spec.template.spec.securityContext.appArmorProfile)) && (!has(object.spec.template.spec.containers[0].envFrom)) && (!has(object.spec.template.spec.containers[0].lifecycle)) && (!has(object.spec.template.spec.containers[0].volumeDevices)) && (!has(object.spec.template.spec.containers[0].workingDir))",
+            "message": "Only the reviewed isolated verification template is permitted."
+          },
+          {
+            "expression": "(!has(object.spec.template.spec.containers[0].resizePolicy)) && (!has(object.spec.template.spec.containers[0].restartPolicy)) && (!has(object.spec.template.spec.containers[0].restartPolicyRules)) && (!has(object.spec.template.spec.containers[0].stdin) || object.spec.template.spec.containers[0].stdin == false) && (!has(object.spec.template.spec.containers[0].stdinOnce) || object.spec.template.spec.containers[0].stdinOnce == false) && (!has(object.spec.template.spec.containers[0].tty) || object.spec.template.spec.containers[0].tty == false) && (!has(object.spec.template.spec.containers[0].securityContext.privileged)) && (!has(object.spec.template.spec.containers[0].securityContext.procMount)) && (!has(object.spec.template.spec.containers[0].securityContext.windowsOptions)) && (!has(object.spec.template.spec.containers[0].securityContext.seLinuxOptions))",
+            "message": "Only the reviewed isolated verification template is permitted."
+          },
+          {
+            "expression": "(!has(object.spec.template.spec.containers[0].securityContext.runAsUser)) && (!has(object.spec.template.spec.containers[0].securityContext.runAsGroup)) && (!has(object.spec.template.spec.containers[0].securityContext.runAsNonRoot)) && (!has(object.spec.template.spec.containers[0].securityContext.appArmorProfile)) && (!has(object.spec.template.spec.containers[0].securityContext.seccompProfile)) && (!has(object.spec.template.spec.containers[0].securityContext.capabilities.add) || object.spec.template.spec.containers[0].securityContext.capabilities.add.size() == 0) && (!has(object.spec.template.spec.containers[0].ports[0].hostPort) || object.spec.template.spec.containers[0].ports[0].hostPort == 0) && (!has(object.spec.template.spec.containers[0].ports[0].hostIP)) && (!has(object.spec.template.spec.containers[0].volumeMounts[0].subPath)) && (!has(object.spec.template.spec.containers[0].volumeMounts[0].subPathExpr))",
+            "message": "Only the reviewed isolated verification template is permitted."
+          },
+          {
+            "expression": "(!has(object.spec.template.spec.containers[0].volumeMounts[0].mountPropagation)) && (!has(object.spec.template.spec.containers[0].volumeMounts[0].recursiveReadOnly)) && (!has(object.spec.template.spec.containers[0].volumeMounts[0].readOnly) || object.spec.template.spec.containers[0].volumeMounts[0].readOnly == false) && (!has(object.spec.template.spec.containers[0].volumeMounts[1].subPath)) && (!has(object.spec.template.spec.containers[0].volumeMounts[1].subPathExpr)) && (!has(object.spec.template.spec.containers[0].volumeMounts[1].mountPropagation)) && (!has(object.spec.template.spec.containers[0].volumeMounts[1].recursiveReadOnly)) && (!has(object.spec.template.spec.containers[0].volumeMounts[1].readOnly) || object.spec.template.spec.containers[0].volumeMounts[1].readOnly == false) && (!has(object.spec.template.spec.containers[0].volumeMounts[2].subPath)) && (!has(object.spec.template.spec.containers[0].volumeMounts[2].subPathExpr))",
+            "message": "Only the reviewed isolated verification template is permitted."
+          },
+          {
+            "expression": "(!has(object.spec.template.spec.containers[0].volumeMounts[2].mountPropagation)) && (!has(object.spec.template.spec.containers[0].volumeMounts[2].recursiveReadOnly)) && (!has(object.spec.template.spec.containers[0].volumeMounts[2].readOnly) || object.spec.template.spec.containers[0].volumeMounts[2].readOnly == false) && (!has(object.spec.template.spec.containers[0].volumeMounts[3].subPath)) && (!has(object.spec.template.spec.containers[0].volumeMounts[3].subPathExpr)) && (!has(object.spec.template.spec.containers[0].volumeMounts[3].mountPropagation)) && (!has(object.spec.template.spec.containers[0].volumeMounts[3].recursiveReadOnly)) && (!has(object.spec.template.spec.volumes[0].emptyDir.medium)) && (!has(object.spec.template.spec.volumes[1].emptyDir.medium)) && (!has(object.spec.template.spec.volumes[2].emptyDir.medium))",
+            "message": "Only the reviewed isolated verification template is permitted."
+          },
+          {
+            "expression": "(object.spec.template.metadata.labels['equipment.verify/point'] == object.metadata.labels['equipment.verify/point']) && (object.spec.template.metadata.labels['azure.workload.identity/use'] == 'true') && (object.spec.template.metadata.labels.all(key, key in ['equipment.verify/point', 'azure.workload.identity/use', 'controller-uid', 'job-name', 'batch.kubernetes.io/controller-uid', 'batch.kubernetes.io/job-name'])) && (object.spec.template.spec.dnsPolicy == 'ClusterFirst') && (object.spec.template.spec.schedulerName == 'default-scheduler')",
+            "message": "Only the reviewed isolated verification template is permitted."
+          },
+          {
+            "expression": "object.spec.template.spec.enableServiceLinks == false",
+            "message": "Only the reviewed isolated verification template is permitted."
+          },
+          {
+            "expression": "(dyn(object.spec.template.spec.containers[0].resources).requests.size() == 2) && (dyn(object.spec.template.spec.containers[0].resources).limits.size() == 2) && (!has(object.spec.template.spec.volumes[3].csi.nodePublishSecretRef)) && (!has(object.spec.template.spec.volumes[3].csi.fsType)) && (object.spec.template.spec.volumes[3].csi.volumeAttributes.size() == 1) && (!has(object.spec.template.spec.dnsConfig)) && ((!has(object.spec.template.spec.containers[0].terminationMessagePath) || object.spec.template.spec.containers[0].terminationMessagePath == '/dev/termination-log')) && ((!has(object.spec.template.spec.containers[0].terminationMessagePolicy) || object.spec.template.spec.containers[0].terminationMessagePolicy == 'File'))",
+            "message": "Only the reviewed isolated verification template is permitted."
+          }
+        ]
+      }
+    },
+    {
+      "apiVersion": "admissionregistration.k8s.io/v1",
+      "kind": "ValidatingAdmissionPolicyBinding",
+      "metadata": { "name": "equipment-verification-jobs" },
+      "spec": {
+        "policyName": "equipment-verification-jobs",
+        "validationActions": ["Deny"],
+        "matchResources": {
+          "namespaceSelector": {
+            "matchLabels": {
+              "kubernetes.io/metadata.name": "equipment-recovery"
+            }
+          }
+        }
+      }
+    },
+    {
+      "apiVersion": "admissionregistration.k8s.io/v1",
+      "kind": "ValidatingAdmissionPolicy",
+      "metadata": { "name": "equipment-verification-services" },
+      "spec": {
+        "failurePolicy": "Fail",
+        "matchConstraints": {
+          "resourceRules": [
+            {
+              "apiGroups": [""],
+              "apiVersions": ["v1"],
+              "operations": ["CREATE", "UPDATE"],
+              "resources": ["services"],
+              "scope": "Namespaced"
+            }
+          ]
+        },
+        "matchConditions": [
+          {
+            "name": "recovery-namespace",
+            "expression": "request.namespace == 'equipment-recovery'"
+          }
+        ],
+        "validations": [
+          {
+            "expression": "(object.metadata.name.matches('^equipment-verify-[a-f0-9]{16}$')) && (object.metadata.namespace == 'equipment-recovery') && (object.metadata.labels.size() == 2) && (object.metadata.labels['equipment.verify/point'].matches('^[a-f0-9]{16}$')) && (object.metadata.labels['azure.workload.identity/use'] == 'true') && (object.metadata.name == 'equipment-verify-' + object.metadata.labels['equipment.verify/point']) && (!has(object.metadata.annotations) || object.metadata.annotations.size() == 0) && (!has(object.metadata.ownerReferences) || object.metadata.ownerReferences.size() == 0) && (!has(object.metadata.finalizers) || object.metadata.finalizers.size() == 0) && (object.spec.type == 'ClusterIP')",
+            "message": "Only the reviewed isolated verification template is permitted."
+          },
+          {
+            "expression": "(object.spec.selector == object.metadata.labels) && (object.spec.ports.size() == 1) && (object.spec.ports[0].name == \"postgres\") && (object.spec.ports[0].port == 5432) && (object.spec.ports[0].targetPort == 5432) && (object.spec.ports[0].protocol == \"TCP\") && (!has(object.spec.externalIPs)) && (!has(object.spec.externalName)) && (!has(object.spec.loadBalancerIP)) && (!has(object.spec.loadBalancerSourceRanges))",
+            "message": "Only the reviewed isolated verification template is permitted."
+          },
+          {
+            "expression": "(!has(object.spec.loadBalancerClass)) && (!has(object.spec.allocateLoadBalancerNodePorts)) && (!has(object.spec.healthCheckNodePort)) && (!has(object.spec.externalTrafficPolicy)) && (!has(object.spec.trafficDistribution)) && (!has(object.spec.ports[0].nodePort)) && (!has(object.spec.clusterIP) || object.spec.clusterIP != 'None') && (!has(object.spec.sessionAffinity) || object.spec.sessionAffinity == 'None') && (!has(object.spec.publishNotReadyAddresses) || object.spec.publishNotReadyAddresses == false)",
+            "message": "Only the reviewed isolated verification template is permitted."
+          },
+          {
+            "expression": "!has(object.spec.ports[0].appProtocol)",
+            "message": "Only the reviewed isolated verification template is permitted."
+          }
+        ]
+      }
+    },
+    {
+      "apiVersion": "admissionregistration.k8s.io/v1",
+      "kind": "ValidatingAdmissionPolicyBinding",
+      "metadata": { "name": "equipment-verification-services" },
+      "spec": {
+        "policyName": "equipment-verification-services",
+        "validationActions": ["Deny"],
+        "matchResources": {
+          "namespaceSelector": {
+            "matchLabels": {
+              "kubernetes.io/metadata.name": "equipment-recovery"
+            }
+          }
+        }
+      }
+    }
+  ]
+}

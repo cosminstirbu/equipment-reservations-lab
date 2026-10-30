@@ -1,0 +1,12 @@
+{
+  "apiVersion": "kustomize.config.k8s.io/v1alpha1",
+  "kind": "Component",
+  "resources": [
+    "identities.json"
+  ],
+  "patches": [
+    {
+      "patch": "{\"apiVersion\":\"apps/v1\",\"kind\":\"Deployment\",\"metadata\":{\"name\":\"dashboard\"},\"spec\":{\"template\":{\"spec\":{\"containers\":[{\"name\":\"dashboard\",\"env\":[{\"name\":\"Authentication__Schemes__OpenIdConnect__Authority\",\"value\":\"https://login.microsoftonline.com/ce6c409e-7ec6-4ec6-be6d-011755790f9b/v2.0\"},{\"name\":\"Authentication__Schemes__OpenIdConnect__ClientId\",\"value\":\"3014fb0e-53d4-429f-9282-a2665d4e5e88\"}]}]}}}}"
+    }
+  ]
+}

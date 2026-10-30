@@ -1,0 +1,46 @@
+server:
+  http_listen_address: 0.0.0.0
+  http_listen_port: 3200
+  grpc_listen_address: 127.0.0.1
+  log_level: error
+distributor:
+  receivers:
+    otlp:
+      protocols:
+        http:
+          endpoint: 0.0.0.0:4318
+storage:
+  trace:
+    backend: local
+    local:
+      path: /data/blocks
+    wal:
+      path: /data/wal
+live_store:
+  wal:
+    path: /data/live-store
+  shutdown_marker_dir: /data/shutdown-marker
+  max_live_traces_bytes: 67108864
+  max_block_bytes: 16777216
+backend_scheduler:
+  local_work_path: /data/scheduler
+  provider:
+    compaction:
+      compaction:
+        block_retention: 72h
+        max_block_bytes: 268435456
+backend_worker:
+  compaction:
+    block_retention: 72h
+    max_block_bytes: 268435456
+overrides:
+  defaults:
+    ingestion:
+      rate_limit_bytes: 1048576
+      burst_size_bytes: 2097152
+      max_traces_per_user: 1000
+      max_attribute_bytes: 1024
+    global:
+      max_bytes_per_trace: 1048576
+usage_report:
+  reporting_enabled: false

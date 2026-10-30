@@ -1,0 +1,11 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: notifications
+spec:
+  template:
+    spec:
+      containers:
+        - name: notifications
+          image: er4e7b2c544c382b33a5.azurecr.io/equipment-reservations-lab-notifications@sha256:14943f08a6d1e8543759704bcfb58354fa6031c0576462f6b7258fec5bf82e1a

@@ -1,0 +1,428 @@
+{
+  "apiVersion": "v1",
+  "kind": "List",
+  "items": [
+    {
+      "apiVersion": "cert-manager.io/v1",
+      "kind": "ClusterIssuer",
+      "metadata": {
+        "name": "equipment-selfsigned",
+        "annotations": {
+          "argocd.argoproj.io/sync-wave": "-60",
+          "argocd.argoproj.io/sync-options": "Prune=false,Delete=false"
+        }
+      },
+      "spec": {
+        "selfSigned": {}
+      }
+    },
+    {
+      "apiVersion": "cert-manager.io/v1",
+      "kind": "Certificate",
+      "metadata": {
+        "name": "equipment-internal-root",
+        "namespace": "cert-manager",
+        "annotations": {
+          "argocd.argoproj.io/sync-wave": "-59",
+          "argocd.argoproj.io/sync-options": "Prune=false,Delete=false"
+        }
+      },
+      "spec": {
+        "isCA": true,
+        "commonName": "Equipment internal CA",
+        "secretName": "equipment-internal-root",
+        "duration": "8760h",
+        "renewBefore": "720h",
+        "privateKey": {
+          "algorithm": "ECDSA",
+          "size": 256
+        },
+        "issuerRef": {
+          "name": "equipment-selfsigned",
+          "kind": "ClusterIssuer"
+        }
+      }
+    },
+    {
+      "apiVersion": "cert-manager.io/v1",
+      "kind": "ClusterIssuer",
+      "metadata": {
+        "name": "equipment-internal-ca",
+        "annotations": {
+          "argocd.argoproj.io/sync-wave": "-58",
+          "argocd.argoproj.io/sync-options": "Prune=false,Delete=false"
+        }
+      },
+      "spec": {
+        "ca": {
+          "secretName": "equipment-internal-root"
+        }
+      }
+    },
+    {
+      "apiVersion": "cert-manager.io/v1",
+      "kind": "Certificate",
+      "metadata": {
+        "name": "otel-collector",
+        "namespace": "equipment-platform",
+        "annotations": {
+          "argocd.argoproj.io/sync-wave": "-45",
+          "argocd.argoproj.io/sync-options": "Prune=false,Delete=false"
+        }
+      },
+      "spec": {
+        "secretName": "otel-collector-tls",
+        "dnsNames": [
+          "otel-collector.equipment-platform.svc",
+          "otel-collector.equipment-platform.svc.cluster.local",
+          "localhost"
+        ],
+        "privateKey": {
+          "algorithm": "ECDSA",
+          "size": 256,
+          "rotationPolicy": "Always"
+        },
+        "issuerRef": {
+          "name": "equipment-internal-ca",
+          "kind": "ClusterIssuer"
+        },
+        "ipAddresses": ["127.0.0.1"]
+      }
+    },
+    {
+      "apiVersion": "cert-manager.io/v1",
+      "kind": "Certificate",
+      "metadata": {
+        "name": "prometheus",
+        "namespace": "equipment-platform",
+        "annotations": {
+          "argocd.argoproj.io/sync-wave": "-45",
+          "argocd.argoproj.io/sync-options": "Prune=false,Delete=false"
+        }
+      },
+      "spec": {
+        "secretName": "prometheus-tls",
+        "dnsNames": [
+          "prometheus.equipment-platform.svc",
+          "prometheus.equipment-platform.svc.cluster.local",
+          "localhost"
+        ],
+        "privateKey": {
+          "algorithm": "ECDSA",
+          "size": 256,
+          "rotationPolicy": "Always"
+        },
+        "issuerRef": {
+          "name": "equipment-internal-ca",
+          "kind": "ClusterIssuer"
+        },
+        "ipAddresses": ["127.0.0.1"]
+      }
+    },
+    {
+      "apiVersion": "cert-manager.io/v1",
+      "kind": "Certificate",
+      "metadata": {
+        "name": "loki",
+        "namespace": "equipment-platform",
+        "annotations": {
+          "argocd.argoproj.io/sync-wave": "-45",
+          "argocd.argoproj.io/sync-options": "Prune=false,Delete=false"
+        }
+      },
+      "spec": {
+        "secretName": "loki-tls",
+        "dnsNames": [
+          "loki.equipment-platform.svc",
+          "loki.equipment-platform.svc.cluster.local",
+          "localhost"
+        ],
+        "privateKey": {
+          "algorithm": "ECDSA",
+          "size": 256,
+          "rotationPolicy": "Always"
+        },
+        "issuerRef": {
+          "name": "equipment-internal-ca",
+          "kind": "ClusterIssuer"
+        },
+        "ipAddresses": ["127.0.0.1"]
+      }
+    },
+    {
+      "apiVersion": "cert-manager.io/v1",
+      "kind": "Certificate",
+      "metadata": {
+        "name": "tempo",
+        "namespace": "equipment-platform",
+        "annotations": {
+          "argocd.argoproj.io/sync-wave": "-45",
+          "argocd.argoproj.io/sync-options": "Prune=false,Delete=false"
+        }
+      },
+      "spec": {
+        "secretName": "tempo-tls",
+        "dnsNames": [
+          "tempo.equipment-platform.svc",
+          "tempo.equipment-platform.svc.cluster.local",
+          "localhost"
+        ],
+        "privateKey": {
+          "algorithm": "ECDSA",
+          "size": 256,
+          "rotationPolicy": "Always"
+        },
+        "issuerRef": {
+          "name": "equipment-internal-ca",
+          "kind": "ClusterIssuer"
+        },
+        "ipAddresses": ["127.0.0.1"]
+      }
+    },
+    {
+      "apiVersion": "cert-manager.io/v1",
+      "kind": "Certificate",
+      "metadata": {
+        "name": "grafana",
+        "namespace": "equipment-platform",
+        "annotations": {
+          "argocd.argoproj.io/sync-wave": "-45",
+          "argocd.argoproj.io/sync-options": "Prune=false,Delete=false"
+        }
+      },
+      "spec": {
+        "secretName": "grafana-tls",
+        "dnsNames": [
+          "grafana.equipment-platform.svc",
+          "grafana.equipment-platform.svc.cluster.local",
+          "localhost"
+        ],
+        "privateKey": {
+          "algorithm": "ECDSA",
+          "size": 256,
+          "rotationPolicy": "Always"
+        },
+        "issuerRef": {
+          "name": "equipment-internal-ca",
+          "kind": "ClusterIssuer"
+        },
+        "ipAddresses": ["127.0.0.1"]
+      }
+    },
+    {
+      "apiVersion": "cert-manager.io/v1",
+      "kind": "Certificate",
+      "metadata": {
+        "name": "dashboard-internal",
+        "namespace": "equipment",
+        "annotations": {
+          "argocd.argoproj.io/sync-wave": "-45",
+          "argocd.argoproj.io/sync-options": "Prune=false,Delete=false"
+        }
+      },
+      "spec": {
+        "secretName": "dashboard-internal-tls",
+        "dnsNames": [
+          "dashboard.equipment.svc",
+          "dashboard.equipment.svc.cluster.local",
+          "localhost"
+        ],
+        "privateKey": {
+          "algorithm": "ECDSA",
+          "size": 256,
+          "rotationPolicy": "Always"
+        },
+        "issuerRef": {
+          "name": "equipment-internal-ca",
+          "kind": "ClusterIssuer"
+        },
+        "ipAddresses": ["127.0.0.1"]
+      }
+    },
+    {
+      "apiVersion": "cert-manager.io/v1",
+      "kind": "Certificate",
+      "metadata": {
+        "name": "collector-trust",
+        "namespace": "equipment",
+        "annotations": {
+          "argocd.argoproj.io/sync-wave": "-45",
+          "argocd.argoproj.io/sync-options": "Prune=false,Delete=false"
+        }
+      },
+      "spec": {
+        "secretName": "collector-trust",
+        "dnsNames": ["collector-trust.equipment.svc"],
+        "privateKey": {
+          "algorithm": "ECDSA",
+          "size": 256,
+          "rotationPolicy": "Always"
+        },
+        "issuerRef": {
+          "name": "equipment-internal-ca",
+          "kind": "ClusterIssuer"
+        }
+      }
+    },
+    {
+      "apiVersion": "cert-manager.io/v1",
+      "kind": "Certificate",
+      "metadata": {
+        "name": "equipment-staging-check",
+        "namespace": "equipment",
+        "annotations": {
+          "argocd.argoproj.io/sync-wave": "-45",
+          "argocd.argoproj.io/sync-options": "Prune=false,Delete=false"
+        }
+      },
+      "spec": {
+        "secretName": "equipment-staging-check",
+        "dnsNames": [
+          "app.codingfunlab.com",
+          "identity.codingfunlab.com",
+          "dashboard.codingfunlab.com",
+          "argocd.codingfunlab.com"
+        ],
+        "privateKey": {
+          "algorithm": "ECDSA",
+          "size": 256,
+          "rotationPolicy": "Always"
+        },
+        "issuerRef": {
+          "name": "letsencrypt-staging",
+          "kind": "ClusterIssuer"
+        }
+      }
+    },
+    {
+      "apiVersion": "cert-manager.io/v1",
+      "kind": "Certificate",
+      "metadata": {
+        "name": "equipment-public",
+        "namespace": "equipment",
+        "annotations": {
+          "argocd.argoproj.io/sync-wave": "-40",
+          "argocd.argoproj.io/sync-options": "Prune=false,Delete=false"
+        }
+      },
+      "spec": {
+        "secretName": "equipment-tls",
+        "dnsNames": ["app.codingfunlab.com", "identity.codingfunlab.com"],
+        "privateKey": {
+          "algorithm": "ECDSA",
+          "size": 256,
+          "rotationPolicy": "Always"
+        },
+        "issuerRef": {
+          "name": "letsencrypt-production",
+          "kind": "ClusterIssuer"
+        }
+      }
+    },
+    {
+      "apiVersion": "cert-manager.io/v1",
+      "kind": "Certificate",
+      "metadata": {
+        "name": "dashboard-public",
+        "namespace": "equipment",
+        "annotations": {
+          "argocd.argoproj.io/sync-wave": "-40",
+          "argocd.argoproj.io/sync-options": "Prune=false,Delete=false"
+        }
+      },
+      "spec": {
+        "secretName": "dashboard-public-tls",
+        "dnsNames": ["dashboard.codingfunlab.com"],
+        "privateKey": {
+          "algorithm": "ECDSA",
+          "size": 256,
+          "rotationPolicy": "Always"
+        },
+        "issuerRef": {
+          "name": "letsencrypt-production",
+          "kind": "ClusterIssuer"
+        }
+      }
+    },
+    {
+      "apiVersion": "cert-manager.io/v1",
+      "kind": "Certificate",
+      "metadata": {
+        "name": "argocd-public",
+        "namespace": "argocd",
+        "annotations": {
+          "argocd.argoproj.io/sync-wave": "-40",
+          "argocd.argoproj.io/sync-options": "Prune=false,Delete=false"
+        }
+      },
+      "spec": {
+        "secretName": "argocd-public-tls",
+        "dnsNames": ["argocd.codingfunlab.com"],
+        "privateKey": {
+          "algorithm": "ECDSA",
+          "size": 256,
+          "rotationPolicy": "Always"
+        },
+        "issuerRef": {
+          "name": "letsencrypt-production",
+          "kind": "ClusterIssuer"
+        }
+      }
+    },
+    {
+      "apiVersion": "cert-manager.io/v1",
+      "kind": "Certificate",
+      "metadata": {
+        "name": "rabbitmq-management",
+        "namespace": "equipment",
+        "annotations": {
+          "argocd.argoproj.io/sync-wave": "-45",
+          "argocd.argoproj.io/sync-options": "Prune=false,Delete=false"
+        }
+      },
+      "spec": {
+        "secretName": "rabbitmq-management-tls",
+        "dnsNames": [
+          "rabbitmq.equipment.svc",
+          "rabbitmq.equipment.svc.cluster.local",
+          "localhost"
+        ],
+        "privateKey": {
+          "algorithm": "ECDSA",
+          "size": 256,
+          "rotationPolicy": "Always"
+        },
+        "issuerRef": {
+          "name": "equipment-internal-ca",
+          "kind": "ClusterIssuer"
+        },
+        "ipAddresses": ["127.0.0.1"]
+      }
+    },
+    {
+      "apiVersion": "cert-manager.io/v1",
+      "kind": "Certificate",
+      "metadata": {
+        "name": "broker-monitor-trust",
+        "namespace": "equipment-recovery",
+        "annotations": {
+          "argocd.argoproj.io/sync-wave": "-45",
+          "argocd.argoproj.io/sync-options": "Prune=false,Delete=false"
+        }
+      },
+      "spec": {
+        "secretName": "broker-monitor-trust",
+        "dnsNames": ["broker-monitor-trust.equipment-recovery.svc"],
+        "privateKey": {
+          "algorithm": "ECDSA",
+          "size": 256,
+          "rotationPolicy": "Always"
+        },
+        "issuerRef": {
+          "name": "equipment-internal-ca",
+          "kind": "ClusterIssuer"
+        }
+      }
+    }
+  ]
+}

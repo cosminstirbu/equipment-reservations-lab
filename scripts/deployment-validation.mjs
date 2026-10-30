@@ -5,7 +5,11 @@ import { resolve, join } from 'node:path';
 import { executeProcess, OperationalFailure, safeFailure } from './process.mjs';
 import { pathToFileURL } from 'node:url';
 import parsers from '@stoplight/spectral-parsers';
-import { imagePatchPath, readImageReference } from './component-images.mjs';
+import {
+  imagePatch,
+  imagePatchPath,
+  readImageReference,
+} from './component-images.mjs';
 
 export const imageNames = [
   'inventory',
@@ -102,6 +106,38 @@ export function validateComponentRelease(record) {
   )
     throw new OperationalFailure('Invalid component image or index digest');
   return record;
+}
+
+export function validateAzurePublication(
+  publication,
+  { acrLoginServer, patch, repository } = {},
+) {
+  const source = validateComponentRelease(publication?.source);
+  const registry =
+    typeof publication.image === 'string'
+      ? publication.image.split('/')[0]
+      : undefined;
+  const image = `${registry}/${source.repository.name.split('/')[1].toLowerCase()}-${source.component}`;
+  if (
+    publication.schemaVersion !== 1 ||
+    Object.keys(publication).sort().join(',') !==
+      'digest,image,schemaVersion,source' ||
+    publication.digest !== source.digest ||
+    source.sourceRef !== 'refs/heads/main' ||
+    !/^[a-z0-9]{5,50}\.azurecr\.io$/.test(registry ?? '') ||
+    publication.image !== image ||
+    (acrLoginServer !== undefined && registry !== acrLoginServer) ||
+    (repository !== undefined &&
+      canonicalRelease(repository) !== canonicalRelease(source.repository)) ||
+    (patch !== undefined &&
+      patch !==
+        imagePatch(
+          source.component,
+          `${publication.image}@${publication.digest}`,
+        ))
+  )
+    throw new OperationalFailure('Invalid Azure component publication');
+  return publication;
 }
 
 export function verifyComponentIndex(record, inspect) {

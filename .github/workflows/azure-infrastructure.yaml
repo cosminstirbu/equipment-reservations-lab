@@ -1,0 +1,33 @@
+name: Azure infrastructure
+on:
+  pull_request:
+    paths:
+      - infra/azure/**
+      - scripts/azure-*.mjs
+      - .github/workflows/azure-*.yaml
+      - package.json
+      - package-lock.json
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  source:
+    name: Azure deterministic source checks
+    permissions:
+      contents: read
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+      - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444
+        with:
+          node-version: 24.15.0
+      - run: npm ci
+      - run: npm run infra:tools
+      - run: npm run infra:check
+      - run: npm run infra:test
+      - name: Focused Azure source contracts
+        run: node --test scripts/azure-quality.test.mjs scripts/azure-infrastructure.test.mjs scripts/azure-terraform.test.mjs scripts/azure-provisioning.test.mjs scripts/azure-audit.test.mjs scripts/azure-handoff.test.mjs scripts/azure-vault-guard.test.mjs scripts/azure-guard-activation.test.mjs scripts/azure-operations.test.mjs scripts/azure-recovery.test.mjs scripts/azure-workflows.test.mjs scripts/manifest-quality.test.mjs

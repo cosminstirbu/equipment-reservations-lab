@@ -1,0 +1,15 @@
+{
+  "argocd": {
+    "revision": "a5038b0e2bbac1715754380ae0084df8e3d5b48c",
+    "url": "https://raw.githubusercontent.com/argoproj/argo-cd/a5038b0e2bbac1715754380ae0084df8e3d5b48c/manifests/install.yaml",
+    "sha256": "90dc9094bf4c5964afd9c0e35d735e1c2fcbbda4f8e36799c092d9864ed65f50",
+    "selection": ["applications.argoproj.io", "appprojects.argoproj.io"]
+  },
+  "secretsStore": {
+    "version": "v1.6.1",
+    "revision": "0e4ceeb734246e1de5267d8968023a3c8dcff39a",
+    "url": "https://raw.githubusercontent.com/kubernetes-sigs/secrets-store-csi-driver/0e4ceeb734246e1de5267d8968023a3c8dcff39a/deploy/secrets-store.csi.x-k8s.io_secretproviderclasses.yaml",
+    "sha256": "5b25cc3fbd8dce30ac8d20adb0789ef9d51207b63ba6a2b68ad5f624fc8b7669",
+    "qualification": "Schema-only stable v1 contract; actual managed AKS add-on CRD must be compared at live acceptance."
+  }
+}

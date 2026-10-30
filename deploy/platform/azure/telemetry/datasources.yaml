@@ -1,0 +1,56 @@
+apiVersion: 1
+datasources:
+  - name: Prometheus
+    uid: prometheus
+    type: prometheus
+    access: proxy
+    url: https://prometheus.equipment-platform.svc:8443
+    isDefault: true
+    jsonData:
+      httpHeaderName1: Authorization
+      tlsAuthWithCACert: true
+      tlsSkipVerify: false
+      exemplarTraceIdDestinations:
+        - name: trace_id
+          datasourceUid: tempo
+    secureJsonData:
+      httpHeaderValue1: Bearer $PROMETHEUS_TOKEN
+      tlsCACert: $CA_CERT
+  - name: Loki
+    uid: loki
+    type: loki
+    access: proxy
+    url: https://loki.equipment-platform.svc:8443
+    jsonData:
+      httpHeaderName1: Authorization
+      tlsAuthWithCACert: true
+      tlsSkipVerify: false
+      derivedFields:
+        - name: TraceID
+          matcherType: label
+          matcherRegex: trace_id
+          datasourceUid: tempo
+          url: $${__value.raw}
+    secureJsonData:
+      httpHeaderValue1: Bearer $LOKI_TOKEN
+      tlsCACert: $CA_CERT
+  - name: Tempo
+    uid: tempo
+    type: tempo
+    access: proxy
+    url: https://tempo.equipment-platform.svc:8443
+    jsonData:
+      httpHeaderName1: Authorization
+      tlsAuthWithCACert: true
+      tlsSkipVerify: false
+      tracesToLogsV2:
+        datasourceUid: loki
+        spanStartTimeShift: -1m
+        spanEndTimeShift: 1m
+        filterByTraceID: true
+        tags:
+          - key: service.name
+            value: service_name
+    secureJsonData:
+      httpHeaderValue1: Bearer $TEMPO_TOKEN
+      tlsCACert: $CA_CERT

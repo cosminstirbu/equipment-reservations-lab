@@ -815,18 +815,30 @@ function pipelineSummary() {
   const status = (key) =>
     outcomes.has(needs?.[key]?.result) ? needs[key].result : 'missing';
   const mode = needs.quality?.outputs?.mode;
+  const infrastructurePassed =
+    mode === 'infrastructure' &&
+    needs.quality.outputs.reason === 'azure-only-changes' &&
+    needs.quality.outputs.infrastructure_validated === 'true';
   const deploymentPassed =
     (mode === 'full' && status('deployment') === 'success') ||
-    (mode === 'manifest' && status('deployment') === 'skipped');
+    (mode === 'manifest' && status('deployment') === 'skipped') ||
+    (infrastructurePassed && status('deployment') === 'skipped');
   const lines = [
     `quality: ${status('quality')}`,
-    `validation mode: ${mode === 'full' || mode === 'manifest' ? mode : 'missing'}`,
+    `validation mode: ${['full', 'manifest', 'infrastructure'].includes(mode) ? mode : 'missing'}`,
     `deployment: ${status('deployment')}`,
   ];
   let failed = invalid || status('quality') !== 'success' || !deploymentPassed;
   if (!pullRequest) {
     lines.push(`selection: ${status('select')}`);
-    failed ||= status('select') !== 'success';
+    failed ||= infrastructurePassed
+      ? status('select') !== 'skipped' ||
+        selected.length !== 0 ||
+        imageNames.some(
+          (name) =>
+            status(`component_${name.replaceAll('-', '_')}`) !== 'skipped',
+        )
+      : status('select') !== 'success';
   }
   for (const name of pullRequest ? [] : imageNames) {
     if (!selected.includes(name)) {

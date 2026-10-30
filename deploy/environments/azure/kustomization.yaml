@@ -1,0 +1,1283 @@
+apiVersion: 'kustomize.config.k8s.io/v1beta1'
+kind: 'Kustomization'
+namespace: 'equipment'
+resources:
+  - '../../base'
+  - 'jobs/database'
+  - 'jobs/identity'
+  - 'ingress.yaml'
+  - 'dashboard-route.yaml'
+components:
+  - 'runtime'
+generators:
+  - 'broker-configuration.yaml'
+  - 'configuration.yaml'
+  - 'web-configuration.yaml'
+  - 'proxy-configuration.yaml'
+patches:
+  - path: broker-tls.yaml
+  - path: postgres-access.yaml
+  - target:
+      kind: 'PersistentVolumeClaim'
+      name: 'postgres-data'
+    patch: |-
+      [
+        {
+          "op": "replace",
+          "path": "/spec/storageClassName",
+          "value": "equipment-azure-retain"
+        }
+      ]
+  - target:
+      kind: 'PersistentVolumeClaim'
+      name: 'rabbitmq-data'
+    patch: |-
+      [
+        {
+          "op": "replace",
+          "path": "/spec/storageClassName",
+          "value": "equipment-azure-retain"
+        }
+      ]
+  - target:
+      kind: 'PersistentVolumeClaim'
+      name: 'dashboard-data'
+    patch: |-
+      [
+        {
+          "op": "replace",
+          "path": "/spec/storageClassName",
+          "value": "equipment-azure-retain"
+        }
+      ]
+  - patch: |-
+      {
+        "apiVersion": "apps/v1",
+        "kind": "Deployment",
+        "metadata": {
+          "name": "inventory"
+        },
+        "spec": {
+          "template": {
+            "metadata": {
+              "labels": {
+                "azure.workload.identity/use": "true"
+              }
+            },
+            "spec": {
+              "serviceAccountName": "inventory",
+              "volumes": [
+                {
+                  "name": "secrets-store",
+                  "csi": {
+                    "driver": "secrets-store.csi.k8s.io",
+                    "readOnly": true,
+                    "volumeAttributes": {
+                      "secretProviderClass": "inventory"
+                    }
+                  }
+                },
+                {
+                  "name": "trust",
+                  "$patch": "delete"
+                },
+                {
+                  "name": "otlp-trust",
+                  "secret": {
+                    "secretName": "collector-trust"
+                  }
+                }
+              ],
+              "containers": [
+                {
+                  "name": "inventory",
+                  "volumeMounts": [
+                    {
+                      "name": "trust",
+                      "$patch": "delete"
+                    },
+                    {
+                      "name": "secrets-store",
+                      "mountPath": "/mnt/secrets-store",
+                      "readOnly": true
+                    },
+                    {
+                      "name": "otlp-trust",
+                      "mountPath": "/otlp-trust",
+                      "readOnly": true
+                    }
+                  ],
+                  "env": [
+                    {
+                      "name": "OTLP_KEY",
+                      "$patch": "delete"
+                    },
+                    {
+                      "name": "OTLP_TOKEN",
+                      "valueFrom": {
+                        "secretKeyRef": {
+                          "name": "inventory-credentials",
+                          "key": "otlpToken"
+                        }
+                      }
+                    },
+                    {
+                      "name": "OTEL_EXPORTER_OTLP_HEADERS",
+                      "value": "authorization=Bearer%20$(OTLP_TOKEN)"
+                    }
+                  ]
+                }
+              ]
+            }
+          }
+        }
+      }
+  - patch: |-
+      {
+        "apiVersion": "apps/v1",
+        "kind": "Deployment",
+        "metadata": {
+          "name": "reservations"
+        },
+        "spec": {
+          "template": {
+            "metadata": {
+              "labels": {
+                "azure.workload.identity/use": "true"
+              }
+            },
+            "spec": {
+              "serviceAccountName": "reservations",
+              "volumes": [
+                {
+                  "name": "secrets-store",
+                  "csi": {
+                    "driver": "secrets-store.csi.k8s.io",
+                    "readOnly": true,
+                    "volumeAttributes": {
+                      "secretProviderClass": "reservations"
+                    }
+                  }
+                },
+                {
+                  "name": "trust",
+                  "$patch": "delete"
+                },
+                {
+                  "name": "otlp-trust",
+                  "secret": {
+                    "secretName": "collector-trust"
+                  }
+                }
+              ],
+              "containers": [
+                {
+                  "name": "reservations",
+                  "volumeMounts": [
+                    {
+                      "name": "trust",
+                      "$patch": "delete"
+                    },
+                    {
+                      "name": "secrets-store",
+                      "mountPath": "/mnt/secrets-store",
+                      "readOnly": true
+                    },
+                    {
+                      "name": "otlp-trust",
+                      "mountPath": "/otlp-trust",
+                      "readOnly": true
+                    }
+                  ],
+                  "env": [
+                    {
+                      "name": "OTLP_KEY",
+                      "$patch": "delete"
+                    },
+                    {
+                      "name": "OTLP_TOKEN",
+                      "valueFrom": {
+                        "secretKeyRef": {
+                          "name": "reservations-credentials",
+                          "key": "otlpToken"
+                        }
+                      }
+                    },
+                    {
+                      "name": "OTEL_EXPORTER_OTLP_HEADERS",
+                      "value": "authorization=Bearer%20$(OTLP_TOKEN)"
+                    }
+                  ]
+                }
+              ]
+            }
+          }
+        }
+      }
+  - patch: |-
+      {
+        "apiVersion": "apps/v1",
+        "kind": "Deployment",
+        "metadata": {
+          "name": "notifications"
+        },
+        "spec": {
+          "template": {
+            "metadata": {
+              "labels": {
+                "azure.workload.identity/use": "true"
+              }
+            },
+            "spec": {
+              "serviceAccountName": "notifications",
+              "volumes": [
+                {
+                  "name": "secrets-store",
+                  "csi": {
+                    "driver": "secrets-store.csi.k8s.io",
+                    "readOnly": true,
+                    "volumeAttributes": {
+                      "secretProviderClass": "notifications"
+                    }
+                  }
+                },
+                {
+                  "name": "trust",
+                  "$patch": "delete"
+                },
+                {
+                  "name": "otlp-trust",
+                  "secret": {
+                    "secretName": "collector-trust"
+                  }
+                }
+              ],
+              "containers": [
+                {
+                  "name": "notifications",
+                  "volumeMounts": [
+                    {
+                      "name": "trust",
+                      "$patch": "delete"
+                    },
+                    {
+                      "name": "secrets-store",
+                      "mountPath": "/mnt/secrets-store",
+                      "readOnly": true
+                    },
+                    {
+                      "name": "otlp-trust",
+                      "mountPath": "/otlp-trust",
+                      "readOnly": true
+                    }
+                  ],
+                  "env": [
+                    {
+                      "name": "OTLP_KEY",
+                      "$patch": "delete"
+                    },
+                    {
+                      "name": "OTLP_TOKEN",
+                      "valueFrom": {
+                        "secretKeyRef": {
+                          "name": "notifications-credentials",
+                          "key": "otlpToken"
+                        }
+                      }
+                    },
+                    {
+                      "name": "OTEL_EXPORTER_OTLP_HEADERS",
+                      "value": "authorization=Bearer%20$(OTLP_TOKEN)"
+                    }
+                  ]
+                }
+              ]
+            }
+          }
+        }
+      }
+  - patch: |-
+      {
+        "apiVersion": "apps/v1",
+        "kind": "Deployment",
+        "metadata": {
+          "name": "keycloak"
+        },
+        "spec": {
+          "template": {
+            "metadata": {
+              "labels": {
+                "azure.workload.identity/use": "true"
+              }
+            },
+            "spec": {
+              "serviceAccountName": "keycloak",
+              "volumes": [
+                {
+                  "name": "secrets-store",
+                  "csi": {
+                    "driver": "secrets-store.csi.k8s.io",
+                    "readOnly": true,
+                    "volumeAttributes": {
+                      "secretProviderClass": "keycloak"
+                    }
+                  }
+                },
+                {
+                  "name": "trust",
+                  "$patch": "delete"
+                }
+              ],
+              "containers": [
+                {
+                  "name": "keycloak",
+                  "volumeMounts": [
+                    {
+                      "name": "trust",
+                      "$patch": "delete"
+                    },
+                    {
+                      "name": "secrets-store",
+                      "mountPath": "/mnt/secrets-store",
+                      "readOnly": true
+                    }
+                  ],
+                  "env": [
+                    {
+                      "name": "KC_TRUSTSTORE_PATHS",
+                      "$patch": "delete"
+                    }
+                  ]
+                }
+              ]
+            }
+          }
+        }
+      }
+  - patch: |-
+      {
+        "apiVersion": "apps/v1",
+        "kind": "Deployment",
+        "metadata": {
+          "name": "rabbitmq"
+        },
+        "spec": {
+          "template": {
+            "metadata": {
+              "labels": {
+                "azure.workload.identity/use": "true"
+              }
+            },
+            "spec": {
+              "serviceAccountName": "rabbitmq",
+              "volumes": [
+                {
+                  "name": "secrets-store",
+                  "csi": {
+                    "driver": "secrets-store.csi.k8s.io",
+                    "readOnly": true,
+                    "volumeAttributes": {
+                      "secretProviderClass": "rabbitmq"
+                    }
+                  }
+                },
+                {
+                  "name": "trust",
+                  "$patch": "delete"
+                }
+              ],
+              "containers": [
+                {
+                  "name": "rabbitmq",
+                  "volumeMounts": [
+                    {
+                      "mountPath": "/trust",
+                      "$patch": "delete"
+                    },
+                    {
+                      "name": "secrets-store",
+                      "mountPath": "/mnt/secrets-store",
+                      "readOnly": true
+                    }
+                  ]
+                }
+              ]
+            }
+          }
+        }
+      }
+  - patch: |-
+      {
+        "apiVersion": "apps/v1",
+        "kind": "Deployment",
+        "metadata": {
+          "name": "dashboard"
+        },
+        "spec": {
+          "template": {
+            "metadata": {
+              "labels": {
+                "azure.workload.identity/use": "true"
+              }
+            },
+            "spec": {
+              "serviceAccountName": "dashboard",
+              "volumes": [
+                {
+                  "name": "secrets-store",
+                  "csi": {
+                    "driver": "secrets-store.csi.k8s.io",
+                    "readOnly": true,
+                    "volumeAttributes": {
+                      "secretProviderClass": "dashboard"
+                    }
+                  }
+                }
+              ],
+              "containers": [
+                {
+                  "name": "dashboard",
+                  "volumeMounts": [
+                    {
+                      "name": "secrets-store",
+                      "mountPath": "/mnt/secrets-store",
+                      "readOnly": true
+                    }
+                  ]
+                }
+              ]
+            }
+          }
+        }
+      }
+  - patch: |-
+      {
+        "apiVersion": "apps/v1",
+        "kind": "Deployment",
+        "metadata": {
+          "name": "postgres"
+        },
+        "spec": {
+          "template": {
+            "metadata": {
+              "labels": {
+                "azure.workload.identity/use": "true"
+              }
+            },
+            "spec": {
+              "serviceAccountName": "postgres",
+              "volumes": [
+                {
+                  "name": "secrets-store",
+                  "csi": {
+                    "driver": "secrets-store.csi.k8s.io",
+                    "readOnly": true,
+                    "volumeAttributes": {
+                      "secretProviderClass": "postgres"
+                    }
+                  }
+                }
+              ],
+              "containers": [
+                {
+                  "name": "postgres",
+                  "volumeMounts": [
+                    {
+                      "name": "secrets-store",
+                      "mountPath": "/mnt/secrets-store",
+                      "readOnly": true
+                    }
+                  ]
+                }
+              ]
+            }
+          }
+        }
+      }
+  - patch: |-
+      {
+        "apiVersion": "apps/v1",
+        "kind": "Deployment",
+        "metadata": {
+          "name": "web"
+        },
+        "spec": {
+          "template": {
+            "metadata": {
+              "labels": {}
+            },
+            "spec": {
+              "containers": [
+                {
+                  "name": "web",
+                  "startupProbe": {
+                    "httpGet": {
+                      "httpHeaders": [
+                        {
+                          "name": "Host",
+                          "value": "app.codingfunlab.com"
+                        }
+                      ]
+                    }
+                  },
+                  "readinessProbe": {
+                    "httpGet": {
+                      "httpHeaders": [
+                        {
+                          "name": "Host",
+                          "value": "app.codingfunlab.com"
+                        }
+                      ]
+                    }
+                  },
+                  "livenessProbe": {
+                    "httpGet": {
+                      "httpHeaders": [
+                        {
+                          "name": "Host",
+                          "value": "app.codingfunlab.com"
+                        }
+                      ]
+                    }
+                  }
+                }
+              ]
+            }
+          }
+        }
+      }
+  - patch: |-
+      {
+        "apiVersion": "batch/v1",
+        "kind": "Job",
+        "metadata": {
+          "name": "database-bootstrap"
+        },
+        "spec": {
+          "template": {
+            "metadata": {
+              "labels": {
+                "app.kubernetes.io/name": "database-bootstrap",
+                "azure.workload.identity/use": "true"
+              }
+            },
+            "spec": {
+              "serviceAccountName": "database-bootstrap",
+              "volumes": [
+                {
+                  "name": "trust",
+                  "$patch": "delete"
+                },
+                {
+                  "name": "secrets-store",
+                  "csi": {
+                    "driver": "secrets-store.csi.k8s.io",
+                    "readOnly": true,
+                    "volumeAttributes": {
+                      "secretProviderClass": "database-bootstrap"
+                    }
+                  }
+                },
+                {
+                  "name": "otlp-trust",
+                  "secret": {
+                    "secretName": "collector-trust"
+                  }
+                }
+              ],
+              "containers": [
+                {
+                  "name": "database-bootstrap",
+                  "env": [
+                    {
+                      "name": "OTLP_KEY",
+                      "$patch": "delete"
+                    },
+                    {
+                      "name": "OTLP_TOKEN",
+                      "valueFrom": {
+                        "secretKeyRef": {
+                          "name": "database-bootstrap-credentials",
+                          "key": "otlpToken"
+                        }
+                      }
+                    },
+                    {
+                      "name": "OTEL_EXPORTER_OTLP_HEADERS",
+                      "value": "authorization=Bearer%20$(OTLP_TOKEN)"
+                    }
+                  ],
+                  "volumeMounts": [
+                    {
+                      "name": "trust",
+                      "$patch": "delete"
+                    },
+                    {
+                      "name": "secrets-store",
+                      "mountPath": "/mnt/secrets-store",
+                      "readOnly": true
+                    },
+                    {
+                      "name": "otlp-trust",
+                      "mountPath": "/otlp-trust",
+                      "readOnly": true
+                    }
+                  ]
+                }
+              ]
+            }
+          }
+        }
+      }
+  - patch: |-
+      {
+        "apiVersion": "batch/v1",
+        "kind": "Job",
+        "metadata": {
+          "name": "identity-bootstrap"
+        },
+        "spec": {
+          "template": {
+            "metadata": {
+              "labels": {
+                "app.kubernetes.io/name": "identity-bootstrap",
+                "azure.workload.identity/use": "true"
+              }
+            },
+            "spec": {
+              "serviceAccountName": "identity-bootstrap",
+              "volumes": [
+                {
+                  "name": "trust",
+                  "$patch": "delete"
+                },
+                {
+                  "name": "secrets-store",
+                  "csi": {
+                    "driver": "secrets-store.csi.k8s.io",
+                    "readOnly": true,
+                    "volumeAttributes": {
+                      "secretProviderClass": "identity-bootstrap"
+                    }
+                  }
+                },
+                {
+                  "name": "otlp-trust",
+                  "secret": {
+                    "secretName": "collector-trust"
+                  }
+                }
+              ],
+              "containers": [
+                {
+                  "name": "identity-bootstrap",
+                  "env": [
+                    {
+                      "name": "OTLP_KEY",
+                      "$patch": "delete"
+                    },
+                    {
+                      "name": "OTLP_TOKEN",
+                      "valueFrom": {
+                        "secretKeyRef": {
+                          "name": "identity-bootstrap-credentials",
+                          "key": "otlpToken"
+                        }
+                      }
+                    },
+                    {
+                      "name": "OTEL_EXPORTER_OTLP_HEADERS",
+                      "value": "authorization=Bearer%20$(OTLP_TOKEN)"
+                    }
+                  ],
+                  "volumeMounts": [
+                    {
+                      "name": "trust",
+                      "$patch": "delete"
+                    },
+                    {
+                      "name": "secrets-store",
+                      "mountPath": "/mnt/secrets-store",
+                      "readOnly": true
+                    },
+                    {
+                      "name": "otlp-trust",
+                      "mountPath": "/otlp-trust",
+                      "readOnly": true
+                    }
+                  ]
+                }
+              ]
+            }
+          }
+        }
+      }
+  - patch: |-
+      {
+        "apiVersion": "apps/v1",
+        "kind": "Deployment",
+        "metadata": {
+          "name": "inventory"
+        },
+        "spec": {
+          "template": {
+            "spec": {
+              "containers": [
+                {
+                  "name": "inventory",
+                  "env": [
+                    {
+                      "name": "DB_PASSWORD",
+                      "valueFrom": {
+                        "secretKeyRef": {
+                          "name": "inventory-credentials",
+                          "key": "inventoryDb"
+                        }
+                      }
+                    }
+                  ]
+                }
+              ]
+            }
+          }
+        }
+      }
+  - patch: |-
+      {
+        "apiVersion": "apps/v1",
+        "kind": "Deployment",
+        "metadata": {
+          "name": "reservations"
+        },
+        "spec": {
+          "template": {
+            "spec": {
+              "containers": [
+                {
+                  "name": "reservations",
+                  "env": [
+                    {
+                      "name": "DB_PASSWORD",
+                      "valueFrom": {
+                        "secretKeyRef": {
+                          "name": "reservations-credentials",
+                          "key": "reservationsDb"
+                        }
+                      }
+                    },
+                    {
+                      "name": "BROKER_PASSWORD",
+                      "valueFrom": {
+                        "secretKeyRef": {
+                          "name": "reservations-credentials",
+                          "key": "rabbitPublisher"
+                        }
+                      }
+                    },
+                    {
+                      "name": "Identity__ClientSecret",
+                      "valueFrom": {
+                        "secretKeyRef": {
+                          "name": "reservations-credentials",
+                          "key": "reservationsClient"
+                        }
+                      }
+                    }
+                  ]
+                }
+              ]
+            }
+          }
+        }
+      }
+  - patch: |-
+      {
+        "apiVersion": "apps/v1",
+        "kind": "Deployment",
+        "metadata": {
+          "name": "notifications"
+        },
+        "spec": {
+          "template": {
+            "spec": {
+              "containers": [
+                {
+                  "name": "notifications",
+                  "env": [
+                    {
+                      "name": "DB_PASSWORD",
+                      "valueFrom": {
+                        "secretKeyRef": {
+                          "name": "notifications-credentials",
+                          "key": "notificationsDb"
+                        }
+                      }
+                    },
+                    {
+                      "name": "BROKER_PASSWORD",
+                      "valueFrom": {
+                        "secretKeyRef": {
+                          "name": "notifications-credentials",
+                          "key": "rabbitConsumer"
+                        }
+                      }
+                    }
+                  ]
+                }
+              ]
+            }
+          }
+        }
+      }
+  - patch: |-
+      {
+        "apiVersion": "apps/v1",
+        "kind": "Deployment",
+        "metadata": {
+          "name": "postgres"
+        },
+        "spec": {
+          "template": {
+            "spec": {
+              "containers": [
+                {
+                  "name": "postgres",
+                  "env": [
+                    {
+                      "name": "POSTGRES_PASSWORD",
+                      "valueFrom": {
+                        "secretKeyRef": {
+                          "name": "postgres-credentials",
+                          "key": "postgresAdmin"
+                        }
+                      }
+                    }
+                  ]
+                }
+              ]
+            }
+          }
+        }
+      }
+  - patch: |-
+      {
+        "apiVersion": "apps/v1",
+        "kind": "Deployment",
+        "metadata": {
+          "name": "keycloak"
+        },
+        "spec": {
+          "template": {
+            "spec": {
+              "containers": [
+                {
+                  "name": "keycloak",
+                  "env": [
+                    {
+                      "name": "KC_DB_PASSWORD",
+                      "valueFrom": {
+                        "secretKeyRef": {
+                          "name": "keycloak-credentials",
+                          "key": "keycloakDb"
+                        }
+                      }
+                    },
+                    {
+                      "name": "KC_BOOTSTRAP_ADMIN_PASSWORD",
+                      "valueFrom": {
+                        "secretKeyRef": {
+                          "name": "keycloak-credentials",
+                          "key": "identityAdmin"
+                        }
+                      }
+                    }
+                  ]
+                }
+              ]
+            }
+          }
+        }
+      }
+  - patch: |-
+      {
+        "apiVersion": "apps/v1",
+        "kind": "Deployment",
+        "metadata": {
+          "name": "dashboard"
+        },
+        "spec": {
+          "template": {
+            "spec": {
+              "containers": [
+                {
+                  "name": "dashboard",
+                  "env": [
+                    {
+                      "name": "Dashboard__Api__PrimaryApiKey",
+                      "valueFrom": {
+                        "secretKeyRef": {
+                          "name": "dashboard-credentials",
+                          "key": "dashboardApi"
+                        }
+                      }
+                    }
+                  ]
+                }
+              ]
+            }
+          }
+        }
+      }
+  - patch: |-
+      {
+        "apiVersion": "batch/v1",
+        "kind": "Job",
+        "metadata": {
+          "name": "database-bootstrap"
+        },
+        "spec": {
+          "template": {
+            "spec": {
+              "containers": [
+                {
+                  "name": "database-bootstrap",
+                  "env": [
+                    {
+                      "name": "DB_PASSWORD",
+                      "valueFrom": {
+                        "secretKeyRef": {
+                          "name": "database-bootstrap-credentials",
+                          "key": "postgresAdmin"
+                        }
+                      }
+                    },
+                    {
+                      "name": "InventoryPassword",
+                      "valueFrom": {
+                        "secretKeyRef": {
+                          "name": "database-bootstrap-credentials",
+                          "key": "inventoryDb"
+                        }
+                      }
+                    },
+                    {
+                      "name": "ReservationsPassword",
+                      "valueFrom": {
+                        "secretKeyRef": {
+                          "name": "database-bootstrap-credentials",
+                          "key": "reservationsDb"
+                        }
+                      }
+                    },
+                    {
+                      "name": "NotificationsPassword",
+                      "valueFrom": {
+                        "secretKeyRef": {
+                          "name": "database-bootstrap-credentials",
+                          "key": "notificationsDb"
+                        }
+                      }
+                    },
+                    {
+                      "name": "KeycloakPassword",
+                      "valueFrom": {
+                        "secretKeyRef": {
+                          "name": "database-bootstrap-credentials",
+                          "key": "keycloakDb"
+                        }
+                      }
+                    }
+                  ]
+                }
+              ]
+            }
+          }
+        }
+      }
+  - patch: |-
+      {
+        "apiVersion": "batch/v1",
+        "kind": "Job",
+        "metadata": {
+          "name": "identity-bootstrap"
+        },
+        "spec": {
+          "template": {
+            "spec": {
+              "containers": [
+                {
+                  "name": "identity-bootstrap",
+                  "env": [
+                    {
+                      "name": "AdminPassword",
+                      "valueFrom": {
+                        "secretKeyRef": {
+                          "name": "identity-bootstrap-credentials",
+                          "key": "identityAdmin"
+                        }
+                      }
+                    },
+                    {
+                      "name": "EmployeeAPassword",
+                      "valueFrom": {
+                        "secretKeyRef": {
+                          "name": "identity-bootstrap-credentials",
+                          "key": "alice"
+                        }
+                      }
+                    },
+                    {
+                      "name": "EmployeeBPassword",
+                      "valueFrom": {
+                        "secretKeyRef": {
+                          "name": "identity-bootstrap-credentials",
+                          "key": "bob"
+                        }
+                      }
+                    },
+                    {
+                      "name": "ApproverPassword",
+                      "valueFrom": {
+                        "secretKeyRef": {
+                          "name": "identity-bootstrap-credentials",
+                          "key": "manager"
+                        }
+                      }
+                    },
+                    {
+                      "name": "EquipmentStaffPassword",
+                      "valueFrom": {
+                        "secretKeyRef": {
+                          "name": "identity-bootstrap-credentials",
+                          "key": "staff"
+                        }
+                      }
+                    },
+                    {
+                      "name": "ReservationsClientSecret",
+                      "valueFrom": {
+                        "secretKeyRef": {
+                          "name": "identity-bootstrap-credentials",
+                          "key": "reservationsClient"
+                        }
+                      }
+                    }
+                  ]
+                }
+              ]
+            }
+          }
+        }
+      }
+  - patch: |-
+      {
+        "apiVersion": "apps/v1",
+        "kind": "Deployment",
+        "metadata": {
+          "name": "rabbitmq"
+        },
+        "spec": {
+          "template": {
+            "spec": {
+              "initContainers": [
+                {
+                  "name": "definitions",
+                  "env": [
+                    {
+                      "name": "BrokerPassword",
+                      "valueFrom": {
+                        "secretKeyRef": {
+                          "name": "rabbitmq-credentials",
+                          "key": "rabbitAdmin"
+                        }
+                      }
+                    },
+                    {
+                      "name": "BrokerAdministratorSalt",
+                      "valueFrom": {
+                        "secretKeyRef": {
+                          "name": "rabbitmq-credentials",
+                          "key": "brokerAdminSalt"
+                        }
+                      }
+                    },
+                    {
+                      "name": "PublisherPassword",
+                      "valueFrom": {
+                        "secretKeyRef": {
+                          "name": "rabbitmq-credentials",
+                          "key": "rabbitPublisher"
+                        }
+                      }
+                    },
+                    {
+                      "name": "PublisherSalt",
+                      "valueFrom": {
+                        "secretKeyRef": {
+                          "name": "rabbitmq-credentials",
+                          "key": "brokerPublisherSalt"
+                        }
+                      }
+                    },
+                    {
+                      "name": "ConsumerPassword",
+                      "valueFrom": {
+                        "secretKeyRef": {
+                          "name": "rabbitmq-credentials",
+                          "key": "rabbitConsumer"
+                        }
+                      }
+                    },
+                    {
+                      "name": "ConsumerSalt",
+                      "valueFrom": {
+                        "secretKeyRef": {
+                          "name": "rabbitmq-credentials",
+                          "key": "brokerConsumerSalt"
+                        }
+                      }
+                    }
+                  ]
+                }
+              ]
+            }
+          }
+        }
+      }
+  - path: 'images/inventory.yaml'
+  - path: 'images/reservations.yaml'
+  - path: 'images/notifications.yaml'
+  - path: 'images/web.yaml'
+  - path: 'images/database-bootstrap.yaml'
+  - path: 'images/identity-bootstrap.yaml'
+  - path: 'images/broker-bootstrap.yaml'
+  - patch: |-
+      {
+        "apiVersion": "apps/v1",
+        "kind": "Deployment",
+        "metadata": {
+          "name": "dashboard"
+        },
+        "spec": {
+          "template": {
+            "spec": {
+              "containers": [
+                {
+                  "name": "dashboard",
+                  "env": [
+                    {
+                      "name": "Dashboard__Frontend__BrowserToken",
+                      "$patch": "delete"
+                    },
+                    {
+                      "name": "Dashboard__Frontend__AuthMode",
+                      "value": "OpenIdConnect"
+                    },
+                    {
+                      "name": "Dashboard__Frontend__PublicUrl",
+                      "value": "https://dashboard.codingfunlab.com"
+                    },
+                    {
+                      "name": "Dashboard__Frontend__OpenIdConnect__RequiredClaimType",
+                      "value": "http://schemas.microsoft.com/ws/2008/06/identity/claims/role"
+                    },
+                    {
+                      "name": "Dashboard__Frontend__OpenIdConnect__RequiredClaimValue",
+                      "value": "Equipment.Operator"
+                    },
+                    {
+                      "name": "Authentication__Schemes__OpenIdConnect__ClientSecret",
+                      "valueFrom": {
+                        "secretKeyRef": {
+                          "name": "dashboard-credentials",
+                          "key": "oidcClientSecret"
+                        }
+                      }
+                    },
+                    {
+                      "name": "Dashboard__Otlp__PrimaryApiKey",
+                      "valueFrom": {
+                        "secretKeyRef": {
+                          "name": "dashboard-credentials",
+                          "key": "dashboardOtlp"
+                        }
+                      }
+                    },
+                    {
+                      "name": "ASPNETCORE_FORWARDEDHEADERS_ENABLED",
+                      "value": "true"
+                    },
+                    {
+                      "name": "ASPIRE_DASHBOARD_APPLICATION_NAME",
+                      "value": "equipment-azure"
+                    }
+                  ]
+                }
+              ]
+            }
+          }
+        }
+      }
+  - patch: |-
+      {
+        "apiVersion": "apps/v1",
+        "kind": "Deployment",
+        "metadata": {
+          "name": "rabbitmq"
+        },
+        "spec": {
+          "template": {
+            "spec": {
+              "volumes": [
+                {
+                  "name": "otlp-trust",
+                  "secret": {
+                    "secretName": "collector-trust"
+                  }
+                }
+              ],
+              "initContainers": [
+                {
+                  "name": "definitions",
+                  "env": [
+                    {
+                      "name": "OTLP_KEY",
+                      "$patch": "delete"
+                    },
+                    {
+                      "name": "OTLP_TOKEN",
+                      "valueFrom": {
+                        "secretKeyRef": {
+                          "name": "rabbitmq-credentials",
+                          "key": "otlpToken"
+                        }
+                      }
+                    },
+                    {
+                      "name": "OTEL_EXPORTER_OTLP_HEADERS",
+                      "value": "authorization=Bearer%20$(OTLP_TOKEN)"
+                    }
+                  ],
+                  "volumeMounts": [
+                    {
+                      "mountPath": "/trust",
+                      "$patch": "delete"
+                    },
+                    {
+                      "name": "secrets-store",
+                      "mountPath": "/mnt/secrets-store",
+                      "readOnly": true
+                    },
+                    {
+                      "name": "otlp-trust",
+                      "mountPath": "/otlp-trust",
+                      "readOnly": true
+                    }
+                  ]
+                }
+              ]
+            }
+          }
+        }
+      }
+  - path: dashboard-tls.yaml

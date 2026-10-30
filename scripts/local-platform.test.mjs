@@ -13,7 +13,7 @@ import {
 } from './local-platform.mjs';
 
 test(
-  'Windows private state accepts protected inherited ACLs and rejects broad grants',
+  'Windows private state reuses verified empty directories, accepts protected inherited ACLs and rejects broad grants',
   {
     skip: process.platform !== 'win32',
   },
@@ -22,6 +22,8 @@ test(
     t.after(() => rmSync(parent, { recursive: true, force: true }));
     const state = join(parent, 'private');
     createPrivateDirectory(state);
+    createPrivateDirectory(state);
+    assertPrivatePath(state, 0o700);
     const secret = join(state, 'credentials.json');
     writeFileSync(secret, 'PRIVATE_MARKER');
     assertPrivatePath(state, 0o700);

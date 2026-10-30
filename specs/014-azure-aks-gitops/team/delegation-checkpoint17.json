@@ -1,0 +1,12 @@
+{
+  "repair": 17,
+  "scope": "T089 staged producer and pure validator/evaluator; operational migration and live/current authority unbuilt",
+  "files": {
+    "infra/azure/foundation/delegation.tf": "3474F88C98AD08FA35A187FB1A0D238159ECF3ED91739547308BA3C27577213F",
+    "infra/azure/foundation/vault-guard.tf": "3E6BB8ECC56F403CDD01852CFAE32C24257C868171CCB2139C23BA3F496AA36D",
+    "infra/azure/foundation/tests/foundation.tftest.hcl": "418D2F8DF5A88B44415AB23FE12E8B9C7C746571E0793D710F7E8890A8B15A3A",
+    "infra/azure/foundation/tests/mocks/azurerm.tfmock.hcl": "D54075B0EBAA0D2F23B6C70BCFCE079ADF2A583D1326850767EF20172BFA8781",
+    "scripts/azure-vault-guard.mjs": "12CAD87C67A29794374FBF2D853C3C72EC5F6965CF829452C27700D06D3546C5",
+    "scripts/azure-vault-guard.test.mjs": "B0A250F0BEC2BD0EE68200131724157C1D4C4ECB4C2E8B9360B384F7D0044BBD"
+  }
+}

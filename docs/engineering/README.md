@@ -11,18 +11,25 @@ cross-references. The routing table is cumulative: read every row that applies.
 | --- | --- |
 | Any source, test, or tooling/configuration work, including review | [Formatting and static analysis](formatting-and-linting.md) |
 | Add, change, or review tests; investigate or increase coverage | [Testing](testing.md) |
+| Infrastructure, deployment workflows or platform feasibility | [Verification profile and infrastructure execution](testing.md#verification-profile), [Tool output and operational failures](tooling.md), and [change-scoped checks](formatting-and-linting.md#required-checks-for-handoff) |
 | Scripts or test helpers, process execution, operational HTTP calls, output capture, or resource cleanup | [Tool output and operational failures](tooling.md) |
 | Backend behavior, contracts, serialization, logging, or source generation | [ASP.NET Core](aspnet-core.md) |
 | Application HTTP API contracts, generated documentation, or interactive API testing | [OpenAPI](openapi.md) |
 | Client behavior, components, templates, accessibility, or browser interaction | [Angular](angular.md) |
 | Traces, logs, metrics, correlation, or telemetry privacy | [Observability](observability.md) |
-| Dependency calls, messaging, timeouts, cancellation, retries, or recovery | [Resilience](resilience.md), [Observability](observability.md), and [Testing](testing.md) |
+| Application dependency calls, messaging, timeouts, cancellation, retries, or recovery | [Resilience](resilience.md), [Observability](observability.md), and [Testing](testing.md) |
 | AppHost wiring or local orchestration | [Aspire](aspire.md) |
+| Terraform infrastructure, formatting, lint or security gates | [Terraform quality gates](formatting-and-linting.md#terraform-quality-gates) and [Tool output and operational failures](tooling.md) |
 | Change instructions, standards, or policy | [Constitution governance](../../.specify/memory/constitution.md#governance) and the guide that owns the affected requirement |
 
 Apply the same routing during planning, implementation, and review. Feature plans list
 the applicable guides and record decisions they leave open. For ordinary work, use the
 existing task response or review record; a new feature-team loop is not implied.
+
+Load the relevant sections and required cross-references; reuse unchanged material already
+read. Artifact classification and test-first applicability are owned by the testing guide
+under the constitution. Milestones, review cadence and investigation budgets are owned by
+the [feature-team protocol](../agent-team/protocol.md#scope-and-milestones).
 
 ## Approved stack
 

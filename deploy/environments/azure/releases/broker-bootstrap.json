@@ -1,0 +1,20 @@
+{
+  "schemaVersion": 1,
+  "source": {
+    "component": "broker-bootstrap",
+    "digest": "sha256:0d13f7c4b3c4343b33baec419ddf81ecce47808958c23feff7fbca002b2b6fc7",
+    "image": "ghcr.io/cosminstirbu/equipment-reservations-lab-broker-bootstrap",
+    "repository": {
+      "id": 1426639177,
+      "name": "cosminstirbu/equipment-reservations-lab"
+    },
+    "runAttempt": 1,
+    "runId": 40287698424,
+    "schemaVersion": 1,
+    "sourceRef": "refs/heads/main",
+    "sourceRevision": "1a69ed6830b3b6abaed1dbd42ddfa67654b0b342",
+    "workflow": ".github/workflows/validate.yaml"
+  },
+  "image": "er4e7b2c544c382b33a5.azurecr.io/equipment-reservations-lab-broker-bootstrap",
+  "digest": "sha256:0d13f7c4b3c4343b33baec419ddf81ecce47808958c23feff7fbca002b2b6fc7"
+}

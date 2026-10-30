@@ -1,0 +1,32 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: dashboard
+spec:
+  template:
+    spec:
+      volumes:
+        - name: internal-tls
+          secret:
+            secretName: dashboard-internal-tls
+      containers:
+        - name: dashboard
+          startupProbe:
+            tcpSocket:
+              port: 18888
+            periodSeconds: 5
+            timeoutSeconds: 2
+            failureThreshold: 60
+          env:
+            - name: DOTNET_DASHBOARD_OTLP_ENDPOINT_URL
+              value: https://+:18889
+            - name: DOTNET_DASHBOARD_OTLP_HTTP_ENDPOINT_URL
+              value: https://+:18890
+            - name: Kestrel__Certificates__Default__Path
+              value: /internal-tls/tls.crt
+            - name: Kestrel__Certificates__Default__KeyPath
+              value: /internal-tls/tls.key
+          volumeMounts:
+            - name: internal-tls
+              mountPath: /internal-tls
+              readOnly: true

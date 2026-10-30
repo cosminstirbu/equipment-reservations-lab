@@ -1,0 +1,12 @@
+{
+  "round": 16,
+  "classification": "Diagnostic source-unchanged observation only; not native gate acceptance",
+  "files": {
+    "scripts/azure-acme.test.mjs": "7CF71E577B713309B8CC15314619B5BC9310AA9A28B95D470BB8B88BB285B6FA",
+    "scripts/azure-admission.test.mjs": "3CC57351154582405B2759604A29152FE8D81210DE12460BAF2C2C18E96553AC",
+    "scripts/azure-recovery-bundle.native.test.mjs": "F59C9EEA348778BFEA4B568A96E6A23B11464630E39F478349095FC38C9C9A06",
+    "scripts/azure-observability.test.mjs": "6FF8425EECEC071F24DFCC563E785E330506420D372C950A76D2841FBA136E28",
+    "scripts/azure-native-fixture.mjs": "6CFBE9EE7E17F8EA8F28B79AFB24BAD8155747A6D82D8421DE14A51353D7990C",
+    "scripts/azure-native-fixture.test.mjs": "2994B4ACCDC3EFB9346F18935CF0DEB4086B5E2A8669DAC89D5BB8596D671B12"
+  }
+}

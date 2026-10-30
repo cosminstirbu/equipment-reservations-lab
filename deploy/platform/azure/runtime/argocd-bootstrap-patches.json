@@ -1,0 +1,96 @@
+[
+  {
+    "kind": "ServiceAccount",
+    "name": "argocd-server",
+    "namespace": "argocd",
+    "type": "merge",
+    "patch": {
+      "metadata": {
+        "annotations": {
+          "azure.workload.identity/client-id": "660aae29-e33c-4549-9b78-95973935d608"
+        }
+      }
+    }
+  },
+  {
+    "kind": "Deployment",
+    "name": "argocd-server",
+    "namespace": "argocd",
+    "type": "strategic",
+    "patch": {
+      "spec": {
+        "template": {
+          "metadata": {
+            "labels": {
+              "azure.workload.identity/use": "true"
+            }
+          },
+          "spec": {
+            "volumes": [
+              {
+                "name": "azure-secrets",
+                "csi": {
+                  "driver": "secrets-store.csi.k8s.io",
+                  "readOnly": true,
+                  "volumeAttributes": {
+                    "secretProviderClass": "argocd"
+                  }
+                }
+              }
+            ],
+            "containers": [
+              {
+                "name": "argocd-server",
+                "volumeMounts": [
+                  {
+                    "name": "azure-secrets",
+                    "mountPath": "/mnt/azure-secrets",
+                    "readOnly": true
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      }
+    }
+  },
+  {
+    "kind": "ConfigMap",
+    "name": "argocd-cm",
+    "namespace": "argocd",
+    "type": "merge",
+    "patch": {
+      "data": {
+        "url": "https://argocd.codingfunlab.com",
+        "admin.enabled": "false",
+        "users.anonymous.enabled": "false",
+        "oidc.config": "name: Microsoft Entra ID\nissuer: https://login.microsoftonline.com/ce6c409e-7ec6-4ec6-be6d-011755790f9b/v2.0\nclientID: f5dc5c6f-1231-4161-b228-ff2b7101bb88\nclientSecret: $argocd-credentials:oidcClientSecret\nrequestedScopes: [openid, profile, email]\nrequestedIDTokenClaims:\n  roles:\n    essential: true\nenablePKCEAuthentication: true\n"
+      }
+    }
+  },
+  {
+    "kind": "ConfigMap",
+    "name": "argocd-rbac-cm",
+    "namespace": "argocd",
+    "type": "merge",
+    "patch": {
+      "data": {
+        "policy.default": "",
+        "policy.csv": "g, Equipment.Operator, role:admin",
+        "scopes": "[roles]"
+      }
+    }
+  },
+  {
+    "kind": "ConfigMap",
+    "name": "argocd-cmd-params-cm",
+    "namespace": "argocd",
+    "type": "merge",
+    "patch": {
+      "data": {
+        "server.insecure": "true"
+      }
+    }
+  }
+]

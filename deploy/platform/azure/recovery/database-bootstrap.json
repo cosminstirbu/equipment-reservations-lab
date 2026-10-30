@@ -1,0 +1,159 @@
+{
+  "apiVersion": "batch/v1",
+  "kind": "Job",
+  "metadata": {
+    "name": "recovery-database-bootstrap",
+    "namespace": "equipment",
+    "labels": {
+      "app.kubernetes.io/name": "recovery-database-bootstrap"
+    },
+    "annotations": {
+      "argocd.argoproj.io/hook": "Sync",
+      "argocd.argoproj.io/hook-delete-policy": "HookSucceeded,BeforeHookCreation",
+      "argocd.argoproj.io/sync-wave": "-20"
+    }
+  },
+  "spec": {
+    "activeDeadlineSeconds": 300,
+    "backoffLimit": 0,
+    "template": {
+      "metadata": {
+        "labels": {
+          "app.kubernetes.io/name": "recovery-database-bootstrap",
+          "azure.workload.identity/use": "true"
+        }
+      },
+      "spec": {
+        "serviceAccountName": "database-bootstrap",
+        "automountServiceAccountToken": false,
+        "restartPolicy": "Never",
+        "securityContext": {
+          "runAsNonRoot": true,
+          "runAsUser": 999,
+          "runAsGroup": 999,
+          "fsGroup": 999,
+          "seccompProfile": {
+            "type": "RuntimeDefault"
+          }
+        },
+        "containers": [
+          {
+            "name": "bootstrap",
+            "image": "docker.io/library/postgres@sha256:74935e72241653ca55e0414067e6d8763aceb8a810eb51b452253ec3dcfc4336",
+            "command": [
+              "/bin/sh",
+              "-ec",
+              "if ! psql -X --set ON_ERROR_STOP=1 -f /sql/database-bootstrap.sql >/dev/null 2>&1; then printf \"Recovery database bootstrap failed.\\n\" >&2; exit 1; fi"
+            ],
+            "env": [
+              {
+                "name": "PGHOST",
+                "value": "postgres.equipment.svc.cluster.local"
+              },
+              {
+                "name": "PGPORT",
+                "value": "5432"
+              },
+              {
+                "name": "PGDATABASE",
+                "value": "postgres"
+              },
+              {
+                "name": "PGUSER",
+                "value": "postgres"
+              },
+              {
+                "name": "PGCONNECT_TIMEOUT",
+                "value": "5"
+              },
+              {
+                "name": "PGPASSWORD",
+                "valueFrom": {
+                  "secretKeyRef": {
+                    "name": "recovery-database-bootstrap-credentials",
+                    "key": "postgresAdmin"
+                  }
+                }
+              },
+              {
+                "name": "BACKUP_PASSWORD",
+                "valueFrom": {
+                  "secretKeyRef": {
+                    "name": "recovery-database-bootstrap-credentials",
+                    "key": "backupPassword"
+                  }
+                }
+              },
+              {
+                "name": "RESTORE_PASSWORD",
+                "valueFrom": {
+                  "secretKeyRef": {
+                    "name": "recovery-database-bootstrap-credentials",
+                    "key": "restorePassword"
+                  }
+                }
+              }
+            ],
+            "resources": {
+              "requests": {
+                "cpu": "100m",
+                "memory": "128Mi"
+              },
+              "limits": {
+                "cpu": "500m",
+                "memory": "512Mi"
+              }
+            },
+            "securityContext": {
+              "allowPrivilegeEscalation": false,
+              "readOnlyRootFilesystem": true,
+              "capabilities": {
+                "drop": ["ALL"]
+              }
+            },
+            "volumeMounts": [
+              {
+                "name": "tmp",
+                "mountPath": "/tmp"
+              },
+              {
+                "name": "sql",
+                "mountPath": "/sql",
+                "readOnly": true
+              },
+              {
+                "name": "credentials",
+                "mountPath": "/mnt/secrets-store",
+                "readOnly": true
+              }
+            ]
+          }
+        ],
+        "volumes": [
+          {
+            "name": "tmp",
+            "emptyDir": {
+              "sizeLimit": "16Mi"
+            }
+          },
+          {
+            "name": "sql",
+            "configMap": {
+              "name": "equipment-recovery-sql"
+            }
+          },
+          {
+            "name": "credentials",
+            "csi": {
+              "driver": "secrets-store.csi.k8s.io",
+              "readOnly": true,
+              "volumeAttributes": {
+                "secretProviderClass": "recovery-database-bootstrap"
+              }
+            }
+          }
+        ]
+      }
+    }
+  }
+}

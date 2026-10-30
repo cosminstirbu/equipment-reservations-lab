@@ -1,0 +1,43 @@
+{
+  "apiVersion": "v1",
+  "kind": "List",
+  "items": [
+    {
+      "apiVersion": "secrets-store.csi.x-k8s.io/v1",
+      "kind": "SecretProviderClass",
+      "metadata": {
+        "name": "argocd",
+        "namespace": "argocd",
+        "annotations": {
+          "argocd.argoproj.io/sync-wave": "-50",
+          "argocd.argoproj.io/sync-options": "Prune=false,Delete=false"
+        }
+      },
+      "spec": {
+        "provider": "azure",
+        "parameters": {
+          "usePodIdentity": "false",
+          "clientID": "660aae29-e33c-4549-9b78-95973935d608",
+          "keyvaultName": "erw4e7b2c544c382b33a5",
+          "tenantId": "ce6c409e-7ec6-4ec6-be6d-011755790f9b",
+          "objects": "array:\n  - |\n    objectName: argocd-oidc-client-secret\n    objectType: secret\n    objectVersion: \"\""
+        },
+        "secretObjects": [
+          {
+            "secretName": "argocd-credentials",
+            "labels": {
+              "app.kubernetes.io/part-of": "argocd"
+            },
+            "type": "Opaque",
+            "data": [
+              {
+                "key": "oidcClientSecret",
+                "objectName": "argocd-oidc-client-secret"
+              }
+            ]
+          }
+        ]
+      }
+    }
+  ]
+}

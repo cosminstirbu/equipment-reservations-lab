@@ -1,0 +1,88 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+  - cert-manager.yaml
+commonAnnotations:
+  argocd.argoproj.io/sync-options: Prune=false,Delete=false
+  argocd.argoproj.io/sync-wave: '-70'
+images:
+  - name: quay.io/jetstack/cert-manager-controller
+    digest: sha256:9f4f96a33c7774cef24466fcd85031997531a03a8d117f151126baa8d1290dcc
+  - name: quay.io/jetstack/cert-manager-cainjector
+    digest: sha256:083d0e906f8eb44e255fe4ff817ae54e49f9ed82e22f1011bb4e9e4f4b8a641f
+  - name: quay.io/jetstack/cert-manager-webhook
+    digest: sha256:055ac8e9de6a0ba6763794838fe38944acc650f68ebe1b01dd8be079e580f458
+patches:
+  - target:
+      kind: Deployment
+      name: cert-manager
+    patch: |-
+      - op: add
+        path: /spec/template/metadata/labels/azure.workload.identity~1use
+        value: 'true'
+      - op: test
+        path: /spec/template/spec/containers/0/args/2
+        value: --leader-election-namespace=kube-system
+      - op: replace
+        path: /spec/template/spec/containers/0/args/2
+        value: --leader-election-namespace=cert-manager
+      - op: add
+        path: /spec/template/spec/containers/0/args/-
+        value: --dns01-recursive-nameservers-only
+  - target:
+      kind: Deployment
+      name: cert-manager-cainjector
+    patch: |-
+      - op: test
+        path: /spec/template/spec/containers/0/args/1
+        value: --leader-election-namespace=kube-system
+      - op: replace
+        path: /spec/template/spec/containers/0/args/1
+        value: --leader-election-namespace=cert-manager
+  - target:
+      group: rbac.authorization.k8s.io
+      kind: Role|RoleBinding
+      name: cert-manager(-cainjector)?:leaderelection
+      namespace: kube-system
+    patch: |-
+      - op: replace
+        path: /metadata/namespace
+        value: cert-manager
+  - target:
+      group: admissionregistration.k8s.io
+      kind: ValidatingWebhookConfiguration
+      name: cert-manager-webhook
+    patch: |-
+      - op: test
+        path: /webhooks/0/name
+        value: webhook.cert-manager.io
+      - op: test
+        path: /webhooks/0/namespaceSelector/matchExpressions
+        value:
+          - key: cert-manager.io/disable-validation
+            operator: NotIn
+            values: ['true']
+      - op: add
+        path: /webhooks/0/namespaceSelector/matchExpressions/-
+        value:
+          key: control-plane
+          operator: NotIn
+          values: ['true']
+      - op: add
+        path: /webhooks/0/namespaceSelector/matchExpressions/-
+        value:
+          key: kubernetes.azure.com/managedby
+          operator: NotIn
+          values: [aks]
+  - target:
+      kind: Deployment
+    patch: |-
+      - op: add
+        path: /spec/template/spec/containers/0/resources
+        value:
+          requests:
+            cpu: 50m
+            memory: 64Mi
+          limits:
+            cpu: 500m
+            memory: 256Mi

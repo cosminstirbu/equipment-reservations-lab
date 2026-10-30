@@ -11,7 +11,12 @@ import { dirname, resolve } from 'node:path';
 import { check, resolveConfig } from 'prettier';
 import { imagePatch, imagePatchPath } from './component-images.mjs';
 import { validateStaticDeployment } from './manifest-quality.mjs';
-import { OperationalFailure, safeFailure, cleanupAllSync } from './process.mjs';
+import {
+  OperationalFailure,
+  safeFailure,
+  cleanupAllSync,
+  executeProcess,
+} from './process.mjs';
 import { Buffer } from 'node:buffer';
 import { createHash, randomUUID } from 'node:crypto';
 import { join } from 'node:path';
@@ -29,16 +34,255 @@ import {
   parseRelease,
   validateCommittedState,
   validateComponentRelease,
+  validateAzurePublication,
   canonicalRelease,
   imageNames,
   verifyComponentIndex,
   validateIndex,
 } from './deployment-validation.mjs';
 import { validateRunIntent } from './component-pipelines.mjs';
+import { runPrivateProcess } from './azure-infrastructure.mjs';
+import { withRegistryPublication } from './azure-operations.mjs';
+export { validateAzurePublication } from './deployment-validation.mjs';
 
 const releasePath = 'deploy/environments/local/release.json';
 const overlayPath = 'deploy/environments/local/kustomization.yaml';
 const marker = 'chore: promote local application images';
+
+function registryCommand(args, operation, timeout = 45000, signal, env) {
+  return runPrivateProcess('docker', ['buildx', 'imagetools', ...args], {
+    operation,
+    tool: 'docker',
+    timeout,
+    signal,
+    env,
+    maxBuffer: 1048576,
+  });
+}
+
+async function registryIndex(image, record, signal, env) {
+  const raw = await registryCommand(
+    ['inspect', '--raw', `${image}@${record.digest}`],
+    'Registry immutable index verification',
+    45000,
+    signal,
+    env,
+  );
+  const hash = (text) =>
+    `sha256:${createHash('sha256').update(text).digest('hex')}`;
+  // Buildx can append a presentation newline to the original manifest bytes.
+  if (
+    hash(raw) !== record.digest &&
+    !(raw.endsWith('\n') && hash(raw.slice(0, -1)) === record.digest)
+  )
+    throw new OperationalFailure('Registry index digest mismatch');
+  let index;
+  try {
+    index = JSON.parse(raw);
+  } catch {
+    throw new OperationalFailure('Registry index payload invalid');
+  }
+  validateIndex(index);
+  for (const architecture of ['amd64', 'arm64']) {
+    const descriptors = index.manifests.filter(
+      (item) =>
+        item.platform?.os === 'linux' &&
+        item.platform?.architecture === architecture,
+    );
+    if (descriptors.length !== 1)
+      throw new OperationalFailure('Registry platform descriptor is ambiguous');
+    const configText = await registryCommand(
+      [
+        'inspect',
+        '--format',
+        '{{json .Image}}',
+        `${image}@${descriptors[0].digest}`,
+      ],
+      'Registry source provenance verification',
+      45000,
+      signal,
+      env,
+    );
+    let config;
+    try {
+      config = JSON.parse(configText);
+    } catch {
+      throw new OperationalFailure('Registry source configuration invalid');
+    }
+    if (
+      config.os !== 'linux' ||
+      config.architecture !== architecture ||
+      config.config?.Labels?.['org.opencontainers.image.revision'] !==
+        record.sourceRevision ||
+      config.config?.Labels?.['org.opencontainers.image.source'] !==
+        `https://github.com/${record.repository.name}`
+    )
+      throw new OperationalFailure('Registry source provenance mismatch');
+  }
+  return index;
+}
+
+export async function publishDualRegistry({
+  release,
+  acr,
+  copy = true,
+  signal,
+  env,
+}) {
+  validateComponentRelease(release);
+  if (!/^[a-z0-9]{5,50}\.azurecr\.io$/.test(acr ?? ''))
+    throw new OperationalFailure('Explicit valid ACR login server required');
+  const image = `${acr}/${release.repository.name.split('/')[1].toLowerCase()}-${release.component}`;
+  await registryIndex(release.image, release, signal, env);
+  if (copy)
+    await registryCommand(
+      [
+        'create',
+        '--tag',
+        `${image}:${release.sourceRevision}`,
+        `${release.image}@${release.digest}`,
+      ],
+      'Dual registry immutable publication',
+      120000,
+      signal,
+      env,
+    );
+  await registryIndex(image, release, signal, env);
+  return { schemaVersion: 1, source: release, image, digest: release.digest };
+}
+
+function assertPublicationInvocation(
+  release,
+  intent,
+  { mainOnly = false } = {},
+) {
+  const event = process.env.GITHUB_EVENT_NAME;
+  const ref = process.env.GITHUB_REF;
+  if (
+    !(
+      (event === 'push' && ref === 'refs/heads/main') ||
+      (event === 'workflow_dispatch' && /^refs\/heads\/[^\s]+$/.test(ref ?? ''))
+    ) ||
+    (mainOnly && ref !== 'refs/heads/main') ||
+    release.repository.name !== process.env.GITHUB_REPOSITORY ||
+    release.repository.id !== Number(process.env.GITHUB_REPOSITORY_ID) ||
+    release.sourceRevision !== process.env.GITHUB_SHA ||
+    release.sourceRef !== ref ||
+    release.runId !== Number(process.env.GITHUB_RUN_ID) ||
+    release.runAttempt > Number(process.env.GITHUB_RUN_ATTEMPT) ||
+    intent.event !== event ||
+    intent.sourceRevision !== release.sourceRevision ||
+    intent.sourceRef !== release.sourceRef ||
+    intent.runId !== release.runId ||
+    canonicalRelease(intent.repository) !==
+      canonicalRelease(release.repository) ||
+    !intent.selected.includes(release.component)
+  )
+    throw new OperationalFailure(
+      'Component publication identity does not match trusted workflow invocation',
+    );
+}
+
+export async function verifyAzurePublication(publication, options = {}) {
+  validateAzurePublication(publication, options);
+  await registryIndex(
+    publication.source.image,
+    publication.source,
+    options.signal,
+    options.env,
+  );
+  await registryIndex(
+    publication.image,
+    publication.source,
+    options.signal,
+    options.env,
+  );
+  return publication;
+}
+
+function azurePublicationFiles(publication) {
+  validateAzurePublication(publication);
+  const source = publication.source;
+  return {
+    [`deploy/environments/azure/releases/${source.component}.json`]: `${JSON.stringify(publication, null, 2)}\n`,
+    [`deploy/environments/azure/images/${source.component}.yaml`]: imagePatch(
+      source.component,
+      `${publication.image}@${publication.digest}`,
+    ),
+  };
+}
+
+export async function proposeAzure({ publication, gateway }) {
+  const candidate = azurePublicationFiles(publication);
+  const state = await gateway.readState();
+  if (!state.managed)
+    throw new OperationalFailure(
+      'Azure image proposal branch is not managed; manual review required',
+    );
+  const main = await gateway.readSnapshot(state.base);
+  const files = { ...main.azureFiles };
+  if (state.head && state.proposalBase !== state.head) {
+    const proposal = await gateway.readSnapshot(state.head);
+    const ancestor = await gateway.readSnapshot(state.proposalBase);
+    for (const [path, text] of Object.entries(proposal.azureFiles)) {
+      if (text === ancestor.azureFiles[path]) continue;
+      if (
+        main.azureFiles[path] !== ancestor.azureFiles[path] &&
+        main.azureFiles[path] !== text
+      )
+        throw new OperationalFailure(
+          'Azure image proposal conflicts with reviewed main; manual review required',
+        );
+      files[path] = text;
+    }
+  }
+  const previousText =
+    files[
+      `deploy/environments/azure/releases/${publication.source.component}.json`
+    ];
+  if (previousText) {
+    const previous = JSON.parse(canonicalRelease(previousText));
+    if (
+      previous.source.sourceRevision === publication.source.sourceRevision &&
+      previous.digest !== publication.digest
+    )
+      throw new OperationalFailure(
+        'Divergent image content for the same source release',
+      );
+    if (
+      previous.source.sourceRevision !== publication.source.sourceRevision &&
+      !(await gateway.isAncestor(
+        previous.source.sourceRevision,
+        publication.source.sourceRevision,
+      ))
+    )
+      throw new OperationalFailure(
+        'Azure source release is stale or on a different lineage',
+      );
+  }
+  const previousFiles = { ...files };
+  Object.assign(files, candidate);
+  if (canonicalRelease(files) === canonicalRelease(main.azureFiles))
+    return { status: 'noop' };
+  if (canonicalRelease(files) === canonicalRelease(previousFiles))
+    return gateway.ensurePullRequest();
+  const current = await gateway.readState();
+  if (current.base !== state.base || current.head !== state.head)
+    throw new OperationalFailure('Azure image proposal changed before commit');
+  const commit = await gateway.commit(
+    files,
+    state.head ?? state.base,
+    `chore: propose Azure component images\n\nComponent: ${publication.source.component}\nSource: ${publication.source.sourceRevision}`,
+    { treeParent: state.base, mergeParent: state.base },
+  );
+  const beforeRef = await gateway.readState();
+  if (beforeRef.base !== state.base || beforeRef.head !== state.head)
+    throw new OperationalFailure(
+      'Azure image proposal changed before ref update',
+    );
+  await gateway.compareAndSwap(state.head, commit);
+  return gateway.ensurePullRequest();
+}
 
 export function promotionFiles(release, kustomization, jobInputs) {
   validateRelease(release);
@@ -401,24 +645,44 @@ export function githubGateway({
   token,
   request = globalThis.fetch,
   kubectl,
+  azure = false,
+  signal,
 }) {
   if (!/^[\w.-]+\/[\w.-]+$/.test(repository) || !token)
     throw new OperationalFailure('Repository and promotion token required');
   if (component !== undefined && !imageNames.includes(component))
     throw new OperationalFailure('Unknown promotion component');
-  const branch = component ? 'main' : 'automation/local-image-promotion';
-  const allowedPaths = component
-    ? [
-        `deploy/environments/local/releases/${component}.json`,
-        imagePatchPath(component),
-        ...jobNames
-          .filter((name) => component === `${name}-bootstrap`)
-          .map(wrapperPath),
-      ]
-    : [releasePath, overlayPath, ...jobNames.map(wrapperPath)];
+  if (azure && !component)
+    throw new OperationalFailure('Azure proposal requires component identity');
+  const branch = azure
+    ? 'automation/azure-image-promotion'
+    : component
+      ? 'main'
+      : 'automation/local-image-promotion';
+  const proposalMarker = azure
+    ? 'chore: propose Azure component images'
+    : marker;
+  const allowedPaths = azure
+    ? imageNames.flatMap((name) => [
+        `deploy/environments/azure/releases/${name}.json`,
+        `deploy/environments/azure/images/${name}.yaml`,
+      ])
+    : component
+      ? [
+          `deploy/environments/local/releases/${component}.json`,
+          imagePatchPath(component),
+          ...jobNames
+            .filter((name) => component === `${name}-bootstrap`)
+            .map(wrapperPath),
+        ]
+      : [releasePath, overlayPath, ...jobNames.map(wrapperPath)];
   const root = `https://api.github.com/repos/${repository}`;
   const owner = repository.split('/')[0];
   async function api(path, method = 'GET', body, allowMissing = false) {
+    if (signal?.aborted)
+      throw new OperationalFailure(
+        'GitHub proposal cancelled after lost operation lease',
+      );
     let response;
     try {
       response = await request(
@@ -434,7 +698,12 @@ export function githubGateway({
             'Content-Type': 'application/json',
           },
           body: body === undefined ? undefined : JSON.stringify(body),
-          signal: globalThis.AbortSignal.timeout(15000),
+          signal: signal
+            ? globalThis.AbortSignal.any([
+                signal,
+                globalThis.AbortSignal.timeout(15000),
+              ])
+            : globalThis.AbortSignal.timeout(15000),
         },
       );
     } catch {
@@ -461,7 +730,7 @@ export function githubGateway({
       const base = (await api('/git/ref/heads/main')).object.sha;
       if (!/^[a-f0-9]{40}$/.test(base ?? ''))
         throw new OperationalFailure('Invalid main ref identity');
-      if (component) return { base, head: null, managed: true };
+      if (component && !azure) return { base, head: null, managed: true };
       const ref = await api(`/git/ref/heads/${branch}`, 'GET', undefined, true);
       if (!ref) return { base, head: null, managed: true };
       const comparison = await api(
@@ -474,15 +743,18 @@ export function githubGateway({
             /^[a-f0-9]{40}$/.test(comparison.merge_base_commit?.sha ?? '')
           : comparison.behind_by === 0 &&
             comparison.merge_base_commit?.sha === base) &&
-        comparison.ahead_by > 0 &&
+        (azure ? comparison.ahead_by >= 0 : comparison.ahead_by > 0) &&
         comparison.ahead_by <= 100 &&
         Array.isArray(comparison.commits) &&
         comparison.commits.length === comparison.ahead_by &&
-        comparison.commits.at(-1)?.sha === ref.object.sha &&
+        ((azure &&
+          comparison.ahead_by === 0 &&
+          comparison.merge_base_commit?.sha === ref.object.sha) ||
+          comparison.commits.at(-1)?.sha === ref.object.sha) &&
         comparison.commits.every(
           (commit) =>
             commit.author?.login === 'github-actions[bot]' &&
-            commit.commit.message.startsWith(`${marker}\n`),
+            commit.commit.message.startsWith(`${proposalMarker}\n`),
         ) &&
         Array.isArray(comparison.files) &&
         comparison.files.length < 300 &&
@@ -574,6 +846,39 @@ export function githubGateway({
           throw new OperationalFailure('Invalid parent UTF-8 input');
         cache.set(path, text);
         return text;
+      }
+      if (azure) {
+        const azureFiles = {};
+        for (const name of imageNames) {
+          const path = `deploy/environments/azure/releases/${name}.json`;
+          const text = await file(path, true);
+          const patch = await file(
+            `deploy/environments/azure/images/${name}.yaml`,
+            true,
+          );
+          if (text === null && patch === null) continue;
+          if (text === null || patch === null)
+            throw new OperationalFailure(
+              'Incomplete Azure component publication',
+            );
+          const publication = JSON.parse(canonicalRelease(text));
+          if (
+            publication.source?.component !== name ||
+            publication.source.repository.name !== repository
+          )
+            throw new OperationalFailure(
+              'Azure component publication identity mismatch',
+            );
+          const expected = azurePublicationFiles(publication);
+          if (
+            patch !== expected[`deploy/environments/azure/images/${name}.yaml`]
+          )
+            throw new OperationalFailure(
+              'Azure image patch does not match publication',
+            );
+          Object.assign(azureFiles, expected);
+        }
+        return { revision, azureFiles };
       }
       const jobInputs = {
         baseConfiguration: await file('deploy/base/configuration.yaml'),
@@ -711,7 +1016,8 @@ export function githubGateway({
       { treeParent = parent, mergeParent = null } = {},
     ) {
       if (
-        Object.keys(files).length !== allowedPaths.length ||
+        (!azure && Object.keys(files).length !== allowedPaths.length) ||
+        !Object.keys(files).length ||
         Object.keys(files).some((path) => !allowedPaths.includes(path))
       )
         throw new OperationalFailure('Unexpected promotion file');
@@ -737,7 +1043,7 @@ export function githubGateway({
       ).sha;
     },
     async compareAndSwap(expected, sha) {
-      if (component && !/^[a-f0-9]{40}$/.test(expected ?? ''))
+      if (component && !azure && !/^[a-f0-9]{40}$/.test(expected ?? ''))
         throw new OperationalFailure('Exact main parent required');
       const repositoryId = (await api('')).node_id;
       const result = await api('graphql', 'POST', {
@@ -780,13 +1086,193 @@ export function githubGateway({
         );
       if (prs.length) return prs[0];
       return api('/pulls', 'POST', {
-        title: marker,
+        title: proposalMarker,
         head: branch,
         base: 'main',
-        body: 'Updates only local application image digests and source provenance. Review immutable indexes and source revision before merging.',
+        body: azure
+          ? 'Updates verified matching GHCR/ACR component digests and source provenance. Initial creation accumulates all seven components in this PR; merge only when complete Azure manifest checks pass. Review immutable digests and source revisions.'
+          : 'Updates only local application image digests and source provenance. Review immutable indexes and source revision before merging.',
       });
     },
   };
+}
+
+export async function runPromotionCommand({
+  argv = process.argv,
+  signal,
+} = {}) {
+  if (argv[2] === 'registry-login') {
+    const acr = argv[3];
+    if (
+      !/^[a-z0-9]{5,50}\.azurecr\.io$/.test(acr ?? '') ||
+      process.env.GITHUB_REF !== 'refs/heads/main' ||
+      !['push', 'workflow_dispatch'].includes(process.env.GITHUB_EVENT_NAME)
+    )
+      throw new OperationalFailure(
+        'Registry login requires trusted main and explicit ACR',
+      );
+    await runPrivateProcess(
+      process.platform === 'win32' ? 'cmd.exe' : 'az',
+      process.platform === 'win32'
+        ? [
+            '/d',
+            '/s',
+            '/c',
+            `az acr login --name ${acr.split('.')[0]} --output none`,
+          ]
+        : ['acr', 'login', '--name', acr.split('.')[0], '--output', 'none'],
+      {
+        operation: 'ACR federated registry login',
+        tool: 'az',
+        timeout: 60000,
+        maxBuffer: 65536,
+      },
+    );
+    console.log('ACR registry authentication ready.');
+  } else if (argv[2] === 'repopulate') {
+    const component = argv[3];
+    const revision = process.env.GITHUB_SHA;
+    if (
+      process.env.GITHUB_REF !== 'refs/heads/main' ||
+      process.env.GITHUB_EVENT_NAME !== 'workflow_dispatch' ||
+      !/^[a-f0-9]{40}$/.test(revision ?? '') ||
+      !imageNames.includes(component) ||
+      (argv.length !== 6 && !(argv.length === 7 && argv[6] === '--propose'))
+    )
+      throw new OperationalFailure(
+        'Registry repopulation requires exact trusted-main reviewed release',
+      );
+    const text = executeProcess(
+      'git',
+      [
+        'show',
+        `${revision}:deploy/environments/azure/releases/${component}.json`,
+      ],
+      {
+        operation: 'Reviewed registry recovery publication',
+        tool: 'git',
+        output: 'private-capture',
+        timeout: 15000,
+        maxBuffer: 65536,
+      },
+    );
+    const previous = JSON.parse(canonicalRelease(text));
+    azurePublicationFiles(previous);
+    const release = previous.source;
+    if (
+      release.component !== component ||
+      release.sourceRef !== 'refs/heads/main' ||
+      release.repository.name !== process.env.GITHUB_REPOSITORY ||
+      release.repository.id !== Number(process.env.GITHUB_REPOSITORY_ID)
+    )
+      throw new OperationalFailure(
+        'Reviewed registry recovery provenance mismatch',
+      );
+    const publication = await publishDualRegistry({
+      release,
+      acr: argv[4],
+      signal,
+    });
+    if (argv[6] === '--propose')
+      await proposeAzure({
+        publication,
+        gateway: githubGateway({
+          repository: release.repository.name,
+          component,
+          azure: true,
+          signal,
+          token: process.env.GH_TOKEN,
+        }),
+      });
+    writeFileSync(argv[5], `${JSON.stringify(publication, null, 2)}\n`);
+    console.log(
+      `Repopulated verified original component: ${component} ${release.digest}`,
+    );
+  } else if (argv[2] === 'dual') {
+    if (argv.length !== 7 && !(argv.length === 8 && argv[7] === '--propose'))
+      throw new OperationalFailure(
+        'Dual registry publication requires result, intent, ACR and output',
+      );
+    const result = JSON.parse(canonicalRelease(readFileSync(argv[3], 'utf8')));
+    const release = validateComponentRelease(result.record);
+    const intent = validateRunIntent(
+      JSON.parse(canonicalRelease(readFileSync(argv[4], 'utf8'))),
+    );
+    assertPublicationInvocation(release, intent, { mainOnly: true });
+    validateIndex(result.index);
+    const publication = await publishDualRegistry({
+      release,
+      acr: argv[5],
+      signal,
+    });
+    if (argv[7] === '--propose')
+      await proposeAzure({
+        publication,
+        gateway: githubGateway({
+          repository: release.repository.name,
+          component: release.component,
+          azure: true,
+          signal,
+          token: process.env.GH_TOKEN,
+        }),
+      });
+    writeFileSync(argv[6], `${JSON.stringify(publication, null, 2)}\n`);
+    console.log(
+      `Verified dual registry publication: ${release.component} ${release.digest}`,
+    );
+  } else if (argv[2] === 'refresh') {
+    refreshJobSuffixes(argv[3] ?? process.cwd());
+    console.log(
+      'Refreshed only local bootstrap Job suffixes; review the configuration diff.',
+    );
+  } else {
+    const event = process.env.GITHUB_EVENT_NAME;
+    const ref = process.env.GITHUB_REF;
+    if (!(
+      (event === 'push' && ref === 'refs/heads/main') ||
+      (event === 'workflow_dispatch' && /^refs\/heads\/[^\s]+$/.test(ref ?? ''))
+    ))
+      throw new OperationalFailure(
+        'Promotion requires trusted repository branch invocation',
+      );
+    const resultFile = JSON.parse(
+      canonicalRelease(readFileSync(argv[2], 'utf8')),
+    );
+    const release = validateComponentRelease(resultFile.record);
+    const intent = validateRunIntent(
+      JSON.parse(canonicalRelease(readFileSync(argv[3], 'utf8'))),
+    );
+    if (
+      release.repository.name !== process.env.GITHUB_REPOSITORY ||
+      release.repository.id !== Number(process.env.GITHUB_REPOSITORY_ID) ||
+      release.sourceRevision !== process.env.GITHUB_SHA ||
+      release.sourceRef !== ref ||
+      release.runId !== Number(process.env.GITHUB_RUN_ID) ||
+      release.runAttempt > Number(process.env.GITHUB_RUN_ATTEMPT) ||
+      intent.event !== event
+    )
+      throw new OperationalFailure(
+        'Component publication identity does not match current workflow invocation',
+      );
+    validateIndex(resultFile.index);
+    verifyComponentIndex(release);
+    const gateway = githubGateway({
+      repository: process.env.GITHUB_REPOSITORY,
+      component: release.component,
+      token: process.env.GH_TOKEN,
+      kubectl: process.env.PROMOTION_KUBECTL,
+    });
+    const result = await promote({
+      release,
+      intent,
+      gateway,
+    });
+    console.log(
+      result.status === 'noop'
+        ? 'Component already deployed; no promotion needed.'
+        : `Promoted component to main: ${result.commit}`,
+    );
+  }
 }
 
 if (
@@ -794,60 +1280,23 @@ if (
   import.meta.url === pathToFileURL(process.argv[1]).href
 ) {
   try {
-    if (process.argv[2] === 'refresh') {
-      refreshJobSuffixes(process.argv[3] ?? process.cwd());
-      console.log(
-        'Refreshed only local bootstrap Job suffixes; review the configuration diff.',
+    if (['dual', 'repopulate'].includes(process.argv[2])) {
+      await withRegistryPublication(
+        {
+          configPath: process.env.AZURE_CONFIG_PATH,
+          outputsPath: process.env.AZURE_OUTPUTS_PATH,
+        },
+        async ({ signal, outputs }) => {
+          const acr =
+            process.argv[2] === 'dual' ? process.argv[5] : process.argv[4];
+          if (acr !== outputs.acr_login_server)
+            throw new OperationalFailure(
+              'Publication registry does not match approved environment outputs',
+            );
+          return runPromotionCommand({ signal });
+        },
       );
-    } else {
-      const event = process.env.GITHUB_EVENT_NAME;
-      const ref = process.env.GITHUB_REF;
-      if (!(
-        (event === 'push' && ref === 'refs/heads/main') ||
-        (event === 'workflow_dispatch' &&
-          /^refs\/heads\/[^\s]+$/.test(ref ?? ''))
-      ))
-        throw new OperationalFailure(
-          'Promotion requires trusted repository branch invocation',
-        );
-      const resultFile = JSON.parse(
-        canonicalRelease(readFileSync(process.argv[2], 'utf8')),
-      );
-      const release = validateComponentRelease(resultFile.record);
-      const intent = validateRunIntent(
-        JSON.parse(canonicalRelease(readFileSync(process.argv[3], 'utf8'))),
-      );
-      if (
-        release.repository.name !== process.env.GITHUB_REPOSITORY ||
-        release.repository.id !== Number(process.env.GITHUB_REPOSITORY_ID) ||
-        release.sourceRevision !== process.env.GITHUB_SHA ||
-        release.sourceRef !== ref ||
-        release.runId !== Number(process.env.GITHUB_RUN_ID) ||
-        release.runAttempt > Number(process.env.GITHUB_RUN_ATTEMPT) ||
-        intent.event !== event
-      )
-        throw new OperationalFailure(
-          'Component publication identity does not match current workflow invocation',
-        );
-      validateIndex(resultFile.index);
-      verifyComponentIndex(release);
-      const gateway = githubGateway({
-        repository: process.env.GITHUB_REPOSITORY,
-        component: release.component,
-        token: process.env.GH_TOKEN,
-        kubectl: process.env.PROMOTION_KUBECTL,
-      });
-      const result = await promote({
-        release,
-        intent,
-        gateway,
-      });
-      console.log(
-        result.status === 'noop'
-          ? 'Component already deployed; no promotion needed.'
-          : `Promoted component to main: ${result.commit}`,
-      );
-    }
+    } else await runPromotionCommand();
   } catch (error) {
     console.error(
       safeFailure(

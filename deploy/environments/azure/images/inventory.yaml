@@ -1,0 +1,11 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: inventory
+spec:
+  template:
+    spec:
+      containers:
+        - name: inventory
+          image: er4e7b2c544c382b33a5.azurecr.io/equipment-reservations-lab-inventory@sha256:9d4ccc8ba585ab54fda903052ec46e7094793ca21fe5a2a5c690feeeaeefe469

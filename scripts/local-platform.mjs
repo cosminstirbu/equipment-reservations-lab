@@ -70,7 +70,12 @@ export function createPrivateDirectory(path) {
   if (process.platform === 'win32') {
     if (lstatSync(path).isSymbolicLink())
       throw new OperationalFailure('Private state cannot be a symlink.');
-    windowsAcl(path, true);
+    try {
+      assertPrivatePath(path, 0o700);
+      return;
+    } catch {
+      windowsAcl(path, true);
+    }
   }
   assertPrivatePath(path, 0o700);
 }

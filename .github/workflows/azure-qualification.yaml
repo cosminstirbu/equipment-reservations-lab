@@ -1,0 +1,68 @@
+name: Azure initial recovery identity qualification
+on:
+  workflow_dispatch:
+    inputs:
+      actor:
+        description: Protected recovery identity to qualify
+        type: choice
+        required: true
+        options:
+          - both
+          - backup
+          - restore
+permissions:
+  contents: read
+concurrency:
+  group: azure-${{ vars.AZURE_ENVIRONMENT }}
+  cancel-in-progress: false
+jobs:
+  prove:
+    if: github.ref == 'refs/heads/main'
+    environment: azure-${{ matrix.actor }}
+    permissions:
+      contents: read
+      id-token: write
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      max-parallel: 1
+      matrix:
+        actor: ${{ fromJSON(inputs.actor == 'both' && '["backup","restore"]' || format('["{0}"]', inputs.actor)) }}
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+      - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444
+        with:
+          node-version: 24.15.0
+      - run: sh scripts/azure-qualification-launch.sh install
+      - run: |
+          unset NODE_OPTIONS NODE_PATH
+          npm run infra:tools
+      - uses: azure/login@a641126d1b8aa4d1fa005f4f92df94a3a4c4c906
+        with:
+          client-id: ${{ matrix.actor == 'backup' && vars.AZURE_BACKUP_CLIENT_ID || vars.AZURE_RESTORE_CLIENT_ID }}
+          tenant-id: ${{ vars.AZURE_TENANT_ID }}
+          subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID }}
+          enable-AzPSSession: false
+        env:
+          AZURE_CORE_OUTPUT: none
+      - name: Write restricted qualification inputs
+        env:
+          AZURE_CONFIG_JSON: ${{ secrets.AZURE_CONFIG_JSON }}
+          AZURE_BOOTSTRAP_LOCATOR_JSON: ${{ secrets.AZURE_BOOTSTRAP_LOCATOR_JSON }}
+        run: |
+          unset NODE_OPTIONS NODE_PATH
+          node --input-type=module -e "import {writeFileSync} from 'node:fs';import {join} from 'node:path';process.umask(0o077);for(const [name,value] of [['qualification-config.json',process.env.AZURE_CONFIG_JSON],['qualification-locator.json',process.env.AZURE_BOOTSTRAP_LOCATOR_JSON]]){if(!value)throw Error('Missing private qualification inputs');writeFileSync(join(process.env.RUNNER_TEMP,name),value,{mode:0o600});}"
+      - name: Prove actual hosted identity against harmless fixtures
+        env:
+          AZURE_QUALIFICATION_NONCE: ${{ secrets.AZURE_QUALIFICATION_NONCE }}
+          QUALIFICATION_ACTOR: ${{ matrix.actor }}
+        run: sh scripts/azure-qualification-launch.sh prove --config "$RUNNER_TEMP/qualification-config.json" --locator "$RUNNER_TEMP/qualification-locator.json" --actor "$QUALIFICATION_ACTOR" --nonce "$AZURE_QUALIFICATION_NONCE"
+      - name: Remove private qualification inputs
+        if: always()
+        run: |
+          unset NODE_OPTIONS NODE_PATH
+          node --input-type=module -e "import {rmSync} from 'node:fs';import {join} from 'node:path';for(const name of ['qualification-config.json','qualification-locator.json'])rmSync(join(process.env.RUNNER_TEMP,name),{force:true});"

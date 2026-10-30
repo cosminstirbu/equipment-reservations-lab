@@ -27,6 +27,7 @@ jobs:
         with:
           node-version: 24.15.0
           cache: npm
+      - run: npm ci
       - id: quality_scope
         name: Classify required quality
         env:
@@ -44,6 +45,7 @@ jobs:
     outputs:
       mode: ${{ needs.scope.outputs.mode }}
       reason: ${{ needs.scope.outputs.reason }}
+      infrastructure_validated: ${{ steps.azure_infrastructure_done.outputs.validated }}
     steps:
       - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
         with:
@@ -55,10 +57,35 @@ jobs:
           node-version: 24.15.0
           cache: npm
       - run: npm ci
+      - name: Install checksum-pinned Azure tools and policies
+        if: needs.scope.outputs.mode == 'infrastructure' || needs.scope.outputs.mode == 'full'
+        run: npm run infra:tools
+      - name: Deterministic Terraform source gates
+        if: needs.scope.outputs.mode == 'infrastructure' || needs.scope.outputs.mode == 'full'
+        run: npm run infra:check
+      - name: Native Terraform contracts
+        if: needs.scope.outputs.mode == 'infrastructure' || needs.scope.outputs.mode == 'full'
+        run: npm run infra:test
+      - name: Check Azure tooling and workflow formatting
+        if: needs.scope.outputs.mode == 'infrastructure' || needs.scope.outputs.mode == 'full'
+        run: npm run format-check -- scripts/azure-*.mjs .github/workflows/azure-*.yaml .github/workflows/pull-request.yaml
+      - name: Lint Azure tooling
+        if: needs.scope.outputs.mode == 'infrastructure' || needs.scope.outputs.mode == 'full'
+        run: node node_modules/eslint/bin/eslint.js scripts/azure-*.mjs --max-warnings 0
       - uses: actions/setup-dotnet@26b0ec14cb23fa6904739307f278c14f94c95bf1
         if: needs.scope.outputs.mode == 'full'
         with:
           global-json-file: global.json
+      - name: Focused Azure source contracts
+        if: needs.scope.outputs.mode == 'infrastructure' || needs.scope.outputs.mode == 'full'
+        run: node --test scripts/azure-quality.test.mjs scripts/azure-infrastructure.test.mjs scripts/azure-terraform.test.mjs scripts/azure-provisioning.test.mjs scripts/azure-audit.test.mjs scripts/azure-handoff.test.mjs scripts/azure-vault-guard.test.mjs scripts/azure-guard-activation.test.mjs scripts/azure-operations.test.mjs scripts/azure-recovery.test.mjs scripts/azure-workflows.test.mjs scripts/manifest-quality.test.mjs
+      - name: Validate authored and synthetic Azure manifests
+        if: needs.scope.outputs.mode == 'infrastructure' || needs.scope.outputs.mode == 'full'
+        run: node scripts/manifest-quality.mjs azure
+      - id: azure_infrastructure_done
+        name: Record completed infrastructure gates
+        if: needs.scope.outputs.mode == 'infrastructure'
+        run: echo "validated=true" >> "$GITHUB_OUTPUT"
       - run: npm --prefix src/Web ci
         if: needs.scope.outputs.mode == 'full'
       - name: Validate committed release and bootstrap identities
@@ -167,6 +194,8 @@ jobs:
       contents: write
       packages: write
       actions: read
+      pull-requests: write
+      id-token: write
     uses: ./.github/workflows/component-inventory.yaml
   component_reservations:
     name: Component reservations
@@ -176,6 +205,8 @@ jobs:
       contents: write
       packages: write
       actions: read
+      pull-requests: write
+      id-token: write
     uses: ./.github/workflows/component-reservations.yaml
   component_notifications:
     name: Component notifications
@@ -185,6 +216,8 @@ jobs:
       contents: write
       packages: write
       actions: read
+      pull-requests: write
+      id-token: write
     uses: ./.github/workflows/component-notifications.yaml
   component_web:
     name: Component web
@@ -194,6 +227,8 @@ jobs:
       contents: write
       packages: write
       actions: read
+      pull-requests: write
+      id-token: write
     uses: ./.github/workflows/component-web.yaml
   component_database_bootstrap:
     name: Component database-bootstrap
@@ -203,6 +238,8 @@ jobs:
       contents: write
       packages: write
       actions: read
+      pull-requests: write
+      id-token: write
     uses: ./.github/workflows/component-database-bootstrap.yaml
   component_identity_bootstrap:
     name: Component identity-bootstrap
@@ -212,6 +249,8 @@ jobs:
       contents: write
       packages: write
       actions: read
+      pull-requests: write
+      id-token: write
     uses: ./.github/workflows/component-identity-bootstrap.yaml
   component_broker_bootstrap:
     name: Component broker-bootstrap
@@ -221,6 +260,8 @@ jobs:
       contents: write
       packages: write
       actions: read
+      pull-requests: write
+      id-token: write
     uses: ./.github/workflows/component-broker-bootstrap.yaml
   summary:
     if: always()
@@ -251,7 +292,7 @@ jobs:
       - run: npm ci
       - name: Required independent component outcomes
         env:
-          SELECTED_COMPONENTS: ${{ needs.select.outputs.selected }}
+          SELECTED_COMPONENTS: ${{ needs.select.outputs.selected || '[]' }}
           PIPELINE_NEEDS: ${{ toJSON(needs) }}
         run: node scripts/deployment-ci.mjs summary
       - name: Required quality mode

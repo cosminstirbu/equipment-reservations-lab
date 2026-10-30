@@ -1,0 +1,163 @@
+{
+  "version": 1,
+  "serialization": "Sort repository-relative POSIX paths lexicographically; concatenate path + | + uppercase SHA256(file bytes) + LF; SHA256 UTF-8. Include .tf/.hcl/.json/.tfvars, exclude .terraform directory.",
+  "roots": {
+    "foundation": {
+      "snapshotId": "8A4AFFE0C2C627DF26E8B3649E57CB4876608E4FC1E2EF13916241BB7409F0CD",
+      "files": [
+        {
+          "path": "infra/azure/foundation/.terraform.lock.hcl",
+          "sha256": "BCBB02BC48972B3CF6A397F325D1347A9070074853313780B42D39903A98D8F2"
+        },
+        {
+          "path": "infra/azure/foundation/audit.tf",
+          "sha256": "5E54D03E9B3516D940D31E133896AF984E4416F0AFD6F96C756CBA4FB0DAB5CD"
+        },
+        {
+          "path": "infra/azure/foundation/bootstrap-variables.tf",
+          "sha256": "BBB0DBA185AACFF4172B48AB1A13102C5A185ED6A02122DFB26B3A99C360E632"
+        },
+        {
+          "path": "infra/azure/foundation/continuity.tf",
+          "sha256": "4565B45FA374DF0A7270266C9B4DB353119B7A2792F8A688A75B52478FABF1E9"
+        },
+        {
+          "path": "infra/azure/foundation/delegation.tf",
+          "sha256": "A51373DEC9360F944BE7B35E90D4E7234574A4E6B20279B5E08764700717028A"
+        },
+        {
+          "path": "infra/azure/foundation/guard-evidence.tf",
+          "sha256": "E316D2A6F725B761806355DEE825667718C69D854CC5B514375192D254BA8EE0"
+        },
+        {
+          "path": "infra/azure/foundation/guard-inspection.tf",
+          "sha256": "5106DD037358B1447D63FFBF6872D342CE86D81C76CDA7AB5E8CA0D962046692"
+        },
+        {
+          "path": "infra/azure/foundation/handoff.tf",
+          "sha256": "933E3E4658F5547C2E536ECDA0ECB0A6C3D4E08E137F792D53D489A9D9015177"
+        },
+        {
+          "path": "infra/azure/foundation/main.tf",
+          "sha256": "15CDF0CB452978D4FA2295A0E1FFD9E28715D8704F388150DF47608BD5A9B534"
+        },
+        {
+          "path": "infra/azure/foundation/network-access.tf",
+          "sha256": "7458470FCDCE73CB2E8B53D75E1FDCFBF68AE11E9DB7985CCD0BE2A39FDCB84A"
+        },
+        {
+          "path": "infra/azure/foundation/operation-authorities.tf",
+          "sha256": "EC4EA118553E873390CE8FF9BC216E0193BA5CBDE3A945B6905A7A1CA0AAF3CF"
+        },
+        {
+          "path": "infra/azure/foundation/operators.tf",
+          "sha256": "F634D43BD33B5ADAEFAD2FB603467CA40D167710A25F16D74B44E288D9ABAAA6"
+        },
+        {
+          "path": "infra/azure/foundation/outputs.tf",
+          "sha256": "A2D58A6745CE26BB21FEBB993A4AF3B051A62AE4816D00D7F39D24C09CE4247E"
+        },
+        {
+          "path": "infra/azure/foundation/storage.tf",
+          "sha256": "2048E24DB3FDF024F04FBC8D2A0207BC1DD5AB7A91FEF7ECD54C692AB7BFD340"
+        },
+        {
+          "path": "infra/azure/foundation/tests/audit.tftest.hcl",
+          "sha256": "CBFDC99C8A5D8E3B76694AE972E1041E92ED333CD7230979B2B27ED54161A9C3"
+        },
+        {
+          "path": "infra/azure/foundation/tests/foundation.tftest.hcl",
+          "sha256": "542225E668B75A858816CF6B229435A7A84A446D7253458F3A31F57683ACC73A"
+        },
+        {
+          "path": "infra/azure/foundation/tests/mocks/azuread.tfmock.hcl",
+          "sha256": "F20909EF17B2C82063D0D80C17ACCBA2C2E3A6D504C59D0E666E2E6BAC178CD7"
+        },
+        {
+          "path": "infra/azure/foundation/tests/mocks/azurerm.tfmock.hcl",
+          "sha256": "F395D383E02F89AE6C991DDA86FA4CF84E4CFAF955B1CEE1275E32FAEEEEB0AD"
+        },
+        {
+          "path": "infra/azure/foundation/variables.tf",
+          "sha256": "0AA601C629E53414CA637DC3BF911EA7C1B86F72A1FE31F6BC0668590CE8F208"
+        },
+        {
+          "path": "infra/azure/foundation/vault-guard-stages.tf",
+          "sha256": "EBC9B907CAC8846AB32383E0B15E543C0377FC29CC6E5C6FACD8CB8D7C8F1CA6"
+        },
+        {
+          "path": "infra/azure/foundation/vault-guard.tf",
+          "sha256": "B5001462BEA502784179A00515BC658385554489727E4605ACE848BEBF3A5ADE"
+        },
+        {
+          "path": "infra/azure/foundation/versions.tf",
+          "sha256": "82B74D70204F8C3BE369DA2DBC7FBD1E949941C9B39F5BF8FCC53BA0354EF8A7"
+        }
+      ]
+    },
+    "environment": {
+      "snapshotId": "DFFF278628F380A15B114AF87CBEEA8BF5C9EE122AEECC1960BC0E34F1E7089B",
+      "files": [
+        {
+          "path": "infra/azure/environment/.terraform.lock.hcl",
+          "sha256": "BCBB02BC48972B3CF6A397F325D1347A9070074853313780B42D39903A98D8F2"
+        },
+        {
+          "path": "infra/azure/environment/continuity.tf",
+          "sha256": "90141DDC3776FEB1FA98F61705B7BBB302FAC34702E65F216BBD4BC00478297C"
+        },
+        {
+          "path": "infra/azure/environment/foundation-variables.tf",
+          "sha256": "E0780CBB754FC306D1B6ABAA1B8A94D5B0AA8EB817047E677B08A10F2C2E2E9D"
+        },
+        {
+          "path": "infra/azure/environment/guard-inspection.tf",
+          "sha256": "1DF7DAF5DA83A684753625B967207B83C0BCFA9506A0B07E04BF1A9B846B7AF0"
+        },
+        {
+          "path": "infra/azure/environment/main.tf",
+          "sha256": "005DEC7F8969D0A0C1208BBA22EB48C8A94268BBC2377FAE9858A0CD7E9A1F92"
+        },
+        {
+          "path": "infra/azure/environment/operation-authorities.tf",
+          "sha256": "E7F936ACF468B808FA322B8260E2466AB2A41BC0B26BBFBC4F07D881F37D9401"
+        },
+        {
+          "path": "infra/azure/environment/outputs.tf",
+          "sha256": "BAE90D21FF89198151BF15E9CA6CDBF361E8A9F0A770B5AFADFC2042FAC74D30"
+        },
+        {
+          "path": "infra/azure/environment/tests/environment.tftest.hcl",
+          "sha256": "B69AC5D9D41EE94A0A9556C4EB28BECCDF1CE1CFB07124556B57181A56A78293"
+        },
+        {
+          "path": "infra/azure/environment/tests/mocks/azurerm.tfmock.hcl",
+          "sha256": "6335744E41EA46CA78F8E838D2BC5F3E62523C3E9F273C2E7DD23110F4D959EE"
+        },
+        {
+          "path": "infra/azure/environment/tests/secret-scopes.json",
+          "sha256": "73A95303690C7F5BA6F71B082EEA02CA84E9BE401FDDCA7938A0FF002DB87D7C"
+        },
+        {
+          "path": "infra/azure/environment/variables.tf",
+          "sha256": "0AA601C629E53414CA637DC3BF911EA7C1B86F72A1FE31F6BC0668590CE8F208"
+        },
+        {
+          "path": "infra/azure/environment/vault-guard-stages.tf",
+          "sha256": "9D94DF20B43CF4AC600748873E8D31DFDD4F762F28B562290EC76C9E8315D5B8"
+        },
+        {
+          "path": "infra/azure/environment/versions.tf",
+          "sha256": "82B74D70204F8C3BE369DA2DBC7FBD1E949941C9B39F5BF8FCC53BA0354EF8A7"
+        }
+      ]
+    }
+  },
+  "descriptionOnlyChange": {
+    "previousSnapshot": "terraform-inspection-snapshot.json",
+    "file": "infra/azure/foundation/handoff.tf",
+    "oldSha256": "CFDDB1B24D432FAE292397CA10CFC2B24B2544488D9D36C3F144F46D6266E938",
+    "newSha256": "933E3E4658F5547C2E536ECDA0ECB0A6C3D4E08E137F792D53D489A9D9015177",
+    "scope": "Output description only; resource/test behavior unchanged."
+  }
+}

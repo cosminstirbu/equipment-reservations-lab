@@ -1,0 +1,79 @@
+---
+apiVersion: builtin
+kind: ConfigMapGenerator
+metadata:
+  name: equipment-proxy
+literals:
+  - |
+    nginx.conf=worker_processes auto;
+    pid /tmp/nginx.pid;
+    error_log /dev/stderr crit;
+
+    events {
+        worker_connections 256;
+    }
+
+    http {
+        include /etc/nginx/mime.types;
+        default_type application/octet-stream;
+        access_log off;
+        server_tokens off;
+        client_max_body_size 1m;
+        client_body_temp_path /tmp/client_body;
+        proxy_temp_path /tmp/proxy;
+        fastcgi_temp_path /tmp/fastcgi;
+        uwsgi_temp_path /tmp/uwsgi;
+        scgi_temp_path /tmp/scgi;
+
+        upstream inventory { server inventory:8080; }
+        upstream reservations { server reservations:8080; }
+        upstream notifications { server notifications:8080; }
+
+        server {
+            listen 8080;
+            server_name app.codingfunlab.com;
+            root /usr/share/nginx/html;
+            if ($http_host != app.codingfunlab.com) { return 421; }
+            if ($request_uri ~* "^[^?]*(%|\\.\\.|//)") { return 400; }
+
+            proxy_http_version 1.1;
+            proxy_connect_timeout 5s;
+            proxy_send_timeout 15s;
+            proxy_read_timeout 15s;
+            proxy_next_upstream off;
+            proxy_set_header Host app.codingfunlab.com;
+            proxy_set_header X-Forwarded-Host app.codingfunlab.com;
+            proxy_set_header X-Forwarded-Proto https;
+            proxy_set_header X-Forwarded-Port 443;
+            proxy_set_header X-Forwarded-For $remote_addr;
+            proxy_set_header Forwarded "";
+            proxy_set_header X-Forwarded-Prefix "";
+
+            location ~ ^/api/equipment(?:/|$) { proxy_pass http://inventory; }
+            location ~ ^/api/(?:availability|reservations)(?:/|$) { proxy_pass http://reservations; }
+            location ~ ^/api/notifications(?:/|$) { proxy_pass http://notifications; }
+
+            location ~ ^/services/inventory/(?:openapi/v1[.]json$|scalar/(?:v1|scalar[.]js|scalar[.]aspnetcore[.]js|favicon[.]svg)$|oauth/callback$|api/equipment(?:/|$)) {
+                rewrite ^/services/inventory(/.*)$ $1 break;
+                proxy_pass http://inventory;
+            }
+            location ~ ^/services/reservations/(?:openapi/v1[.]json$|scalar/(?:v1|scalar[.]js|scalar[.]aspnetcore[.]js|favicon[.]svg)$|oauth/callback$|api/(?:availability|reservations)(?:/|$)) {
+                rewrite ^/services/reservations(/.*)$ $1 break;
+                proxy_pass http://reservations;
+            }
+            location ~ ^/services/notifications/(?:openapi/v1[.]json$|scalar/(?:v1|scalar[.]js|scalar[.]aspnetcore[.]js|favicon[.]svg)$|oauth/callback$|api/notifications(?:/|$)) {
+                rewrite ^/services/notifications(/.*)$ $1 break;
+                proxy_pass http://notifications;
+            }
+
+            location ~ ^/(?:api|services|health|alive|metrics|admin)(?:/|$) { return 404; }
+            location ~ [.] { try_files $uri =404; }
+            location / { try_files $uri $uri/ /index.html; }
+        }
+    }
+options:
+  labels:
+    app.kubernetes.io/part-of: equipment
+    app.kubernetes.io/name: equipment-proxy
+  annotations:
+    argocd.argoproj.io/sync-wave: '-40'

@@ -1,0 +1,19 @@
+---
+apiVersion: builtin
+kind: ConfigMapGenerator
+metadata:
+  name: equipment-runtime
+literals:
+  - Identity__Authority=https://identity.codingfunlab.com/realms/equipment
+  - Application__ExternalOrigin=https://app.codingfunlab.com
+  - Documentation__Enabled=true
+  - OTEL_EXPORTER_OTLP_ENDPOINT=https://otel-collector.equipment-platform.svc:4317
+  - OTEL_EXPORTER_OTLP_CERTIFICATE=/otlp-trust/ca.crt
+  - SSL_CERT_FILE=/etc/ssl/certs/ca-certificates.crt
+  - OTEL_EXPORTER_OTLP_TIMEOUT=5000
+  - IdentityPublicOrigin=https://identity.codingfunlab.com
+options:
+  labels:
+    app.kubernetes.io/part-of: equipment
+    app.kubernetes.io/name: equipment-runtime
+behavior: merge

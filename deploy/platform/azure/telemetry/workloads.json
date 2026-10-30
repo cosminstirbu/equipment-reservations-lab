@@ -1,0 +1,1557 @@
+{
+  "apiVersion": "v1",
+  "kind": "List",
+  "items": [
+    {
+      "apiVersion": "v1",
+      "kind": "PersistentVolumeClaim",
+      "metadata": {
+        "name": "prometheus-data",
+        "namespace": "equipment-platform",
+        "labels": {
+          "app.kubernetes.io/name": "prometheus-data",
+          "app.kubernetes.io/part-of": "equipment"
+        },
+        "annotations": {
+          "argocd.argoproj.io/sync-options": "Prune=false,Delete=false",
+          "argocd.argoproj.io/sync-wave": "-40"
+        }
+      },
+      "spec": {
+        "accessModes": ["ReadWriteOnce"],
+        "storageClassName": "equipment-azure-retain",
+        "resources": {
+          "requests": {
+            "storage": "8Gi"
+          }
+        }
+      }
+    },
+    {
+      "apiVersion": "apps/v1",
+      "kind": "Deployment",
+      "metadata": {
+        "name": "prometheus",
+        "namespace": "equipment-platform",
+        "labels": {
+          "app.kubernetes.io/name": "prometheus",
+          "app.kubernetes.io/part-of": "equipment"
+        },
+        "annotations": {
+          "argocd.argoproj.io/sync-options": "Prune=false,Delete=false",
+          "argocd.argoproj.io/sync-wave": "-40"
+        }
+      },
+      "spec": {
+        "replicas": 1,
+        "strategy": {
+          "type": "Recreate"
+        },
+        "selector": {
+          "matchLabels": {
+            "app.kubernetes.io/name": "prometheus"
+          }
+        },
+        "template": {
+          "metadata": {
+            "labels": {
+              "app.kubernetes.io/name": "prometheus",
+              "app.kubernetes.io/part-of": "equipment",
+              "azure.workload.identity/use": "true"
+            }
+          },
+          "spec": {
+            "serviceAccountName": "prometheus",
+            "automountServiceAccountToken": false,
+            "securityContext": {
+              "runAsNonRoot": true,
+              "runAsUser": 10001,
+              "runAsGroup": 10001,
+              "fsGroup": 10001,
+              "seccompProfile": {
+                "type": "RuntimeDefault"
+              }
+            },
+            "containers": [
+              {
+                "name": "prometheus",
+                "image": "quay.io/prometheus/prometheus@sha256:fa3302279710be2f21a8301ec17a8b4f2301fd829bd113839b3b6b02b6f191a2",
+                "args": [
+                  "--config.file=/configuration/prometheus.yaml",
+                  "--storage.tsdb.path=/data",
+                  "--storage.tsdb.retention.time=72h",
+                  "--storage.tsdb.retention.size=6GB",
+                  "--web.enable-otlp-receiver",
+                  "--web.listen-address=0.0.0.0:9090",
+                  "--log.level=error"
+                ],
+                "resources": {
+                  "requests": {
+                    "cpu": "100m",
+                    "memory": "256Mi",
+                    "ephemeral-storage": "64Mi"
+                  },
+                  "limits": {
+                    "cpu": "500m",
+                    "memory": "768Mi",
+                    "ephemeral-storage": "128Mi"
+                  }
+                },
+                "securityContext": {
+                  "allowPrivilegeEscalation": false,
+                  "readOnlyRootFilesystem": true,
+                  "capabilities": {
+                    "drop": ["ALL"]
+                  }
+                },
+                "ports": [
+                  {
+                    "name": "backend",
+                    "containerPort": 9090
+                  }
+                ],
+                "volumeMounts": [
+                  {
+                    "name": "configuration",
+                    "mountPath": "/configuration",
+                    "readOnly": true
+                  },
+                  {
+                    "name": "data",
+                    "mountPath": "/data",
+                    "readOnly": false
+                  },
+                  {
+                    "name": "tmp",
+                    "mountPath": "/tmp",
+                    "readOnly": false
+                  }
+                ],
+                "startupProbe": {
+                  "httpGet": {
+                    "port": "backend",
+                    "path": "/-/ready",
+                    "scheme": "HTTP"
+                  },
+                  "timeoutSeconds": 2,
+                  "periodSeconds": 5,
+                  "failureThreshold": 60
+                },
+                "readinessProbe": {
+                  "httpGet": {
+                    "port": "backend",
+                    "path": "/-/ready",
+                    "scheme": "HTTP"
+                  },
+                  "timeoutSeconds": 2,
+                  "periodSeconds": 5,
+                  "failureThreshold": 3
+                },
+                "livenessProbe": {
+                  "httpGet": {
+                    "port": "backend",
+                    "path": "/-/healthy",
+                    "scheme": "HTTP"
+                  },
+                  "timeoutSeconds": 2,
+                  "periodSeconds": 5,
+                  "failureThreshold": 6
+                }
+              },
+              {
+                "name": "authentication-proxy",
+                "image": "docker.io/nginxinc/nginx-unprivileged@sha256:0c79d56aee561a1d81c63f00eee5fb5fe29279560cdc55e91425133104c7fbe6",
+                "command": ["/bin/sh", "-ec"],
+                "args": [
+                  "envsubst '$API_TOKEN' < /proxy/nginx.conf.template > /tmp/nginx.conf; exec nginx -c /tmp/nginx.conf -g 'daemon off;'"
+                ],
+                "env": [
+                  {
+                    "name": "API_TOKEN",
+                    "valueFrom": {
+                      "secretKeyRef": {
+                        "name": "prometheus-credentials",
+                        "key": "apiToken"
+                      }
+                    }
+                  }
+                ],
+                "resources": {
+                  "requests": {
+                    "cpu": "20m",
+                    "memory": "24Mi",
+                    "ephemeral-storage": "64Mi"
+                  },
+                  "limits": {
+                    "cpu": "100m",
+                    "memory": "64Mi",
+                    "ephemeral-storage": "128Mi"
+                  }
+                },
+                "securityContext": {
+                  "allowPrivilegeEscalation": false,
+                  "readOnlyRootFilesystem": true,
+                  "capabilities": {
+                    "drop": ["ALL"]
+                  }
+                },
+                "ports": [
+                  {
+                    "name": "https",
+                    "containerPort": 8443
+                  }
+                ],
+                "volumeMounts": [
+                  {
+                    "name": "proxy",
+                    "mountPath": "/proxy",
+                    "readOnly": true
+                  },
+                  {
+                    "name": "tls",
+                    "mountPath": "/tls",
+                    "readOnly": true
+                  },
+                  {
+                    "name": "proxy-tmp",
+                    "mountPath": "/tmp",
+                    "readOnly": false
+                  },
+                  {
+                    "name": "secrets-store",
+                    "mountPath": "/mnt/secrets-store",
+                    "readOnly": true
+                  }
+                ],
+                "startupProbe": {
+                  "httpGet": {
+                    "port": "https",
+                    "path": "/healthz",
+                    "scheme": "HTTPS"
+                  },
+                  "timeoutSeconds": 2,
+                  "periodSeconds": 5,
+                  "failureThreshold": 60
+                },
+                "readinessProbe": {
+                  "httpGet": {
+                    "port": "https",
+                    "path": "/healthz",
+                    "scheme": "HTTPS"
+                  },
+                  "timeoutSeconds": 2,
+                  "periodSeconds": 5,
+                  "failureThreshold": 3
+                },
+                "livenessProbe": {
+                  "httpGet": {
+                    "port": "https",
+                    "path": "/livez",
+                    "scheme": "HTTPS"
+                  },
+                  "timeoutSeconds": 2,
+                  "periodSeconds": 5,
+                  "failureThreshold": 3
+                }
+              }
+            ],
+            "volumes": [
+              {
+                "name": "configuration",
+                "configMap": {
+                  "name": "prometheus"
+                }
+              },
+              {
+                "name": "data",
+                "persistentVolumeClaim": {
+                  "claimName": "prometheus-data"
+                }
+              },
+              {
+                "name": "tmp",
+                "emptyDir": {
+                  "sizeLimit": "32Mi"
+                }
+              },
+              {
+                "name": "proxy-tmp",
+                "emptyDir": {
+                  "medium": "Memory",
+                  "sizeLimit": "16Mi"
+                }
+              },
+              {
+                "name": "proxy",
+                "configMap": {
+                  "name": "prometheus-proxy"
+                }
+              },
+              {
+                "name": "tls",
+                "secret": {
+                  "secretName": "prometheus-tls"
+                }
+              },
+              {
+                "name": "secrets-store",
+                "csi": {
+                  "driver": "secrets-store.csi.k8s.io",
+                  "readOnly": true,
+                  "volumeAttributes": {
+                    "secretProviderClass": "prometheus"
+                  }
+                }
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "apiVersion": "v1",
+      "kind": "Service",
+      "metadata": {
+        "name": "prometheus",
+        "namespace": "equipment-platform",
+        "labels": {
+          "app.kubernetes.io/name": "prometheus",
+          "app.kubernetes.io/part-of": "equipment"
+        },
+        "annotations": {
+          "argocd.argoproj.io/sync-options": "Prune=false,Delete=false",
+          "argocd.argoproj.io/sync-wave": "-40"
+        }
+      },
+      "spec": {
+        "type": "ClusterIP",
+        "selector": {
+          "app.kubernetes.io/name": "prometheus"
+        },
+        "ports": [
+          {
+            "name": "https",
+            "port": 8443,
+            "targetPort": 8443
+          }
+        ]
+      }
+    },
+    {
+      "apiVersion": "v1",
+      "kind": "PersistentVolumeClaim",
+      "metadata": {
+        "name": "loki-data",
+        "namespace": "equipment-platform",
+        "labels": {
+          "app.kubernetes.io/name": "loki-data",
+          "app.kubernetes.io/part-of": "equipment"
+        },
+        "annotations": {
+          "argocd.argoproj.io/sync-options": "Prune=false,Delete=false",
+          "argocd.argoproj.io/sync-wave": "-40"
+        }
+      },
+      "spec": {
+        "accessModes": ["ReadWriteOnce"],
+        "storageClassName": "equipment-azure-retain",
+        "resources": {
+          "requests": {
+            "storage": "8Gi"
+          }
+        }
+      }
+    },
+    {
+      "apiVersion": "apps/v1",
+      "kind": "Deployment",
+      "metadata": {
+        "name": "loki",
+        "namespace": "equipment-platform",
+        "labels": {
+          "app.kubernetes.io/name": "loki",
+          "app.kubernetes.io/part-of": "equipment"
+        },
+        "annotations": {
+          "argocd.argoproj.io/sync-options": "Prune=false,Delete=false",
+          "argocd.argoproj.io/sync-wave": "-40"
+        }
+      },
+      "spec": {
+        "replicas": 1,
+        "strategy": {
+          "type": "Recreate"
+        },
+        "selector": {
+          "matchLabels": {
+            "app.kubernetes.io/name": "loki"
+          }
+        },
+        "template": {
+          "metadata": {
+            "labels": {
+              "app.kubernetes.io/name": "loki",
+              "app.kubernetes.io/part-of": "equipment",
+              "azure.workload.identity/use": "true"
+            }
+          },
+          "spec": {
+            "serviceAccountName": "loki",
+            "automountServiceAccountToken": false,
+            "securityContext": {
+              "runAsNonRoot": true,
+              "runAsUser": 10001,
+              "runAsGroup": 10001,
+              "fsGroup": 10001,
+              "seccompProfile": {
+                "type": "RuntimeDefault"
+              }
+            },
+            "containers": [
+              {
+                "name": "loki",
+                "image": "docker.io/grafana/loki@sha256:0db216b630ae1f348a1584c67f3cead8b4c1fc839169a39501db664744158e28",
+                "args": ["-config.file=/configuration/loki.yaml"],
+                "resources": {
+                  "requests": {
+                    "cpu": "100m",
+                    "memory": "256Mi",
+                    "ephemeral-storage": "64Mi"
+                  },
+                  "limits": {
+                    "cpu": "500m",
+                    "memory": "768Mi",
+                    "ephemeral-storage": "128Mi"
+                  }
+                },
+                "securityContext": {
+                  "allowPrivilegeEscalation": false,
+                  "readOnlyRootFilesystem": true,
+                  "capabilities": {
+                    "drop": ["ALL"]
+                  }
+                },
+                "ports": [
+                  {
+                    "name": "backend",
+                    "containerPort": 3100
+                  }
+                ],
+                "volumeMounts": [
+                  {
+                    "name": "configuration",
+                    "mountPath": "/configuration",
+                    "readOnly": true
+                  },
+                  {
+                    "name": "data",
+                    "mountPath": "/data",
+                    "readOnly": false
+                  },
+                  {
+                    "name": "tmp",
+                    "mountPath": "/tmp",
+                    "readOnly": false
+                  }
+                ],
+                "startupProbe": {
+                  "httpGet": {
+                    "port": "backend",
+                    "path": "/ready",
+                    "scheme": "HTTP"
+                  },
+                  "timeoutSeconds": 2,
+                  "periodSeconds": 5,
+                  "failureThreshold": 60
+                },
+                "readinessProbe": {
+                  "httpGet": {
+                    "port": "backend",
+                    "path": "/ready",
+                    "scheme": "HTTP"
+                  },
+                  "timeoutSeconds": 2,
+                  "periodSeconds": 5,
+                  "failureThreshold": 3
+                },
+                "livenessProbe": {
+                  "httpGet": {
+                    "port": "backend",
+                    "path": "/ready",
+                    "scheme": "HTTP"
+                  },
+                  "timeoutSeconds": 2,
+                  "periodSeconds": 5,
+                  "failureThreshold": 6
+                }
+              },
+              {
+                "name": "authentication-proxy",
+                "image": "docker.io/nginxinc/nginx-unprivileged@sha256:0c79d56aee561a1d81c63f00eee5fb5fe29279560cdc55e91425133104c7fbe6",
+                "command": ["/bin/sh", "-ec"],
+                "args": [
+                  "envsubst '$API_TOKEN' < /proxy/nginx.conf.template > /tmp/nginx.conf; exec nginx -c /tmp/nginx.conf -g 'daemon off;'"
+                ],
+                "env": [
+                  {
+                    "name": "API_TOKEN",
+                    "valueFrom": {
+                      "secretKeyRef": {
+                        "name": "loki-credentials",
+                        "key": "apiToken"
+                      }
+                    }
+                  }
+                ],
+                "resources": {
+                  "requests": {
+                    "cpu": "20m",
+                    "memory": "24Mi",
+                    "ephemeral-storage": "64Mi"
+                  },
+                  "limits": {
+                    "cpu": "100m",
+                    "memory": "64Mi",
+                    "ephemeral-storage": "128Mi"
+                  }
+                },
+                "securityContext": {
+                  "allowPrivilegeEscalation": false,
+                  "readOnlyRootFilesystem": true,
+                  "capabilities": {
+                    "drop": ["ALL"]
+                  }
+                },
+                "ports": [
+                  {
+                    "name": "https",
+                    "containerPort": 8443
+                  }
+                ],
+                "volumeMounts": [
+                  {
+                    "name": "proxy",
+                    "mountPath": "/proxy",
+                    "readOnly": true
+                  },
+                  {
+                    "name": "tls",
+                    "mountPath": "/tls",
+                    "readOnly": true
+                  },
+                  {
+                    "name": "proxy-tmp",
+                    "mountPath": "/tmp",
+                    "readOnly": false
+                  },
+                  {
+                    "name": "secrets-store",
+                    "mountPath": "/mnt/secrets-store",
+                    "readOnly": true
+                  }
+                ],
+                "startupProbe": {
+                  "httpGet": {
+                    "port": "https",
+                    "path": "/healthz",
+                    "scheme": "HTTPS"
+                  },
+                  "timeoutSeconds": 2,
+                  "periodSeconds": 5,
+                  "failureThreshold": 60
+                },
+                "readinessProbe": {
+                  "httpGet": {
+                    "port": "https",
+                    "path": "/healthz",
+                    "scheme": "HTTPS"
+                  },
+                  "timeoutSeconds": 2,
+                  "periodSeconds": 5,
+                  "failureThreshold": 3
+                },
+                "livenessProbe": {
+                  "httpGet": {
+                    "port": "https",
+                    "path": "/livez",
+                    "scheme": "HTTPS"
+                  },
+                  "timeoutSeconds": 2,
+                  "periodSeconds": 5,
+                  "failureThreshold": 3
+                }
+              }
+            ],
+            "volumes": [
+              {
+                "name": "configuration",
+                "configMap": {
+                  "name": "loki"
+                }
+              },
+              {
+                "name": "data",
+                "persistentVolumeClaim": {
+                  "claimName": "loki-data"
+                }
+              },
+              {
+                "name": "tmp",
+                "emptyDir": {
+                  "sizeLimit": "32Mi"
+                }
+              },
+              {
+                "name": "proxy-tmp",
+                "emptyDir": {
+                  "medium": "Memory",
+                  "sizeLimit": "16Mi"
+                }
+              },
+              {
+                "name": "proxy",
+                "configMap": {
+                  "name": "loki-proxy"
+                }
+              },
+              {
+                "name": "tls",
+                "secret": {
+                  "secretName": "loki-tls"
+                }
+              },
+              {
+                "name": "secrets-store",
+                "csi": {
+                  "driver": "secrets-store.csi.k8s.io",
+                  "readOnly": true,
+                  "volumeAttributes": {
+                    "secretProviderClass": "loki"
+                  }
+                }
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "apiVersion": "v1",
+      "kind": "Service",
+      "metadata": {
+        "name": "loki",
+        "namespace": "equipment-platform",
+        "labels": {
+          "app.kubernetes.io/name": "loki",
+          "app.kubernetes.io/part-of": "equipment"
+        },
+        "annotations": {
+          "argocd.argoproj.io/sync-options": "Prune=false,Delete=false",
+          "argocd.argoproj.io/sync-wave": "-40"
+        }
+      },
+      "spec": {
+        "type": "ClusterIP",
+        "selector": {
+          "app.kubernetes.io/name": "loki"
+        },
+        "ports": [
+          {
+            "name": "https",
+            "port": 8443,
+            "targetPort": 8443
+          }
+        ]
+      }
+    },
+    {
+      "apiVersion": "v1",
+      "kind": "PersistentVolumeClaim",
+      "metadata": {
+        "name": "tempo-data",
+        "namespace": "equipment-platform",
+        "labels": {
+          "app.kubernetes.io/name": "tempo-data",
+          "app.kubernetes.io/part-of": "equipment"
+        },
+        "annotations": {
+          "argocd.argoproj.io/sync-options": "Prune=false,Delete=false",
+          "argocd.argoproj.io/sync-wave": "-40"
+        }
+      },
+      "spec": {
+        "accessModes": ["ReadWriteOnce"],
+        "storageClassName": "equipment-azure-retain",
+        "resources": {
+          "requests": {
+            "storage": "8Gi"
+          }
+        }
+      }
+    },
+    {
+      "apiVersion": "apps/v1",
+      "kind": "Deployment",
+      "metadata": {
+        "name": "tempo",
+        "namespace": "equipment-platform",
+        "labels": {
+          "app.kubernetes.io/name": "tempo",
+          "app.kubernetes.io/part-of": "equipment"
+        },
+        "annotations": {
+          "argocd.argoproj.io/sync-options": "Prune=false,Delete=false",
+          "argocd.argoproj.io/sync-wave": "-40"
+        }
+      },
+      "spec": {
+        "replicas": 1,
+        "strategy": {
+          "type": "Recreate"
+        },
+        "selector": {
+          "matchLabels": {
+            "app.kubernetes.io/name": "tempo"
+          }
+        },
+        "template": {
+          "metadata": {
+            "labels": {
+              "app.kubernetes.io/name": "tempo",
+              "app.kubernetes.io/part-of": "equipment",
+              "azure.workload.identity/use": "true"
+            }
+          },
+          "spec": {
+            "serviceAccountName": "tempo",
+            "automountServiceAccountToken": false,
+            "securityContext": {
+              "runAsNonRoot": true,
+              "runAsUser": 10001,
+              "runAsGroup": 10001,
+              "fsGroup": 10001,
+              "seccompProfile": {
+                "type": "RuntimeDefault"
+              }
+            },
+            "containers": [
+              {
+                "name": "tempo",
+                "image": "docker.io/grafana/tempo@sha256:64e2fbd56d9c2b3412a4b430a58ea59e91a670b1e75f920a0c702213ad145044",
+                "args": [
+                  "-config.file=/configuration/tempo.yaml",
+                  "-target=all"
+                ],
+                "resources": {
+                  "requests": {
+                    "cpu": "200m",
+                    "memory": "512Mi",
+                    "ephemeral-storage": "64Mi"
+                  },
+                  "limits": {
+                    "cpu": "1000m",
+                    "memory": "1536Mi",
+                    "ephemeral-storage": "128Mi"
+                  }
+                },
+                "securityContext": {
+                  "allowPrivilegeEscalation": false,
+                  "readOnlyRootFilesystem": true,
+                  "capabilities": {
+                    "drop": ["ALL"]
+                  }
+                },
+                "ports": [
+                  {
+                    "name": "backend",
+                    "containerPort": 3200
+                  }
+                ],
+                "volumeMounts": [
+                  {
+                    "name": "configuration",
+                    "mountPath": "/configuration",
+                    "readOnly": true
+                  },
+                  {
+                    "name": "data",
+                    "mountPath": "/data",
+                    "readOnly": false
+                  },
+                  {
+                    "name": "tmp",
+                    "mountPath": "/tmp",
+                    "readOnly": false
+                  }
+                ],
+                "startupProbe": {
+                  "httpGet": {
+                    "port": "backend",
+                    "path": "/ready",
+                    "scheme": "HTTP"
+                  },
+                  "timeoutSeconds": 2,
+                  "periodSeconds": 5,
+                  "failureThreshold": 60
+                },
+                "readinessProbe": {
+                  "httpGet": {
+                    "port": "backend",
+                    "path": "/ready",
+                    "scheme": "HTTP"
+                  },
+                  "timeoutSeconds": 2,
+                  "periodSeconds": 5,
+                  "failureThreshold": 3
+                },
+                "livenessProbe": {
+                  "httpGet": {
+                    "port": "backend",
+                    "path": "/ready",
+                    "scheme": "HTTP"
+                  },
+                  "timeoutSeconds": 2,
+                  "periodSeconds": 5,
+                  "failureThreshold": 6
+                }
+              },
+              {
+                "name": "authentication-proxy",
+                "image": "docker.io/nginxinc/nginx-unprivileged@sha256:0c79d56aee561a1d81c63f00eee5fb5fe29279560cdc55e91425133104c7fbe6",
+                "command": ["/bin/sh", "-ec"],
+                "args": [
+                  "envsubst '$API_TOKEN' < /proxy/nginx.conf.template > /tmp/nginx.conf; exec nginx -c /tmp/nginx.conf -g 'daemon off;'"
+                ],
+                "env": [
+                  {
+                    "name": "API_TOKEN",
+                    "valueFrom": {
+                      "secretKeyRef": {
+                        "name": "tempo-credentials",
+                        "key": "apiToken"
+                      }
+                    }
+                  }
+                ],
+                "resources": {
+                  "requests": {
+                    "cpu": "20m",
+                    "memory": "24Mi",
+                    "ephemeral-storage": "64Mi"
+                  },
+                  "limits": {
+                    "cpu": "100m",
+                    "memory": "64Mi",
+                    "ephemeral-storage": "128Mi"
+                  }
+                },
+                "securityContext": {
+                  "allowPrivilegeEscalation": false,
+                  "readOnlyRootFilesystem": true,
+                  "capabilities": {
+                    "drop": ["ALL"]
+                  }
+                },
+                "ports": [
+                  {
+                    "name": "https",
+                    "containerPort": 8443
+                  }
+                ],
+                "volumeMounts": [
+                  {
+                    "name": "proxy",
+                    "mountPath": "/proxy",
+                    "readOnly": true
+                  },
+                  {
+                    "name": "tls",
+                    "mountPath": "/tls",
+                    "readOnly": true
+                  },
+                  {
+                    "name": "proxy-tmp",
+                    "mountPath": "/tmp",
+                    "readOnly": false
+                  },
+                  {
+                    "name": "secrets-store",
+                    "mountPath": "/mnt/secrets-store",
+                    "readOnly": true
+                  }
+                ],
+                "startupProbe": {
+                  "httpGet": {
+                    "port": "https",
+                    "path": "/healthz",
+                    "scheme": "HTTPS"
+                  },
+                  "timeoutSeconds": 2,
+                  "periodSeconds": 5,
+                  "failureThreshold": 60
+                },
+                "readinessProbe": {
+                  "httpGet": {
+                    "port": "https",
+                    "path": "/healthz",
+                    "scheme": "HTTPS"
+                  },
+                  "timeoutSeconds": 2,
+                  "periodSeconds": 5,
+                  "failureThreshold": 3
+                },
+                "livenessProbe": {
+                  "httpGet": {
+                    "port": "https",
+                    "path": "/livez",
+                    "scheme": "HTTPS"
+                  },
+                  "timeoutSeconds": 2,
+                  "periodSeconds": 5,
+                  "failureThreshold": 3
+                }
+              }
+            ],
+            "volumes": [
+              {
+                "name": "configuration",
+                "configMap": {
+                  "name": "tempo"
+                }
+              },
+              {
+                "name": "data",
+                "persistentVolumeClaim": {
+                  "claimName": "tempo-data"
+                }
+              },
+              {
+                "name": "tmp",
+                "emptyDir": {
+                  "sizeLimit": "32Mi"
+                }
+              },
+              {
+                "name": "proxy-tmp",
+                "emptyDir": {
+                  "medium": "Memory",
+                  "sizeLimit": "16Mi"
+                }
+              },
+              {
+                "name": "proxy",
+                "configMap": {
+                  "name": "tempo-proxy"
+                }
+              },
+              {
+                "name": "tls",
+                "secret": {
+                  "secretName": "tempo-tls"
+                }
+              },
+              {
+                "name": "secrets-store",
+                "csi": {
+                  "driver": "secrets-store.csi.k8s.io",
+                  "readOnly": true,
+                  "volumeAttributes": {
+                    "secretProviderClass": "tempo"
+                  }
+                }
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "apiVersion": "v1",
+      "kind": "Service",
+      "metadata": {
+        "name": "tempo",
+        "namespace": "equipment-platform",
+        "labels": {
+          "app.kubernetes.io/name": "tempo",
+          "app.kubernetes.io/part-of": "equipment"
+        },
+        "annotations": {
+          "argocd.argoproj.io/sync-options": "Prune=false,Delete=false",
+          "argocd.argoproj.io/sync-wave": "-40"
+        }
+      },
+      "spec": {
+        "type": "ClusterIP",
+        "selector": {
+          "app.kubernetes.io/name": "tempo"
+        },
+        "ports": [
+          {
+            "name": "https",
+            "port": 8443,
+            "targetPort": 8443
+          }
+        ]
+      }
+    },
+    {
+      "apiVersion": "apps/v1",
+      "kind": "Deployment",
+      "metadata": {
+        "name": "otel-collector",
+        "namespace": "equipment-platform",
+        "labels": {
+          "app.kubernetes.io/name": "otel-collector",
+          "app.kubernetes.io/part-of": "equipment"
+        },
+        "annotations": {
+          "argocd.argoproj.io/sync-options": "Prune=false,Delete=false",
+          "argocd.argoproj.io/sync-wave": "-40"
+        }
+      },
+      "spec": {
+        "replicas": 1,
+        "strategy": {
+          "type": "Recreate"
+        },
+        "selector": {
+          "matchLabels": {
+            "app.kubernetes.io/name": "otel-collector"
+          }
+        },
+        "template": {
+          "metadata": {
+            "labels": {
+              "app.kubernetes.io/name": "otel-collector",
+              "app.kubernetes.io/part-of": "equipment",
+              "azure.workload.identity/use": "true"
+            }
+          },
+          "spec": {
+            "serviceAccountName": "otel-collector",
+            "automountServiceAccountToken": false,
+            "securityContext": {
+              "runAsNonRoot": true,
+              "runAsUser": 10001,
+              "runAsGroup": 10001,
+              "fsGroup": 10001,
+              "seccompProfile": {
+                "type": "RuntimeDefault"
+              }
+            },
+            "containers": [
+              {
+                "name": "otel-collector",
+                "image": "ghcr.io/open-telemetry/opentelemetry-collector-releases/opentelemetry-collector-contrib@sha256:7f22d2a6748110ffb6a59bc0df448bccbf501cdb667d610ede4c61d3863d5849",
+                "args": ["--config=/configuration/collector.yaml"],
+                "env": [
+                  {
+                    "name": "INVENTORY_TOKEN",
+                    "valueFrom": {
+                      "secretKeyRef": {
+                        "name": "otel-collector-credentials",
+                        "key": "inventoryToken"
+                      }
+                    }
+                  },
+                  {
+                    "name": "RESERVATIONS_TOKEN",
+                    "valueFrom": {
+                      "secretKeyRef": {
+                        "name": "otel-collector-credentials",
+                        "key": "reservationsToken"
+                      }
+                    }
+                  },
+                  {
+                    "name": "NOTIFICATIONS_TOKEN",
+                    "valueFrom": {
+                      "secretKeyRef": {
+                        "name": "otel-collector-credentials",
+                        "key": "notificationsToken"
+                      }
+                    }
+                  },
+                  {
+                    "name": "DATABASE_BOOTSTRAP_TOKEN",
+                    "valueFrom": {
+                      "secretKeyRef": {
+                        "name": "otel-collector-credentials",
+                        "key": "databaseBootstrapToken"
+                      }
+                    }
+                  },
+                  {
+                    "name": "IDENTITY_BOOTSTRAP_TOKEN",
+                    "valueFrom": {
+                      "secretKeyRef": {
+                        "name": "otel-collector-credentials",
+                        "key": "identityBootstrapToken"
+                      }
+                    }
+                  },
+                  {
+                    "name": "BROKER_BOOTSTRAP_TOKEN",
+                    "valueFrom": {
+                      "secretKeyRef": {
+                        "name": "otel-collector-credentials",
+                        "key": "brokerBootstrapToken"
+                      }
+                    }
+                  },
+                  {
+                    "name": "DASHBOARD_OTLP",
+                    "valueFrom": {
+                      "secretKeyRef": {
+                        "name": "otel-collector-credentials",
+                        "key": "dashboardOtlp"
+                      }
+                    }
+                  },
+                  {
+                    "name": "PROMETHEUS_TOKEN",
+                    "valueFrom": {
+                      "secretKeyRef": {
+                        "name": "otel-collector-credentials",
+                        "key": "prometheusToken"
+                      }
+                    }
+                  },
+                  {
+                    "name": "LOKI_TOKEN",
+                    "valueFrom": {
+                      "secretKeyRef": {
+                        "name": "otel-collector-credentials",
+                        "key": "lokiToken"
+                      }
+                    }
+                  },
+                  {
+                    "name": "TEMPO_TOKEN",
+                    "valueFrom": {
+                      "secretKeyRef": {
+                        "name": "otel-collector-credentials",
+                        "key": "tempoToken"
+                      }
+                    }
+                  }
+                ],
+                "resources": {
+                  "requests": {
+                    "cpu": "100m",
+                    "memory": "128Mi",
+                    "ephemeral-storage": "64Mi"
+                  },
+                  "limits": {
+                    "cpu": "500m",
+                    "memory": "384Mi",
+                    "ephemeral-storage": "128Mi"
+                  }
+                },
+                "securityContext": {
+                  "allowPrivilegeEscalation": false,
+                  "readOnlyRootFilesystem": true,
+                  "capabilities": {
+                    "drop": ["ALL"]
+                  }
+                },
+                "ports": [
+                  {
+                    "name": "otlp",
+                    "containerPort": 4317
+                  },
+                  {
+                    "name": "health",
+                    "containerPort": 13133
+                  }
+                ],
+                "volumeMounts": [
+                  {
+                    "name": "configuration",
+                    "mountPath": "/configuration",
+                    "readOnly": true
+                  },
+                  {
+                    "name": "tls",
+                    "mountPath": "/tls",
+                    "readOnly": true
+                  },
+                  {
+                    "name": "secrets-store",
+                    "mountPath": "/mnt/secrets-store",
+                    "readOnly": true
+                  },
+                  {
+                    "name": "tmp",
+                    "mountPath": "/tmp",
+                    "readOnly": false
+                  }
+                ],
+                "startupProbe": {
+                  "httpGet": {
+                    "port": "health",
+                    "path": "/",
+                    "scheme": "HTTP"
+                  },
+                  "timeoutSeconds": 2,
+                  "periodSeconds": 5,
+                  "failureThreshold": 36
+                },
+                "readinessProbe": {
+                  "httpGet": {
+                    "port": "health",
+                    "path": "/",
+                    "scheme": "HTTP"
+                  },
+                  "timeoutSeconds": 2,
+                  "periodSeconds": 5,
+                  "failureThreshold": 3
+                },
+                "livenessProbe": {
+                  "httpGet": {
+                    "port": "health",
+                    "path": "/",
+                    "scheme": "HTTP"
+                  },
+                  "timeoutSeconds": 2,
+                  "periodSeconds": 5,
+                  "failureThreshold": 6
+                }
+              }
+            ],
+            "volumes": [
+              {
+                "name": "configuration",
+                "configMap": {
+                  "name": "otel-collector"
+                }
+              },
+              {
+                "name": "tls",
+                "secret": {
+                  "secretName": "otel-collector-tls"
+                }
+              },
+              {
+                "name": "secrets-store",
+                "csi": {
+                  "driver": "secrets-store.csi.k8s.io",
+                  "readOnly": true,
+                  "volumeAttributes": {
+                    "secretProviderClass": "otel-collector"
+                  }
+                }
+              },
+              {
+                "name": "tmp",
+                "emptyDir": {
+                  "sizeLimit": "32Mi"
+                }
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "apiVersion": "v1",
+      "kind": "Service",
+      "metadata": {
+        "name": "otel-collector",
+        "namespace": "equipment-platform",
+        "labels": {
+          "app.kubernetes.io/name": "otel-collector",
+          "app.kubernetes.io/part-of": "equipment"
+        },
+        "annotations": {
+          "argocd.argoproj.io/sync-options": "Prune=false,Delete=false",
+          "argocd.argoproj.io/sync-wave": "-40"
+        }
+      },
+      "spec": {
+        "type": "ClusterIP",
+        "selector": {
+          "app.kubernetes.io/name": "otel-collector"
+        },
+        "ports": [
+          {
+            "name": "otlp-grpc",
+            "port": 4317,
+            "targetPort": 4317
+          }
+        ]
+      }
+    },
+    {
+      "apiVersion": "apps/v1",
+      "kind": "Deployment",
+      "metadata": {
+        "name": "grafana",
+        "namespace": "equipment-platform",
+        "labels": {
+          "app.kubernetes.io/name": "grafana",
+          "app.kubernetes.io/part-of": "equipment"
+        },
+        "annotations": {
+          "argocd.argoproj.io/sync-wave": "-40",
+          "argocd.argoproj.io/sync-options": "Prune=false,Delete=false"
+        }
+      },
+      "spec": {
+        "replicas": 1,
+        "selector": {
+          "matchLabels": {
+            "app.kubernetes.io/name": "grafana"
+          }
+        },
+        "template": {
+          "metadata": {
+            "labels": {
+              "app.kubernetes.io/name": "grafana",
+              "app.kubernetes.io/part-of": "equipment",
+              "azure.workload.identity/use": "true"
+            }
+          },
+          "spec": {
+            "serviceAccountName": "grafana",
+            "automountServiceAccountToken": false,
+            "securityContext": {
+              "runAsNonRoot": true,
+              "runAsUser": 10001,
+              "runAsGroup": 10001,
+              "fsGroup": 10001,
+              "seccompProfile": {
+                "type": "RuntimeDefault"
+              }
+            },
+            "containers": [
+              {
+                "name": "grafana",
+                "image": "docker.io/grafana/grafana@sha256:dbbc38ea21103cefb50396340cd88afec779c7e070b0a7bf5a75b4ce46651d3f",
+                "command": ["/bin/sh", "-ec"],
+                "args": ["export CA_CERT=\"$(cat /tls/ca.crt)\"; exec /run.sh"],
+                "env": [
+                  {
+                    "name": "GF_AUTH_ANONYMOUS_ENABLED",
+                    "value": "false"
+                  },
+                  {
+                    "name": "GF_USERS_ALLOW_SIGN_UP",
+                    "value": "false"
+                  },
+                  {
+                    "name": "GF_SERVER_PROTOCOL",
+                    "value": "https"
+                  },
+                  {
+                    "name": "GF_SERVER_CERT_FILE",
+                    "value": "/tls/tls.crt"
+                  },
+                  {
+                    "name": "GF_SERVER_CERT_KEY",
+                    "value": "/tls/tls.key"
+                  },
+                  {
+                    "name": "GF_LOG_LEVEL",
+                    "value": "error"
+                  },
+                  {
+                    "name": "GF_ANALYTICS_REPORTING_ENABLED",
+                    "value": "false"
+                  },
+                  {
+                    "name": "GF_ANALYTICS_CHECK_FOR_UPDATES",
+                    "value": "false"
+                  },
+                  {
+                    "name": "GF_SECURITY_ADMIN_USER",
+                    "value": "operator"
+                  },
+                  {
+                    "name": "GF_SECURITY_ADMIN_PASSWORD",
+                    "valueFrom": {
+                      "secretKeyRef": {
+                        "name": "grafana-credentials",
+                        "key": "adminPassword"
+                      }
+                    }
+                  },
+                  {
+                    "name": "PROMETHEUS_TOKEN",
+                    "valueFrom": {
+                      "secretKeyRef": {
+                        "name": "grafana-credentials",
+                        "key": "prometheusToken"
+                      }
+                    }
+                  },
+                  {
+                    "name": "LOKI_TOKEN",
+                    "valueFrom": {
+                      "secretKeyRef": {
+                        "name": "grafana-credentials",
+                        "key": "lokiToken"
+                      }
+                    }
+                  },
+                  {
+                    "name": "TEMPO_TOKEN",
+                    "valueFrom": {
+                      "secretKeyRef": {
+                        "name": "grafana-credentials",
+                        "key": "tempoToken"
+                      }
+                    }
+                  }
+                ],
+                "resources": {
+                  "requests": {
+                    "cpu": "100m",
+                    "memory": "128Mi"
+                  },
+                  "limits": {
+                    "cpu": "500m",
+                    "memory": "384Mi"
+                  }
+                },
+                "securityContext": {
+                  "allowPrivilegeEscalation": false,
+                  "readOnlyRootFilesystem": true,
+                  "capabilities": {
+                    "drop": ["ALL"]
+                  }
+                },
+                "ports": [
+                  {
+                    "name": "https",
+                    "containerPort": 3000
+                  }
+                ],
+                "volumeMounts": [
+                  {
+                    "name": "configuration",
+                    "mountPath": "/etc/grafana/provisioning/datasources",
+                    "readOnly": true
+                  },
+                  {
+                    "name": "tls",
+                    "mountPath": "/tls",
+                    "readOnly": true
+                  },
+                  {
+                    "name": "data",
+                    "mountPath": "/var/lib/grafana"
+                  },
+                  {
+                    "name": "tmp",
+                    "mountPath": "/tmp"
+                  },
+                  {
+                    "name": "secrets-store",
+                    "mountPath": "/mnt/secrets-store",
+                    "readOnly": true
+                  }
+                ],
+                "startupProbe": {
+                  "httpGet": {
+                    "port": "https",
+                    "path": "/api/health",
+                    "scheme": "HTTPS"
+                  },
+                  "periodSeconds": 5,
+                  "timeoutSeconds": 2,
+                  "failureThreshold": 60
+                },
+                "readinessProbe": {
+                  "httpGet": {
+                    "port": "https",
+                    "path": "/api/health",
+                    "scheme": "HTTPS"
+                  },
+                  "periodSeconds": 5,
+                  "timeoutSeconds": 2,
+                  "failureThreshold": 3
+                },
+                "livenessProbe": {
+                  "httpGet": {
+                    "port": "https",
+                    "path": "/api/health",
+                    "scheme": "HTTPS"
+                  },
+                  "periodSeconds": 5,
+                  "timeoutSeconds": 2,
+                  "failureThreshold": 3
+                }
+              }
+            ],
+            "volumes": [
+              {
+                "name": "configuration",
+                "configMap": {
+                  "name": "grafana-datasources"
+                }
+              },
+              {
+                "name": "tls",
+                "secret": {
+                  "secretName": "grafana-tls"
+                }
+              },
+              {
+                "name": "data",
+                "emptyDir": {
+                  "sizeLimit": "64Mi"
+                }
+              },
+              {
+                "name": "tmp",
+                "emptyDir": {
+                  "sizeLimit": "32Mi"
+                }
+              },
+              {
+                "name": "secrets-store",
+                "csi": {
+                  "driver": "secrets-store.csi.k8s.io",
+                  "readOnly": true,
+                  "volumeAttributes": {
+                    "secretProviderClass": "grafana"
+                  }
+                }
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "apiVersion": "v1",
+      "kind": "Service",
+      "metadata": {
+        "name": "grafana",
+        "namespace": "equipment-platform",
+        "labels": {
+          "app.kubernetes.io/name": "grafana",
+          "app.kubernetes.io/part-of": "equipment"
+        },
+        "annotations": {
+          "argocd.argoproj.io/sync-wave": "-40",
+          "argocd.argoproj.io/sync-options": "Prune=false,Delete=false"
+        }
+      },
+      "spec": {
+        "type": "ClusterIP",
+        "selector": {
+          "app.kubernetes.io/name": "grafana"
+        },
+        "ports": [
+          {
+            "name": "https",
+            "port": 3000,
+            "targetPort": 3000
+          }
+        ]
+      }
+    }
+  ]
+}

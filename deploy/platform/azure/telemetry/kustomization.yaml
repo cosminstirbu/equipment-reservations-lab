@@ -1,0 +1,36 @@
+{
+  'apiVersion': 'kustomize.config.k8s.io/v1beta1',
+  'kind': 'Kustomization',
+  'namespace': 'equipment-platform',
+  'resources': ['workloads.json', 'network.json'],
+  'configMapGenerator':
+    [
+      { 'name': 'otel-collector', 'files': ['collector.yaml'] },
+      { 'name': 'prometheus', 'files': ['prometheus.yaml'] },
+      {
+        'name': 'prometheus-proxy',
+        'files': ['nginx.conf.template=prometheus-proxy.conf'],
+      },
+      { 'name': 'loki', 'files': ['loki.yaml'] },
+      {
+        'name': 'loki-proxy',
+        'files': ['nginx.conf.template=loki-proxy.conf'],
+      },
+      { 'name': 'tempo', 'files': ['tempo.yaml'] },
+      {
+        'name': 'tempo-proxy',
+        'files': ['nginx.conf.template=tempo-proxy.conf'],
+      },
+      { 'name': 'grafana-datasources', 'files': ['datasources.yaml'] },
+    ],
+  'generatorOptions':
+    {
+      'annotations':
+        {
+          'argocd.argoproj.io/compare-options': 'IgnoreExtraneous',
+          'argocd.argoproj.io/sync-options': 'Prune=false,Delete=false',
+          'argocd.argoproj.io/sync-wave': '-40',
+        },
+      'labels': { 'app.kubernetes.io/part-of': 'equipment' },
+    },
+}
